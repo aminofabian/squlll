@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.homepageConfigSchema = exports.homepageSectionSchema = exports.homepageThemeSchema = exports.HOMEPAGE_TEMPLATES = exports.HOMEPAGE_TEMPLATE_IDS = void 0;
+exports.HOMEPAGE_TEMPLATE_THEMES = exports.homepageConfigSchema = exports.homepageSectionSchema = exports.homepageThemeSchema = exports.HOMEPAGE_TEMPLATES = exports.HOMEPAGE_TEMPLATE_IDS = void 0;
 exports.createDefaultHomepageConfig = createDefaultHomepageConfig;
 exports.parseHomepageConfig = parseHomepageConfig;
 exports.getSection = getSection;
@@ -31,8 +31,8 @@ exports.HOMEPAGE_TEMPLATES = [
     {
         id: 'assembly-hall',
         name: 'Assembly Hall',
-        tagline: 'Monumental prospectus, serif authority',
-        mood: 'Editorial',
+        tagline: 'Ruled paper, red margin, chalkboard numbers',
+        mood: 'Notebook',
     },
     {
         id: 'playfield',
@@ -531,6 +531,103 @@ function getSection(config, type) {
         return null;
     return { section, slots: section.slots };
 }
+/** Recommended brand palette per look — applied when switching templates. */
+exports.HOMEPAGE_TEMPLATE_THEMES = {
+    'campus-dawn': {
+        primary: '#246a59',
+        primaryDark: '#1a4c40',
+        primaryLight: '#2d8570',
+        accent: '#a7f3d0',
+        ink: '#0a1f1a',
+        paper: '#f3f7f5',
+        radiusMode: 'sharp',
+    },
+    'assembly-hall': {
+        primary: '#AE3A2B',
+        primaryDark: '#8B2E22',
+        primaryLight: '#C45A4A',
+        accent: '#CE9A22',
+        ink: '#1C2B45',
+        paper: '#ECE1C3',
+        radiusMode: 'soft',
+    },
+    playfield: {
+        primary: '#166534',
+        primaryDark: '#14532d',
+        primaryLight: '#22c55e',
+        accent: '#fef08a',
+        ink: '#14532d',
+        paper: '#f7fee7',
+        radiusMode: 'soft',
+    },
+    'garden-court': {
+        primary: '#65a30d',
+        primaryDark: '#4d7c0f',
+        primaryLight: '#84cc16',
+        accent: '#ecfccb',
+        ink: '#365314',
+        paper: '#f7fee7',
+        radiusMode: 'soft',
+    },
+    'crest-motto': {
+        primary: '#854d0e',
+        primaryDark: '#713f12',
+        primaryLight: '#a16207',
+        accent: '#fde68a',
+        ink: '#1c1917',
+        paper: '#fafaf9',
+        radiusMode: 'sharp',
+    },
+    'skyline-cbc': {
+        primary: '#0ea5e9',
+        primaryDark: '#0369a1',
+        primaryLight: '#38bdf8',
+        accent: '#e0f2fe',
+        ink: '#0f172a',
+        paper: '#f8fafc',
+        radiusMode: 'sharp',
+    },
+    'story-scroll': {
+        primary: '#78716c',
+        primaryDark: '#57534e',
+        primaryLight: '#a8a29e',
+        accent: '#fafaf9',
+        ink: '#292524',
+        paper: '#fafaf9',
+        radiusMode: 'soft',
+    },
+    'horizon-board': {
+        primary: '#0ea5e9',
+        primaryDark: '#0369a1',
+        primaryLight: '#38bdf8',
+        accent: '#e0f2fe',
+        ink: '#0c4a6e',
+        paper: '#f0f9ff',
+        radiusMode: 'soft',
+    },
+    'studio-day': {
+        primary: '#ea580c',
+        primaryDark: '#c2410c',
+        primaryLight: '#f97316',
+        accent: '#fed7aa',
+        ink: '#7c2d12',
+        paper: '#fff7ed',
+        radiusMode: 'soft',
+    },
+    'night-lights': {
+        primary: '#134e4a',
+        primaryDark: '#042f2e',
+        primaryLight: '#0f766e',
+        accent: '#5eead4',
+        ink: '#070f0c',
+        paper: '#0a1a16',
+        radiusMode: 'sharp',
+    },
+};
 function applyTemplateKeepContent(config, templateId) {
-    return { ...config, templateId };
+    return {
+        ...config,
+        templateId,
+        theme: exports.HOMEPAGE_TEMPLATE_THEMES[templateId] || config.theme,
+    };
 }

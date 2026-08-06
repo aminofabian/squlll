@@ -752,4 +752,6 @@ export declare function getSection<T extends Record<string, unknown> = Record<st
     section: HomepageSection;
     slots: T;
 } | null;
+/** Recommended brand palette per look — applied when switching templates. */
+export declare const HOMEPAGE_TEMPLATE_THEMES: Record<HomepageTemplateId, HomepageTheme>;
 export declare function applyTemplateKeepContent(config: HomepageConfig, templateId: HomepageTemplateId): HomepageConfig;

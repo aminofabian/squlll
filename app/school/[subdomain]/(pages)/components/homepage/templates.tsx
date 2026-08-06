@@ -46,11 +46,13 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
     cta: 'primary',
   },
   'assembly-hall': {
-    nav: 'solid',
+    nav: 'notebook',
     hero: 'assembly',
-    stats: 'band',
-    offerings: 'open',
-    cta: 'ink',
+    stats: 'chalk',
+    offerings: 'periods',
+    gallery: 'cork',
+    testimonials: 'yearbook',
+    cta: 'fees',
   },
   playfield: {
     hero: 'playfield',
@@ -106,7 +108,7 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
 }
 
 const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
-  'assembly-hall': 'bg-[#f7f4ee]',
+  'assembly-hall': 'assembly-hall-shell bg-[var(--school-paper)]',
   'night-lights': 'bg-[#070f0c]',
 }
 
@@ -129,7 +131,7 @@ function Shell({
       )}
       style={themeStyle(config.theme)}
     >
-      <HomepageShellStyles />
+      <HomepageShellStyles assembly={config.templateId === 'assembly-hall'} />
       {children}
     </div>
   )
@@ -199,9 +201,21 @@ function TemplateBody({
               />
             )
           case 'gallery':
-            return <HomepageGallery key={section.id} config={config} />
+            return (
+              <HomepageGallery
+                key={section.id}
+                config={config}
+                variant={variants.gallery}
+              />
+            )
           case 'testimonials':
-            return <HomepageTestimonials key={section.id} config={config} />
+            return (
+              <HomepageTestimonials
+                key={section.id}
+                config={config}
+                variant={variants.testimonials}
+              />
+            )
           case 'cta':
             return (
               <HomepageCtaBand

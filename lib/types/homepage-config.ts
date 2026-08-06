@@ -6,6 +6,7 @@
 export {
   HOMEPAGE_TEMPLATE_IDS,
   HOMEPAGE_TEMPLATES,
+  HOMEPAGE_TEMPLATE_THEMES,
   applyTemplateKeepContent,
   createDefaultHomepageConfig,
   getSection,

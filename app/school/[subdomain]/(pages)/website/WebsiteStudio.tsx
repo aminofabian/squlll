@@ -106,7 +106,7 @@ const STUDIO_STEPS: {
 
 const TEMPLATE_PALETTES: Record<string, string> = {
   'campus-dawn': 'from-[#0a1f1a] via-[#246a59] to-[#a7f3d0]',
-  'assembly-hall': 'from-[#1e293b] via-[#f7f4ee] to-[#c4a574]',
+  'assembly-hall': 'from-[#1C2B45] via-[#ECE1C3] to-[#AE3A2B]',
   playfield: 'from-[#166534] via-[#22c55e] to-[#fef08a]',
   'garden-court': 'from-[#365314] via-[#86efac] to-[#ecfccb]',
   'crest-motto': 'from-[#1c1917] via-[#854d0e] to-[#fde68a]',
@@ -119,7 +119,7 @@ const TEMPLATE_PALETTES: Record<string, string> = {
 
 const TEMPLATE_ACCENT: Record<string, string> = {
   'campus-dawn': '#246a59',
-  'assembly-hall': '#c4a574',
+  'assembly-hall': '#AE3A2B',
   playfield: '#22c55e',
   'garden-court': '#65a30d',
   'crest-motto': '#854d0e',
@@ -579,7 +579,7 @@ export function WebsiteStudio() {
     const name = HOMEPAGE_TEMPLATES.find((t) => t.id === id)?.name || id
     toast.success(`Look applied: ${name}`, {
       description:
-        'Your words and images were kept. Preview updates on the right.',
+        'Palette and layout updated. Your words and images were kept.',
     })
   }
 
