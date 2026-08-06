@@ -21,6 +21,8 @@ export function SchoolAuthShell({
   description,
   children,
   footer,
+  wide = false,
+  headerExtra,
 }: {
   config: HomepageConfig
   schoolName: string
@@ -31,6 +33,10 @@ export function SchoolAuthShell({
   description?: string
   children: ReactNode
   footer?: ReactNode
+  /** Wider content column for multi-step forms (e.g. admissions). */
+  wide?: boolean
+  /** Optional content rendered under the page description (e.g. step progress). */
+  headerExtra?: ReactNode
 }) {
   const isAssembly = config.templateId === 'assembly-hall'
   const isPlayfield = config.templateId === 'playfield'
@@ -228,7 +234,12 @@ export function SchoolAuthShell({
           isPlayfield && 'pf-hero',
         )}
       >
-        <div className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div
+          className={cn(
+            'relative z-10 mx-auto flex w-full flex-1 flex-col justify-center px-4 py-12 sm:px-6 sm:py-16 lg:px-8',
+            wide ? 'max-w-2xl' : 'max-w-lg',
+          )}
+        >
           <div className="mb-8 text-center sm:mb-10 sm:text-left">
             {eyebrow && (
               <p
@@ -276,6 +287,7 @@ export function SchoolAuthShell({
                 {description}
               </p>
             )}
+            {headerExtra}
           </div>
 
           <div
