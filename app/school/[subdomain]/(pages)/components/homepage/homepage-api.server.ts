@@ -41,16 +41,26 @@ export async function fetchPublicHomepageConfigServer(
       headers: {
         'Content-Type': 'application/json',
         'x-tenant-subdomain': subdomain,
+        'Cache-Control': 'no-store',
       },
       body: JSON.stringify({
         query: PUBLIC_HOMEPAGE_QUERY,
         variables: { subdomain },
       }),
       cache: 'no-store',
+      next: { revalidate: 0 },
     })
     const json = await res.json()
+    if (json.errors?.length) {
+      console.error(
+        '[publicHomepageConfig]',
+        subdomain,
+        json.errors[0]?.message,
+      )
+    }
     return parseHomepageConfig(json.data?.publicHomepageConfig, schoolName)
-  } catch {
+  } catch (err) {
+    console.error('[publicHomepageConfig] fetch failed', subdomain, err)
     // Public site must still render if the backend is unreachable.
     return parseHomepageConfig(null, schoolName)
   }

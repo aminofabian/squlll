@@ -52,6 +52,7 @@ import { getAccessTokenFromStorage } from '@/lib/realtime/getAccessToken'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import {
   fetchAdminHomepageConfig,
+  fetchPublicHomepageConfig,
   publishHomepageConfig,
   saveHomepageDraft,
 } from '../components/homepage/homepage-api'
@@ -295,11 +296,31 @@ export function WebsiteStudio() {
     setPublishing(true)
     try {
       const record = await publishHomepageConfig(config)
+      if (!record.published) {
+        throw new Error('Publish succeeded but no live config was returned')
+      }
+      if (record.published.templateId !== config.templateId) {
+        throw new Error(
+          `Published look mismatch (wanted ${config.templateId}, got ${record.published.templateId})`,
+        )
+      }
       setConfig(record.draft)
       setPublished(record.published)
       setPublishedAt(record.publishedAt || new Date().toISOString())
       setDirty(false)
-      toast.success('Homepage published')
+
+      // Confirm the public API serves the new look (same path visitors hit).
+      const live = await fetchPublicHomepageConfig(subdomain, schoolName)
+      if (live.templateId !== record.published.templateId) {
+        toast.error('Published, but the live site is still showing an old look', {
+          description:
+            'Wait a few seconds and hard-refresh the public homepage. If it persists, contact support.',
+        })
+      } else {
+        toast.success('Homepage published', {
+          description: `Live look: ${record.published.templateId}. Open the live site to verify.`,
+        })
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Publish failed')
     } finally {

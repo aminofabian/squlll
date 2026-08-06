@@ -125,9 +125,14 @@ export async function publishHomepageConfig(
     throw new Error(json.errors[0]?.message || 'Failed to publish')
   }
   const data = json.data?.publishHomepageConfig
+  if (!data?.published) {
+    throw new Error(
+      'Publish did not store a live homepage. Try Save draft, then Publish again.',
+    )
+  }
   return {
     draft: parseHomepageConfig(data?.draft),
-    published: data?.published ? parseHomepageConfig(data.published) : null,
+    published: parseHomepageConfig(data.published),
     publishedAt: data?.publishedAt ?? null,
     updatedAt: data?.updatedAt ?? null,
   }

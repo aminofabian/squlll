@@ -6,9 +6,11 @@ import {
   fetchPublicSchoolLevelsServer,
 } from './(pages)/components/homepage/homepage-api.server'
 
-// Force dynamic rendering and disable caching
+// Force dynamic rendering and disable caching — publish must show immediately
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 function getSchoolNameFromSubdomain(subdomain: string) {
   return subdomain
