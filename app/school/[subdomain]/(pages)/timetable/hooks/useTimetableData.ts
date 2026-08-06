@@ -14,6 +14,7 @@ import type {
 import {
   entryMatchesGradeScope,
   resolveCanonicalGradeId,
+  resolveTenantStreamIdForApi,
 } from "../utils/resolveGradeForSchoolConfig";
 import {
   formatCombinedLessonShortcode,
@@ -42,7 +43,10 @@ function gradeStreamKey(gradeId: string, streamId: string | null): string {
 
 function entryGradeStreamKey(entry: TimetableEntry, grades: Grade[]): string {
   const gradeId = resolveCanonicalGradeId(entry.gradeId, grades);
-  return gradeStreamKey(gradeId, entry.streamId ?? null);
+  const streamId = entry.streamId
+    ? resolveTenantStreamIdForApi(entry.streamId, gradeId, grades)
+    : null;
+  return gradeStreamKey(gradeId, streamId);
 }
 
 function buildGradeStreamCatalog(grades: Grade[]): GradeStreamSlot[] {
@@ -334,9 +338,13 @@ export function useSchoolCombinedEntries() {
     })();
 
     const resolvePeriod = (entry: TimetableEntry): number | null => {
-      if (entry.periodNumber) return entry.periodNumber;
+      if (typeof entry.periodNumber === "number" && entry.periodNumber >= 1) {
+        return entry.periodNumber;
+      }
       const slot = store.timeSlots.find((ts) => ts.id === entry.timeSlotId);
       if (slot?.periodNumber) return slot.periodNumber;
+      // Shared-bell / stale ids: match any slot on the same weekday with the
+      // same period number already known on the entry via timeSlot lookup fail.
       return null;
     };
 

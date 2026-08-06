@@ -2635,9 +2635,9 @@ export const useTimetableStore = create<TimetableStore>()(
                   }
                 : {};
 
-          // Keep full term entries in the store; grid hooks filter by grade/stream.
+          // Successful load wins — including an empty term (clears stale cache).
           set((state) => {
-            const entries = allEntries.length > 0 ? allEntries : state.entries;
+            const entries = allEntries;
             const nextPeriodNumbers = gradeLevelId
               ? mergedPeriodNumbers
               : resolvedPeriodNumbers;

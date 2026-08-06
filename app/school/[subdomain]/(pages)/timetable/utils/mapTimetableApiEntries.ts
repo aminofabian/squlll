@@ -9,6 +9,7 @@ type ApiTimetableEntryRow = {
   subjectId: string;
   teacherId: string;
   streamId?: string | null;
+  gradeLevelId?: string | null;
   dayTemplatePeriodId: string;
   isDoublePeriod?: boolean;
   gradeLevel?: {
@@ -38,7 +39,7 @@ export function mapApiTimetableEntries(
     const periodId = row.dayTemplatePeriodId || row.period?.id;
     if (!periodId) continue;
 
-    const entryGradeLevelId = row.gradeLevel?.id;
+    const entryGradeLevelId = row.gradeLevel?.id ?? row.gradeLevelId;
     if (!entryGradeLevelId) continue;
 
     const dayOfWeekFromMap = periodDayMap?.get(periodId);
@@ -106,6 +107,7 @@ export const GET_TIMETABLE_ENTRIES_QUERY = `
       subjectId
       teacherId
       streamId
+      gradeLevelId
       dayTemplatePeriodId
       isDoublePeriod
       gradeLevel {
