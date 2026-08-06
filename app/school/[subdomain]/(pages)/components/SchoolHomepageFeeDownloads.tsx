@@ -26,9 +26,15 @@ function formatKes(amount: number) {
 export function SchoolHomepageFeeDownloads({
   subdomain,
   schoolName,
+  eyebrow,
+  headline,
+  subcopy,
 }: {
   subdomain: string
   schoolName: string
+  eyebrow?: string
+  headline?: string
+  subcopy?: string
 }) {
   const [plans, setPlans] = useState<PublicFeePlan[]>([])
   const [letterDetails, setLetterDetails] =
@@ -109,14 +115,14 @@ export function SchoolHomepageFeeDownloads({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-            Fees &amp; admissions
+            {eyebrow || 'Fees & admissions'}
           </p>
           <h2 className="mt-3 font-display text-4xl tracking-tight text-[var(--school-ink)] sm:text-5xl">
-            Download fee structure
+            {headline || 'Download fee structure'}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-            Current fee plans for {schoolName} — same letters parents receive from
-            the school fees office.
+            {subcopy ||
+              `Current fee plans for ${schoolName} — same letters parents receive from the school fees office.`}
           </p>
         </div>
 

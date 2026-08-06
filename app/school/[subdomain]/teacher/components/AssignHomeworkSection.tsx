@@ -440,7 +440,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
           sizeBytes: file.size,
           url: file.url,
           path: file.path,
-          entityType: file.entityType,
+          entityType: file.entityType as AssignmentAttachment['entityType'],
           entityId: file.entityId,
           uploadedAt: file.uploadedAt
         }));

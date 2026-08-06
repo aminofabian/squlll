@@ -12,7 +12,7 @@ export interface UploadedFile {
   url: string;
   path: string;
   tenantId: string;
-  entityType: 'assignment' | 'question' | 'submission';
+  entityType: 'assignment' | 'question' | 'submission' | 'homepage';
   entityId: string;
   userId: string;
   uploadedAt: string;
@@ -30,11 +30,11 @@ export interface UploadProgress {
  */
 export async function uploadFile(
   file: File,
-  entityType: 'assignment' | 'question' | 'submission',
+  entityType: 'assignment' | 'question' | 'submission' | 'homepage',
   entityId: string,
   description?: string,
   accessToken?: string,
-  onProgress?: (progress: number) => void
+  _onProgress?: (progress: number) => void
 ): Promise<UploadedFile> {
   const formData = new FormData();
   formData.append('file', file);
@@ -52,7 +52,6 @@ export async function uploadFile(
   }
 
   console.log('Uploading file:', file.name, 'with token:', accessToken ? 'present' : 'missing');
-  console.log('Headers:', headers);
 
   try {
     // Use local API route to proxy the request and avoid CORS issues

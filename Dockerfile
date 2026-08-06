@@ -4,8 +4,10 @@ FROM oven/bun:1-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lockb* ./
+# Copy package files (bun.lock is the current lockfile format)
+COPY package.json bun.lock ./
+# Copy the vendored @squl/shared package (file:shared dependency)
+COPY shared ./shared
 
 # Install dependencies
 RUN bun install --frozen-lockfile

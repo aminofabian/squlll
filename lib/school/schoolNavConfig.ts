@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Settings,
   LayoutGrid,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
   },
   {
     items: [
+      { title: "Website", shortLabel: "Website", href: "/website", icon: Globe },
       { title: "Settings", shortLabel: "Settings", href: "/settings", icon: Settings },
     ],
   },
@@ -83,6 +85,7 @@ export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
   { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
   { title: "Enrollment", href: "/enrollment", icon: Medal },
   { title: "Communication", href: "/communication", icon: MessageCircle },
+  { title: "Website", href: "/website", icon: Globe },
 ];
 
 export interface SchoolNavSection {
@@ -126,6 +129,7 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
       { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
       { title: "Enrollment", href: "/enrollment", icon: Medal },
       { title: "Communication", href: "/communication", icon: MessageCircle },
+      { title: "Website", href: "/website", icon: Globe },
     ],
   },
 ];
@@ -167,5 +171,6 @@ export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
 /** Mobile bottom nav — overflow items shown in "More" sheet */
 export const SCHOOL_MORE_ITEMS: SchoolNavItem[] = [
   ...SCHOOL_SECONDARY_NAV,
+  { title: "Website", href: "/website", icon: Globe },
   { title: "Settings", href: "/settings", icon: Settings },
 ];
