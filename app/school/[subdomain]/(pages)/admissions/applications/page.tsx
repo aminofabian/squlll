@@ -114,6 +114,17 @@ const STATUS_META: Record<
   },
 }
 
+/** GraphQL enums serialize as NEW/REVIEWING; DB stores new/reviewing. */
+function normalizeStatus(status: string | null | undefined): ApplicationStatus {
+  const raw = String(status || 'new').toLowerCase()
+  if (raw in STATUS_META) return raw as ApplicationStatus
+  return 'new'
+}
+
+function statusMeta(status: string | null | undefined) {
+  return STATUS_META[normalizeStatus(status)]
+}
+
 const PROGRAMME_LABELS: Record<string, string> = {
   'early-years': 'Early Years',
   primary: 'Primary',
@@ -163,7 +174,12 @@ export default function AdmissionsApplicationsPage() {
       const data = await graphqlClient.request<{
         admissionApplications: AdmissionApplication[]
       }>(LIST_QUERY)
-      setApps(data.admissionApplications || [])
+      setApps(
+        (data.admissionApplications || []).map((app) => ({
+          ...app,
+          status: normalizeStatus(app.status),
+        })),
+      )
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Could not load applications',
@@ -189,7 +205,7 @@ export default function AdmissionsApplicationsPage() {
   const filtered = useMemo(() => {
     let list = apps
     if (statusFilter !== 'all') {
-      list = list.filter((a) => a.status === statusFilter)
+      list = list.filter((a) => normalizeStatus(a.status) === statusFilter)
     }
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -214,7 +230,7 @@ export default function AdmissionsApplicationsPage() {
       rejected: 0,
       withdrawn: 0,
     }
-    for (const a of apps) base[a.status] += 1
+    for (const a of apps) base[normalizeStatus(a.status)] += 1
     return base
   }, [apps])
 
@@ -228,7 +244,12 @@ export default function AdmissionsApplicationsPage() {
           'id' | 'status' | 'adminNotes' | 'updatedAt'
         >
       }>(UPDATE_MUTATION, {
-        input: { id: selected.id, status, adminNotes },
+        input: {
+          id: selected.id,
+          // GraphQL enum expects NEW / REVIEWING / …
+          status: status.toUpperCase(),
+          adminNotes,
+        },
       })
       const updated = data.updateAdmissionApplication
       setApps((prev) =>
@@ -236,14 +257,14 @@ export default function AdmissionsApplicationsPage() {
           a.id === updated.id
             ? {
                 ...a,
-                status: updated.status,
+                status: normalizeStatus(updated.status),
                 adminNotes: updated.adminNotes,
                 updatedAt: updated.updatedAt,
               }
             : a,
         ),
       )
-      toast.success(`Marked as ${STATUS_META[status].label.toLowerCase()}`)
+      toast.success(`Marked as ${statusMeta(status).label.toLowerCase()}`)
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : 'Could not update application',
@@ -271,6 +292,7 @@ export default function AdmissionsApplicationsPage() {
           a.id === updated.id
             ? {
                 ...a,
+                status: normalizeStatus(updated.status),
                 adminNotes: updated.adminNotes,
                 updatedAt: updated.updatedAt,
               }
@@ -336,7 +358,7 @@ export default function AdmissionsApplicationsPage() {
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
                 )}
               >
-                {key === 'all' ? 'All' : STATUS_META[key].label}
+                {key === 'all' ? 'All' : statusMeta(key).label}
                 <span className="ml-1.5 tabular-nums opacity-70">
                   {counts[key]}
                 </span>
@@ -382,7 +404,7 @@ export default function AdmissionsApplicationsPage() {
             <ul className="divide-y divide-slate-100">
               {filtered.map((app) => {
                 const active = app.id === selectedId
-                const meta = STATUS_META[app.status]
+                const meta = statusMeta(app.status)
                 return (
                   <li key={app.id}>
                     <button

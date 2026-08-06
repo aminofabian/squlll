@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-
-const GRAPHQL_ENDPOINT =
-  process.env.GRAPHQL_API_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'http://localhost:3001/graphql'
+import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
 
 const applySchema = z.object({
   subdomain: z.string().min(1),
@@ -50,8 +46,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
+    const endpoint = resolveGraphqlEndpoint()
 
-    const response = await fetch(GRAPHQL_ENDPOINT, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -78,17 +75,27 @@ export async function POST(request: NextRequest) {
       }),
     })
 
-    const result = await response.json()
+    const result = await response.json().catch(() => null)
 
-    if (result.errors?.length) {
+    if (!response.ok) {
+      console.error('[school-apply] upstream HTTP error', response.status, result)
+      return NextResponse.json(
+        { error: 'Could not reach admissions. Please try again.' },
+        { status: 502 },
+      )
+    }
+
+    if (result?.errors?.length) {
+      console.error('[school-apply] GraphQL errors', result.errors)
       return NextResponse.json(
         { error: result.errors[0].message || 'Could not submit application' },
         { status: 400 },
       )
     }
 
-    const payload = result.data?.submitAdmissionApplication
-    if (!payload?.ok) {
+    const payload = result?.data?.submitAdmissionApplication
+    if (!payload?.ok || !payload?.reference) {
+      console.error('[school-apply] unexpected payload', result)
       return NextResponse.json(
         { error: 'Could not submit application' },
         { status: 500 },
@@ -96,7 +103,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(payload)
-  } catch {
+  } catch (err) {
+    console.error('[school-apply] failed', err)
     return NextResponse.json(
       { error: 'Something went wrong submitting your application.' },
       { status: 500 },
