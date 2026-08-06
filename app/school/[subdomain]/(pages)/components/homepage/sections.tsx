@@ -62,6 +62,7 @@ export function HomepageNav({
   const isTerminal = variant === 'terminal'
   const isCloister = variant === 'cloister'
   const isVine = variant === 'vine'
+  const isDisc = variant === 'disc'
   const solid =
     scrolled ||
     open ||
@@ -69,7 +70,8 @@ export function HomepageNav({
     isNotebook ||
     isTerminal ||
     isCloister ||
-    isVine
+    isVine ||
+    isDisc
   const logoUrl = config.logoUrl || runtime.logoUrl
   const initials = runtime.schoolName
     .split(' ')
@@ -77,6 +79,103 @@ export function HomepageNav({
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  if (isDisc) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 border-b-2 border-[var(--school-ink)] bg-[var(--hb-cream,#F4ECD8)]',
+          runtime.preview ? 'absolute' : 'sticky',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-9 w-9 rounded-full border-2 border-[var(--hb-gold,#C9A227)] object-contain sm:h-10 sm:w-10"
+              />
+            ) : (
+              <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-2 border-[var(--hb-gold,#C9A227)] bg-[var(--school-ink)] font-display text-[15px] font-bold text-[var(--hb-gold,#C9A227)]">
+                {initials.slice(0, 1)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="block truncate font-display text-[1.25rem] font-bold leading-none text-[var(--school-ink)]">
+                {runtime.schoolName}
+              </span>
+              {slots.showTagline !== false && (
+                <span className="hb-mono mt-1 block truncate text-[10px] uppercase tracking-[0.1em] text-primary">
+                  {runtime.tagline || 'Conservatory campus'}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          <div className="hidden items-center gap-6 lg:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="relative pb-0.5 text-[13.5px] font-semibold text-[var(--hb-charcoal,#332720)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-primary after:transition-transform hover:after:scale-x-100"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-2.5 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-[3px] border-[1.5px] border-[var(--school-ink)] bg-transparent px-4 text-[13.5px] font-bold text-[var(--school-ink)] shadow-none hover:bg-[var(--school-ink)] hover:text-[var(--hb-cream,#F4ECD8)]"
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-3.5 w-3.5" />
+                {slots.portalLabel || 'Portal'}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-[3px] border-[1.5px] border-primary bg-primary px-4 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--primary-dark)]"
+            >
+              <Link href="/apply">
+                {slots.applyLabel || 'Apply'}
+                <ArrowRight className="ml-2 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-[3px] border border-[var(--school-ink)] text-[var(--school-ink)] lg:hidden"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-[var(--school-ink)]/15 bg-[var(--hb-cream,#F4ECD8)] lg:hidden">
+            <div className="space-y-1 px-4 py-4">
+              {links.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-2 py-3 text-sm font-semibold text-[var(--hb-charcoal,#332720)] hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
 
   if (isVine) {
     return (
@@ -1177,6 +1276,124 @@ export function HomepageHero({
     )
   }
 
+  if (variant === 'label') {
+    const stats = getSection<{ items?: HomepageStatItem[] }>(config, 'stats')
+    const firstStat = stats?.slots.items?.[0]
+    const headline = slots.headline || runtime.schoolName
+    const parts = headline.trim().split(/\s+/)
+    const accentWord =
+      parts.length > 1 ? parts.slice(-2).join(' ') : parts[parts.length - 1]
+    const lead =
+      parts.length > 2
+        ? parts.slice(0, -2).join(' ')
+        : parts.length > 1
+          ? parts.slice(0, -1).join(' ')
+          : ''
+
+    return (
+      <section className="hb-staff relative overflow-hidden pb-24 pt-16 sm:pb-28 sm:pt-20">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:gap-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-8">
+          <div
+            className={cn(
+              'school-hero-copy max-w-xl',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            {slots.eyebrow && (
+              <p className="hb-tag mb-5">{slots.eyebrow}</p>
+            )}
+            <h1 className="hb-italic font-display text-[clamp(2.5rem,4.6vw,4.2rem)] leading-[1.08] text-[var(--school-ink)]">
+              {lead ? (
+                <>
+                  {lead}{' '}
+                  <span className="not-italic text-primary">{accentWord}</span>
+                </>
+              ) : (
+                headline
+              )}
+            </h1>
+            <p className="mt-6 max-w-[460px] text-[1.1rem] leading-[1.7] text-[var(--hb-charcoal,#332720)]">
+              {slots.subcopy}
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-6">
+              {slots.primaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-11 rounded-[3px] border-[1.5px] border-primary bg-primary px-6 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--primary-dark)]"
+                >
+                  <Link href={slots.primaryCta.href}>
+                    {slots.primaryCta.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="border-b-2 border-primary pb-0.5 text-sm font-bold text-[var(--school-ink)]"
+                >
+                  {slots.secondaryCta.label} ↓
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              'flex flex-col items-center',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="hb-label-disc">
+              <span
+                className="absolute left-1/2 top-[6%] h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-[var(--school-ink)] bg-[var(--hb-cream,#F4ECD8)]"
+                aria-hidden
+              />
+              <div className="hb-label-center">
+                <span className="hb-mono mb-1.5 text-[9.5px] uppercase tracking-[0.12em] text-[var(--hb-gold,#C9A227)]">
+                  Est. · Campus
+                </span>
+                {firstStat ? (
+                  <>
+                    <p className="font-display text-[clamp(1.8rem,4vw,2.6rem)] font-bold leading-none">
+                      {firstStat.value}
+                    </p>
+                    <p className="mt-1.5 text-[11px] leading-snug text-[#E9D9C6]">
+                      {firstStat.label}
+                    </p>
+                  </>
+                ) : (
+                  <p className="hb-italic text-lg leading-snug">
+                    {runtime.schoolName}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 text-center">
+              {slots.primaryCta && (
+                <Link
+                  href={slots.primaryCta.href}
+                  className="inline-block rounded-[3px] bg-[var(--school-ink)] px-6 py-3 text-[13px] font-bold text-[var(--hb-cream,#F4ECD8)]"
+                >
+                  {slots.primaryCta.label}
+                </Link>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="mt-2.5 block text-[12.5px] font-bold text-primary underline"
+                >
+                  {slots.secondaryCta.label}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   if (variant === 'crest') {
     return (
       <section className="relative bg-[var(--school-paper)] pt-[var(--school-nav-h)]">
@@ -1552,6 +1769,40 @@ export function HomepageStats({
     )
   }
 
+  if (variant === 'score') {
+    const markings = ['Allegro', '12 / 1', 'Con brio', 'Da capo']
+    return (
+      <section className="bg-[var(--school-ink)] py-20 text-[var(--hb-cream,#F4ECD8)] sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <p className="hb-tag text-[var(--hb-gold,#C9A227)]">The score</p>
+            <h2 className="hb-italic mt-3 font-display text-[clamp(1.85rem,3.5vw,2.4rem)]">
+              Marked up, term by term.
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid grid-cols-2 gap-5 lg:grid-cols-4 lg:gap-6">
+            {items.map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 70}>
+                <div className="hb-score-card px-5 py-6 text-center">
+                  <p className="hb-italic mb-2.5 font-display text-[1.7rem] text-[var(--hb-gold,#C9A227)]">
+                    {markings[i % markings.length]}
+                  </p>
+                  <p className="hb-mono text-[1.9rem] font-bold leading-none">
+                    {stat.value}
+                  </p>
+                  <p className="mt-2 text-[0.82rem] leading-snug text-[#C9BCA9]">
+                    {stat.label}
+                    {stat.hint ? ` · ${stat.hint}` : ''}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-b border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-black/10 lg:grid-cols-4 lg:divide-y-0">
@@ -1814,6 +2065,68 @@ export function HomepageOfferings({
                 <div className="h-3.5 w-0.5 bg-[var(--ss-soil,#4A3728)]" />
                 <div className="ss-plant-tag w-full">{tag}</div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'movements') {
+    const romans = ['I.', 'II.', 'III.', 'IV.', 'V.', 'VI.']
+    const stages = [
+      'Exposition',
+      'Development',
+      'Recapitulation',
+      'Coda',
+      'Encore',
+      'Finale',
+    ]
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 max-w-xl">
+              {slots.eyebrow && (
+                <p className="hb-tag mb-2">{slots.eyebrow}</p>
+              )}
+              <h2 className="hb-italic font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--school-ink)]">
+                {slots.headline}
+              </h2>
+              <p className="mt-3 text-[0.98rem] leading-relaxed text-[var(--hb-charcoal,#332720)]">
+                {slots.subcopy}
+              </p>
+            </div>
+          </Reveal>
+          <div className="space-y-5">
+            {items.map((item, index) => (
+              <Reveal key={item.title} delay={index * 70}>
+                <div className="hb-movement grid gap-5 px-6 py-7 sm:grid-cols-[150px_1fr] sm:gap-7 sm:px-8">
+                  <div>
+                    <span className="hb-italic font-display text-[2.6rem] leading-none text-[var(--hb-gold-dim,#8E7420)]">
+                      {romans[index % romans.length]}
+                    </span>
+                    <span className="hb-mono mt-1.5 block text-[10.5px] uppercase tracking-[0.1em] text-primary">
+                      {stages[index % stages.length]}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-display text-[1.5rem] text-[var(--school-ink)]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-[0.94rem] leading-relaxed text-[var(--hb-charcoal,#332720)]">
+                      {item.body}
+                    </p>
+                    <Link
+                      href={item.href}
+                      className="mt-4 inline-flex items-center text-sm font-bold text-primary"
+                    >
+                      {item.ctaLabel}
+                      <ArrowRight className="ml-1.5 h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -2231,6 +2544,53 @@ export function HomepageGallery({
     )
   }
 
+  if (variant === 'programme') {
+    const venues = ['Main Hall', 'Pool Deck', 'Studio A', 'Whole Campus']
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="hb-tag mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="hb-italic font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--school-ink)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <Reveal>
+            <div className="hb-programme mt-10">
+              {images.slice(0, 8).map((image, i) => (
+                <div
+                  key={image.url + i}
+                  className={cn(
+                    'grid grid-cols-[88px_1fr] items-center gap-4 px-5 py-5 sm:grid-cols-[120px_1fr_110px] sm:gap-5 sm:px-7',
+                    i < Math.min(images.length, 8) - 1 &&
+                      'border-b border-[var(--hb-cream-2,#EBE0C4)]',
+                  )}
+                >
+                  <span className="hb-mono text-sm font-bold text-primary">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="hb-italic font-display text-[1.05rem] text-[var(--school-ink)]">
+                      {image.caption || `Programme item ${i + 1}`}
+                    </h4>
+                    <p className="mt-0.5 text-[0.86rem] text-[var(--hb-charcoal,#332720)]">
+                      From this term&apos;s calendar
+                    </p>
+                  </div>
+                  <span className="hb-mono hidden text-right text-[11px] text-[var(--hb-gold-dim,#8E7420)] sm:block">
+                    {venues[i % venues.length]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2484,6 +2844,45 @@ export function HomepageTestimonials({
     )
   }
 
+  if (variant === 'liner') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="hb-tag mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="hb-italic font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--school-ink)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 70}>
+                <blockquote className="hb-liner relative flex h-full flex-col px-6 pb-7 pt-7">
+                  <p className="hb-mono text-[0.9rem] font-bold text-[var(--hb-gold,#C9A227)]">
+                    → {item.role}
+                  </p>
+                  <p className="mt-3 flex-1 text-[0.94rem] leading-relaxed text-[#F1E6D5]">
+                    {item.quote}
+                  </p>
+                  <footer className="mt-5">
+                    <p className="hb-italic font-display text-[1.05rem]">
+                      {item.name}
+                    </p>
+                    <p className="hb-hand mt-0.5 text-base text-[#E3C98E]">
+                      Alumni
+                    </p>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2700,6 +3099,48 @@ export function HomepageCtaBand({
                 asChild
                 variant="outline"
                 className="h-11 rounded-full border border-[#E7DFCB]/35 bg-transparent px-5 text-[13.5px] font-bold text-[#E7DFCB] shadow-none hover:bg-[#E7DFCB] hover:text-[var(--ss-soil,#4A3728)]"
+              >
+                <Link href={slots.secondaryCta.href}>
+                  {slots.secondaryCta.label}
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'boxoffice') {
+    return (
+      <section className="sticky bottom-0 z-40 border-t-2 border-[var(--hb-gold,#C9A227)] bg-[var(--school-ink)] py-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <div className="min-w-0">
+            <p className="hb-italic font-display text-[1.05rem] text-[var(--hb-cream,#F4ECD8)] sm:text-lg">
+              {slots.headline}
+            </p>
+            <p className="mt-0.5 max-w-xl text-sm text-[#C9BCA9]">
+              {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
+                slots.body}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {slots.primaryCta && (
+              <Button
+                asChild
+                className="h-11 rounded-[3px] border-[1.5px] border-primary bg-primary px-6 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--primary-dark)]"
+              >
+                <Link href={slots.primaryCta.href}>
+                  {slots.primaryCta.label}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {slots.secondaryCta && (
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-[3px] border border-[var(--hb-gold,#C9A227)]/50 bg-transparent px-5 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--hb-gold,#C9A227)] hover:text-[var(--school-ink)]"
               >
                 <Link href={slots.secondaryCta.href}>
                   {slots.secondaryCta.label}

@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 import {
   HomepageRuntime,
   HomepageShellStyles,
+  HorizonVinyl,
   StoryScrollVine,
   shellClass,
   themeStyle,
@@ -97,11 +98,13 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
     cta: 'bench',
   },
   'horizon-board': {
-    nav: 'glass',
-    hero: 'horizon',
-    stats: 'band',
-    offerings: 'open',
-    cta: 'primary',
+    nav: 'disc',
+    hero: 'label',
+    stats: 'score',
+    offerings: 'movements',
+    gallery: 'programme',
+    testimonials: 'liner',
+    cta: 'boxoffice',
   },
   'studio-day': {
     hero: 'studio',
@@ -122,6 +125,7 @@ const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
   playfield: 'playfield-shell bg-[var(--school-paper)]',
   'garden-court': 'garden-court-shell bg-[var(--school-paper)]',
   'story-scroll': 'story-scroll-shell bg-[var(--school-paper)]',
+  'horizon-board': 'horizon-board-shell bg-[var(--school-paper)]',
   'night-lights': 'bg-[#070f0c]',
 }
 
@@ -149,8 +153,10 @@ function Shell({
         playfield={config.templateId === 'playfield'}
         garden={config.templateId === 'garden-court'}
         story={config.templateId === 'story-scroll'}
+        horizon={config.templateId === 'horizon-board'}
       />
       {config.templateId === 'story-scroll' && <StoryScrollVine />}
+      {config.templateId === 'horizon-board' && <HorizonVinyl />}
       {children}
     </div>
   )

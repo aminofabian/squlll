@@ -112,7 +112,7 @@ const TEMPLATE_PALETTES: Record<string, string> = {
   'crest-motto': 'from-[#1c1917] via-[#854d0e] to-[#fde68a]',
   'skyline-cbc': 'from-[#0f172a] via-[#334155] to-[#38bdf8]',
   'story-scroll': 'from-[#1F3226] via-[#EEF0E2] to-[#C1652E]',
-  'horizon-board': 'from-[#0c4a6e] via-[#38bdf8] to-[#e0f2fe]',
+  'horizon-board': 'from-[#1B1512] via-[#F4ECD8] to-[#6E2430]',
   'studio-day': 'from-[#7c2d12] via-[#ea580c] to-[#fed7aa]',
   'night-lights': 'from-black via-[#134e4a] to-[#5eead4]',
 }
@@ -125,7 +125,7 @@ const TEMPLATE_ACCENT: Record<string, string> = {
   'crest-motto': '#854d0e',
   'skyline-cbc': '#38bdf8',
   'story-scroll': '#2F4A34',
-  'horizon-board': '#0ea5e9',
+  'horizon-board': '#6E2430',
   'studio-day': '#ea580c',
   'night-lights': '#5eead4',
 }

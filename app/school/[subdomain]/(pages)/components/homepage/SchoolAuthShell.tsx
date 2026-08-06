@@ -36,6 +36,7 @@ export function SchoolAuthShell({
   const isPlayfield = config.templateId === 'playfield'
   const isGarden = config.templateId === 'garden-court'
   const isStory = config.templateId === 'story-scroll'
+  const isHorizon = config.templateId === 'horizon-board'
   const initials = schoolName
     .split(' ')
     .map((w) => w[0])
@@ -43,7 +44,7 @@ export function SchoolAuthShell({
     .slice(0, 2)
     .toUpperCase()
   const soft = config.theme.radiusMode === 'soft'
-  const themed = isAssembly || isPlayfield || isGarden || isStory
+  const themed = isAssembly || isPlayfield || isGarden || isStory || isHorizon
 
   return (
     <div
@@ -55,6 +56,7 @@ export function SchoolAuthShell({
           isPlayfield && 'playfield-shell',
           isGarden && 'garden-court-shell',
           isStory && 'story-scroll-shell',
+          isHorizon && 'horizon-board-shell',
         ),
       )}
       style={themeStyle(config.theme)}
@@ -64,6 +66,7 @@ export function SchoolAuthShell({
         playfield={isPlayfield}
         garden={isGarden}
         story={isStory}
+        horizon={isHorizon}
       />
 
       <header
@@ -77,6 +80,8 @@ export function SchoolAuthShell({
             'border-[var(--school-ink)]/12 bg-[var(--gc-linen,#F4EFE4)]/95 backdrop-blur-md',
           isStory &&
             'border-[1.5px] border-primary bg-[var(--ss-sage,#EEF0E2)]',
+          isHorizon &&
+            'border-[var(--school-ink)] bg-[var(--hb-cream,#F4ECD8)]',
           !themed && 'border-black/10 bg-white/95 backdrop-blur-md',
         )}
       >
@@ -131,6 +136,10 @@ export function SchoolAuthShell({
                   fill="none"
                 />
               </svg>
+            ) : isHorizon ? (
+              <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-2 border-[var(--hb-gold,#C9A227)] bg-[var(--school-ink)] font-display text-[15px] font-bold text-[var(--hb-gold,#C9A227)]">
+                {initials.slice(0, 1)}
+              </div>
             ) : (
               <div
                 className={cn(
@@ -151,6 +160,7 @@ export function SchoolAuthShell({
                   isPlayfield && 'text-[var(--school-paper)]',
                   isGarden && 'text-[var(--school-ink)]',
                   isStory && 'text-[var(--school-ink)]',
+                  isHorizon && 'font-bold text-[var(--school-ink)]',
                 )}
               >
                 {schoolName}
@@ -166,7 +176,9 @@ export function SchoolAuthShell({
                         ? 'gc-label text-[var(--gc-clay,#C17A4A)]'
                         : isStory
                           ? 'ss-mono uppercase tracking-[0.05em] text-[var(--ss-moss-2,#3E6247)]'
-                          : 'uppercase tracking-[0.16em] text-primary',
+                          : isHorizon
+                            ? 'hb-mono uppercase tracking-[0.1em] text-primary'
+                            : 'uppercase tracking-[0.16em] text-primary',
                 )}
               >
                 {tagline ||
@@ -176,7 +188,9 @@ export function SchoolAuthShell({
                       ? 'Walled courtyard'
                       : isStory
                         ? 'Greenhouse campus'
-                        : 'Inspiring excellence every day')}
+                        : isHorizon
+                          ? 'Conservatory campus'
+                          : 'Inspiring excellence every day')}
               </span>
             </div>
           </Link>
@@ -194,6 +208,8 @@ export function SchoolAuthShell({
                 'rounded-full border border-[var(--school-ink)]/20 bg-transparent text-[var(--school-ink)] hover:border-primary hover:bg-primary hover:text-[var(--school-paper)]',
               isStory &&
                 'rounded-full border-[1.5px] border-primary bg-transparent text-primary hover:bg-primary hover:text-[var(--ss-sage,#EEF0E2)]',
+              isHorizon &&
+                'rounded-[3px] border-[1.5px] border-[var(--school-ink)] bg-transparent text-[var(--school-ink)] hover:bg-[var(--school-ink)] hover:text-[var(--hb-cream,#F4ECD8)]',
               !themed &&
                 'border-primary/30 text-primary hover:bg-primary hover:text-white',
             )}
@@ -223,6 +239,7 @@ export function SchoolAuthShell({
                     'pf-mono text-[12px] uppercase tracking-[0.16em] text-primary',
                   isGarden && 'gc-label text-[var(--gc-clay,#C17A4A)]',
                   isStory && 'ss-tag',
+                  isHorizon && 'hb-tag',
                   !themed &&
                     'text-[11px] font-semibold uppercase tracking-[0.18em] text-primary',
                 )}
@@ -235,10 +252,11 @@ export function SchoolAuthShell({
                 'font-display text-[clamp(1.75rem,4vw,2.5rem)] font-extrabold leading-tight',
                 isPlayfield
                   ? 'font-semibold text-[var(--school-paper)]'
-                  : isGarden || isStory
+                  : isGarden || isStory || isHorizon
                     ? 'font-semibold text-[var(--school-ink)]'
                     : 'text-[var(--school-ink)]',
                 isStory && 'ss-italic',
+                isHorizon && 'hb-italic',
               )}
             >
               {title}
@@ -251,6 +269,7 @@ export function SchoolAuthShell({
                   isPlayfield && 'text-[#B9CBC8]',
                   isGarden && 'text-[var(--school-ink)]/65',
                   isStory && 'text-[var(--ss-soil,#4A3728)]',
+                  isHorizon && 'text-[var(--hb-charcoal,#332720)]',
                   !themed && 'text-[var(--school-ink)]/70',
                 )}
               >
@@ -270,6 +289,8 @@ export function SchoolAuthShell({
                 'gc-label-card rounded-sm border-[var(--school-ink)]/14',
               isStory &&
                 'ss-pane rounded-md border-[var(--ss-moss-3,#1F3226)] bg-[var(--ss-sage,#EEF0E2)]',
+              isHorizon &&
+                'hb-notes rounded-sm border-transparent border-l-4 border-l-[var(--hb-gold,#C9A227)] bg-white',
               !themed &&
                 cn(
                   'border-[var(--school-ink)] bg-white',
@@ -289,6 +310,7 @@ export function SchoolAuthShell({
                 isPlayfield && 'text-[#9FB3B0]',
                 isGarden && 'text-[var(--school-ink)]/55',
                 isStory && 'text-[var(--ss-soil,#4A3728)]/70',
+                isHorizon && 'text-[var(--hb-charcoal,#332720)]/70',
               )}
             >
               {footer}
@@ -307,12 +329,14 @@ export function authFieldClass(config: HomepageConfig) {
   const isPlayfield = config.templateId === 'playfield'
   const isGarden = config.templateId === 'garden-court'
   const isStory = config.templateId === 'story-scroll'
+  const isHorizon = config.templateId === 'horizon-board'
   const soft =
     config.theme.radiusMode === 'soft' ||
     isAssembly ||
     isPlayfield ||
     isGarden ||
-    isStory
+    isStory ||
+    isHorizon
   return cn(
     'h-12 border-2 bg-white text-[var(--school-ink)] placeholder:text-[var(--school-ink)]/40 focus-visible:ring-2 focus-visible:ring-primary/25',
     soft ? 'rounded-lg' : 'rounded-none',
@@ -323,10 +347,13 @@ export function authFieldClass(config: HomepageConfig) {
       'rounded-full border-[var(--school-ink)]/15 focus-visible:border-primary',
     isStory &&
       'rounded-full border-primary/25 focus-visible:border-[var(--ss-terra,#C1652E)]',
+    isHorizon &&
+      'rounded-[3px] border-[var(--school-ink)]/25 focus-visible:border-primary',
     !isAssembly &&
       !isPlayfield &&
       !isGarden &&
       !isStory &&
+      !isHorizon &&
       'border-black/15 focus-visible:border-primary',
   )
 }
@@ -336,12 +363,14 @@ export function authPrimaryButtonClass(config: HomepageConfig) {
   const isPlayfield = config.templateId === 'playfield'
   const isGarden = config.templateId === 'garden-court'
   const isStory = config.templateId === 'story-scroll'
+  const isHorizon = config.templateId === 'horizon-board'
   const soft =
     config.theme.radiusMode === 'soft' ||
     isAssembly ||
     isPlayfield ||
     isGarden ||
-    isStory
+    isStory ||
+    isHorizon
   return cn(
     'h-12 w-full border-2 font-display text-sm font-bold shadow-none transition-[background-color,border-color,transform] active:scale-[0.98] disabled:opacity-50',
     soft ? 'rounded-lg' : 'rounded-none',
@@ -353,10 +382,13 @@ export function authPrimaryButtonClass(config: HomepageConfig) {
       'rounded-full border-0 bg-primary font-semibold text-[var(--school-paper)] hover:bg-[var(--primary-dark)]',
     isStory &&
       'rounded-full border-[1.5px] border-[var(--ss-terra,#C1652E)] bg-[var(--ss-terra,#C1652E)] font-bold text-white hover:bg-[#A6541F]',
+    isHorizon &&
+      'rounded-[3px] border-[1.5px] border-primary bg-primary font-bold text-[var(--hb-cream,#F4ECD8)] hover:bg-[var(--primary-dark)]',
     !isAssembly &&
       !isPlayfield &&
       !isGarden &&
       !isStory &&
+      !isHorizon &&
       'border-primary bg-primary text-white hover:border-primary-dark hover:bg-primary-dark',
   )
 }
@@ -366,11 +398,13 @@ export function authLabelClass(config: HomepageConfig) {
   const isPlayfield = config.templateId === 'playfield'
   const isGarden = config.templateId === 'garden-court'
   const isStory = config.templateId === 'story-scroll'
+  const isHorizon = config.templateId === 'horizon-board'
   return cn(
     'text-sm font-semibold text-[var(--school-ink)]',
     isAssembly && 'font-display tracking-wide',
     isPlayfield && 'pf-mono text-[11px] uppercase tracking-wide',
     isGarden && 'gc-label text-[var(--gc-clay,#C17A4A)]',
     isStory && 'ss-tag',
+    isHorizon && 'hb-tag',
   )
 }

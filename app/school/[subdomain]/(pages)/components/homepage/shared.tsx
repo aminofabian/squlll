@@ -113,11 +113,13 @@ export function HomepageShellStyles({
   playfield = false,
   garden = false,
   story = false,
+  horizon = false,
 }: {
   assembly?: boolean
   playfield?: boolean
   garden?: boolean
   story?: boolean
+  horizon?: boolean
 }) {
   return (
     <>
@@ -177,6 +179,20 @@ export function HomepageShellStyles({
           />
         </>
       )}
+      {horizon && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      )}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -222,6 +238,9 @@ export function HomepageShellStyles({
         @keyframes pf-pass-settle {
           from { opacity: 0; transform: translateY(28px) rotate(-1deg); }
           to { opacity: 1; transform: translateY(0) rotate(0); }
+        }
+        @keyframes hb-spin {
+          to { transform: rotate(360deg); }
         }
         .school-hero-copy {
           animation: school-hero-rise 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -802,6 +821,193 @@ export function HomepageShellStyles({
           border-color: rgba(47,74,52,0.12) !important;
         }
 
+        /* ---- Horizon Board / vinyl conservatory shell ---- */
+        .horizon-board-shell {
+          --hb-cream: #F4ECD8;
+          --hb-cream-2: #EBE0C4;
+          --hb-burgundy: #6E2430;
+          --hb-burgundy-2: #8C3140;
+          --hb-burgundy-3: #4A1620;
+          --hb-gold: #C9A227;
+          --hb-gold-dim: #8E7420;
+          --hb-charcoal: #332720;
+          --hb-shadow: rgba(27,21,18,0.22);
+          --hb-ease: cubic-bezier(0.16, 1, 0.3, 1);
+          --font-display: 'Playfair Display', Georgia, serif;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          color: var(--school-ink);
+          background: var(--hb-cream);
+          font-size: 1.05rem;
+          line-height: 1.65;
+          overflow-x: hidden;
+        }
+        .horizon-board-shell .font-display,
+        .horizon-board-shell h1,
+        .horizon-board-shell h2,
+        .horizon-board-shell h3 {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-weight: 700;
+          letter-spacing: -0.01em;
+          text-wrap: balance;
+        }
+        .horizon-board-shell .hb-mono {
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+        }
+        .horizon-board-shell .hb-hand {
+          font-family: 'Caveat', cursive;
+        }
+        .horizon-board-shell .hb-tag {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.72rem;
+          font-weight: 600;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--hb-burgundy);
+        }
+        .horizon-board-shell .hb-italic {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-style: italic;
+          font-weight: 600;
+        }
+        .horizon-board-shell a:focus-visible,
+        .horizon-board-shell button:focus-visible {
+          outline: 2px solid var(--hb-gold);
+          outline-offset: 3px;
+        }
+        .horizon-board-shell .hb-vinyl-widget {
+          position: fixed;
+          right: 26px;
+          bottom: 26px;
+          width: 96px;
+          height: 96px;
+          z-index: 90;
+          filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+          pointer-events: none;
+        }
+        .horizon-board-shell .hb-vinyl-disc {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 2px solid var(--hb-gold-dim);
+          background: repeating-radial-gradient(circle at center, #1B1512 0 3px, #262019 3px 6px);
+          animation: hb-spin 6s linear infinite;
+          position: relative;
+        }
+        .horizon-board-shell .hb-vinyl-disc::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 30%;
+          height: 30%;
+          border-radius: 50%;
+          background: var(--hb-burgundy);
+          transform: translate(-50%, -50%);
+          border: 2px solid var(--hb-gold);
+        }
+        .horizon-board-shell .hb-tonearm {
+          position: absolute;
+          top: -10px;
+          right: -14px;
+          width: 52px;
+          height: 52px;
+          transform-origin: 88% 12%;
+          transform: rotate(-24deg);
+          transition: transform 0.1s linear;
+        }
+        .horizon-board-shell .hb-tonearm svg { width: 100%; height: 100%; }
+        @media (max-width: 980px) {
+          .horizon-board-shell .hb-vinyl-widget {
+            width: 64px;
+            height: 64px;
+            right: 14px;
+            bottom: 14px;
+          }
+        }
+        .horizon-board-shell .hb-staff {
+          background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0 42px,
+            rgba(27,21,18,0.08) 42px 43px,
+            transparent 43px 85px
+          );
+        }
+        .horizon-board-shell .hb-label-disc {
+          width: min(340px, 86vw);
+          height: min(340px, 86vw);
+          border-radius: 50%;
+          position: relative;
+          background: repeating-conic-gradient(var(--school-ink) 0deg 2deg, #241d17 2deg 6deg);
+          box-shadow:
+            0 20px 40px var(--hb-shadow),
+            0 0 0 10px var(--hb-cream),
+            0 0 0 12px var(--school-ink);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: pf-pass-settle 0.95s var(--hb-ease) 0.12s both;
+        }
+        .horizon-board-shell .hb-label-center {
+          width: 62%;
+          height: 62%;
+          border-radius: 50%;
+          background: var(--hb-burgundy);
+          border: 3px solid var(--hb-gold);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 14px;
+          color: var(--hb-cream);
+        }
+        .horizon-board-shell .hb-notes {
+          border-left: 4px solid var(--hb-gold);
+          background: #fff;
+          box-shadow: 8px 8px 0 var(--hb-shadow);
+        }
+        .horizon-board-shell .hb-movement {
+          border: 1.5px solid var(--school-ink);
+          border-radius: 4px;
+          background: #fff;
+          transition: transform 0.35s var(--hb-ease), box-shadow 0.35s var(--hb-ease);
+        }
+        .horizon-board-shell .hb-movement:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 28px var(--hb-shadow);
+        }
+        .horizon-board-shell .hb-score-card {
+          border: 1px solid rgba(201,162,39,0.35);
+          border-radius: 6px;
+          background: #241D17;
+        }
+        .horizon-board-shell .hb-programme {
+          background: #fff;
+          border: 1.5px solid var(--school-ink);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .horizon-board-shell .hb-liner {
+          background: var(--hb-burgundy);
+          color: var(--hb-cream);
+          border-radius: 6px;
+          box-shadow: 6px 6px 0 var(--hb-shadow);
+        }
+        .horizon-board-shell footer {
+          background: var(--hb-burgundy-3) !important;
+        }
+        .horizon-board-shell footer h3 {
+          color: var(--hb-gold) !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          letter-spacing: 0.14em !important;
+          text-transform: uppercase;
+          font-size: 0.78rem !important;
+        }
+        .horizon-board-shell section.border-y {
+          background: #fff !important;
+          border-color: rgba(27,21,18,0.12) !important;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .school-hero-copy, .school-hero-media, .school-accent-line { animation: none !important; }
           .assembly-hall-shell .ah-ticker-track,
@@ -821,6 +1027,9 @@ export function HomepageShellStyles({
           .story-scroll-shell .ss-pane { animation: none !important; }
           .story-scroll-shell .ss-season:hover { transform: none; }
           .story-scroll-shell .ss-vine-fill { transition: none; }
+          .horizon-board-shell .hb-vinyl-disc { animation: none !important; }
+          .horizon-board-shell .hb-label-disc { animation: none !important; }
+          .horizon-board-shell .hb-movement:hover { transform: none; }
         }
       `,
         }}
@@ -850,6 +1059,47 @@ export function StoryScrollVine() {
   return (
     <div className="ss-vine-track" aria-hidden>
       <div ref={fillRef} className="ss-vine-fill" />
+    </div>
+  )
+}
+
+/** Fixed vinyl + tonearm that tracks scroll for Horizon Board. */
+export function HorizonVinyl() {
+  const armRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = armRef.current
+      if (!el) return
+      const h = document.documentElement
+      const max = h.scrollHeight - h.clientHeight
+      const pct = max > 0 ? h.scrollTop / max : 0
+      const angle = -24 + Math.min(1, Math.max(0, pct)) * 40
+      el.style.transform = `rotate(${angle}deg)`
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <div className="hb-vinyl-widget" aria-hidden>
+      <div className="hb-vinyl-disc" />
+      <div ref={armRef} className="hb-tonearm">
+        <svg viewBox="0 0 52 52">
+          <line
+            x1="46"
+            y1="6"
+            x2="10"
+            y2="40"
+            stroke="#C9A227"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          <circle cx="46" cy="6" r="5" fill="#C9A227" />
+          <circle cx="10" cy="40" r="3" fill="#1B1512" />
+        </svg>
+      </div>
     </div>
   )
 }

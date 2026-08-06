@@ -67,8 +67,8 @@ exports.HOMEPAGE_TEMPLATES = [
     {
         id: 'horizon-board',
         name: 'Horizon Board',
-        tagline: 'Cinematic open-air, glass nav',
-        mood: 'Airy',
+        tagline: 'Vinyl label, programme movements, box office',
+        mood: 'Conservatory',
     },
     {
         id: 'studio-day',
@@ -597,12 +597,12 @@ exports.HOMEPAGE_TEMPLATE_THEMES = {
         radiusMode: 'soft',
     },
     'horizon-board': {
-        primary: '#0ea5e9',
-        primaryDark: '#0369a1',
-        primaryLight: '#38bdf8',
-        accent: '#e0f2fe',
-        ink: '#0c4a6e',
-        paper: '#f0f9ff',
+        primary: '#6E2430',
+        primaryDark: '#4A1620',
+        primaryLight: '#8C3140',
+        accent: '#C9A227',
+        ink: '#1B1512',
+        paper: '#F4ECD8',
         radiusMode: 'soft',
     },
     'studio-day': {
