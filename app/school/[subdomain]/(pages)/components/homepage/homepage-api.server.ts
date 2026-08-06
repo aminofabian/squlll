@@ -21,6 +21,10 @@ const PUBLIC_SCHOOL_LEVELS_QUERY = `
         id
         name
       }
+      subjects {
+        id
+        name
+      }
     }
   }
 `

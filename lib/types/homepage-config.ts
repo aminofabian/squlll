@@ -28,6 +28,7 @@ import type {
   HomepageTheme,
   PublicSchoolGradeLevel,
   PublicSchoolLevel,
+  PublicSchoolSubject,
 } from '@squl/shared'
 
 export type {
@@ -45,6 +46,7 @@ export type {
   HomepageTheme,
   PublicSchoolGradeLevel,
   PublicSchoolLevel,
+  PublicSchoolSubject,
 }
 
 export type HomepageConfigRecord = {

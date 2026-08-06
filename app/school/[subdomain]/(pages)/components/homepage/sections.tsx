@@ -2904,35 +2904,69 @@ export function HomepagePrograms({
 
         {programLevels.length > 0 ? (
           <div className="mt-12 space-y-4">
-            {programLevels.map((level, index) => (
-              <Reveal key={level.id} delay={index * 60}>
-                <div className="border border-black/10 bg-[var(--school-paper)] p-6 sm:p-8">
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-xs font-semibold tabular-nums text-primary">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <h3 className="font-display text-2xl tracking-tight text-[var(--school-ink)] sm:text-3xl">
-                      {level.name}
-                    </h3>
-                  </div>
-                  {level.description && (
-                    <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                      {level.description}
-                    </p>
-                  )}
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {level.gradeLevels.map((grade) => (
-                      <span
-                        key={grade.id}
-                        className="border border-primary/20 bg-white px-2.5 py-1 text-xs font-medium text-primary"
-                      >
-                        {grade.name}
+            {programLevels.map((level, index) => {
+              const grades = level.gradeLevels || []
+              const subjects =
+                ('subjects' in level && Array.isArray(level.subjects)
+                  ? level.subjects
+                  : []) as { id: string; name: string }[]
+
+              return (
+                <Reveal key={level.id} delay={index * 60}>
+                  <div className="border border-black/10 bg-[var(--school-paper)] p-6 sm:p-8">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-xs font-semibold tabular-nums text-primary">
+                        {String(index + 1).padStart(2, '0')}
                       </span>
-                    ))}
+                      <h3 className="font-display text-2xl tracking-tight text-[var(--school-ink)] sm:text-3xl">
+                        {level.name}
+                      </h3>
+                    </div>
+                    {level.description && (
+                      <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                        {level.description}
+                      </p>
+                    )}
+
+                    {grades.length > 0 && (
+                      <div className="mt-5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Grades
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {grades.map((grade) => (
+                            <span
+                              key={grade.id}
+                              className="border border-primary/20 bg-white px-2.5 py-1 text-xs font-medium text-primary"
+                            >
+                              {grade.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {subjects.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Subjects
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {subjects.map((subject) => (
+                            <span
+                              key={subject.id}
+                              className="border border-black/10 bg-white px-2.5 py-1 text-xs font-medium text-[var(--school-ink)]"
+                            >
+                              {subject.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              )
+            })}
           </div>
         ) : (
           <Reveal>
