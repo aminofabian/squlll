@@ -10,6 +10,7 @@ import {
   MapPin,
   Menu,
   PhoneCall,
+  Star,
   UserPlus,
   X,
 } from 'lucide-react'
@@ -63,6 +64,8 @@ export function HomepageNav({
   const isCloister = variant === 'cloister'
   const isVine = variant === 'vine'
   const isDisc = variant === 'disc'
+  const isFolio = variant === 'folio'
+  const isMarquee = variant === 'marquee'
   const solid =
     scrolled ||
     open ||
@@ -71,7 +74,9 @@ export function HomepageNav({
     isTerminal ||
     isCloister ||
     isVine ||
-    isDisc
+    isDisc ||
+    isFolio ||
+    isMarquee
   const logoUrl = config.logoUrl || runtime.logoUrl
   const initials = runtime.schoolName
     .split(' ')
@@ -79,6 +84,187 @@ export function HomepageNav({
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  if (isFolio) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 border-b-2 border-[var(--fo-ink)] bg-[var(--fo-cream)]/95 backdrop-blur-md',
+          runtime.preview ? 'absolute' : 'fixed',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-baseline gap-3">
+            <span className="font-display text-[1.3rem] leading-none tracking-tight text-[var(--fo-ink)]">
+              {runtime.schoolName}
+            </span>
+            {slots.showTagline !== false && (
+              <span className="fo-mono hidden text-[9.5px] uppercase tracking-[0.18em] text-[var(--fo-vermilion)] sm:block">
+                {runtime.tagline || 'The student review'}
+              </span>
+            )}
+          </Link>
+
+          <div className="hidden items-center gap-1 lg:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="px-3 py-2 text-sm font-semibold text-[var(--fo-ink)]/70 transition-colors hover:text-[var(--fo-vermilion)]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-none border-[var(--fo-ink)]/30 px-4 text-sm font-semibold text-[var(--fo-ink)] shadow-none hover:border-[var(--fo-ink)] hover:bg-[var(--fo-ink)] hover:text-[var(--fo-cream)]"
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                {slots.portalLabel || 'Portal'}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-none bg-[var(--fo-ink)] px-5 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-vermilion)]"
+            >
+              <Link href="/apply">
+                {slots.applyLabel || 'Apply now'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center border border-[var(--fo-ink)]/25 text-[var(--fo-ink)] lg:hidden"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t-2 border-[var(--fo-ink)] bg-[var(--fo-cream)] lg:hidden">
+            <div className="space-y-1 px-4 py-4">
+              {links.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-2 py-3 font-display text-xl text-[var(--fo-ink)] hover:text-[var(--fo-vermilion)]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
+
+  if (isMarquee) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 border-b border-white/10 bg-[var(--nl-ink)]/85 backdrop-blur-md',
+          runtime.preview ? 'absolute' : 'fixed',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-9 w-9 object-contain sm:h-10 sm:w-10"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--nl-neon)]/50 bg-[var(--nl-ink-2)] text-[var(--nl-neon)]">
+                <Building2 className="h-4 w-4" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="block truncate font-display text-base leading-none tracking-wide text-white sm:text-lg">
+                {runtime.schoolName}
+              </span>
+              {slots.showTagline !== false && (
+                <span className="nl-mono mt-1 block truncate text-[9px] uppercase tracking-[0.26em] text-[var(--nl-neon)]">
+                  {runtime.tagline || 'After dark on campus'}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          <div className="hidden items-center gap-1 lg:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="relative px-3.5 py-2 text-sm font-medium text-white/70 transition-colors hover:text-white after:absolute after:inset-x-3.5 after:bottom-0.5 after:h-px after:bg-[var(--nl-neon)] after:opacity-0 hover:after:opacity-100"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-full border-white/20 px-4 text-sm font-medium text-white shadow-none hover:border-[var(--nl-neon)] hover:text-[var(--nl-neon)]"
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                {slots.portalLabel || 'Portal'}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-full bg-[var(--nl-neon)] px-5 text-sm font-bold text-[var(--nl-ink)] shadow-[0_0_18px_rgba(79,227,201,0.35)] hover:bg-white"
+            >
+              <Link href="/apply">
+                {slots.applyLabel || 'Apply now'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white lg:hidden"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-white/10 bg-[var(--nl-ink-2)] lg:hidden">
+            <div className="space-y-1 px-4 py-4">
+              {links.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-2 py-3 text-base font-medium text-white/85 hover:text-[var(--nl-neon)]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
 
   if (isDisc) {
     return (
@@ -1459,6 +1645,235 @@ export function HomepageHero({
     )
   }
 
+  if (variant === 'folio') {
+    const headline = slots.headline || runtime.schoolName
+    const headlineParts = headline.trim().split(/\s+/)
+    const accentWord =
+      headlineParts.length > 1 ? headlineParts[headlineParts.length - 1] : null
+    const headlineLead =
+      accentWord && headlineParts.length > 1
+        ? headlineParts.slice(0, -1).join(' ')
+        : headline
+    return (
+      <section className="relative overflow-hidden pt-[var(--school-nav-h)]">
+        {/* Masthead rule */}
+        <div className="border-b-2 border-[var(--fo-ink)] bg-[var(--fo-cream)]">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
+            <span className="fo-mono text-[9.5px] uppercase tracking-[0.2em] text-[var(--fo-ink)]/70">
+              The {runtime.schoolName} review
+            </span>
+            <span className="fo-mono hidden text-[9.5px] uppercase tracking-[0.2em] text-[var(--fo-vermilion)] sm:block">
+              Vol. {new Date().getFullYear()} · Est. edition
+            </span>
+          </div>
+        </div>
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-8">
+          <div
+            className={cn(
+              'school-hero-copy max-w-xl',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            {slots.eyebrow && (
+              <p className="fo-mono mb-4 text-[11px] uppercase tracking-[0.24em] text-[var(--fo-vermilion)]">
+                {slots.eyebrow}
+              </p>
+            )}
+            <h1 className="font-display text-[clamp(2.9rem,6vw,5rem)] leading-[0.98] text-[var(--fo-ink)]">
+              {headlineLead}
+              {accentWord ? (
+                <>
+                  {' '}
+                  <em className="fo-italic text-[var(--fo-vermilion)]">
+                    {accentWord}
+                  </em>
+                </>
+              ) : null}
+            </h1>
+            <div className="mt-6 flex items-center gap-4">
+              <span className="h-px w-16 bg-[var(--fo-vermilion)]" />
+              <span className="fo-mono text-[9.5px] uppercase tracking-[0.2em] text-[var(--fo-ink-soft)]">
+                A campus in print
+              </span>
+            </div>
+            <p className="mt-6 max-w-[46ch] text-[1.06rem] leading-[1.75] text-[var(--fo-ink-soft)]">
+              {slots.subcopy}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-6">
+              <HeroButtons slots={slots} tone="folio" />
+            </div>
+          </div>
+
+          {/* Framed feature image — always rendered */}
+          <div
+            className={cn(
+              'relative mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="fo-crop absolute -inset-4" aria-hidden />
+            <figure className="fo-frame relative bg-white">
+              <img
+                src={img}
+                alt=""
+                fetchPriority="high"
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <figcaption className="flex items-center justify-between gap-3 border-t-[3px] border-[var(--fo-ink)] px-4 py-3">
+                <span className="fo-mono text-[9.5px] uppercase tracking-[0.16em] text-[var(--fo-ink-soft)]">
+                  Feature · {runtime.schoolName}
+                </span>
+                <span className="font-display text-lg italic leading-none text-[var(--fo-vermilion)]">
+                  № 01
+                </span>
+              </figcaption>
+            </figure>
+            <span className="absolute -left-4 -top-4 rotate-[-7deg] bg-[var(--fo-vermilion)] px-3 py-1.5 fo-mono text-[9.5px] font-bold uppercase tracking-[0.18em] text-white shadow-[4px_4px_0_var(--fo-ink)]">
+              Cover story
+            </span>
+          </div>
+        </div>
+
+        <div className="border-t-2 border-[var(--fo-ink)]" aria-hidden />
+      </section>
+    )
+  }
+
+  if (variant === 'marquee') {
+    const stats = getSection<{ items?: HomepageStatItem[] }>(config, 'stats')
+    const firstStat = stats?.slots.items?.[0]
+    const headline = slots.headline || runtime.schoolName
+    const parts = headline.trim().split(/\s+/)
+    const accentWord =
+      parts.length > 1 ? parts.slice(-2).join(' ') : parts[parts.length - 1]
+    const lead =
+      parts.length > 2
+        ? parts.slice(0, -2).join(' ')
+        : parts.length > 1
+          ? parts.slice(0, -1).join(' ')
+          : ''
+    return (
+      <section className="relative min-h-[min(100svh,960px)] overflow-hidden bg-[var(--nl-ink)] pt-[var(--school-nav-h)]">
+        {/* Night sky: stars, beams, glow orbs */}
+        <div className="nl-stars pointer-events-none absolute inset-0" aria-hidden />
+        <div className="nl-beams pointer-events-none absolute inset-0" aria-hidden />
+        <div
+          className="pointer-events-none absolute -left-40 top-0 h-[520px] w-[520px] rounded-full bg-[var(--nl-neon)]/14 blur-[120px]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -right-32 bottom-0 h-[460px] w-[460px] rounded-full bg-[var(--nl-gold)]/10 blur-[130px]"
+          aria-hidden
+        />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--nl-ink)] to-transparent" />
+
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.02fr_0.98fr] lg:gap-20 lg:px-8">
+          <div
+            className={cn(
+              'school-hero-copy max-w-xl',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-[var(--nl-neon)]/40 bg-[var(--nl-neon)]/10 px-3.5 py-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--nl-neon)] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--nl-neon)]" />
+              </span>
+              <span className="nl-mono text-[10px] uppercase tracking-[0.26em] text-[var(--nl-neon)]">
+                {slots.eyebrow || 'Now showing'}
+              </span>
+            </div>
+            <h1 className="font-display text-[clamp(2.4rem,5.4vw,4.4rem)] font-semibold leading-[1.06] text-white">
+              {lead ? (
+                <>
+                  {lead} <span className="nl-glow">{accentWord}</span>
+                </>
+              ) : (
+                headline
+              )}
+            </h1>
+            <p className="mt-6 max-w-[40ch] text-[1.05rem] leading-[1.75] text-[#AEBFCC]">
+              {slots.subcopy}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-5">
+              {slots.primaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-full bg-[var(--nl-neon)] px-8 text-sm font-bold text-[var(--nl-ink)] shadow-[0_0_24px_rgba(79,227,201,0.4)] hover:bg-white"
+                >
+                  <Link href={slots.primaryCta.href}>
+                    {slots.primaryCta.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="border-b border-white/30 pb-0.5 text-sm font-semibold text-white/80 transition-colors hover:border-[var(--nl-neon)] hover:text-[var(--nl-neon)]"
+                >
+                  {slots.secondaryCta.label}
+                </Link>
+              )}
+            </div>
+            <div className="nl-mono mt-10 flex flex-wrap items-center gap-3 text-[9.5px] uppercase tracking-[0.22em] text-white/40">
+              <span>{runtime.schoolName}</span>
+              <span className="h-px w-10 bg-white/20" aria-hidden />
+              <span>Est. {new Date().getFullYear()}</span>
+              {firstStat && (
+                <>
+                  <span className="h-px w-10 bg-white/20" aria-hidden />
+                  <span className="text-[var(--nl-gold)]">
+                    {firstStat.value} {firstStat.label}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Glowing framed still — always rendered */}
+          <div
+            className={cn(
+              'relative mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="nl-frame relative overflow-hidden rounded-2xl">
+              <img
+                src={img}
+                alt=""
+                fetchPriority="high"
+                className="aspect-[4/5] w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--nl-ink)]/85 via-transparent to-transparent" />
+              <div className="nl-sprockets absolute bottom-0 right-0 top-0 w-6 bg-[var(--nl-ink-2)]" aria-hidden />
+              <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 pr-8">
+                <div>
+                  <p className="nl-mono text-[9px] uppercase tracking-[0.26em] text-[var(--nl-gold)]">
+                    Featured · Night one
+                  </p>
+                  <p className="mt-1 font-display text-xl leading-tight text-white">
+                    {runtime.schoolName}
+                  </p>
+                </div>
+                {firstStat && (
+                  <p className="nl-glow font-display text-3xl font-semibold leading-none">
+                    {firstStat.value}
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="nl-sign absolute -right-3 -top-5 rotate-[5deg] rounded-md bg-[var(--nl-gold)] px-3 py-1.5 nl-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-[var(--nl-ink)] shadow-[0_0_24px_rgba(255,200,87,0.45)]">
+              Tonight
+            </span>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   const isNight = variant === 'night' || variant === 'horizon'
   const isPlayfield = variant === 'playfield'
   const isStudio = variant === 'studio'
@@ -1559,9 +1974,10 @@ function HeroButtons({
     primaryCta?: HomepageCta
     secondaryCta?: HomepageCta
   }
-  tone?: 'dark' | 'notebook'
+  tone?: 'dark' | 'notebook' | 'folio'
 }) {
   const notebook = tone === 'notebook'
+  const folio = tone === 'folio'
   return (
     <>
       {slots.primaryCta && (
@@ -1570,9 +1986,11 @@ function HeroButtons({
           size="lg"
           className={cn(
             'h-12 px-8 text-base font-semibold shadow-none',
-            notebook
-              ? 'rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] text-[var(--ah-cream,#FBF6E9)] hover:border-primary hover:bg-primary'
-              : 'rounded-none bg-primary text-white hover:bg-primary-dark',
+            folio
+              ? 'rounded-none bg-[var(--fo-ink)] text-[var(--fo-cream)] hover:bg-[var(--fo-vermilion)]'
+              : notebook
+                ? 'rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] text-[var(--ah-cream,#FBF6E9)] hover:border-primary hover:bg-primary'
+                : 'rounded-none bg-primary text-white hover:bg-primary-dark',
           )}
         >
           <Link href={slots.primaryCta.href}>
@@ -1581,11 +1999,18 @@ function HeroButtons({
           </Link>
         </Button>
       )}
-      {slots.secondaryCta && (
-        notebook ? (
+      {slots.secondaryCta &&
+        (notebook ? (
           <Link
             href={slots.secondaryCta.href}
             className="border-b-2 border-primary pb-0.5 text-sm font-semibold text-[var(--school-ink)]"
+          >
+            {slots.secondaryCta.label}
+          </Link>
+        ) : folio ? (
+          <Link
+            href={slots.secondaryCta.href}
+            className="border-b-2 border-[var(--fo-vermilion)] pb-0.5 text-sm font-semibold text-[var(--fo-ink)] transition-colors hover:text-[var(--fo-vermilion)]"
           >
             {slots.secondaryCta.label}
           </Link>
@@ -1601,8 +2026,7 @@ function HeroButtons({
               {slots.secondaryCta.label}
             </Link>
           </Button>
-        )
-      )}
+        ))}
     </>
   )
 }
@@ -1827,6 +2251,69 @@ export function HomepageStats({
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'ledger') {
+    return (
+      <section className="border-y-2 border-[var(--fo-ink)] bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 lg:grid-cols-4">
+          {items.map((stat, i) => (
+            <Reveal key={stat.label} delay={i * 60}>
+              <div
+                className={cn(
+                  'flex h-full flex-col justify-between gap-3 px-6 py-9 sm:px-8',
+                  i > 0 && 'border-l border-[var(--fo-ink)]/15',
+                )}
+              >
+                <p className="font-display text-[2.9rem] leading-none tracking-tight text-[var(--fo-ink)]">
+                  {stat.value}
+                </p>
+                <div>
+                  <p className="fo-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fo-vermilion)]">
+                    {stat.label}
+                  </p>
+                  {stat.hint && (
+                    <p className="mt-1.5 text-xs text-[var(--fo-ink-soft)]/70">
+                      {stat.hint}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'starlight') {
+    return (
+      <section className="border-y border-white/10 bg-[var(--nl-ink-2)] py-14">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-10 sm:grid-cols-4">
+          {items.map((stat, i) => (
+            <Reveal key={stat.label} delay={i * 60}>
+              <div className="relative px-6 text-center">
+                {i > 0 && (
+                  <span
+                    className="absolute -left-3 top-1/2 hidden h-1.5 w-1.5 -translate-y-1/2 rotate-45 bg-[var(--nl-neon)] sm:block"
+                    aria-hidden
+                  />
+                )}
+                <p className="nl-glow font-display text-[2.6rem] font-semibold leading-none">
+                  {stat.value}
+                </p>
+                <p className="nl-mono mt-2.5 text-[10px] uppercase tracking-[0.24em] text-[var(--nl-neon)]">
+                  {stat.label}
+                </p>
+                {stat.hint && (
+                  <p className="mt-1.5 text-xs text-[var(--nl-muted)]">{stat.hint}</p>
+                )}
+              </div>
+            </Reveal>
+          ))}
         </div>
       </section>
     )
@@ -2155,6 +2642,118 @@ export function HomepageOfferings({
                     </Link>
                   </div>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'spread') {
+    const folioNumbers = ['01', '02', '03']
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-14 grid gap-6 border-b-2 border-[var(--fo-ink)] pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="max-w-xl">
+                {slots.eyebrow && (
+                  <p className="fo-mono mb-3 text-[11px] uppercase tracking-[0.22em] text-[var(--fo-vermilion)]">
+                    {slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="font-display text-[clamp(1.9rem,3.6vw,2.9rem)] leading-tight text-[var(--fo-ink)]">
+                  {slots.headline}
+                </h2>
+                <p className="mt-4 max-w-xl text-[1rem] leading-relaxed text-[var(--fo-ink-soft)]">
+                  {slots.subcopy}
+                </p>
+              </div>
+              <span className="fo-mono text-[9.5px] uppercase tracking-[0.2em] text-[var(--fo-ink-soft)]">
+                The contents
+              </span>
+            </div>
+          </Reveal>
+          <div className="space-y-0">
+            {items.map((item, index) => (
+              <Reveal key={item.title} delay={index * 60}>
+                <article className="group grid gap-4 border-b border-[var(--fo-ink)]/20 py-8 sm:grid-cols-[72px_1fr_auto] sm:gap-8 sm:py-10">
+                  <span className="fo-mono text-sm font-bold text-[var(--fo-vermilion)]">
+                    {folioNumbers[index % folioNumbers.length]}
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-display text-[1.7rem] leading-tight text-[var(--fo-ink)] transition-colors group-hover:text-[var(--fo-vermilion)]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2.5 max-w-2xl text-[0.98rem] leading-relaxed text-[var(--fo-ink-soft)]">
+                      {item.body}
+                    </p>
+                  </div>
+                  <Link
+                    href={item.href}
+                    className="fo-mono self-center text-[10.5px] font-bold uppercase tracking-[0.16em] text-[var(--fo-vermilion)]"
+                  >
+                    {item.ctaLabel} →
+                  </Link>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'premieres') {
+    const showtimes = ['7:30 PM', '8:45 PM', '10:00 PM']
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-xl">
+                {slots.eyebrow && (
+                  <p className="nl-mono mb-3 text-[10px] uppercase tracking-[0.26em] text-[var(--nl-neon)]">
+                    {slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.7rem)] leading-tight text-white">
+                  {slots.headline}
+                </h2>
+                <p className="mt-4 text-[1rem] leading-relaxed text-[var(--nl-slate)]">
+                  {slots.subcopy}
+                </p>
+              </div>
+              <span className="nl-mono text-[9.5px] uppercase tracking-[0.22em] text-white/35">
+                This season&apos;s premieres
+              </span>
+            </div>
+          </Reveal>
+          <div className="grid gap-5 md:grid-cols-3">
+            {items.map((item, index) => (
+              <Reveal key={item.title} delay={index * 70}>
+                <article className="group relative h-full rounded-2xl border border-white/10 bg-[var(--nl-ink-2)] p-7 transition-colors hover:border-[var(--nl-neon)]/50">
+                  <div className="flex items-start justify-between">
+                    <SectionIcon name={item.icon} className="h-6 w-6 text-[var(--nl-neon)]" />
+                    <span className="nl-mono text-[10px] uppercase tracking-[0.2em] text-white/35">
+                      {showtimes[index % showtimes.length]}
+                    </span>
+                  </div>
+                  <h3 className="mt-7 font-display text-xl leading-tight text-white transition-colors group-hover:text-[var(--nl-neon)]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-[0.95rem] leading-relaxed text-[var(--nl-slate)]">
+                    {item.body}
+                  </p>
+                  <Link
+                    href={item.href}
+                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[var(--nl-neon)]"
+                  >
+                    {item.ctaLabel}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </article>
               </Reveal>
             ))}
           </div>
@@ -2620,6 +3219,108 @@ export function HomepageGallery({
     )
   }
 
+  if (variant === 'contact') {
+    return (
+      <section className="border-t-2 border-[var(--fo-ink)] bg-white py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 flex items-end justify-between gap-4 border-b-2 border-[var(--fo-ink)] pb-5">
+              <div>
+                {data.slots.eyebrow && (
+                  <p className="fo-mono mb-2 text-[11px] uppercase tracking-[0.22em] text-[var(--fo-vermilion)]">
+                    {data.slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="font-display text-[clamp(1.9rem,3.6vw,2.9rem)] leading-tight text-[var(--fo-ink)]">
+                  {data.slots.headline}
+                </h2>
+              </div>
+              <span className="fo-mono hidden shrink-0 text-[9.5px] uppercase tracking-[0.2em] text-[var(--fo-ink-soft)] sm:block">
+                Contact sheet · {String(images.length).padStart(2, '0')} frames
+              </span>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-2 gap-px bg-[var(--fo-ink)]/12 md:grid-cols-4">
+            {images.slice(0, 8).map((image, i) => (
+              <Reveal key={image.url + i} delay={i * 40}>
+                <figure className="group relative bg-[var(--fo-cream)]">
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={image.url}
+                      alt={image.caption || ''}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                  </div>
+                  <figcaption className="flex items-center justify-between gap-2 border-t border-[var(--fo-ink)]/15 px-3 py-2">
+                    <span className="truncate text-[11px] text-[var(--fo-ink-soft)]">
+                      {image.caption || `Frame ${String(i + 1).padStart(2, '0')}`}
+                    </span>
+                    <span className="fo-mono shrink-0 text-[9px] text-[var(--fo-vermilion)]">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'reel') {
+    return (
+      <section className="overflow-hidden border-y border-white/10 bg-[var(--nl-ink)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                {data.slots.eyebrow && (
+                  <p className="nl-mono mb-2 text-[10px] uppercase tracking-[0.26em] text-[var(--nl-neon)]">
+                    {data.slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.7rem)] leading-tight text-white">
+                  {data.slots.headline}
+                </h2>
+              </div>
+              <span className="nl-mono shrink-0 text-[9.5px] uppercase tracking-[0.22em] text-white/35">
+                Reel · {String(images.length).padStart(2, '0')} stills
+              </span>
+            </div>
+          </Reveal>
+        </div>
+        <div className="flex gap-5 overflow-x-auto px-4 pb-6 sm:px-[max(1.5rem,calc((100vw-80rem)/2+2rem))]">
+          {images.map((image, i) => (
+            <Reveal key={image.url + i} delay={i * 40}>
+              <figure className="w-[240px] shrink-0 sm:w-[300px]">
+                <div className="aspect-[3/4] overflow-hidden rounded-xl border border-white/10">
+                  <img
+                    src={image.url}
+                    alt={image.caption || ''}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <figcaption className="mt-3 flex items-center justify-between gap-3">
+                  <span className="truncate text-[0.85rem] text-[var(--nl-slate)]">
+                    {image.caption || `Still ${String(i + 1).padStart(2, '0')}`}
+                  </span>
+                  <span className="nl-mono shrink-0 text-[9px] text-[var(--nl-neon)]">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                </figcaption>
+              </figure>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2912,6 +3613,110 @@ export function HomepageTestimonials({
     )
   }
 
+  if (variant === 'pullquote') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 border-l-[3px] border-[var(--fo-vermilion)] pl-5">
+              {data.slots.eyebrow && (
+                <p className="fo-mono text-[11px] uppercase tracking-[0.22em] text-[var(--fo-vermilion)]">
+                  {data.slots.eyebrow}
+                </p>
+              )}
+              <h2 className="mt-1 font-display text-[clamp(1.9rem,3.6vw,2.9rem)] leading-tight text-[var(--fo-ink)]">
+                {data.slots.headline}
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 60}>
+                <blockquote className="flex h-full flex-col">
+                  <span className="font-display text-6xl leading-[0.6] text-[var(--fo-vermilion)]">
+                    “
+                  </span>
+                  <p className="mt-3 flex-1 font-display text-[1.35rem] leading-snug text-[var(--fo-ink)]">
+                    {item.quote}
+                  </p>
+                  <footer className="mt-6 border-t-2 border-[var(--fo-ink)] pt-3">
+                    <p className="fo-mono text-[10.5px] font-bold uppercase tracking-[0.16em] text-[var(--fo-ink)]">
+                      {item.name}
+                    </p>
+                    <p className="mt-1 text-[0.85rem] text-[var(--fo-ink-soft)]">
+                      {item.role}
+                    </p>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'reviews') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 text-center">
+              {data.slots.eyebrow && (
+                <p className="nl-mono text-[10px] uppercase tracking-[0.28em] text-[var(--nl-neon)]">
+                  {data.slots.eyebrow}
+                </p>
+              )}
+              <h2 className="mt-2 font-display text-[clamp(1.85rem,3.5vw,2.7rem)] leading-tight text-white">
+                {data.slots.headline}
+              </h2>
+              <div className="mt-4 flex items-center justify-center gap-1 text-[var(--nl-gold)]">
+                {Array.from({ length: 5 }).map((_, s) => (
+                  <Star key={s} className="h-4 w-4 fill-current" />
+                ))}
+                <span className="nl-mono ml-2 text-[9.5px] uppercase tracking-[0.2em] text-white/40">
+                  Parent reviews
+                </span>
+              </div>
+            </div>
+          </Reveal>
+          <div className="grid gap-5 md:grid-cols-3">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 60}>
+                <blockquote className="flex h-full flex-col rounded-2xl border border-white/10 bg-[var(--nl-ink-2)] p-7">
+                  <div className="flex gap-1 text-[var(--nl-gold)]">
+                    {Array.from({ length: 5 }).map((_, s) => (
+                      <Star key={s} className="h-3.5 w-3.5 fill-current" />
+                    ))}
+                  </div>
+                  <p className="mt-4 flex-1 text-[1.02rem] leading-relaxed text-[#D6E1E8]">
+                    “{item.quote}”
+                  </p>
+                  <footer className="mt-6 flex items-center gap-3 border-t border-white/10 pt-4">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--nl-neon)]/15 font-display text-sm font-semibold text-[var(--nl-neon)]">
+                      {(item.name || '?').charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-white">
+                        {item.name}
+                      </p>
+                      <p className="truncate text-xs text-[var(--nl-muted)]">
+                        {item.role}
+                      </p>
+                    </div>
+                    <span className="nl-mono ml-auto shrink-0 rounded-full border border-[var(--nl-gold)]/40 px-2 py-0.5 text-[9px] uppercase tracking-[0.16em] text-[var(--nl-gold)]">
+                      Pick
+                    </span>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -3170,6 +3975,95 @@ export function HomepageCtaBand({
                 asChild
                 variant="outline"
                 className="h-11 rounded-[3px] border border-[var(--hb-gold,#C9A227)]/50 bg-transparent px-5 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--hb-gold,#C9A227)] hover:text-[var(--school-ink)]"
+              >
+                <Link href={slots.secondaryCta.href}>
+                  {slots.secondaryCta.label}
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'subscription') {
+    return (
+      <section className="border-t-2 border-[var(--fo-ink)] bg-[var(--fo-ink)] py-16 text-[var(--fo-cream)] sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="relative border-2 border-dashed border-[var(--fo-cream)]/40 px-6 py-12 text-center sm:px-12">
+              <span className="fo-mono absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[var(--fo-ink)] px-3 text-[9.5px] uppercase tracking-[0.22em] text-[var(--fo-cream)]">
+                Subscribe
+              </span>
+              <h2 className="font-display text-[clamp(1.9rem,3.6vw,3rem)] leading-tight">
+                {slots.headline}
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-[1rem] leading-relaxed text-[var(--fo-cream)]/70">
+                {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
+                  slots.body}
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                {slots.primaryCta && (
+                  <Button
+                    asChild
+                    className="h-12 rounded-none bg-[var(--fo-vermilion)] px-8 text-sm font-semibold text-white shadow-none hover:bg-white hover:text-[var(--fo-ink)]"
+                  >
+                    <Link href={slots.primaryCta.href}>
+                      {slots.primaryCta.label}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+                {slots.secondaryCta && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-none border-[var(--fo-cream)]/40 px-8 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-cream)] hover:text-[var(--fo-ink)]"
+                  >
+                    <Link href={slots.secondaryCta.href}>
+                      {slots.secondaryCta.label}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'encore') {
+    return (
+      <section className="sticky bottom-0 z-40 border-t border-white/10 bg-[var(--nl-ink)]/92 py-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <div className="min-w-0">
+            <p className="font-display text-lg leading-tight text-white sm:text-xl">
+              {slots.headline}
+            </p>
+            <p className="mt-0.5 max-w-xl text-sm text-[var(--nl-slate)]">
+              {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
+                slots.body}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {slots.primaryCta && (
+              <Button
+                asChild
+                className="h-11 rounded-full bg-[var(--nl-neon)] px-6 text-sm font-bold text-[var(--nl-ink)] shadow-[0_0_20px_rgba(79,227,201,0.35)] hover:bg-white"
+              >
+                <Link href={slots.primaryCta.href}>
+                  {slots.primaryCta.label}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {slots.secondaryCta && (
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-full border-white/25 px-5 text-sm font-semibold text-white shadow-none hover:border-[var(--nl-neon)] hover:text-[var(--nl-neon)]"
               >
                 <Link href={slots.secondaryCta.href}>
                   {slots.secondaryCta.label}

@@ -114,12 +114,16 @@ export function HomepageShellStyles({
   garden = false,
   story = false,
   horizon = false,
+  folio = false,
+  night = false,
 }: {
   assembly?: boolean
   playfield?: boolean
   garden?: boolean
   story?: boolean
   horizon?: boolean
+  folio?: boolean
+  night?: boolean
 }) {
   return (
     <>
@@ -189,6 +193,34 @@ export function HomepageShellStyles({
           />
           <link
             href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      )}
+      {folio && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      )}
+      {night && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700;800&display=swap"
             rel="stylesheet"
           />
         </>
@@ -389,10 +421,159 @@ export function HomepageShellStyles({
           text-shadow: 0 0 1px rgba(255,255,255,0.35);
           animation: ah-chalk-dust 5s ease-in-out infinite;
         }
-        .assembly-hall-shell footer {
+        /* ---- Folio / arts-magazine shell (Studio Day) ---- */
+        .folio-shell {
+          --fo-cream: #F6F1E7;
+          --fo-cream-2: #EDE4D2;
+          --fo-ink: #191512;
+          --fo-ink-soft: #4A4238;
+          --fo-rule: rgba(25, 21, 18, 0.16);
+          --fo-vermilion: #C8442F;
+          --fo-ease: cubic-bezier(0.16, 1, 0.3, 1);
+          --font-display: 'DM Serif Display', 'Playfair Display', Georgia, serif;
+          font-family: 'Archivo', 'Avenir Next', system-ui, sans-serif;
+          background-color: var(--fo-cream);
+          background-image:
+            radial-gradient(ellipse 90% 60% at 100% 0%, rgba(200, 68, 47, 0.05), transparent 55%),
+            linear-gradient(180deg, var(--fo-cream) 0%, var(--fo-cream-2) 100%);
+          color: var(--fo-ink);
+        }
+        .folio-shell .font-display,
+        .folio-shell h1,
+        .folio-shell h2,
+        .folio-shell h3 {
+          font-family: 'DM Serif Display', 'Playfair Display', Georgia, serif;
+          letter-spacing: -0.01em;
+        }
+        .folio-shell .fo-mono {
+          font-family: 'Space Mono', ui-monospace, monospace;
+          font-variant-numeric: tabular-nums;
+        }
+        .folio-shell .fo-italic { font-style: italic; }
+        .folio-shell .fo-frame {
+          box-shadow: 12px 14px 0 var(--fo-ink);
+        }
+        .folio-shell .fo-crop {
           background:
-            radial-gradient(ellipse 70% 60% at 20% 0%, rgba(206, 154, 34, 0.12), transparent 50%),
-            var(--school-ink);
+            linear-gradient(to top, var(--fo-vermilion) 0 2px, transparent 2px) 0 100%/14px 2px,
+            linear-gradient(to top, var(--fo-vermilion) 0 2px, transparent 2px) 100% 100%/14px 2px,
+            linear-gradient(to right, var(--fo-vermilion) 0 2px, transparent 2px) 0 100%/2px 14px,
+            linear-gradient(to right, var(--fo-vermilion) 0 2px, transparent 2px) 100% 100%/2px 14px,
+            linear-gradient(to bottom, var(--fo-vermilion) 0 2px, transparent 2px) 0 0/14px 2px,
+            linear-gradient(to bottom, var(--fo-vermilion) 0 2px, transparent 2px) 100% 0/14px 2px,
+            linear-gradient(to right, var(--fo-vermilion) 0 2px, transparent 2px) 0 0/2px 14px,
+            linear-gradient(to right, var(--fo-vermilion) 0 2px, transparent 2px) 100% 0/2px 14px;
+          background-repeat: no-repeat;
+        }
+        .folio-shell .fo-rule-y {
+          border-left: 1px solid var(--fo-rule);
+        }
+        .folio-shell .fo-rule-x {
+          border-top: 1px solid var(--fo-rule);
+        }
+        .folio-shell footer {
+          background: var(--fo-ink);
+          color: var(--fo-cream);
+        }
+        .folio-shell footer h3 {
+          color: var(--fo-cream) !important;
+          letter-spacing: 0.16em !important;
+          font-family: 'Space Mono', ui-monospace, monospace !important;
+        }
+        .folio-shell section.border-y {
+          border-color: var(--fo-rule) !important;
+        }
+
+        /* ---- Night Lights / evening-marquee shell ---- */
+        .night-lights-shell {
+          --nl-ink: #060A0E;
+          --nl-ink-2: #0C141B;
+          --nl-slate: #9FB4C4;
+          --nl-muted: #64788A;
+          --nl-neon: #4FE3C9;
+          --nl-gold: #FFC857;
+          --font-display: 'Unbounded', 'Avenir Next', sans-serif;
+          font-family: 'Space Grotesk', 'Avenir Next', system-ui, sans-serif;
+          background-color: var(--nl-ink);
+          color: #EAF2F6;
+        }
+        .night-lights-shell .font-display,
+        .night-lights-shell h1,
+        .night-lights-shell h2,
+        .night-lights-shell h3 {
+          font-family: 'Unbounded', 'Avenir Next', sans-serif;
+          letter-spacing: -0.01em;
+        }
+        .night-lights-shell .nl-mono {
+          font-family: 'Red Hat Mono', ui-monospace, monospace;
+          font-variant-numeric: tabular-nums;
+        }
+        .night-lights-shell .nl-glow {
+          background: linear-gradient(100deg, #FFFFFF 10%, var(--nl-neon) 90%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+        .night-lights-shell .nl-stars {
+          background-image:
+            radial-gradient(1.5px 1.5px at 18% 26%, rgba(255,255,255,0.85), transparent 100%),
+            radial-gradient(1px 1px at 34% 12%, rgba(255,255,255,0.6), transparent 100%),
+            radial-gradient(1.5px 1.5px at 58% 34%, rgba(255,255,255,0.5), transparent 100%),
+            radial-gradient(1px 1px at 72% 18%, rgba(255,255,255,0.75), transparent 100%),
+            radial-gradient(1px 1px at 86% 30%, rgba(255,255,255,0.45), transparent 100%),
+            radial-gradient(1.5px 1.5px at 92% 60%, rgba(255,255,255,0.6), transparent 100%),
+            radial-gradient(1px 1px at 8% 70%, rgba(255,255,255,0.5), transparent 100%),
+            radial-gradient(1px 1px at 44% 82%, rgba(255,255,255,0.4), transparent 100%),
+            radial-gradient(1px 1px at 66% 74%, rgba(255,255,255,0.55), transparent 100%);
+          background-size: 260px 260px;
+        }
+        .night-lights-shell .nl-beams {
+          background: conic-gradient(
+            from 205deg at 50% -12%,
+            transparent 0deg,
+            rgba(79, 227, 201, 0.16) 14deg,
+            transparent 30deg,
+            rgba(255, 200, 87, 0.09) 46deg,
+            transparent 66deg,
+            rgba(79, 227, 201, 0.1) 84deg,
+            transparent 100deg
+          );
+          filter: blur(2px);
+        }
+        .night-lights-shell .nl-frame {
+          box-shadow:
+            0 0 0 1px rgba(79, 227, 201, 0.32),
+            0 30px 80px rgba(0, 0, 0, 0.6),
+            0 0 70px rgba(79, 227, 201, 0.16);
+        }
+        .night-lights-shell .nl-sprockets {
+          background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0 13px,
+            rgba(255, 255, 255, 0.16) 13px 16px
+          );
+        }
+        .night-lights-shell .nl-sign {
+          animation: nl-flicker 3.6s ease-in-out infinite;
+        }
+        @keyframes nl-flicker {
+          0%, 100% { opacity: 1; }
+          91% { opacity: 1; }
+          92% { opacity: 0.55; }
+          93% { opacity: 1; }
+          96% { opacity: 0.7; }
+          97% { opacity: 1; }
+        }
+        .night-lights-shell footer {
+          background: var(--nl-ink-2);
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .night-lights-shell footer h3 {
+          color: var(--nl-neon) !important;
+          letter-spacing: 0.2em !important;
+        }
+        .night-lights-shell section.border-y {
+          border-color: rgba(255, 255, 255, 0.1) !important;
         }
         .assembly-hall-shell footer h3 {
           color: var(--school-accent) !important;

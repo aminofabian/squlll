@@ -107,16 +107,22 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
     cta: 'boxoffice',
   },
   'studio-day': {
-    hero: 'studio',
-    stats: 'band',
-    offerings: 'magazine',
-    cta: 'block',
+    nav: 'folio',
+    hero: 'folio',
+    stats: 'ledger',
+    offerings: 'spread',
+    gallery: 'contact',
+    testimonials: 'pullquote',
+    cta: 'subscription',
   },
   'night-lights': {
-    hero: 'night',
-    stats: 'plaques',
-    offerings: 'grid',
-    cta: 'ink',
+    nav: 'marquee',
+    hero: 'marquee',
+    stats: 'starlight',
+    offerings: 'premieres',
+    gallery: 'reel',
+    testimonials: 'reviews',
+    cta: 'encore',
   },
 }
 
@@ -126,7 +132,8 @@ const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
   'garden-court': 'garden-court-shell bg-[var(--school-paper)]',
   'story-scroll': 'story-scroll-shell bg-[var(--school-paper)]',
   'horizon-board': 'horizon-board-shell bg-[var(--school-paper)]',
-  'night-lights': 'bg-[#070f0c]',
+  'studio-day': 'folio-shell bg-[var(--school-paper)]',
+  'night-lights': 'night-lights-shell bg-[#060A0E]',
 }
 
 function Shell({
@@ -154,6 +161,8 @@ function Shell({
         garden={config.templateId === 'garden-court'}
         story={config.templateId === 'story-scroll'}
         horizon={config.templateId === 'horizon-board'}
+        folio={config.templateId === 'studio-day'}
+        night={config.templateId === 'night-lights'}
       />
       {config.templateId === 'story-scroll' && <StoryScrollVine />}
       {config.templateId === 'horizon-board' && <HorizonVinyl />}
