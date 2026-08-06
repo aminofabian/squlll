@@ -37,7 +37,7 @@ export function ExamSectionNav<T extends string>({
             type="button"
             onClick={() => onChange(id)}
             className={cn(
-              'flex shrink-0 snap-start items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all',
+              'flex shrink-0 snap-start items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors',
               isActive ? examTabActiveClass : examTabIdleClass,
             )}
           >

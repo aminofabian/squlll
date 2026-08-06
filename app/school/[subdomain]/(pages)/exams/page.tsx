@@ -287,14 +287,6 @@ export default function ExamsPage() {
       ? "Detailed performance analysis"
       : "Manage and track examinations";
 
-  const sectionLabels: Record<typeof activeSection, string> = {
-    sessions: "Sessions",
-    "report-cards": "Report cards",
-    rankings: "Rankings",
-    analytics: "Analytics",
-    moderation: "Moderation",
-  };
-
   const sessionStats = useMemo(() => {
     const fills = filteredSessions.map((s) => examTimetableFill(s));
     const withPapers = fills.filter((f) => f.total > 0);
@@ -386,15 +378,6 @@ export default function ExamsPage() {
 
   return (
     <div className={cn(examPageShellClass, examSessionMicroScopeClass)}>
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.35] dark:opacity-[0.12]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(36,106,89,0.35) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }}
-        aria-hidden
-      />
       <div className="flex min-w-0 flex-1">
         <aside
           className={cn(
@@ -426,9 +409,6 @@ export default function ExamsPage() {
             viewMode={viewMode}
             subtitle={headerSubtitle}
             selectedGradeLabel={selectedGrade?.displayName}
-            activeSectionLabel={
-              viewMode === "overview" ? sectionLabels[activeSection] : undefined
-            }
             showMobileGradeButton
             showGradeControls
             gradePanelOpen={isGradePanelOpen}
@@ -489,7 +469,7 @@ export default function ExamsPage() {
           />
 
           <div className="flex-1 pb-5 sm:pb-6">
-            <div className="mx-auto max-w-6xl px-3 sm:px-5">
+            <div className="mx-auto max-w-6xl px-3 pt-3 sm:px-5">
               {viewMode === "overview" ? (
                 <div className={examCreativeSurfaceClass}>
                   <ExamSectionNav
@@ -502,7 +482,7 @@ export default function ExamsPage() {
                     ]}
                     active={activeSection}
                     onChange={setActiveSection}
-                    className="border-b border-slate-200/60 bg-gradient-to-b from-slate-50/50 to-white/80 px-1.5 py-1 dark:border-slate-800 dark:from-slate-900/50 dark:to-slate-900/80"
+                    className="border-b border-slate-200/70 px-1.5 py-1.5 dark:border-slate-800"
                   />
 
                   <div className={examPanelBodyClass}>

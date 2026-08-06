@@ -35,15 +35,6 @@ interface ExamSessionsTableProps {
   onTogglePublish: (sessionId: string, published: boolean) => void
 }
 
-const TABLE_SHELL =
-  'overflow-hidden rounded-xl border border-slate-200/80 bg-white ring-1 ring-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:ring-slate-800'
-
-const TABLE_HEAD =
-  'border-b border-slate-200/80 bg-gradient-to-b from-slate-50/90 to-slate-50/40 dark:border-slate-800 dark:from-slate-900/90 dark:to-slate-900/50'
-
-const TH =
-  'text-[10px] font-semibold uppercase tracking-wider text-slate-400'
-
 function formatSessionDates(session: ExamSessionRecord, short = false) {
   if (!session.startDate) return null
   const opts: Intl.DateTimeFormatOptions = short
@@ -219,65 +210,6 @@ function TimetableCell({ session }: { session: ExamSessionRecord }) {
   )
 }
 
-function MobileStatCell({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-white px-2 py-2 text-center dark:bg-slate-900">
-      <p className="text-sm font-bold tabular-nums text-slate-800 dark:text-slate-100">
-        {value}
-      </p>
-      <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </p>
-    </div>
-  )
-}
-
-function MobileListSummary({ sessions }: { sessions: ExamSessionRecord[] }) {
-  const fills = sessions.map((s) => examTimetableFill(s))
-  const withPapers = fills.filter((f) => f.total > 0)
-  const complete = withPapers.filter((f) => f.percent >= 100).length
-  const avgFill =
-    withPapers.length > 0
-      ? Math.round(
-          withPapers.reduce((sum, f) => sum + f.percent, 0) / withPapers.length,
-        )
-      : 0
-
-  return (
-    <div className="grid grid-cols-3 gap-2 border-b border-slate-100 bg-[#246a59]/[0.03] px-3 py-2.5 dark:border-slate-800 dark:bg-[#246a59]/10">
-      <div className="text-center">
-        <p className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100">
-          {sessions.length}
-        </p>
-        <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
-          Sessions
-        </p>
-      </div>
-      <div className="border-x border-slate-200/80 text-center dark:border-slate-700">
-        <p className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-          {complete}
-        </p>
-        <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
-          Fully scheduled
-        </p>
-      </div>
-      <div className="text-center">
-        <p
-          className={cn(
-            'text-base font-bold tabular-nums',
-            timetablePercentClass(avgFill),
-          )}
-        >
-          {withPapers.length > 0 ? `${avgFill}%` : '—'}
-        </p>
-        <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
-          Avg timetable
-        </p>
-      </div>
-    </div>
-  )
-}
-
 function SessionActions({
   href,
   session,
@@ -373,7 +305,7 @@ function SessionActions({
   )
 }
 
-/** Mobile-only: structured ledger rows — organized columns, creative rings & stat strip */
+/** Mobile-only: compact session rows */
 function ExamSessionsMobileTable({
   subdomain,
   sessions,
@@ -382,112 +314,87 @@ function ExamSessionsMobileTable({
 }: ExamSessionsTableProps) {
   return (
     <div className={cn(examTableShellClass, 'lg:hidden')} aria-label="Exam sessions">
-      <MobileListSummary sessions={sessions} />
-
-      <div
-        className={cn(
-          examTableHeadClass,
-          'grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2',
-        )}
-      >
-        <span className={examMicroLabelClass}>Session</span>
-        <span className={cn(examMicroLabelClass, 'text-right')}>Timetable</span>
-      </div>
-
       <ul className="divide-y divide-slate-100 dark:divide-slate-800/80">
-        {sessions.map((session, index) => {
+        {sessions.map((session) => {
           const href = examSessionPath(subdomain, session.id)
           const dates = formatSessionDates(session, true)
           const timetable = examTimetableFill(session)
           const isPublishing = publishingId === session.id
-          const isExam = session.type === 'EXAM'
 
           return (
-            <li
-              key={session.id}
-              className={cn(
-                'relative',
-                index % 2 === 1 && 'bg-slate-50/50 dark:bg-slate-900/30',
-              )}
-            >
-              <span
-                className={cn(
-                  'absolute inset-y-0 left-0 w-[3px]',
-                  isExam
-                    ? 'bg-gradient-to-b from-[#246a59] to-[#246a59]/30'
-                    : 'bg-gradient-to-b from-[#0073ea] to-[#0073ea]/30',
-                )}
-                aria-hidden
-              />
-
-              {/* Primary row — mirrors table columns */}
-              <Link
-                href={href}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3 pl-4 pr-3 active:bg-[#246a59]/5"
-              >
-                <div className="flex min-w-0 items-start gap-2.5">
-                  <SessionTypeIcon type={session.type} size="sm" />
-                  <div className="min-w-0">
-                    <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-900 dark:text-slate-100">
-                      {session.name}
-                    </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={cn(
-                          'inline-flex rounded border px-1 py-px text-[9px] font-semibold uppercase tracking-wide',
-                          examTypeChipClass(session.type),
-                        )}
+            <li key={session.id} className="px-3 py-2.5">
+              <div className="flex items-start gap-2.5">
+                <SessionTypeIcon type={session.type} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link
+                        href={href}
+                        className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-900 hover:text-[#246a59] dark:text-slate-100"
                       >
-                        {session.type}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
+                        {session.name}
+                      </Link>
+                      <p className="mt-0.5 text-[10px] text-slate-500">
+                        <span className="font-medium uppercase tracking-wide text-slate-400">
+                          {session.type}
+                        </span>
+                        {' · '}
                         Term {session.term} · {session.academicYear}
-                      </span>
+                      </p>
                     </div>
+                    <TimetableRing
+                      percent={timetable.percent}
+                      scheduled={timetable.scheduled}
+                      total={timetable.total}
+                      size={36}
+                    />
+                  </div>
+
+                  <p className="mt-1.5 text-[11px] tabular-nums text-slate-500">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {session.gradesCount}
+                    </span>{' '}
+                    grades
+                    <span className="mx-1.5 text-slate-300">·</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {session.subjectsCount}
+                    </span>{' '}
+                    subjects
+                    <span className="mx-1.5 text-slate-300">·</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {session.papersCount}
+                    </span>{' '}
+                    papers
+                  </p>
+
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span className={sessionStatusChipClass(session.status)}>
+                      {statusLabel(session.status)}
+                    </span>
+                    {session.resultsPublished ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Live
+                      </span>
+                    ) : null}
+                    {dates ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-slate-500">
+                        <Calendar className="h-2.5 w-2.5" />
+                        {dates}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-2">
+                    <SessionActions
+                      href={href}
+                      session={session}
+                      isPublishing={isPublishing}
+                      onTogglePublish={onTogglePublish}
+                      mobile
+                    />
                   </div>
                 </div>
-
-                <TimetableRing
-                  percent={timetable.percent}
-                  scheduled={timetable.scheduled}
-                  total={timetable.total}
-                />
-              </Link>
-
-              {/* Scope strip — labeled cells like a table footer */}
-              <div className="mx-3 mb-2 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-slate-200/80 bg-slate-200/80 dark:border-slate-700 dark:bg-slate-700">
-                <MobileStatCell label="Grades" value={session.gradesCount} />
-                <MobileStatCell label="Subjects" value={session.subjectsCount} />
-                <MobileStatCell label="Papers" value={session.papersCount} />
-              </div>
-
-              {/* Meta + actions row */}
-              <div className="space-y-2 px-3 pb-3 pl-4">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className={sessionStatusChipClass(session.status)}>
-                    {statusLabel(session.status)}
-                  </span>
-                  {session.resultsPublished ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      Results live
-                    </span>
-                  ) : null}
-                  {dates ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-1.5 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800">
-                      <Calendar className="h-2.5 w-2.5" />
-                      {dates}
-                    </span>
-                  ) : null}
-                </div>
-
-                <SessionActions
-                  href={href}
-                  session={session}
-                  isPublishing={isPublishing}
-                  onTogglePublish={onTogglePublish}
-                  mobile
-                />
               </div>
             </li>
           )

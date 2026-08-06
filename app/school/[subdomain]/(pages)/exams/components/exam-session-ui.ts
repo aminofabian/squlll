@@ -11,10 +11,10 @@ export const examPageShellClass =
   'relative flex min-h-full flex-col bg-[#f4f6f8] dark:bg-slate-950'
 
 export const examHeroGlowClass =
-  'pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_-10%,rgba(36,106,89,0.18),transparent_50%),radial-gradient(ellipse_60%_50%_at_90%_0%,rgba(0,115,234,0.12),transparent_45%),radial-gradient(ellipse_50%_40%_at_50%_100%,rgba(139,92,246,0.08),transparent_50%)] dark:bg-[radial-gradient(ellipse_80%_60%_at_20%_-10%,rgba(36,106,89,0.25),transparent_50%),radial-gradient(ellipse_60%_50%_at_90%_0%,rgba(0,115,234,0.15),transparent_45%)]'
+  'pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_10%_-20%,rgba(36,106,89,0.1),transparent_55%)]'
 
 export const examCreativeSurfaceClass =
-  'overflow-hidden rounded-xl border border-white/60 bg-white/75 shadow-lg shadow-slate-300/20 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/75 dark:shadow-none sm:rounded-2xl'
+  'overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:rounded-xl'
 
 export const examPageHeaderClass =
   'sticky top-0 z-20 shrink-0 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90'
@@ -23,7 +23,7 @@ export const examPageHeaderAccentClass =
   'h-[2px] bg-gradient-to-r from-[#246a59] via-teal-400/90 to-[#0073ea]/50'
 
 export const examSectionNavClass =
-  'flex gap-0.5 overflow-x-auto rounded-lg border border-slate-200/80 bg-white p-0.5 shadow-sm scrollbar-none snap-x snap-mandatory dark:border-slate-800 dark:bg-slate-900'
+  'flex gap-0.5 overflow-x-auto scrollbar-none snap-x snap-mandatory'
 
 export const examPanelHeaderBarClass =
   'border-b border-slate-100 bg-gradient-to-b from-slate-50/90 to-white px-3 py-1.5 dark:border-slate-800 dark:from-slate-900/90 dark:to-slate-900 sm:px-3.5 sm:py-2'
@@ -43,10 +43,10 @@ export const examEmptyStateClass =
   'flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200/80 bg-slate-50/50 px-4 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40'
 
 export const examTabActiveClass =
-  'bg-gradient-to-br from-[#2f8f7a] via-[#246a59] to-[#1a4c40] text-white shadow-md shadow-[#246a59]/30 ring-1 ring-white/20'
+  'bg-[#246a59] text-white shadow-sm'
 
 export const examTabIdleClass =
-  'text-slate-500 hover:bg-white/80 hover:text-slate-800 hover:shadow-sm dark:hover:bg-slate-800/80 dark:hover:text-slate-200'
+  'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200'
 
 export const examTabGroupLabelClass =
   'rounded-md bg-slate-100/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:bg-slate-800/80'
