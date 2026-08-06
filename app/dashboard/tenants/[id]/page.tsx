@@ -18,15 +18,20 @@ import {
   subscriptionStatusBadgeVariant,
 } from "@/lib/superadmin/subscriptions";
 import { useTenantDetail } from "@/lib/superadmin/useTenantDetail";
+import { enterTenantPortal } from "@/lib/superadmin/tenantsApi";
 import {
   ArrowLeft,
   Building2,
   CalendarDays,
   CreditCard,
+  ExternalLink,
+  Loader2,
+  LogIn,
   Plus,
   Settings2,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -49,6 +54,22 @@ export default function TenantDetailPage() {
     createUser,
   } = useTenantDetail(tenantId);
   const [createOpen, setCreateOpen] = useState(false);
+  const [entering, setEntering] = useState(false);
+
+  const handleEnterPortal = async () => {
+    if (!detail?.tenant) return;
+    setEntering(true);
+    try {
+      const { portalUrl, message } = await enterTenantPortal(detail.tenant.id);
+      toast.success(message || `Opening ${detail.tenant.name}`);
+      window.location.href = portalUrl;
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not enter school portal",
+      );
+      setEntering(false);
+    }
+  };
 
   const activeSubscription = detail?.activeSubscription;
   const remaining = activeSubscription
@@ -122,6 +143,22 @@ export default function TenantDetailPage() {
           actions={
             detail ? (
               <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2"
+                  disabled={entering || detail.tenant.status !== "ACTIVE"}
+                  onClick={() => void handleEnterPortal()}
+                >
+                  {entering ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogIn className="h-4 w-4" />
+                  )}
+                  Enter portal
+                  <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+                </Button>
                 {activeSubscription ? (
                   <Button variant="outline" size="sm" className="h-9 gap-2" asChild>
                     <Link

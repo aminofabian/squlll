@@ -16,15 +16,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTenants } from "@/lib/superadmin/useTenants";
+import { enterTenantPortal } from "@/lib/superadmin/tenantsApi";
 import {
   Building2,
   CalendarDays,
   Circle,
   CreditCard,
+  ExternalLink,
+  Loader2,
+  LogIn,
   Plus,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 function StatusBadge({ status }: { status: string }) {
   const isActive = status === "ACTIVE";
@@ -70,12 +75,27 @@ function TenantsPageContent() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [createOpen, setCreateOpen] = useState(false);
+  const [enteringId, setEnteringId] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get("create") !== "1") return;
     setCreateOpen(true);
     router.replace("/dashboard/tenants", { scroll: false });
   }, [searchParams, router]);
+
+  const handleEnterPortal = async (tenantId: string, schoolName: string) => {
+    setEnteringId(tenantId);
+    try {
+      const { portalUrl, message } = await enterTenantPortal(tenantId);
+      toast.success(message || `Opening ${schoolName}`);
+      window.location.href = portalUrl;
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not enter school portal",
+      );
+      setEnteringId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!searchTerm) return tenants;
@@ -181,10 +201,10 @@ function TenantsPageContent() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-800">
-                    {["School", "Subdomain", "Status", "Created"].map(
+                    {["School", "Subdomain", "Status", "Created", ""].map(
                       (heading) => (
                         <th
-                          key={heading}
+                          key={heading || "actions"}
                           className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                         >
                           {heading}
@@ -224,6 +244,34 @@ function TenantsPageContent() {
                       </td>
                       <td className="px-4 py-3.5 text-sm text-slate-500">
                         {new Date(tenant.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            enteringId === tenant.id ||
+                            tenant.status !== "ACTIVE"
+                          }
+                          className="h-8 gap-1.5"
+                          onClick={() =>
+                            void handleEnterPortal(tenant.id, tenant.name)
+                          }
+                          title={
+                            tenant.status !== "ACTIVE"
+                              ? "School is inactive"
+                              : `Open ${tenant.name} as school admin`
+                          }
+                        >
+                          {enteringId === tenant.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <LogIn className="h-3.5 w-3.5" />
+                          )}
+                          Enter portal
+                          <ExternalLink className="h-3 w-3 opacity-50" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

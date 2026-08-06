@@ -83,3 +83,25 @@ export async function createTenant(
     subscriptionId: result.subscriptionId,
   };
 }
+
+export async function enterTenantPortal(tenantId: string): Promise<{
+  portalUrl: string;
+  message: string;
+}> {
+  const response = await fetch("/api/auth/impersonate-tenant", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ tenantId }),
+  });
+
+  const result = await response.json();
+  if (!response.ok || !result?.portalUrl) {
+    throw new Error(result?.error || "Could not enter school portal");
+  }
+
+  return {
+    portalUrl: result.portalUrl as string,
+    message: (result.message as string) || "Opening school portal",
+  };
+}
