@@ -61,13 +61,15 @@ export function HomepageNav({
   const isNotebook = variant === 'notebook'
   const isTerminal = variant === 'terminal'
   const isCloister = variant === 'cloister'
+  const isVine = variant === 'vine'
   const solid =
     scrolled ||
     open ||
     variant === 'solid' ||
     isNotebook ||
     isTerminal ||
-    isCloister
+    isCloister ||
+    isVine
   const logoUrl = config.logoUrl || runtime.logoUrl
   const initials = runtime.schoolName
     .split(' ')
@@ -75,6 +77,130 @@ export function HomepageNav({
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  if (isVine) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 border-b-[1.5px] border-primary bg-[var(--ss-sage,#EEF0E2)]',
+          runtime.preview ? 'absolute' : 'sticky',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 pl-12 pr-4 sm:pl-16 sm:pr-6 lg:pl-[4.75rem] lg:pr-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-9 w-9 object-contain sm:h-10 sm:w-10"
+              />
+            ) : (
+              <svg
+                className="h-9 w-9 shrink-0"
+                viewBox="0 0 40 40"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M4 18 L20 6 L36 18 V34 H4 Z"
+                  stroke="var(--ss-moss,#2F4A34)"
+                  strokeWidth="2"
+                  fill="var(--ss-sage,#EEF0E2)"
+                />
+                <path
+                  d="M4 18 H36"
+                  stroke="var(--ss-moss,#2F4A34)"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M20 6 V34"
+                  stroke="var(--ss-moss,#2F4A34)"
+                  strokeWidth="1.2"
+                  opacity=".5"
+                />
+                <path
+                  d="M12 34 V22 H28 V34"
+                  stroke="var(--ss-terra,#C1652E)"
+                  strokeWidth="1.5"
+                  fill="none"
+                />
+              </svg>
+            )}
+            <div className="min-w-0">
+              <span className="block truncate font-display text-[1.25rem] leading-none tracking-tight text-[var(--school-ink)]">
+                {runtime.schoolName}
+              </span>
+              {slots.showTagline !== false && (
+                <span className="ss-mono mt-1 block truncate text-[10.5px] uppercase tracking-[0.05em] text-[var(--ss-moss-2,#3E6247)]">
+                  {runtime.tagline || 'Greenhouse campus'}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          <div className="hidden items-center gap-6 lg:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="relative pb-0.5 text-[13.5px] font-semibold text-[var(--ss-soil,#4A3728)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-[var(--ss-terra,#C1652E)] after:transition-transform hover:after:scale-x-100"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-2.5 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-full border-[1.5px] border-primary bg-transparent px-4 text-[13.5px] font-bold text-primary shadow-none hover:bg-primary hover:text-[var(--ss-sage,#EEF0E2)]"
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-3.5 w-3.5" />
+                {slots.portalLabel || 'Visit'}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-full border-[1.5px] border-[var(--ss-terra,#C1652E)] bg-[var(--ss-terra,#C1652E)] px-4 text-[13.5px] font-bold text-white shadow-none hover:bg-[#A6541F]"
+            >
+              <Link href="/apply">
+                {slots.applyLabel || 'Enrol this season'}
+                <ArrowRight className="ml-2 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 text-primary lg:hidden"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-primary/15 bg-[var(--ss-sage,#EEF0E2)] lg:hidden">
+            <div className="space-y-1 px-4 py-4 pl-12">
+              {links.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-2 py-3 text-sm font-semibold text-[var(--ss-soil,#4A3728)] hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
 
   if (isCloister) {
     return (
@@ -924,6 +1050,133 @@ export function HomepageHero({
     )
   }
 
+  if (variant === 'pane') {
+    const stats = getSection<{ items?: HomepageStatItem[] }>(config, 'stats')
+    const firstStat = stats?.slots.items?.[0]
+    const headline = slots.headline || runtime.schoolName
+    const parts = headline.trim().split(/\s+/)
+    const accentWord =
+      parts.length > 1 ? parts.slice(-2).join(' ') : parts[parts.length - 1]
+    const lead =
+      parts.length > 2
+        ? parts.slice(0, -2).join(' ')
+        : parts.length > 1
+          ? parts.slice(0, -1).join(' ')
+          : ''
+
+    return (
+      <section className="relative overflow-hidden pb-24 pt-16 sm:pb-28 sm:pt-20">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 pl-12 pr-4 sm:gap-16 sm:pl-16 sm:pr-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:pl-[4.75rem] lg:pr-8">
+          <div
+            className={cn(
+              'school-hero-copy max-w-xl',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            {slots.eyebrow && (
+              <p className="ss-tag mb-5">{slots.eyebrow}</p>
+            )}
+            <h1 className="ss-italic font-display text-[clamp(2.5rem,4.6vw,4.2rem)] leading-[1.08] text-[var(--ss-moss-3,#1F3226)]">
+              {lead ? (
+                <>
+                  {lead}{' '}
+                  <span className="not-italic text-[var(--ss-terra,#C1652E)]">
+                    {accentWord}
+                  </span>
+                </>
+              ) : (
+                headline
+              )}
+            </h1>
+            <p className="mt-6 max-w-[460px] text-[1.1rem] leading-[1.7] text-[var(--ss-soil,#4A3728)]">
+              {slots.subcopy}
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-6">
+              {slots.primaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-11 rounded-full border-[1.5px] border-[var(--ss-terra,#C1652E)] bg-[var(--ss-terra,#C1652E)] px-6 text-[13.5px] font-bold text-white shadow-none hover:bg-[#A6541F]"
+                >
+                  <Link href={slots.primaryCta.href}>
+                    {slots.primaryCta.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="border-b-2 border-[var(--ss-terra,#C1652E)] pb-0.5 text-sm font-bold text-[var(--ss-moss-3,#1F3226)]"
+                >
+                  {slots.secondaryCta.label} ↓
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              'relative mx-auto w-full max-w-md lg:mx-0',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="ss-pane-back" aria-hidden />
+            <div className="ss-pane relative px-7 pb-7 pt-9 sm:px-8">
+              <span className="ss-mono mb-2 block text-[11px] uppercase tracking-[0.1em] text-[var(--ss-moss-2,#3E6247)]">
+                Est. · Campus
+              </span>
+              <h3 className="font-display text-[1.5rem] text-[var(--ss-moss-3,#1F3226)]">
+                {runtime.schoolName}, in numbers
+              </h3>
+              {img ? (
+                <div className="mt-4 aspect-[5/3] overflow-hidden rounded-sm border border-[var(--ss-moss-3,#1F3226)]/15">
+                  <img
+                    src={img}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    fetchPriority="high"
+                  />
+                </div>
+              ) : null}
+              {firstStat ? (
+                <>
+                  <p className="ss-mono mt-5 text-[3.2rem] font-bold leading-none text-[var(--ss-terra,#C1652E)]">
+                    {firstStat.value}
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--ss-soil,#4A3728)]">
+                    {firstStat.label}
+                    {firstStat.hint ? ` · ${firstStat.hint}` : ''}
+                  </p>
+                </>
+              ) : (
+                <p className="ss-italic mt-5 text-[1.15rem] text-[var(--ss-soil,#4A3728)]">
+                  Every learner is still growing.
+                </p>
+              )}
+              {slots.primaryCta && (
+                <Link
+                  href={slots.primaryCta.href}
+                  className="mt-6 block rounded-full bg-primary px-4 py-3.5 text-center text-[13.5px] font-bold text-[var(--ss-sage,#EEF0E2)] transition-colors hover:bg-[var(--ss-moss-2,#3E6247)]"
+                >
+                  {slots.primaryCta.label}
+                </Link>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="mt-3 block text-center text-[13px] font-bold text-[var(--ss-moss-2,#3E6247)]"
+                >
+                  {slots.secondaryCta.label} →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   if (variant === 'crest') {
     return (
       <section className="relative bg-[var(--school-paper)] pt-[var(--school-nav-h)]">
@@ -1263,6 +1516,42 @@ export function HomepageStats({
     )
   }
 
+  if (variant === 'harvest') {
+    return (
+      <section className="bg-[var(--ss-moss-3,#1F3226)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl pl-12 pr-4 sm:pl-16 sm:pr-6 lg:pl-[4.75rem] lg:pr-8">
+          <Reveal>
+            <p className="ss-tag text-[var(--ss-gold,#E3A73F)]">
+              The harvest report
+            </p>
+            <h2 className="ss-italic mt-3 font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--ss-sage,#EEF0E2)]">
+              What last season yielded.
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid grid-cols-2 gap-5 lg:grid-cols-4 lg:gap-6">
+            {items.map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 70}>
+                <div className="ss-crate px-5 py-6 text-center">
+                  <p className="ss-mono text-[2.3rem] font-bold leading-none text-[var(--ss-gold,#E3A73F)]">
+                    {stat.value}
+                  </p>
+                  <p className="ss-mono mt-2 text-[10px] uppercase tracking-[0.1em] text-[#E7E0C6]">
+                    {stat.label}
+                  </p>
+                  {stat.hint && (
+                    <p className="mt-1 text-[0.78rem] text-[#9FB397]">
+                      {stat.hint}
+                    </p>
+                  )}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-b border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-black/10 lg:grid-cols-4 lg:divide-y-0">
@@ -1463,6 +1752,68 @@ export function HomepageOfferings({
                   </Link>
                 </div>
               </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'seasons') {
+    const plantTags = [
+      'MATHS',
+      'SCIENCES',
+      'LANGUAGES',
+      'ARTS',
+      'TECH',
+      'SPORT',
+    ]
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl pl-12 pr-4 sm:pl-16 sm:pr-6 lg:pl-[4.75rem] lg:pr-8">
+          <Reveal>
+            <div className="mb-12 max-w-xl">
+              {slots.eyebrow && (
+                <p className="ss-tag mb-2">{slots.eyebrow}</p>
+              )}
+              <h2 className="ss-italic font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--ss-moss-3,#1F3226)]">
+                {slots.headline}
+              </h2>
+              <p className="mt-3 text-[0.98rem] leading-relaxed text-[var(--ss-soil,#4A3728)]">
+                {slots.subcopy}
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((item, index) => (
+              <Reveal key={item.title} delay={index * 70}>
+                <div className="ss-season group flex h-full flex-col px-6 pb-7 pt-7">
+                  <span className="ss-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--ss-moss-2,#3E6247)]">
+                    Season {index + 1}
+                  </span>
+                  <h3 className="mt-2.5 font-display text-[1.5rem] text-[var(--ss-moss-3,#1F3226)]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-[0.93rem] leading-relaxed text-[var(--ss-soil,#4A3728)]">
+                    {item.body}
+                  </p>
+                  <Link
+                    href={item.href}
+                    className="mt-5 inline-flex items-center text-sm font-bold text-[var(--ss-terra,#C1652E)]"
+                  >
+                    {item.ctaLabel}
+                    <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-wrap gap-3">
+            {plantTags.map((tag) => (
+              <div key={tag} className="flex w-[5.5rem] flex-col items-center">
+                <div className="h-3.5 w-0.5 bg-[var(--ss-soil,#4A3728)]" />
+                <div className="ss-plant-tag w-full">{tag}</div>
+              </div>
             ))}
           </div>
         </div>
@@ -1827,6 +2178,59 @@ export function HomepageGallery({
     )
   }
 
+  if (variant === 'almanac') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl pl-12 pr-4 sm:pl-16 sm:pr-6 lg:pl-[4.75rem] lg:pr-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="ss-tag mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="ss-italic font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--ss-moss-3,#1F3226)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <Reveal>
+            <div className="ss-almanac mt-10">
+              {images.slice(0, 8).map((image, i) => (
+                <div
+                  key={image.url + i}
+                  className={cn(
+                    'grid grid-cols-[88px_1fr] items-center gap-4 px-5 py-5 sm:grid-cols-[110px_1fr] sm:gap-5 sm:px-7',
+                    i < images.length - 1 &&
+                      'border-b border-[var(--ss-sage-2,#E3E7D3)]',
+                  )}
+                >
+                  <span className="ss-mono text-sm font-bold text-[var(--ss-terra,#C1652E)]">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="hidden h-14 w-20 shrink-0 overflow-hidden rounded-sm sm:block">
+                      <img
+                        src={image.url}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-display text-[1.05rem] text-[var(--ss-moss-3,#1F3226)]">
+                        {image.caption || `Campus moment ${i + 1}`}
+                      </h4>
+                      <p className="mt-0.5 truncate text-[0.88rem] text-[var(--ss-soil,#4A3728)]">
+                        From the planting calendar
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2037,6 +2441,49 @@ export function HomepageTestimonials({
     )
   }
 
+  if (variant === 'pressed') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl pl-12 pr-4 sm:pl-16 sm:pr-6 lg:pl-[4.75rem] lg:pr-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="ss-tag mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="ss-italic font-display text-[clamp(1.85rem,3.5vw,2.4rem)] text-[var(--ss-moss-3,#1F3226)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 70}>
+                <blockquote className="ss-bloom relative flex h-full flex-col overflow-hidden px-6 pb-7 pt-7">
+                  <span
+                    className="pointer-events-none absolute -right-1 top-2 h-16 w-16 rounded-full border border-[var(--ss-terra,#C1652E)]/25 opacity-40"
+                    aria-hidden
+                  />
+                  <p className="ss-mono text-[0.95rem] font-bold text-[var(--ss-terra,#C1652E)]">
+                    → {item.role}
+                  </p>
+                  <p className="mt-3 flex-1 text-[0.93rem] leading-relaxed text-[var(--ss-soil,#4A3728)]">
+                    {item.quote}
+                  </p>
+                  <footer className="mt-5">
+                    <p className="ss-italic font-display text-[1.05rem] text-[var(--ss-moss-3,#1F3226)]">
+                      {item.name}
+                    </p>
+                    <p className="ss-mono mt-0.5 text-[0.78rem] text-[var(--ss-moss-2,#3E6247)]">
+                      Alumni
+                    </p>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2211,6 +2658,48 @@ export function HomepageCtaBand({
                 asChild
                 variant="outline"
                 className="h-11 rounded-full border border-[var(--school-ink)]/20 bg-transparent px-5 text-sm font-semibold text-[var(--school-ink)] shadow-none hover:border-[var(--school-accent)] hover:bg-[var(--school-accent)] hover:text-[var(--school-paper)]"
+              >
+                <Link href={slots.secondaryCta.href}>
+                  {slots.secondaryCta.label}
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'bench') {
+    return (
+      <section className="sticky bottom-0 z-40 border-t-2 border-[var(--ss-gold,#E3A73F)] bg-[var(--ss-soil,#4A3728)] py-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 pl-12 pr-4 sm:flex-row sm:items-center sm:pl-16 sm:pr-6 lg:pl-[4.75rem] lg:pr-8">
+          <div className="min-w-0">
+            <p className="ss-italic font-display text-[1.05rem] text-white sm:text-lg">
+              {slots.headline}
+            </p>
+            <p className="mt-0.5 max-w-xl text-sm text-[#E7DFCB]/60">
+              {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
+                slots.body}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {slots.primaryCta && (
+              <Button
+                asChild
+                className="h-11 rounded-full border-[1.5px] border-[var(--ss-terra,#C1652E)] bg-[var(--ss-terra,#C1652E)] px-6 text-[13.5px] font-bold text-white shadow-none hover:bg-[#A6541F]"
+              >
+                <Link href={slots.primaryCta.href}>
+                  {slots.primaryCta.label}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {slots.secondaryCta && (
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-full border border-[#E7DFCB]/35 bg-transparent px-5 text-[13.5px] font-bold text-[#E7DFCB] shadow-none hover:bg-[#E7DFCB] hover:text-[var(--ss-soil,#4A3728)]"
               >
                 <Link href={slots.secondaryCta.href}>
                   {slots.secondaryCta.label}

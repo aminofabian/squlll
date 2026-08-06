@@ -61,8 +61,8 @@ exports.HOMEPAGE_TEMPLATES = [
     {
         id: 'story-scroll',
         name: 'Story Scroll',
-        tagline: 'Narrative chapters, immersive photo breaks',
-        mood: 'Story',
+        tagline: 'Growing vine, greenhouse panes, harvest report',
+        mood: 'Greenhouse',
     },
     {
         id: 'horizon-board',
@@ -588,12 +588,12 @@ exports.HOMEPAGE_TEMPLATE_THEMES = {
         radiusMode: 'sharp',
     },
     'story-scroll': {
-        primary: '#78716c',
-        primaryDark: '#57534e',
-        primaryLight: '#a8a29e',
-        accent: '#fafaf9',
-        ink: '#292524',
-        paper: '#fafaf9',
+        primary: '#2F4A34',
+        primaryDark: '#1F3226',
+        primaryLight: '#3E6247',
+        accent: '#C1652E',
+        ink: '#26301F',
+        paper: '#EEF0E2',
         radiusMode: 'soft',
     },
     'horizon-board': {

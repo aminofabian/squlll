@@ -112,10 +112,12 @@ export function HomepageShellStyles({
   assembly = false,
   playfield = false,
   garden = false,
+  story = false,
 }: {
   assembly?: boolean
   playfield?: boolean
   garden?: boolean
+  story?: boolean
 }) {
   return (
     <>
@@ -157,6 +159,20 @@ export function HomepageShellStyles({
           />
           <link
             href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      )}
+      {story && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Courier+Prime:wght@400;700&family=Mulish:wght@400;500;600;700&display=swap"
             rel="stylesheet"
           />
         </>
@@ -636,6 +652,156 @@ export function HomepageShellStyles({
           border-color: rgba(36,48,40,0.1) !important;
         }
 
+        /* ---- Story Scroll / greenhouse journal shell ---- */
+        .story-scroll-shell {
+          --ss-sage: #EEF0E2;
+          --ss-sage-2: #E3E7D3;
+          --ss-moss: #2F4A34;
+          --ss-moss-2: #3E6247;
+          --ss-moss-3: #1F3226;
+          --ss-terra: #C1652E;
+          --ss-gold: #E3A73F;
+          --ss-soil: #4A3728;
+          --ss-shadow: rgba(38,48,31,0.2);
+          --ss-ease: cubic-bezier(0.16, 1, 0.3, 1);
+          --font-display: 'Cormorant Garamond', Georgia, serif;
+          font-family: 'Mulish', system-ui, sans-serif;
+          color: var(--school-ink);
+          background: var(--ss-sage);
+          font-size: 1.05rem;
+          line-height: 1.65;
+          overflow-x: hidden;
+        }
+        .story-scroll-shell .font-display,
+        .story-scroll-shell h1,
+        .story-scroll-shell h2,
+        .story-scroll-shell h3 {
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-weight: 600;
+          letter-spacing: -0.01em;
+          text-wrap: balance;
+        }
+        .story-scroll-shell .ss-mono {
+          font-family: 'Courier Prime', 'Courier New', monospace;
+        }
+        .story-scroll-shell .ss-tag {
+          font-family: 'Courier Prime', monospace;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--ss-terra);
+        }
+        .story-scroll-shell .ss-italic {
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic;
+          font-weight: 500;
+        }
+        .story-scroll-shell a:focus-visible,
+        .story-scroll-shell button:focus-visible {
+          outline: 2px solid var(--ss-terra);
+          outline-offset: 3px;
+        }
+        .story-scroll-shell .ss-vine-track {
+          position: fixed;
+          top: 0;
+          left: 32px;
+          width: 4px;
+          height: 100%;
+          z-index: 90;
+          background: rgba(47,74,52,0.15);
+          border-radius: 4px;
+          pointer-events: none;
+        }
+        .story-scroll-shell .ss-vine-fill {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 0%;
+          background: linear-gradient(to bottom, var(--ss-gold), var(--ss-moss-2));
+          border-radius: 4px;
+          transition: height 0.08s linear;
+        }
+        @media (max-width: 980px) {
+          .story-scroll-shell .ss-vine-track { left: 14px; }
+        }
+        @media (max-width: 560px) {
+          .story-scroll-shell .ss-vine-track { left: 10px; width: 3px; }
+        }
+        .story-scroll-shell .ss-pane {
+          position: relative;
+          background: var(--ss-sage);
+          border: 2px solid var(--ss-moss-3);
+          border-radius: 6px;
+          clip-path: polygon(6% 0, 94% 0, 100% 9%, 100% 100%, 0 100%, 0 9%);
+          box-shadow: 0 10px 0 rgba(0,0,0,0.06);
+          animation: pf-pass-settle 0.9s var(--ss-ease) 0.12s both;
+        }
+        .story-scroll-shell .ss-pane-back {
+          position: absolute;
+          inset: 16px -16px -16px 16px;
+          background: var(--ss-moss-3);
+          border-radius: 8px;
+          clip-path: polygon(8% 0, 92% 0, 100% 10%, 100% 100%, 0 100%, 0 10%);
+        }
+        .story-scroll-shell .ss-journal {
+          border-left: 4px solid var(--ss-terra);
+          background: #fff;
+          box-shadow: 8px 8px 0 var(--ss-shadow);
+          border-radius: 0 6px 6px 0;
+        }
+        .story-scroll-shell .ss-season {
+          background: #fff;
+          border: 1.5px solid var(--ss-moss);
+          border-radius: 10px;
+          transition: transform 0.35s var(--ss-ease), box-shadow 0.35s var(--ss-ease);
+        }
+        .story-scroll-shell .ss-season:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 28px var(--ss-shadow);
+        }
+        .story-scroll-shell .ss-plant-tag {
+          background: var(--ss-gold);
+          color: var(--ss-moss-3);
+          font-family: 'Courier Prime', monospace;
+          font-size: 0.7rem;
+          font-weight: 700;
+          padding: 8px 6px;
+          border-radius: 4px 4px 2px 2px;
+          text-align: center;
+          line-height: 1.3;
+        }
+        .story-scroll-shell .ss-crate {
+          background: #3A5940;
+          border: 1px solid rgba(227,167,63,0.35);
+          border-radius: 6px;
+        }
+        .story-scroll-shell .ss-almanac {
+          background: #fff;
+          border: 1.5px solid var(--ss-moss);
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .story-scroll-shell .ss-bloom {
+          background: var(--ss-sage-2);
+          border-radius: 8px;
+        }
+        .story-scroll-shell footer {
+          background: var(--ss-moss-3) !important;
+        }
+        .story-scroll-shell footer h3 {
+          color: var(--ss-gold) !important;
+          font-family: 'Courier Prime', monospace !important;
+          letter-spacing: 0.14em !important;
+          text-transform: uppercase;
+          font-size: 0.78rem !important;
+        }
+        .story-scroll-shell section.border-y {
+          background: #fff !important;
+          border-color: rgba(47,74,52,0.12) !important;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .school-hero-copy, .school-hero-media, .school-accent-line { animation: none !important; }
           .assembly-hall-shell .ah-ticker-track,
@@ -652,11 +818,39 @@ export function HomepageShellStyles({
           .garden-court-shell .gc-label-card { animation: none !important; }
           .garden-court-shell .gc-planter:hover,
           .garden-court-shell .gc-specimen:hover { transform: none; }
+          .story-scroll-shell .ss-pane { animation: none !important; }
+          .story-scroll-shell .ss-season:hover { transform: none; }
+          .story-scroll-shell .ss-vine-fill { transition: none; }
         }
       `,
         }}
       />
     </>
+  )
+}
+
+/** Fixed growing-vine scroll progress for Story Scroll. */
+export function StoryScrollVine() {
+  const fillRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = fillRef.current
+      if (!el) return
+      const h = document.documentElement
+      const max = h.scrollHeight - h.clientHeight
+      const pct = max > 0 ? (h.scrollTop / max) * 100 : 0
+      el.style.height = `${Math.min(100, Math.max(0, pct))}%`
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <div className="ss-vine-track" aria-hidden>
+      <div ref={fillRef} className="ss-vine-fill" />
+    </div>
   )
 }
 

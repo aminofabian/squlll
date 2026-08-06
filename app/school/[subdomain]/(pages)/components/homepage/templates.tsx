@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 import {
   HomepageRuntime,
   HomepageShellStyles,
+  StoryScrollVine,
   shellClass,
   themeStyle,
 } from './shared'
@@ -87,10 +88,13 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
     cta: 'block',
   },
   'story-scroll': {
-    hero: 'dawn',
-    stats: 'band',
-    offerings: 'chapters',
-    cta: 'primary',
+    nav: 'vine',
+    hero: 'pane',
+    stats: 'harvest',
+    offerings: 'seasons',
+    gallery: 'almanac',
+    testimonials: 'pressed',
+    cta: 'bench',
   },
   'horizon-board': {
     nav: 'glass',
@@ -117,6 +121,7 @@ const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
   'assembly-hall': 'assembly-hall-shell bg-[var(--school-paper)]',
   playfield: 'playfield-shell bg-[var(--school-paper)]',
   'garden-court': 'garden-court-shell bg-[var(--school-paper)]',
+  'story-scroll': 'story-scroll-shell bg-[var(--school-paper)]',
   'night-lights': 'bg-[#070f0c]',
 }
 
@@ -143,7 +148,9 @@ function Shell({
         assembly={config.templateId === 'assembly-hall'}
         playfield={config.templateId === 'playfield'}
         garden={config.templateId === 'garden-court'}
+        story={config.templateId === 'story-scroll'}
       />
+      {config.templateId === 'story-scroll' && <StoryScrollVine />}
       {children}
     </div>
   )
