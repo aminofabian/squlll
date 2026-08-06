@@ -281,83 +281,103 @@ export function HomepageHero({
     ].filter(Boolean) as string[]
     const tickerLine =
       tickerBits.length > 0
-        ? tickerBits.map((t) => `★ ${t}`).join('   ·   ')
-        : `★ Welcome to ${runtime.schoolName}`
+        ? tickerBits.join('  ·  ')
+        : `Welcome to ${runtime.schoolName}`
+
+    const headline = slots.headline || runtime.schoolName
+    const headlineParts = headline.trim().split(/\s+/)
+    const accentWord =
+      headlineParts.length > 1 ? headlineParts[headlineParts.length - 1] : null
+    const headlineLead =
+      accentWord && headlineParts.length > 1
+        ? headlineParts.slice(0, -1).join(' ')
+        : headline
 
     return (
       <>
         <div className="pt-[var(--school-nav-h)]">
           <div className="overflow-hidden border-b-2 border-[var(--school-accent)] bg-[var(--school-ink)] text-[var(--ah-cream,#FBF6E9)]">
-            <div className="ah-ticker-track ah-mono inline-block whitespace-nowrap py-2.5 text-[12.5px] tracking-wide">
-              <span className="mx-6">{tickerLine}</span>
-              <span className="mx-6" aria-hidden>
+            <div className="ah-ticker-track ah-mono inline-block whitespace-nowrap py-2.5 text-[12px] tracking-[0.08em]">
+              <span className="mx-7">{tickerLine}</span>
+              <span className="mx-7" aria-hidden>
                 {tickerLine}
               </span>
             </div>
           </div>
         </div>
         <section className="ah-ruled relative overflow-hidden pb-24 pt-16 sm:pb-28 sm:pt-24">
-          <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
-            <div className={cn('school-hero-copy max-w-xl', ready ? '' : 'opacity-0')}>
-              <p className="ah-mono mb-4 inline-flex items-center gap-2 text-[12.5px] uppercase tracking-[0.14em] text-primary">
-                <span aria-hidden>—</span>
-                {slots.eyebrow || runtime.schoolName}
-              </p>
-              <h1 className="font-display text-[2.6rem] font-extrabold leading-[1.02] tracking-tight text-[var(--school-ink)] sm:text-6xl lg:text-[4.4rem]">
-                {slots.headline || runtime.schoolName}
+          <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:gap-20 lg:px-8">
+            <div className={cn('school-hero-copy max-w-xl pl-6 sm:pl-10', ready ? '' : 'opacity-0')}>
+              {slots.eyebrow && (
+                <p className="ah-margin-note mb-5">{slots.eyebrow}</p>
+              )}
+              <h1 className="font-display text-[clamp(2.75rem,6vw,4.5rem)] font-extrabold leading-[0.98] text-[var(--school-ink)]">
+                {headlineLead}
+                {accentWord ? (
+                  <>
+                    {' '}
+                    <em className="font-medium italic text-primary [font-family:Literata,Georgia,serif]">
+                      {accentWord}
+                    </em>
+                  </>
+                ) : null}
               </h1>
-              <p className="mt-6 max-w-md text-lg leading-relaxed text-[var(--ah-muted,#5B5241)]">
+              <p className="ah-prose mt-7 text-[1.125rem]">
                 {slots.subcopy}
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-5">
+              <div className="mt-9 flex flex-wrap items-center gap-5">
                 <HeroButtons slots={slots} tone="notebook" />
               </div>
             </div>
 
             <div
               className={cn(
-                'school-hero-copy school-hero-copy-delay relative mx-auto w-full max-w-md lg:mx-0',
+                'relative mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end',
                 ready ? '' : 'opacity-0',
               )}
             >
-              <div className="ah-scribble absolute -inset-x-4 -inset-y-6 bg-[var(--school-ink)] opacity-90 sm:-inset-x-5" />
-              <div className="relative z-10 border-2 border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] px-8 pb-7 pt-9 shadow-[10px_10px_0_var(--ah-shadow,rgba(28,43,69,0.18))]">
-                <div className="absolute -right-3 -top-4 flex h-[76px] w-[76px] -rotate-[11deg] flex-col items-center justify-center rounded-full border-[3px] border-dashed border-primary bg-[var(--ah-cream,#FBF6E9)] text-center font-display text-[11px] font-extrabold leading-tight text-primary">
-                  <span className="text-lg">A+</span>
+              <div className="ah-scribble absolute -inset-x-5 -inset-y-7 bg-[var(--school-ink)] opacity-[0.92] sm:-inset-x-6" />
+              <div className="ah-stat-card relative z-10 border-2 border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] px-7 pb-7 pt-9 sm:px-8">
+                <div className="ah-stamp absolute -right-3 -top-4 flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full border-[3px] border-dashed border-primary bg-[var(--ah-cream,#FBF6E9)] text-center font-display text-[11px] font-extrabold leading-tight text-primary">
+                  <span className="text-[1.15rem] leading-none">A+</span>
                   Campus
                 </div>
                 {img ? (
-                  <div className="mb-5 aspect-[5/3] overflow-hidden rounded-sm border border-[var(--school-ink)]/15">
+                  <div className="mb-5 aspect-[5/3] overflow-hidden border border-[var(--school-ink)]/20">
                     <img
                       src={img}
                       alt=""
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition-transform duration-[1.2s] ease-out hover:scale-[1.03]"
                       fetchPriority="high"
                     />
                   </div>
                 ) : null}
-                <h3 className="ah-hand text-xl font-bold text-[var(--school-ink)]">
+                <h3 className="ah-hand text-[1.35rem] font-bold leading-tight text-[var(--school-ink)]">
                   {runtime.schoolName}
                 </h3>
                 {firstStat ? (
                   <>
-                    <p className="mt-1 font-display text-5xl font-extrabold tracking-tight text-primary sm:text-6xl">
+                    <p className="mt-1 font-display text-[3.25rem] font-extrabold leading-none tracking-tight text-primary sm:text-[3.75rem]">
                       {firstStat.value}
                     </p>
-                    <p className="mt-1 text-sm text-[var(--ah-muted,#5B5241)]">
+                    <p className="mt-2 text-[0.95rem] leading-snug text-[var(--ah-muted,#4A4235)]">
                       {firstStat.label}
-                      {firstStat.hint ? ` · ${firstStat.hint}` : ''}
+                      {firstStat.hint ? (
+                        <span className="ah-hand ml-1 text-primary">
+                          · {firstStat.hint}
+                        </span>
+                      ) : null}
                     </p>
                   </>
                 ) : (
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--ah-muted,#5B5241)]">
+                  <p className="mt-2 text-[0.95rem] leading-relaxed text-[var(--ah-muted,#4A4235)]">
                     {slots.subcopy}
                   </p>
                 )}
                 {slots.primaryCta && (
                   <Link
                     href={slots.primaryCta.href}
-                    className="mt-5 block w-full rounded-lg bg-gradient-to-br from-[var(--primary-dark)] to-[var(--school-ink)] px-4 py-3.5 text-center font-display text-sm font-bold tracking-wide text-[var(--ah-cream,#FBF6E9)] transition-colors hover:from-primary hover:to-primary"
+                    className="mt-6 block w-full rounded-lg bg-[var(--school-ink)] px-4 py-3.5 text-center font-display text-sm font-bold tracking-wide text-[var(--ah-cream,#FBF6E9)] transition-[background-color,transform] duration-200 hover:bg-primary active:scale-[0.98]"
                   >
                     {slots.primaryCta.label}
                   </Link>
@@ -609,24 +629,30 @@ export function HomepageStats({
 
   if (variant === 'chalk') {
     return (
-      <section className="bg-[var(--school-ink)] py-20 text-[var(--ah-cream,#FBF6E9)] sm:py-24">
+      <section className="ah-chalk-surface bg-[var(--school-ink)] py-20 text-[var(--ah-cream,#FBF6E9)] sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <p className="ah-mono text-xs uppercase tracking-[0.14em] text-[var(--school-accent)]">
-              The numbers
+            <p className="ah-margin-note text-[var(--school-accent)]">
+              Chalked up this year
             </p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Chalked up, term by term.
+            <h2 className="mt-3 font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-bold leading-tight">
+              The numbers on the board.
             </h2>
           </Reveal>
-          <div className="mt-10 grid grid-cols-2 gap-8 sm:gap-10 lg:grid-cols-4">
+          <div className="mt-12 grid grid-cols-2 gap-x-8 gap-y-12 lg:grid-cols-4">
             {items.map((stat, i) => (
               <Reveal key={stat.label} delay={i * 70}>
-                <div className="border-l-2 border-white/25 pl-4">
-                  <p className="ah-hand text-4xl font-bold sm:text-5xl">{stat.value}</p>
-                  <p className="mt-2 text-sm leading-snug text-[#C9C3AE]">
+                <div className="border-l border-white/20 pl-5">
+                  <p className="ah-hand ah-chalk-num text-[clamp(2.5rem,4vw,3.25rem)] font-bold leading-none">
+                    {stat.value}
+                  </p>
+                  <p className="mt-3 text-[0.9rem] leading-snug tracking-[0.01em] text-[#D4CEB8]">
                     {stat.label}
-                    {stat.hint ? ` — ${stat.hint}` : ''}
+                    {stat.hint ? (
+                      <span className="mt-1 block text-[0.8rem] text-[#B8B19A]">
+                        {stat.hint}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
               </Reveal>
@@ -687,46 +713,45 @@ export function HomepageOfferings({
       '#AE3A2B',
     ]
     return (
-      <section className="py-16 sm:py-24">
+      <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="mb-12 max-w-xl">
-              <p className="ah-mono text-xs uppercase tracking-[0.14em] text-primary">
-                {slots.eyebrow}
-              </p>
-              <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--school-ink)] sm:text-4xl">
+            <div className="mb-14 max-w-xl">
+              {slots.eyebrow && (
+                <p className="ah-margin-note mb-2">{slots.eyebrow}</p>
+              )}
+              <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-bold leading-tight text-[var(--school-ink)]">
                 {slots.headline}
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-[var(--ah-muted,#5B5241)]">
-                {slots.subcopy}
-              </p>
+              <p className="ah-prose mt-4">{slots.subcopy}</p>
             </div>
           </Reveal>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item, index) => (
               <Reveal key={item.title} delay={index * 70}>
-                <div className="group relative overflow-hidden rounded-md border-2 border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] px-5 pb-6 pt-8 transition-transform hover:-translate-y-1">
-                  <span className="ah-mono absolute left-5 top-0 rounded-b-md bg-[var(--school-ink)] px-2.5 py-1 text-[11px] tracking-wide text-[var(--ah-cream,#FBF6E9)]">
-                    Period {index + 1}
+                <div className="ah-period group relative overflow-hidden rounded-md border-2 border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] px-5 pb-6 pt-9">
+                  <span className="ah-mono absolute left-5 top-0 rounded-b-md bg-[var(--school-ink)] px-2.5 py-1 text-[10px] tracking-[0.06em] text-[var(--ah-cream,#FBF6E9)]">
+                    P{index + 1}
                   </span>
-                  <h3 className="font-display text-xl font-bold text-[var(--school-ink)]">
+                  <h3 className="flex items-start gap-2.5 font-display text-[1.2rem] font-bold leading-snug text-[var(--school-ink)]">
                     <span
-                      className="mr-2 inline-block h-2.5 w-2.5 rounded-full"
+                      className="mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{
                         background: periodColors[index % periodColors.length],
                       }}
+                      aria-hidden
                     />
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--ah-muted,#5B5241)]">
+                  <p className="mt-3 text-[0.95rem] leading-relaxed text-[var(--ah-muted,#4A4235)]">
                     {item.body}
                   </p>
                   <Link
                     href={item.href}
-                    className="mt-4 inline-flex items-center text-sm font-semibold text-primary"
+                    className="mt-5 inline-flex items-center border-b-2 border-transparent text-sm font-semibold text-primary transition-[border-color] hover:border-primary"
                   >
                     {item.ctaLabel}
-                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                    <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>
               </Reveal>
@@ -949,35 +974,35 @@ export function HomepageGallery({
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <p className="ah-mono text-xs uppercase tracking-[0.14em] text-primary">
-              {data.slots.eyebrow || 'Pinned to the noticeboard'}
-            </p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--school-ink)] sm:text-4xl">
+            {data.slots.eyebrow && (
+              <p className="ah-margin-note mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-bold leading-tight text-[var(--school-ink)]">
               {data.slots.headline}
             </h2>
           </Reveal>
           <Reveal>
-            <div className="relative mt-10 overflow-hidden rounded-[10px] bg-[var(--ah-cork,#8B5E3C)] p-8 shadow-[inset_0_0_60px_rgba(0,0,0,0.28)] sm:p-11">
+            <div className="relative mt-12 overflow-hidden rounded-[12px] bg-[var(--ah-cork,#8B5E3C)] p-7 shadow-[inset_0_0_80px_rgba(0,0,0,0.32)] sm:p-11">
               <div
-                className="pointer-events-none absolute inset-0 opacity-50"
+                className="pointer-events-none absolute inset-0 opacity-40"
                 style={{
                   backgroundImage:
-                    'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 1.3px)',
-                  backgroundSize: '9px 9px',
+                    'radial-gradient(rgba(0,0,0,0.18) 1px, transparent 1.4px)',
+                  backgroundSize: '10px 10px',
                 }}
               />
-              <div className="relative z-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="relative z-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
                 {images.slice(0, 8).map((image, i) => (
                   <figure
                     key={image.url + i}
                     className={cn(
-                      'relative min-h-[180px] p-4 shadow-[4px_6px_10px_rgba(0,0,0,0.25)]',
+                      'ah-sticky relative min-h-[188px] p-3.5 shadow-[4px_8px_14px_rgba(0,0,0,0.28)]',
                       rotates[i % rotates.length],
                     )}
                     style={{ background: noteColors[i % noteColors.length] }}
                   >
-                    <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full bg-primary shadow-[0_2px_3px_rgba(0,0,0,0.4)]" />
-                    <div className="aspect-[4/3] overflow-hidden">
+                    <span className="absolute -top-2.5 left-1/2 h-[15px] w-[15px] -translate-x-1/2 rounded-full bg-primary shadow-[0_2px_4px_rgba(0,0,0,0.45),inset_-1px_-1px_0_rgba(0,0,0,0.2)]" />
+                    <div className="aspect-[4/3] overflow-hidden bg-black/5">
                       <img
                         src={image.url}
                         alt={image.caption || ''}
@@ -986,7 +1011,7 @@ export function HomepageGallery({
                       />
                     </div>
                     {image.caption && (
-                      <figcaption className="ah-hand mt-2 text-sm leading-snug text-[var(--school-ink)]">
+                      <figcaption className="ah-hand mt-2.5 px-0.5 text-[0.95rem] leading-snug text-[var(--school-ink)]">
                         {image.caption}
                       </figcaption>
                     )}
@@ -1059,41 +1084,45 @@ export function HomepageTestimonials({
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <p className="ah-mono text-xs uppercase tracking-[0.14em] text-primary">
-              {data.slots.eyebrow || 'Signed in the yearbook'}
-            </p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--school-ink)] sm:text-4xl">
+            {data.slots.eyebrow && (
+              <p className="ah-margin-note mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-bold leading-tight text-[var(--school-ink)]">
               {data.slots.headline}
             </h2>
           </Reveal>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             {items.map((item, i) => (
               <Reveal key={item.name + i} delay={i * 70}>
-                <blockquote className="relative rounded-sm border border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] p-6">
-                  <span
-                    className="mb-3 block font-display text-4xl leading-none text-primary/40"
-                    aria-hidden
-                  >
-                    ❝
-                  </span>
-                  <p className="text-base leading-relaxed text-[var(--school-ink)]">
+                <blockquote className="relative flex h-full flex-col rounded-sm border border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] p-6 shadow-[4px_5px_0_var(--ah-shadow,rgba(28,43,69,0.14))]">
+                  <p className="flex-1 text-[1.05rem] leading-relaxed text-[var(--school-ink)]">
+                    <span className="ah-hand mr-1 text-2xl leading-none text-primary" aria-hidden>
+                      “
+                    </span>
                     {item.quote}
                   </p>
-                  <footer className="mt-5 flex items-center gap-3">
+                  <footer className="mt-6 flex items-center gap-3 border-t border-[var(--school-ink)]/10 pt-4">
                     {item.photoUrl ? (
                       <img
                         src={item.photoUrl}
                         alt=""
-                        className="h-10 w-10 rounded-full object-cover"
+                        className="h-10 w-10 rounded-full object-cover ring-2 ring-[var(--school-ink)]/10"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-[var(--primary-dark)]" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--school-ink)] font-display text-xs font-bold text-[var(--ah-cream,#FBF6E9)]">
+                        {item.name
+                          .split(' ')
+                          .map((w) => w[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </div>
                     )}
                     <div>
                       <p className="text-sm font-semibold text-[var(--school-ink)]">
                         {item.name}
                       </p>
-                      <p className="ah-hand text-sm text-[var(--ah-muted,#5B5241)]">
+                      <p className="ah-hand text-[0.9rem] text-[var(--ah-muted,#4A4235)]">
                         {item.role}
                       </p>
                     </div>
@@ -1169,13 +1198,13 @@ export function HomepageCtaBand({
 
   if (variant === 'fees') {
     return (
-      <section className="sticky bottom-0 z-40 border-t-2 border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] py-4 shadow-[0_-6px_20px_rgba(0,0,0,0.08)]">
+      <section className="sticky bottom-0 z-40 border-t-2 border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)]/95 py-3.5 shadow-[0_-8px_28px_rgba(28,43,69,0.1)] backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
           <div className="min-w-0">
-            <p className="font-display text-lg font-bold tracking-tight text-[var(--school-ink)] sm:text-xl">
+            <p className="font-display text-lg font-bold leading-tight text-[var(--school-ink)] sm:text-xl">
               {slots.headline}
             </p>
-            <p className="mt-0.5 text-sm text-[var(--ah-muted,#5B5241)]">
+            <p className="mt-0.5 max-w-xl text-sm leading-snug text-[var(--ah-muted,#4A4235)]">
               {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
                 slots.body}
             </p>
@@ -1184,7 +1213,7 @@ export function HomepageCtaBand({
             {slots.primaryCta && (
               <Button
                 asChild
-                className="h-11 rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] px-6 text-sm font-bold text-[var(--ah-cream,#FBF6E9)] shadow-none hover:border-primary hover:bg-primary"
+                className="h-11 rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] px-6 text-sm font-bold text-[var(--ah-cream,#FBF6E9)] shadow-none transition-[background-color,border-color,transform] hover:border-primary hover:bg-primary active:scale-[0.98]"
               >
                 <Link href={slots.primaryCta.href}>
                   {slots.primaryCta.label}
