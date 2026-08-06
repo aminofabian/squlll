@@ -290,7 +290,7 @@ export function SchoolAuthShell({
               isStory &&
                 'ss-pane rounded-md border-[var(--ss-moss-3,#1F3226)] bg-[var(--ss-sage,#EEF0E2)]',
               isHorizon &&
-                'hb-notes rounded-sm border-transparent border-l-4 border-l-[var(--hb-gold,#C9A227)] bg-white',
+                'hb-notes rounded-sm bg-white',
               !themed &&
                 cn(
                   'border-[var(--school-ink)] bg-white',

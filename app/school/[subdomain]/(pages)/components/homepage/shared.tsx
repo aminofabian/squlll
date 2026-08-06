@@ -836,7 +836,10 @@ export function HomepageShellStyles({
           --font-display: 'Playfair Display', Georgia, serif;
           font-family: 'DM Sans', system-ui, sans-serif;
           color: var(--school-ink);
-          background: var(--hb-cream);
+          background:
+            radial-gradient(ellipse 80% 50% at 100% 0%, rgba(110,36,48,0.07), transparent 50%),
+            radial-gradient(ellipse 60% 40% at 0% 100%, rgba(201,162,39,0.06), transparent 45%),
+            var(--hb-cream);
           font-size: 1.05rem;
           line-height: 1.65;
           overflow-x: hidden;
@@ -847,7 +850,7 @@ export function HomepageShellStyles({
         .horizon-board-shell h3 {
           font-family: 'Playfair Display', Georgia, serif;
           font-weight: 700;
-          letter-spacing: -0.01em;
+          letter-spacing: -0.02em;
           text-wrap: balance;
         }
         .horizon-board-shell .hb-mono {
@@ -881,7 +884,7 @@ export function HomepageShellStyles({
           width: 96px;
           height: 96px;
           z-index: 90;
-          filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+          filter: drop-shadow(0 10px 18px rgba(0,0,0,0.4));
           pointer-events: none;
         }
         .horizon-board-shell .hb-vinyl-disc {
@@ -928,43 +931,70 @@ export function HomepageShellStyles({
           background-image: repeating-linear-gradient(
             to bottom,
             transparent 0 42px,
-            rgba(27,21,18,0.08) 42px 43px,
+            rgba(244,236,216,0.35) 42px 43px,
             transparent 43px 85px
           );
         }
+        .horizon-board-shell .hb-label-settle {
+          animation: pf-pass-settle 0.95s var(--hb-ease) 0.14s both;
+        }
         .horizon-board-shell .hb-label-disc {
           width: min(340px, 86vw);
-          height: min(340px, 86vw);
+          aspect-ratio: 1;
           border-radius: 50%;
           position: relative;
-          background: repeating-conic-gradient(var(--school-ink) 0deg 2deg, #241d17 2deg 6deg);
+          background: var(--school-ink);
           box-shadow:
-            0 20px 40px var(--hb-shadow),
-            0 0 0 10px var(--hb-cream),
+            10px 18px 0 rgba(27,21,18,0.18),
+            0 28px 48px rgba(27,21,18,0.35),
+            0 0 0 10px rgba(244,236,216,0.92),
             0 0 0 12px var(--school-ink);
           display: flex;
           align-items: center;
           justify-content: center;
-          animation: pf-pass-settle 0.95s var(--hb-ease) 0.12s both;
+          transition: transform 0.45s var(--hb-ease);
+        }
+        .horizon-board-shell .hb-label-disc:hover {
+          transform: translateY(-4px) rotate(-1.5deg);
+        }
+        .horizon-board-shell .hb-label-photo {
+          filter: saturate(0.92) contrast(1.05);
+        }
+        .horizon-board-shell .hb-label-grooves {
+          background:
+            repeating-radial-gradient(
+              circle at center,
+              transparent 0 5px,
+              rgba(27,21,18,0.45) 5px 6px,
+              transparent 6px 11px
+            );
+          box-shadow: inset 0 0 40px rgba(0,0,0,0.35);
         }
         .horizon-board-shell .hb-label-center {
-          width: 62%;
-          height: 62%;
+          width: 58%;
+          height: 58%;
           border-radius: 50%;
-          background: var(--hb-burgundy);
+          background:
+            radial-gradient(circle at 30% 28%, rgba(140,49,64,0.95), var(--hb-burgundy) 55%, var(--hb-burgundy-3));
           border: 3px solid var(--hb-gold);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 14px;
+          padding: 16px 14px;
           color: var(--hb-cream);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.12),
+            0 8px 20px rgba(0,0,0,0.28);
         }
         .horizon-board-shell .hb-notes {
-          border-left: 4px solid var(--hb-gold);
+          border: 1px solid rgba(27,21,18,0.12);
+          border-top: 3px solid var(--hb-gold);
           background: #fff;
-          box-shadow: 8px 8px 0 var(--hb-shadow);
+          box-shadow:
+            8px 10px 0 rgba(27,21,18,0.12),
+            0 16px 32px rgba(27,21,18,0.1);
         }
         .horizon-board-shell .hb-movement {
           border: 1.5px solid var(--school-ink);
@@ -973,28 +1003,53 @@ export function HomepageShellStyles({
           transition: transform 0.35s var(--hb-ease), box-shadow 0.35s var(--hb-ease);
         }
         .horizon-board-shell .hb-movement:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 12px 28px var(--hb-shadow);
+          transform: translateY(-4px);
+          box-shadow:
+            6px 10px 0 rgba(27,21,18,0.1),
+            0 18px 36px rgba(27,21,18,0.12);
         }
         .horizon-board-shell .hb-score-card {
-          border: 1px solid rgba(201,162,39,0.35);
+          border: 1px solid rgba(201,162,39,0.4);
           border-radius: 6px;
-          background: #241D17;
+          background:
+            radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,162,39,0.08), transparent 55%),
+            #241D17;
+          transition: transform 0.35s var(--hb-ease), border-color 0.35s var(--hb-ease);
+        }
+        .horizon-board-shell .hb-score-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(201,162,39,0.7);
         }
         .horizon-board-shell .hb-programme {
           background: #fff;
           border: 1.5px solid var(--school-ink);
           border-radius: 4px;
           overflow: hidden;
+          box-shadow:
+            6px 8px 0 rgba(27,21,18,0.1),
+            0 14px 28px rgba(27,21,18,0.08);
+        }
+        .horizon-board-shell .hb-programme .group:hover h4 {
+          color: var(--hb-burgundy);
         }
         .horizon-board-shell .hb-liner {
-          background: var(--hb-burgundy);
+          background:
+            radial-gradient(ellipse 70% 50% at 100% 0%, rgba(201,162,39,0.18), transparent 50%),
+            var(--hb-burgundy);
           color: var(--hb-cream);
           border-radius: 6px;
-          box-shadow: 6px 6px 0 var(--hb-shadow);
+          box-shadow:
+            6px 8px 0 rgba(27,21,18,0.16),
+            0 16px 32px rgba(27,21,18,0.14);
+          transition: transform 0.35s var(--hb-ease);
+        }
+        .horizon-board-shell .hb-liner:hover {
+          transform: translateY(-3px);
         }
         .horizon-board-shell footer {
-          background: var(--hb-burgundy-3) !important;
+          background:
+            radial-gradient(ellipse 50% 40% at 80% 0%, rgba(201,162,39,0.12), transparent 50%),
+            var(--hb-burgundy-3) !important;
         }
         .horizon-board-shell footer h3 {
           color: var(--hb-gold) !important;
@@ -1028,8 +1083,11 @@ export function HomepageShellStyles({
           .story-scroll-shell .ss-season:hover { transform: none; }
           .story-scroll-shell .ss-vine-fill { transition: none; }
           .horizon-board-shell .hb-vinyl-disc { animation: none !important; }
-          .horizon-board-shell .hb-label-disc { animation: none !important; }
-          .horizon-board-shell .hb-movement:hover { transform: none; }
+          .horizon-board-shell .hb-label-settle { animation: none !important; }
+          .horizon-board-shell .hb-label-disc:hover,
+          .horizon-board-shell .hb-movement:hover,
+          .horizon-board-shell .hb-score-card:hover,
+          .horizon-board-shell .hb-liner:hover { transform: none; }
         }
       `,
         }}

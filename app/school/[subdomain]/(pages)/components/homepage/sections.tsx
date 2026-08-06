@@ -1289,38 +1289,65 @@ export function HomepageHero({
         : parts.length > 1
           ? parts.slice(0, -1).join(' ')
           : ''
+    const overlay = Math.min(
+      0.85,
+      Math.max(0.35, Number(slots.overlayStrength ?? 0.55)),
+    )
 
     return (
-      <section className="hb-staff relative overflow-hidden pb-24 pt-16 sm:pb-28 sm:pt-20">
-        <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:gap-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-8">
+      <section className="relative min-h-[min(100svh,900px)] overflow-hidden bg-[var(--school-ink)]">
+        <div className="absolute inset-0">
+          <img
+            src={img}
+            alt=""
+            aria-hidden
+            fetchPriority="high"
+            className={cn(
+              'school-hero-media h-full w-full scale-105 object-cover object-[52%_28%]',
+              ready ? '' : 'opacity-0',
+            )}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(112deg, rgba(27,21,18,${0.94 * overlay + 0.06}) 0%, rgba(74,22,32,${0.78 * overlay}) 38%, rgba(27,21,18,${0.42 * overlay}) 72%, rgba(27,21,18,0.22) 100%)`,
+            }}
+          />
+          <div
+            className="hb-staff pointer-events-none absolute inset-0 opacity-[0.22] mix-blend-soft-light"
+            aria-hidden
+          />
+          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[var(--school-ink)]/85 to-transparent" />
+        </div>
+
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-[calc(var(--school-nav-h)+3rem)] sm:gap-14 sm:px-6 sm:pb-24 sm:pt-[calc(var(--school-nav-h)+4rem)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
           <div
             className={cn(
               'school-hero-copy max-w-xl',
               ready ? '' : 'opacity-0',
             )}
           >
-            {slots.eyebrow && (
-              <p className="hb-tag mb-5">{slots.eyebrow}</p>
-            )}
-            <h1 className="hb-italic font-display text-[clamp(2.5rem,4.6vw,4.2rem)] leading-[1.08] text-[var(--school-ink)]">
+            <h1 className="hb-italic font-display text-[clamp(2.6rem,5vw,4.35rem)] leading-[1.04] tracking-[-0.02em] text-[var(--hb-cream,#F4ECD8)]">
               {lead ? (
                 <>
                   {lead}{' '}
-                  <span className="not-italic text-primary">{accentWord}</span>
+                  <span className="not-italic text-[var(--hb-gold,#C9A227)]">
+                    {accentWord}
+                  </span>
                 </>
               ) : (
                 headline
               )}
             </h1>
-            <p className="mt-6 max-w-[460px] text-[1.1rem] leading-[1.7] text-[var(--hb-charcoal,#332720)]">
+            <p className="mt-6 max-w-[38ch] text-[1.08rem] leading-[1.7] text-[#E8DCC6]">
               {slots.subcopy}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-6">
+            <div className="mt-9 flex flex-wrap items-center gap-5">
               {slots.primaryCta && (
                 <Button
                   asChild
                   size="lg"
-                  className="h-11 rounded-[3px] border-[1.5px] border-primary bg-primary px-6 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--primary-dark)]"
+                  className="h-12 rounded-[3px] border-[1.5px] border-primary bg-primary px-7 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none transition-[background-color,transform] hover:bg-[var(--primary-dark)] active:scale-[0.98]"
                 >
                   <Link href={slots.primaryCta.href}>
                     {slots.primaryCta.label}
@@ -1331,62 +1358,64 @@ export function HomepageHero({
               {slots.secondaryCta && (
                 <Link
                   href={slots.secondaryCta.href}
-                  className="border-b-2 border-primary pb-0.5 text-sm font-bold text-[var(--school-ink)]"
+                  className="border-b-2 border-[var(--hb-gold,#C9A227)]/80 pb-0.5 text-sm font-bold text-[var(--hb-cream,#F4ECD8)] transition-colors hover:border-[var(--hb-gold,#C9A227)] hover:text-[var(--hb-gold,#C9A227)]"
                 >
                   {slots.secondaryCta.label} ↓
                 </Link>
               )}
             </div>
+            {slots.eyebrow && (
+              <p className="hb-mono mt-10 text-[11px] uppercase tracking-[0.14em] text-[var(--hb-gold,#C9A227)]/90">
+                {slots.eyebrow}
+              </p>
+            )}
           </div>
 
           <div
             className={cn(
-              'flex flex-col items-center',
+              'hb-label-settle relative mx-auto flex w-full max-w-[22rem] flex-col items-center lg:mx-0 lg:justify-self-end',
               ready ? '' : 'opacity-0',
             )}
           >
             <div className="hb-label-disc">
-              <span
-                className="absolute left-1/2 top-[6%] h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-[var(--school-ink)] bg-[var(--hb-cream,#F4ECD8)]"
+              <img
+                src={img}
+                alt=""
+                aria-hidden
+                className="hb-label-photo absolute inset-[7%] rounded-full object-cover"
+              />
+              <div
+                className="hb-label-grooves pointer-events-none absolute inset-[7%] rounded-full"
                 aria-hidden
               />
-              <div className="hb-label-center">
-                <span className="hb-mono mb-1.5 text-[9.5px] uppercase tracking-[0.12em] text-[var(--hb-gold,#C9A227)]">
-                  Est. · Campus
-                </span>
+              <span
+                className="absolute left-1/2 top-[5%] z-20 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-[var(--school-ink)] bg-[var(--hb-cream,#F4ECD8)] shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+                aria-hidden
+              />
+              <div className="hb-label-center relative z-10">
                 {firstStat ? (
                   <>
-                    <p className="font-display text-[clamp(1.8rem,4vw,2.6rem)] font-bold leading-none">
+                    <p className="font-display text-[clamp(1.9rem,4vw,2.7rem)] font-bold leading-none tracking-tight">
                       {firstStat.value}
                     </p>
-                    <p className="mt-1.5 text-[11px] leading-snug text-[#E9D9C6]">
+                    <p className="mt-2 max-w-[14ch] text-[11px] leading-snug text-[#E9D9C6]">
                       {firstStat.label}
                     </p>
                   </>
                 ) : (
-                  <p className="hb-italic text-lg leading-snug">
+                  <p className="hb-italic text-[1.15rem] leading-snug">
                     {runtime.schoolName}
                   </p>
                 )}
+                {slots.primaryCta && (
+                  <Link
+                    href={slots.primaryCta.href}
+                    className="mt-4 inline-block rounded-[3px] border border-[var(--hb-gold,#C9A227)]/50 bg-[var(--school-ink)]/35 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wide text-[var(--hb-cream,#F4ECD8)] transition-colors hover:bg-[var(--school-ink)]/55"
+                  >
+                    {slots.primaryCta.label}
+                  </Link>
+                )}
               </div>
-            </div>
-            <div className="mt-6 text-center">
-              {slots.primaryCta && (
-                <Link
-                  href={slots.primaryCta.href}
-                  className="inline-block rounded-[3px] bg-[var(--school-ink)] px-6 py-3 text-[13px] font-bold text-[var(--hb-cream,#F4ECD8)]"
-                >
-                  {slots.primaryCta.label}
-                </Link>
-              )}
-              {slots.secondaryCta && (
-                <Link
-                  href={slots.secondaryCta.href}
-                  className="mt-2.5 block text-[12.5px] font-bold text-primary underline"
-                >
-                  {slots.secondaryCta.label}
-                </Link>
-              )}
             </div>
           </div>
         </div>
