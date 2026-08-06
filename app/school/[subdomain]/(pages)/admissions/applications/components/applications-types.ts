@@ -24,6 +24,8 @@ export type AdmissionApplication = {
   whyUs: string | null
   notes: string | null
   adminNotes: string | null
+  enrolledStudentId: string | null
+  admissionNumber: string | null
   createdAt: string
   updatedAt: string
 }

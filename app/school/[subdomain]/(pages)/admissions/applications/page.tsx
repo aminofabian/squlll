@@ -48,6 +48,10 @@ import {
   studentName,
   TERM_LABELS,
 } from './components/applications-types'
+import {
+  AcceptApplicationDialog,
+  type AcceptResult,
+} from './components/AcceptApplicationDialog'
 
 const LIST_QUERY = gql`
   query AdmissionApplications {
@@ -70,6 +74,8 @@ const LIST_QUERY = gql`
       whyUs
       notes
       adminNotes
+      enrolledStudentId
+      admissionNumber
       createdAt
       updatedAt
     }
@@ -83,6 +89,29 @@ const UPDATE_MUTATION = gql`
       status
       adminNotes
       updatedAt
+    }
+  }
+`
+
+const ACCEPT_MUTATION = gql`
+  mutation AcceptAdmissionApplication($input: AcceptAdmissionApplicationInput!) {
+    acceptAdmissionApplication(input: $input) {
+      ok
+      studentId
+      admissionNumber
+      studentName
+      gradeName
+      parentInvited
+      emailSent
+      message
+      application {
+        id
+        status
+        adminNotes
+        enrolledStudentId
+        admissionNumber
+        updatedAt
+      }
     }
   }
 `
@@ -108,6 +137,9 @@ export default function AdmissionsApplicationsPage() {
   const [saving, setSaving] = useState(false)
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   const [displayedCount, setDisplayedCount] = useState(20)
+  const [acceptOpen, setAcceptOpen] = useState(false)
+  const [acceptResult, setAcceptResult] = useState<AcceptResult | null>(null)
+  const [accepting, setAccepting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -189,6 +221,11 @@ export default function AdmissionsApplicationsPage() {
 
   const updateStatus = async (status: ApplicationStatus) => {
     if (!selected) return
+    if (status === 'accepted') {
+      setAcceptResult(null)
+      setAcceptOpen(true)
+      return
+    }
     setSaving(true)
     try {
       const data = await graphqlClient.request<{
@@ -223,6 +260,80 @@ export default function AdmissionsApplicationsPage() {
       )
     } finally {
       setSaving(false)
+    }
+  }
+
+  const acceptApplication = async (input: {
+    tenantGradeLevelId: string
+    streamId?: string
+    admissionNumber?: string
+  }) => {
+    if (!selected) return
+    setAccepting(true)
+    try {
+      const data = await graphqlClient.request<{
+        acceptAdmissionApplication: {
+          ok: boolean
+          studentId: string
+          admissionNumber: string
+          studentName: string
+          gradeName: string
+          parentInvited: boolean
+          emailSent: boolean
+          message: string
+          application: Pick<
+            AdmissionApplication,
+            | 'id'
+            | 'status'
+            | 'adminNotes'
+            | 'enrolledStudentId'
+            | 'admissionNumber'
+            | 'updatedAt'
+          >
+        }
+      }>(ACCEPT_MUTATION, {
+        input: {
+          id: selected.id,
+          tenantGradeLevelId: input.tenantGradeLevelId,
+          streamId: input.streamId,
+          admissionNumber: input.admissionNumber,
+          adminNotes,
+        },
+      })
+      const payload = data.acceptAdmissionApplication
+      const updated = payload.application
+      setApps((prev) =>
+        prev.map((a) =>
+          a.id === updated.id
+            ? {
+                ...a,
+                status: normalizeStatus(updated.status),
+                adminNotes: updated.adminNotes,
+                enrolledStudentId: updated.enrolledStudentId,
+                admissionNumber: updated.admissionNumber,
+                updatedAt: updated.updatedAt,
+              }
+            : a,
+        ),
+      )
+      setAcceptResult({
+        studentId: payload.studentId,
+        admissionNumber: payload.admissionNumber,
+        studentName: payload.studentName,
+        gradeName: payload.gradeName,
+        parentInvited: payload.parentInvited,
+        emailSent: payload.emailSent,
+        message: payload.message,
+      })
+      toast.success('Applicant accepted', {
+        description: payload.message,
+      })
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Could not accept application',
+      )
+    } finally {
+      setAccepting(false)
     }
   }
 
@@ -614,6 +725,18 @@ export default function AdmissionsApplicationsPage() {
           </div>
         </div>
       </div>
+
+      <AcceptApplicationDialog
+        open={acceptOpen}
+        app={selected}
+        submitting={accepting}
+        result={acceptResult}
+        onOpenChange={(open) => {
+          setAcceptOpen(open)
+          if (!open) setAcceptResult(null)
+        }}
+        onConfirm={acceptApplication}
+      />
     </div>
   )
 }
@@ -665,6 +788,14 @@ function ApplicationDetail({
                   >
                     {meta.label}
                   </span>
+                  {app.admissionNumber ? (
+                    <>
+                      {' · '}
+                      <span className="font-mono text-[#246a59]">
+                        {app.admissionNumber}
+                      </span>
+                    </>
+                  ) : null}
                 </p>
               </div>
             </div>
@@ -679,6 +810,27 @@ function ApplicationDetail({
             </Button>
           </div>
         </div>
+
+        {app.enrolledStudentId ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1a4d42]/10 bg-[#e8f2ef] px-4 py-3 dark:border-white/10 dark:bg-[#246a59]/15 sm:px-5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#246a59]">
+                Enrolled
+              </p>
+              <p className="text-sm text-[#0a1f1a] dark:text-white">
+                Admission{' '}
+                <span className="font-mono font-semibold">
+                  {app.admissionNumber}
+                </span>
+              </p>
+            </div>
+            <Button asChild size="sm" className={appsPrimaryButton}>
+              <Link href={`/students?studentId=${app.enrolledStudentId}`}>
+                Open student profile
+              </Link>
+            </Button>
+          </div>
+        ) : null}
 
         <div className="grid gap-0 md:grid-cols-2">
           <dl className="space-y-0 border-b border-[#1a4d42]/10 p-4 md:border-b-0 md:border-r dark:border-white/10 sm:p-5">
@@ -806,12 +958,12 @@ function ApplicationDetail({
           <Button
             type="button"
             size="sm"
-            disabled={saving || app.status === 'accepted'}
+            disabled={saving || Boolean(app.enrolledStudentId) || app.status === 'accepted'}
             className={cn(appsPrimaryButton, 'bg-[#246a59] hover:bg-[#1a4d42]')}
             onClick={() => onUpdateStatus('accepted')}
           >
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Accept
+            Accept & enroll
           </Button>
           <Button
             type="button"

@@ -14,6 +14,7 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardSchoolSnapshot } from "./components/DashboardSchoolSnapshot";
 import { DashboardSetupBanner } from "./components/DashboardSetupBanner";
 import { DashboardPulseHero } from "./components/DashboardPulseHero";
+import { DashboardPendingApplications } from "./components/DashboardPendingApplications";
 import { DashboardActivityFeed } from "./components/DashboardActivityFeed";
 import { DashboardQuickActions } from "./components/DashboardQuickActions";
 import { DashboardGradeSheet } from "./components/DashboardGradeSheet";
@@ -203,6 +204,8 @@ export default function SchoolDashboard() {
                     streamCount={tenantStats?.streamCount}
                     statsLoading={statsLoading}
                   />
+
+                  <DashboardPendingApplications />
 
                   <DashboardSetupBanner />
 

@@ -104,8 +104,13 @@ export function NotificationBell({
             {unreadAlerts.map((notification) => (
               <DropdownMenuItem key={notification.id} asChild>
                 <Link
-                  href={notificationsHref}
+                  href={notification.href || notificationsHref}
                   className="flex cursor-pointer flex-col items-start rounded-lg px-3 py-2.5"
+                  onClick={() => {
+                    if (!notification.read && notificationsCtx) {
+                      void notificationsCtx.markRead(notification.id)
+                    }
+                  }}
                 >
                   <span className="text-sm font-medium text-foreground">
                     {notification.title}
