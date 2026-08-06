@@ -61,16 +61,27 @@ function SchoolLayoutContent({
   const [isMounted, setIsMounted] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // Check if this is a signup page - don't fetch school config for signup pages
-  const isSignupPage = pathname?.includes('/signup') || pathname?.includes('/login')
-  
+  // Public auth / invitation flows — no dashboard chrome
+  const signupSegment = params.signup as string | undefined
+  const isInvitationPage = Boolean(
+    signupSegment &&
+      signupSegment !== 'signup' &&
+      /^[A-Za-z0-9+/]+=*$/.test(signupSegment) &&
+      signupSegment.length > 20,
+  )
+  const isSignupPage =
+    pathname?.includes('/signup') ||
+    pathname?.includes('/login') ||
+    pathname?.includes('/forgot-password') ||
+    isInvitationPage
+
   // For signup pages, render minimal layout without authentication checks
   if (isSignupPage) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <>
         <Toaster position="top-right" closeButton richColors />
         {children}
-      </div>
+      </>
     )
   }
   
