@@ -500,18 +500,49 @@ export function HomepageHero({
     const accent =
       parts.length > 2 ? parts.slice(-2).join(' ') : parts[parts.length - 1]
     const lead =
-      parts.length > 2 ? parts.slice(0, -2).join(' ') : parts.slice(0, -1).join(' ')
+      parts.length > 2
+        ? parts.slice(0, -2).join(' ')
+        : parts.slice(0, -1).join(' ')
+    const overlay = Math.min(
+      0.85,
+      Math.max(0.35, Number(slots.overlayStrength ?? 0.55)),
+    )
 
     return (
-      <section className="pf-hero relative overflow-hidden pb-24 pt-[calc(var(--school-nav-h)+3.5rem)] sm:pb-28 sm:pt-[calc(var(--school-nav-h)+4.5rem)]">
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-8">
-          <div className={cn('school-hero-copy max-w-xl', ready ? '' : 'opacity-0')}>
-            {slots.eyebrow && (
-              <p className="pf-mono mb-5 text-[12px] uppercase tracking-[0.16em] text-primary">
-                {slots.eyebrow}
-              </p>
+      <section className="relative min-h-[min(100svh,920px)] overflow-hidden bg-[var(--school-ink)]">
+        {/* Full-bleed campus photo — the terminal window */}
+        <div className="absolute inset-0">
+          <img
+            src={img}
+            alt=""
+            aria-hidden
+            fetchPriority="high"
+            className={cn(
+              'school-hero-media h-full w-full scale-105 object-cover object-[58%_30%]',
+              ready ? '' : 'opacity-0',
             )}
-            <h1 className="font-display text-[clamp(2.5rem,4.6vw,4.1rem)] font-semibold leading-[1.06] text-[var(--school-paper)]">
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(105deg, rgba(10,34,38,${0.92 * overlay + 0.08}) 0%, rgba(14,46,51,${0.78 * overlay}) 42%, rgba(14,46,51,${0.45 * overlay}) 68%, rgba(14,46,51,0.28) 100%)`,
+            }}
+          />
+          <div
+            className="pf-hero-dots pointer-events-none absolute inset-0 opacity-60"
+            aria-hidden
+          />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--school-ink)]/80 to-transparent" />
+        </div>
+
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-[calc(var(--school-nav-h)+3rem)] sm:gap-14 sm:px-6 sm:pb-24 sm:pt-[calc(var(--school-nav-h)+4rem)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
+          <div
+            className={cn(
+              'school-hero-copy max-w-xl',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <h1 className="font-display text-[clamp(2.6rem,5vw,4.25rem)] font-semibold leading-[1.04] tracking-[-0.02em] text-[var(--school-paper)]">
               {lead ? (
                 <>
                   {lead}{' '}
@@ -521,15 +552,15 @@ export function HomepageHero({
                 headline
               )}
             </h1>
-            <p className="mt-6 max-w-md text-[1.08rem] leading-relaxed text-[#B9CBC8]">
+            <p className="mt-6 max-w-[36ch] text-[1.08rem] leading-[1.7] text-[#D4E2DF]">
               {slots.subcopy}
             </p>
-            <div className="mt-9 flex flex-wrap items-center gap-6">
+            <div className="mt-9 flex flex-wrap items-center gap-5">
               {slots.primaryCta && (
                 <Button
                   asChild
                   size="lg"
-                  className="h-12 rounded-sm border border-primary bg-primary px-7 text-[12px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none hover:bg-[var(--primary-light)]"
+                  className="h-12 rounded-sm border border-primary bg-primary px-7 text-[12px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none transition-[background-color,transform] hover:bg-[var(--primary-light)] active:scale-[0.98]"
                 >
                   <Link href={slots.primaryCta.href}>
                     {slots.primaryCta.label}
@@ -540,91 +571,102 @@ export function HomepageHero({
               {slots.secondaryCta && (
                 <Link
                   href={slots.secondaryCta.href}
-                  className="border-b border-primary pb-0.5 text-sm font-semibold text-[var(--school-paper)]"
+                  className="border-b border-primary/80 pb-0.5 text-sm font-semibold text-[var(--school-paper)] transition-colors hover:text-primary"
                 >
                   {slots.secondaryCta.label} →
                 </Link>
               )}
             </div>
+            {slots.eyebrow && (
+              <p className="pf-mono mt-10 text-[11px] uppercase tracking-[0.14em] text-primary/90">
+                {slots.eyebrow}
+              </p>
+            )}
           </div>
 
           <div
             className={cn(
-              'pf-pass relative mx-auto w-full max-w-md overflow-hidden rounded-md bg-[var(--school-paper)] lg:mx-0',
+              'pf-pass relative mx-auto w-full max-w-[26rem] lg:mx-0 lg:justify-self-end',
               ready ? '' : 'opacity-0',
             )}
           >
-            <div className="grid grid-cols-[1fr_auto]">
-              <div className="relative border-r-2 border-dashed border-[var(--school-ink)]/25 p-7">
-                <div className="mb-4 flex justify-between gap-3">
-                  <div>
-                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+            <div className="grid grid-cols-[1fr_auto] overflow-hidden rounded-md bg-[var(--school-paper)]">
+              <div className="relative border-r-2 border-dashed border-[var(--school-ink)]/20 p-5 sm:p-6">
+                {/* Passport photo window */}
+                <div className="mb-4 flex gap-3">
+                  <div className="h-[72px] w-[58px] shrink-0 overflow-hidden border border-[var(--school-ink)]/25 bg-[var(--school-ink)]/5 shadow-[inset_0_0_0_1px_rgba(14,46,51,0.06)]">
+                    <img
+                      src={img}
+                      alt=""
+                      className="h-full w-full object-cover object-center"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1 self-end">
+                    <span className="pf-mono block text-[9px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
                       Passenger
                     </span>
-                    <span className="font-display text-base font-semibold text-[var(--school-ink)]">
+                    <span className="font-display text-[1.05rem] font-semibold leading-tight text-[var(--school-ink)]">
                       Future you
                     </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
-                      Class
-                    </span>
-                    <span className="font-display text-base font-semibold text-[var(--school-ink)]">
-                      All years
+                    <span className="pf-mono mt-1 block text-[9px] uppercase tracking-[0.1em] text-[var(--school-ink)]/45">
+                      {runtime.schoolName}
                     </span>
                   </div>
                 </div>
-                <div className="mb-4 flex justify-between gap-3">
+
+                <div className="mb-3 grid grid-cols-2 gap-3">
                   <div>
-                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+                    <span className="pf-mono block text-[9px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
                       From
                     </span>
-                    <span className="font-display text-base font-semibold">
+                    <span className="font-display text-[0.95rem] font-semibold text-[var(--school-ink)]">
                       Where you are
                     </span>
                   </div>
-                  <div className="text-right">
-                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+                  <div>
+                    <span className="pf-mono block text-[9px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
                       To
                     </span>
-                    <span className="font-display text-base font-semibold">
+                    <span className="font-display text-[0.95rem] font-semibold text-[var(--school-ink)]">
                       Who you&apos;ll become
                     </span>
                   </div>
                 </div>
-                {firstStat ? (
-                  <div className="mt-3">
-                    <p className="pf-mono text-[2.4rem] font-bold leading-none text-[var(--school-accent)]">
+
+                {firstStat && (
+                  <div className="mt-2 border-t border-[var(--school-ink)]/10 pt-3">
+                    <p className="pf-mono text-[2.15rem] font-bold leading-none text-[var(--school-accent)]">
                       {firstStat.value}
                     </p>
-                    <p className="mt-1 text-[12.5px] text-[var(--school-ink)]/70">
+                    <p className="mt-1 text-[12px] leading-snug text-[var(--school-ink)]/65">
                       {firstStat.label}
                     </p>
                   </div>
-                ) : img ? (
-                  <div className="mt-3 aspect-[5/2] overflow-hidden">
-                    <img src={img} alt="" className="h-full w-full object-cover" />
-                  </div>
-                ) : null}
-                <div className="pf-barcode mt-5" aria-hidden />
+                )}
+
+                <div className="pf-barcode mt-4" aria-hidden />
+
                 {slots.primaryCta && (
                   <Link
                     href={slots.primaryCta.href}
-                    className="mt-5 block rounded-sm bg-[var(--school-accent)] px-3 py-3 text-center pf-mono text-[11px] uppercase tracking-wide text-[var(--school-paper)]"
+                    className="mt-4 block rounded-sm bg-[var(--school-accent)] px-3 py-3 text-center pf-mono text-[11px] uppercase tracking-wide text-[var(--school-paper)] transition-colors hover:bg-[var(--school-ink)]"
                   >
                     {slots.primaryCta.label}
                   </Link>
                 )}
               </div>
-              <div className="relative flex w-[74px] flex-col items-center justify-between bg-[var(--pf-navy-2,#153E44)] px-3 py-6 text-[var(--school-paper)]">
+
+              <div className="relative flex w-[68px] flex-col items-center justify-between bg-[var(--pf-navy-2,#153E44)] px-2.5 py-5 text-[var(--school-paper)] sm:w-[74px]">
                 <span className="absolute -left-2 -top-2 h-4 w-4 rounded-full bg-[var(--school-ink)]" />
                 <span className="absolute -bottom-2 -left-2 h-4 w-4 rounded-full bg-[var(--school-ink)]" />
-                <span className="pf-mono [writing-mode:vertical-rl] text-[10px] tracking-[0.2em]">
-                  {runtime.schoolName.slice(0, 12).toUpperCase()}
+                <span className="pf-mono [writing-mode:vertical-rl] text-[10px] tracking-[0.18em]">
+                  {runtime.schoolName.slice(0, 10).toUpperCase()}
                 </span>
-                <span className="font-display text-2xl font-semibold">A1</span>
-                <span className="pf-mono [writing-mode:vertical-rl] text-[10px] tracking-[0.16em]">
-                  SEAT OPEN
+                <span className="font-display text-[1.35rem] font-semibold">
+                  A1
+                </span>
+                <span className="pf-mono [writing-mode:vertical-rl] text-[10px] tracking-[0.14em]">
+                  OPEN
                 </span>
               </div>
             </div>

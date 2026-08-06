@@ -413,9 +413,20 @@ export function HomepageShellStyles({
           background-image: radial-gradient(circle, rgba(199,154,61,0.16) 1.5px, transparent 1.6px);
           background-size: 26px 26px;
         }
+        .playfield-shell .pf-hero-dots {
+          background-image: radial-gradient(circle, rgba(199,154,61,0.22) 1.4px, transparent 1.5px);
+          background-size: 26px 26px;
+          mask-image: linear-gradient(105deg, rgba(0,0,0,0.55), transparent 70%);
+        }
         .playfield-shell .pf-pass {
-          animation: pf-pass-settle 0.95s var(--pf-ease) 0.12s both;
-          box-shadow: 16px 20px 0 rgba(0,0,0,0.28);
+          animation: pf-pass-settle 0.95s var(--pf-ease) 0.18s both;
+          box-shadow:
+            12px 16px 0 rgba(0,0,0,0.22),
+            18px 24px 40px rgba(0,0,0,0.35);
+        }
+        .playfield-shell .pf-pass:hover {
+          transform: translateY(-3px);
+          transition: transform 0.4s var(--pf-ease);
         }
         .playfield-shell .pf-barcode {
           height: 34px;
@@ -494,7 +505,8 @@ export function HomepageShellStyles({
           .assembly-hall-shell .ah-sticky:hover { transform: none; }
           .playfield-shell .pf-pass,
           .playfield-shell .pf-flap.flip { animation: none !important; }
-          .playfield-shell .pf-ticket:hover { transform: none; }
+          .playfield-shell .pf-ticket:hover,
+          .playfield-shell .pf-pass:hover { transform: none; }
         }
       `,
         }}
