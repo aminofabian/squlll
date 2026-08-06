@@ -24,16 +24,15 @@ function readHomepageSession(): HomepageSession {
     }
   }
 
+  // accessToken is httpOnly — never readable from document.cookie.
+  // Session identity cookies (userId / email / userName) are client-readable.
   const userId = getCookie('userId')
   const email = getCookie('email')
-  const accessToken = getCookie('accessToken')
   const rawName = getCookie('userName')
   const role = getCookie('userRole') || undefined
   const userName = rawName ? decodeURIComponent(rawName) : ''
   const firstName = userName.split(/\s+/)[0] || 'there'
-  const isAuthenticated = Boolean(
-    accessToken && (userId || email || userName),
-  )
+  const isAuthenticated = Boolean(userId && email)
 
   return {
     isAuthenticated,

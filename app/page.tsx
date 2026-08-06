@@ -319,6 +319,7 @@ const LANDING_FOOTER_PRODUCT_LINKS: { label: string; href: string }[] = [
 ]
 
 const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
+  { label: "Schools on Squl", href: "/schools" },
   { label: "Start free term", href: "/register" },
   { label: "Sign in", href: "/login" },
   { label: "Book a walkthrough", href: "/login" },
