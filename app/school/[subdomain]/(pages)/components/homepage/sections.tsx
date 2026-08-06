@@ -59,7 +59,8 @@ export function HomepageNav({
   const { slots } = data
   const links = slots.links || []
   const isNotebook = variant === 'notebook'
-  const solid = scrolled || open || variant === 'solid' || isNotebook
+  const isTerminal = variant === 'terminal'
+  const solid = scrolled || open || variant === 'solid' || isNotebook || isTerminal
   const logoUrl = config.logoUrl || runtime.logoUrl
   const initials = runtime.schoolName
     .split(' ')
@@ -67,6 +68,106 @@ export function HomepageNav({
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  if (isTerminal) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 border-b border-[var(--primary-dark)] bg-[var(--school-ink)]',
+          runtime.preview ? 'absolute' : 'fixed',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-10 w-10 object-contain sm:h-11 sm:w-11"
+              />
+            ) : (
+              <div className="pf-mono rounded-sm border border-primary px-2.5 py-1.5 text-[12px] font-bold tracking-wide text-primary">
+                {initials}·EST
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="block truncate font-display text-lg leading-none text-[var(--school-paper)] sm:text-xl">
+                {runtime.schoolName}
+              </span>
+              {slots.showTagline !== false && (
+                <span className="mt-1 block truncate text-[10px] uppercase tracking-[0.14em] text-[#9FB3B0]">
+                  {runtime.tagline || 'Terminal campus'}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          <div className="hidden items-center lg:flex">
+            {links.map((link, i) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className={cn(
+                  'px-4 py-2 text-[12px] uppercase tracking-[0.12em] text-[#CFE0DD] transition-colors hover:text-primary',
+                  i > 0 && 'border-l border-white/15',
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-sm border border-primary bg-transparent px-4 text-[11px] font-bold uppercase tracking-wide text-[var(--school-paper)] shadow-none hover:bg-primary hover:text-[var(--school-ink)]"
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-3.5 w-3.5" />
+                {slots.portalLabel || 'Check-in'}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-sm border border-primary bg-primary px-5 text-[11px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none hover:bg-[var(--primary-light)]"
+            >
+              <Link href="/apply">
+                {slots.applyLabel || 'Reserve a seat'}
+                <ArrowRight className="ml-2 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center border border-white/25 text-[var(--school-paper)] lg:hidden"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-white/10 bg-[var(--school-ink)] lg:hidden">
+            <div className="space-y-1 px-4 py-4">
+              {links.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-2 py-3 text-sm uppercase tracking-wide text-[#CFE0DD] hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
 
   return (
     <nav
@@ -391,6 +492,148 @@ export function HomepageHero({
     )
   }
 
+  if (variant === 'boarding') {
+    const stats = getSection<{ items?: HomepageStatItem[] }>(config, 'stats')
+    const firstStat = stats?.slots.items?.[0]
+    const headline = slots.headline || runtime.schoolName
+    const parts = headline.trim().split(/\s+/)
+    const accent =
+      parts.length > 2 ? parts.slice(-2).join(' ') : parts[parts.length - 1]
+    const lead =
+      parts.length > 2 ? parts.slice(0, -2).join(' ') : parts.slice(0, -1).join(' ')
+
+    return (
+      <section className="pf-hero relative overflow-hidden pb-24 pt-[calc(var(--school-nav-h)+3.5rem)] sm:pb-28 sm:pt-[calc(var(--school-nav-h)+4.5rem)]">
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-8">
+          <div className={cn('school-hero-copy max-w-xl', ready ? '' : 'opacity-0')}>
+            {slots.eyebrow && (
+              <p className="pf-mono mb-5 text-[12px] uppercase tracking-[0.16em] text-primary">
+                {slots.eyebrow}
+              </p>
+            )}
+            <h1 className="font-display text-[clamp(2.5rem,4.6vw,4.1rem)] font-semibold leading-[1.06] text-[var(--school-paper)]">
+              {lead ? (
+                <>
+                  {lead}{' '}
+                  <em className="font-medium italic text-primary">{accent}</em>
+                </>
+              ) : (
+                headline
+              )}
+            </h1>
+            <p className="mt-6 max-w-md text-[1.08rem] leading-relaxed text-[#B9CBC8]">
+              {slots.subcopy}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-6">
+              {slots.primaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-sm border border-primary bg-primary px-7 text-[12px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none hover:bg-[var(--primary-light)]"
+                >
+                  <Link href={slots.primaryCta.href}>
+                    {slots.primaryCta.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="border-b border-primary pb-0.5 text-sm font-semibold text-[var(--school-paper)]"
+                >
+                  {slots.secondaryCta.label} →
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              'pf-pass relative mx-auto w-full max-w-md overflow-hidden rounded-md bg-[var(--school-paper)] lg:mx-0',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="grid grid-cols-[1fr_auto]">
+              <div className="relative border-r-2 border-dashed border-[var(--school-ink)]/25 p-7">
+                <div className="mb-4 flex justify-between gap-3">
+                  <div>
+                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+                      Passenger
+                    </span>
+                    <span className="font-display text-base font-semibold text-[var(--school-ink)]">
+                      Future you
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+                      Class
+                    </span>
+                    <span className="font-display text-base font-semibold text-[var(--school-ink)]">
+                      All years
+                    </span>
+                  </div>
+                </div>
+                <div className="mb-4 flex justify-between gap-3">
+                  <div>
+                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+                      From
+                    </span>
+                    <span className="font-display text-base font-semibold">
+                      Where you are
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="pf-mono block text-[9.5px] uppercase tracking-[0.12em] text-[var(--pf-teal,#3E7D78)]">
+                      To
+                    </span>
+                    <span className="font-display text-base font-semibold">
+                      Who you&apos;ll become
+                    </span>
+                  </div>
+                </div>
+                {firstStat ? (
+                  <div className="mt-3">
+                    <p className="pf-mono text-[2.4rem] font-bold leading-none text-[var(--school-accent)]">
+                      {firstStat.value}
+                    </p>
+                    <p className="mt-1 text-[12.5px] text-[var(--school-ink)]/70">
+                      {firstStat.label}
+                    </p>
+                  </div>
+                ) : img ? (
+                  <div className="mt-3 aspect-[5/2] overflow-hidden">
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                  </div>
+                ) : null}
+                <div className="pf-barcode mt-5" aria-hidden />
+                {slots.primaryCta && (
+                  <Link
+                    href={slots.primaryCta.href}
+                    className="mt-5 block rounded-sm bg-[var(--school-accent)] px-3 py-3 text-center pf-mono text-[11px] uppercase tracking-wide text-[var(--school-paper)]"
+                  >
+                    {slots.primaryCta.label}
+                  </Link>
+                )}
+              </div>
+              <div className="relative flex w-[74px] flex-col items-center justify-between bg-[var(--pf-navy-2,#153E44)] px-3 py-6 text-[var(--school-paper)]">
+                <span className="absolute -left-2 -top-2 h-4 w-4 rounded-full bg-[var(--school-ink)]" />
+                <span className="absolute -bottom-2 -left-2 h-4 w-4 rounded-full bg-[var(--school-ink)]" />
+                <span className="pf-mono [writing-mode:vertical-rl] text-[10px] tracking-[0.2em]">
+                  {runtime.schoolName.slice(0, 12).toUpperCase()}
+                </span>
+                <span className="font-display text-2xl font-semibold">A1</span>
+                <span className="pf-mono [writing-mode:vertical-rl] text-[10px] tracking-[0.16em]">
+                  SEAT OPEN
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   if (variant === 'crest') {
     return (
       <section className="relative bg-[var(--school-paper)] pt-[var(--school-nav-h)]">
@@ -663,6 +906,35 @@ export function HomepageStats({
     )
   }
 
+  if (variant === 'stamps') {
+    return (
+      <section className="bg-[var(--pf-ivory-2,#E8DCC0)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <p className="pf-tag text-[var(--school-accent)]">Stamped and approved</p>
+            <h2 className="mt-3 font-display text-[clamp(1.85rem,3.5vw,2.5rem)] text-[var(--school-ink)]">
+              The numbers, visa-stamped.
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
+            {items.map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 70}>
+                <div className="pf-stamp-card flex flex-col items-center justify-center p-4 text-center">
+                  <p className="pf-mono text-[2.1rem] font-bold text-[var(--school-accent)]">
+                    {stat.value}
+                  </p>
+                  <p className="pf-stamp mt-2 text-[10.5px] uppercase leading-snug tracking-wide text-[var(--pf-navy-2,#153E44)]">
+                    {stat.label}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-b border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-black/10 lg:grid-cols-4 lg:divide-y-0">
@@ -754,6 +1026,60 @@ export function HomepageOfferings({
                     <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'gates') {
+    const gates = ['A', 'B', 'C', 'D', 'E', 'F']
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-14 max-w-xl">
+              {slots.eyebrow && (
+                <p className="pf-tag mb-2 text-[var(--school-accent)]">
+                  {slots.eyebrow}
+                </p>
+              )}
+              <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.5rem)] text-[var(--school-ink)]">
+                {slots.headline}
+              </h2>
+              <p className="mt-4 max-w-xl text-[0.98rem] leading-relaxed text-[var(--pf-muted,#5B564A)]">
+                {slots.subcopy}
+              </p>
+            </div>
+          </Reveal>
+          <div className="relative flex flex-wrap justify-between gap-y-10 px-1">
+            <div
+              className="pointer-events-none absolute left-[6%] right-[6%] top-[26px] hidden border-t-2 border-dashed border-[var(--school-ink)]/40 md:block"
+              aria-hidden
+            />
+            {items.map((item, index) => (
+              <Reveal
+                key={item.title}
+                delay={index * 70}
+                className="relative z-10 flex w-1/2 flex-col items-center px-2 text-center sm:w-1/3 md:w-[15%]"
+              >
+                <div className="mb-3.5 flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-primary bg-[var(--school-ink)] pf-mono text-[15px] font-bold text-primary">
+                  {gates[index % gates.length]}
+                </div>
+                <h3 className="font-display text-[0.95rem] text-[var(--school-ink)]">
+                  {item.title}
+                </h3>
+                <p className="mt-1 text-[0.78rem] leading-snug text-[var(--pf-muted,#5B564A)]">
+                  {item.body}
+                </p>
+                <Link
+                  href={item.href}
+                  className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--school-accent)]"
+                >
+                  {item.ctaLabel} →
+                </Link>
               </Reveal>
             ))}
           </div>
@@ -1025,6 +1351,51 @@ export function HomepageGallery({
     )
   }
 
+  if (variant === 'tickets') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="pf-tag mb-2 text-[var(--school-accent)]">
+                {data.slots.eyebrow}
+              </p>
+            )}
+            <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.5rem)] text-[var(--school-ink)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {images.slice(0, 8).map((image, i) => (
+              <Reveal key={image.url + i} delay={i * 60}>
+                <figure className="pf-ticket overflow-hidden rounded border border-[var(--school-ink)] bg-white">
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={image.url}
+                      alt={image.caption || ''}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="border-t-2 border-dashed border-[var(--school-ink)]/35 px-4 py-3">
+                    <span className="pf-mono text-[10px] uppercase tracking-wide text-[var(--pf-teal,#3E7D78)]">
+                      Gate {String.fromCharCode(65 + (i % 6))}
+                    </span>
+                    {image.caption && (
+                      <figcaption className="mt-1 font-display text-[1.05rem] text-[var(--school-ink)]">
+                        {image.caption}
+                      </figcaption>
+                    )}
+                  </div>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1136,6 +1507,45 @@ export function HomepageTestimonials({
     )
   }
 
+  if (variant === 'luggage') {
+    return (
+      <section className="bg-[var(--school-ink)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="pf-tag mb-2">{data.slots.eyebrow}</p>
+            )}
+            <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.5rem)] text-[var(--school-paper)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 70}>
+                <blockquote className="pf-luggage relative rounded-md bg-[var(--school-paper)] p-6 pt-7">
+                  <p className="pf-mono text-[1.05rem] font-bold text-[var(--school-accent)]">
+                    → {item.role}
+                  </p>
+                  <p className="mt-3 text-[0.92rem] leading-relaxed text-[#332F27]">
+                    {item.quote}
+                  </p>
+                  <footer className="mt-5">
+                    <p className="font-display text-[0.95rem] text-[var(--school-ink)]">
+                      {item.name}
+                    </p>
+                    <p className="pf-stamp text-[0.78rem] text-[var(--pf-teal,#3E7D78)]">
+                      Alumni
+                    </p>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1226,6 +1636,48 @@ export function HomepageCtaBand({
                 asChild
                 variant="outline"
                 className="h-11 rounded-lg border-2 border-[var(--school-ink)] bg-transparent px-5 text-sm font-bold text-[var(--school-ink)] shadow-none hover:bg-[var(--school-ink)] hover:text-[var(--ah-cream,#FBF6E9)]"
+              >
+                <Link href={slots.secondaryCta.href}>
+                  {slots.secondaryCta.label}
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'checkin') {
+    return (
+      <section className="sticky bottom-0 z-40 border-t border-[var(--primary-dark)] bg-[var(--pf-navy-3,#0A2226)] py-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <div className="min-w-0">
+            <p className="font-display text-lg italic text-[var(--school-paper)] sm:text-xl">
+              {slots.headline}
+            </p>
+            <p className="mt-0.5 max-w-xl text-sm text-[#9FB3B0]">
+              {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
+                slots.body}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {slots.primaryCta && (
+              <Button
+                asChild
+                className="h-11 rounded-sm border border-primary bg-primary px-6 text-[12px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none hover:bg-[var(--primary-light)]"
+              >
+                <Link href={slots.primaryCta.href}>
+                  {slots.primaryCta.label}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {slots.secondaryCta && (
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-sm border border-primary bg-transparent px-5 text-[12px] font-bold uppercase tracking-wide text-[var(--school-paper)] shadow-none hover:bg-primary hover:text-[var(--school-ink)]"
               >
                 <Link href={slots.secondaryCta.href}>
                   {slots.secondaryCta.label}

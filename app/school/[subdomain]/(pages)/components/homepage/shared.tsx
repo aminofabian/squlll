@@ -108,7 +108,13 @@ export function shellClass(config: HomepageConfig, extra?: string) {
   )
 }
 
-export function HomepageShellStyles({ assembly = false }: { assembly?: boolean }) {
+export function HomepageShellStyles({
+  assembly = false,
+  playfield = false,
+}: {
+  assembly?: boolean
+  playfield?: boolean
+}) {
   return (
     <>
       {assembly && (
@@ -121,6 +127,20 @@ export function HomepageShellStyles({ assembly = false }: { assembly?: boolean }
           />
           <link
             href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;600;700;800&family=Kalam:wght@400;700&family=Literata:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      )}
+      {playfield && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Space+Mono:wght@400;700&family=Special+Elite&family=Work+Sans:wght@400;500;600;700&display=swap"
             rel="stylesheet"
           />
         </>
@@ -161,6 +181,15 @@ export function HomepageShellStyles({ assembly = false }: { assembly?: boolean }
         @keyframes ah-chalk-dust {
           0%, 100% { opacity: 0.35; }
           50% { opacity: 0.55; }
+        }
+        @keyframes pf-flipflap {
+          0% { transform: rotateX(0deg); opacity: 1; }
+          45% { transform: rotateX(90deg); opacity: 0.3; }
+          100% { transform: rotateX(0deg); opacity: 1; }
+        }
+        @keyframes pf-pass-settle {
+          from { opacity: 0; transform: translateY(28px) rotate(-1deg); }
+          to { opacity: 1; transform: translateY(0) rotate(0); }
         }
         .school-hero-copy {
           animation: school-hero-rise 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -327,6 +356,133 @@ export function HomepageShellStyles({ assembly = false }: { assembly?: boolean }
           background: var(--ah-cream) !important;
           box-shadow: 4px 5px 0 var(--ah-shadow);
         }
+
+        /* ---- Playfield / terminal campus shell ---- */
+        .playfield-shell {
+          --pf-navy: #0E2E33;
+          --pf-navy-2: #153E44;
+          --pf-navy-3: #0A2226;
+          --pf-brass: var(--primary);
+          --pf-brass-dim: var(--primary-dark);
+          --pf-ivory: var(--school-paper);
+          --pf-ivory-2: #E8DCC0;
+          --pf-stub: var(--school-accent);
+          --pf-teal: #3E7D78;
+          --pf-muted: #5B564A;
+          --pf-shadow: rgba(10, 34, 38, 0.28);
+          --pf-ease: cubic-bezier(0.16, 1, 0.3, 1);
+          --font-display: 'Fraunces', Georgia, serif;
+          font-family: 'Work Sans', system-ui, sans-serif;
+          color: #1C1A15;
+          background: var(--pf-ivory);
+          font-size: 1.02rem;
+          line-height: 1.65;
+        }
+        .playfield-shell .font-display,
+        .playfield-shell h1,
+        .playfield-shell h2,
+        .playfield-shell h3 {
+          font-family: 'Fraunces', Georgia, serif;
+          letter-spacing: -0.02em;
+          text-wrap: balance;
+          font-weight: 600;
+        }
+        .playfield-shell .pf-mono {
+          font-family: 'Space Mono', ui-monospace, monospace;
+          letter-spacing: 0.06em;
+          font-variant-numeric: tabular-nums;
+        }
+        .playfield-shell .pf-stamp {
+          font-family: 'Special Elite', 'Courier New', monospace;
+          letter-spacing: 0.04em;
+        }
+        .playfield-shell .pf-tag {
+          font-family: 'Space Mono', monospace;
+          font-size: 0.72rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--pf-brass);
+        }
+        .playfield-shell a:focus-visible,
+        .playfield-shell button:focus-visible {
+          outline: 2px solid var(--pf-brass);
+          outline-offset: 3px;
+        }
+        .playfield-shell .pf-hero {
+          background-color: var(--pf-navy);
+          background-image: radial-gradient(circle, rgba(199,154,61,0.16) 1.5px, transparent 1.6px);
+          background-size: 26px 26px;
+        }
+        .playfield-shell .pf-pass {
+          animation: pf-pass-settle 0.95s var(--pf-ease) 0.12s both;
+          box-shadow: 16px 20px 0 rgba(0,0,0,0.28);
+        }
+        .playfield-shell .pf-barcode {
+          height: 34px;
+          background: repeating-linear-gradient(
+            to right,
+            #1C1A15 0 2px,
+            transparent 2px 5px,
+            #1C1A15 5px 6px,
+            transparent 6px 10px
+          );
+        }
+        .playfield-shell .pf-board {
+          background: #08181A;
+          border: 1px solid rgba(199,154,61,0.3);
+          border-radius: 6px;
+          overflow: hidden;
+        }
+        .playfield-shell .pf-flap.flip {
+          animation: pf-flipflap 0.28s ease;
+        }
+        .playfield-shell .pf-stamp-card {
+          border: 3px double var(--pf-navy-2);
+          border-radius: 50% / 38%;
+          background: var(--pf-ivory);
+          aspect-ratio: 1 / 0.85;
+        }
+        .playfield-shell .pf-stamp-card:nth-child(1) { transform: rotate(-4deg); }
+        .playfield-shell .pf-stamp-card:nth-child(2) { transform: rotate(3deg); }
+        .playfield-shell .pf-stamp-card:nth-child(3) { transform: rotate(-2deg); }
+        .playfield-shell .pf-stamp-card:nth-child(4) { transform: rotate(4deg); }
+        .playfield-shell .pf-ticket {
+          box-shadow: 6px 8px 0 var(--pf-shadow);
+          transition: transform 0.35s var(--pf-ease), box-shadow 0.35s var(--pf-ease);
+        }
+        .playfield-shell .pf-ticket:hover {
+          transform: translateY(-4px);
+          box-shadow: 8px 14px 0 var(--pf-shadow);
+        }
+        .playfield-shell .pf-luggage {
+          box-shadow: 8px 10px 0 rgba(0,0,0,0.3);
+        }
+        .playfield-shell .pf-luggage::before {
+          content: "";
+          position: absolute;
+          top: -14px;
+          left: 24px;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 3px solid var(--pf-navy-2);
+          background: var(--pf-navy);
+        }
+        .playfield-shell footer {
+          background: var(--pf-navy-3) !important;
+        }
+        .playfield-shell footer h3 {
+          color: var(--pf-brass) !important;
+          font-family: 'Space Mono', monospace !important;
+          letter-spacing: 0.12em !important;
+          text-transform: uppercase;
+          font-size: 0.78rem !important;
+        }
+        .playfield-shell section.border-y {
+          background: var(--pf-ivory) !important;
+          border-color: rgba(14, 46, 51, 0.12) !important;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .school-hero-copy, .school-hero-media, .school-accent-line { animation: none !important; }
           .assembly-hall-shell .ah-ticker-track,
@@ -336,6 +492,9 @@ export function HomepageShellStyles({ assembly = false }: { assembly?: boolean }
           .assembly-hall-shell .ah-chalk-num { animation: none !important; }
           .assembly-hall-shell .ah-period:hover,
           .assembly-hall-shell .ah-sticky:hover { transform: none; }
+          .playfield-shell .pf-pass,
+          .playfield-shell .pf-flap.flip { animation: none !important; }
+          .playfield-shell .pf-ticket:hover { transform: none; }
         }
       `,
         }}

@@ -37,8 +37,8 @@ exports.HOMEPAGE_TEMPLATES = [
     {
         id: 'playfield',
         name: 'Playfield',
-        tagline: 'Energetic day school, scoreboard stats',
-        mood: 'Bold',
+        tagline: 'Boarding pass, departures board, terminal campus',
+        mood: 'Travel',
     },
     {
         id: 'garden-court',
@@ -552,12 +552,12 @@ exports.HOMEPAGE_TEMPLATE_THEMES = {
         radiusMode: 'soft',
     },
     playfield: {
-        primary: '#166534',
-        primaryDark: '#14532d',
-        primaryLight: '#22c55e',
-        accent: '#fef08a',
-        ink: '#14532d',
-        paper: '#f7fee7',
+        primary: '#C79A3D',
+        primaryDark: '#8E7134',
+        primaryLight: '#DCAE4D',
+        accent: '#C0432B',
+        ink: '#0E2E33',
+        paper: '#F1E8D6',
         radiusMode: 'soft',
     },
     'garden-court': {

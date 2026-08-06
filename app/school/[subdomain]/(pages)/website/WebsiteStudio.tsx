@@ -107,7 +107,7 @@ const STUDIO_STEPS: {
 const TEMPLATE_PALETTES: Record<string, string> = {
   'campus-dawn': 'from-[#0a1f1a] via-[#246a59] to-[#a7f3d0]',
   'assembly-hall': 'from-[#1C2B45] via-[#ECE1C3] to-[#AE3A2B]',
-  playfield: 'from-[#166534] via-[#22c55e] to-[#fef08a]',
+  playfield: 'from-[#0E2E33] via-[#F1E8D6] to-[#C79A3D]',
   'garden-court': 'from-[#365314] via-[#86efac] to-[#ecfccb]',
   'crest-motto': 'from-[#1c1917] via-[#854d0e] to-[#fde68a]',
   'skyline-cbc': 'from-[#0f172a] via-[#334155] to-[#38bdf8]',
@@ -120,7 +120,7 @@ const TEMPLATE_PALETTES: Record<string, string> = {
 const TEMPLATE_ACCENT: Record<string, string> = {
   'campus-dawn': '#246a59',
   'assembly-hall': '#AE3A2B',
-  playfield: '#22c55e',
+  playfield: '#C79A3D',
   'garden-court': '#65a30d',
   'crest-motto': '#854d0e',
   'skyline-cbc': '#38bdf8',
