@@ -21,7 +21,6 @@ import {
   RotateCcw,
   Save,
   Smartphone,
-  Sparkles,
   Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -79,25 +78,29 @@ const STUDIO_STEPS: {
   id: StudioTab
   step: number
   label: string
+  short: string
   hint: string
 }[] = [
   {
     id: 'look',
     step: 1,
-    label: 'Choose look',
-    hint: 'Pick a homepage layout. Your words stay the same.',
+    label: 'Look',
+    short: 'Look',
+    hint: 'Pick a layout — your words stay.',
   },
   {
     id: 'brand',
     step: 2,
-    label: 'Colors & hero',
-    hint: 'School colors, logo, and the big headline photo.',
+    label: 'Brand',
+    short: 'Brand',
+    hint: 'Colors, logo, and hero photo.',
   },
   {
     id: 'sections',
     step: 3,
-    label: 'Edit content',
-    hint: 'Turn sections on/off and edit the text.',
+    label: 'Content',
+    short: 'Content',
+    hint: 'Toggle sections and edit copy.',
   },
 ]
 
@@ -112,6 +115,19 @@ const TEMPLATE_PALETTES: Record<string, string> = {
   'horizon-board': 'from-[#0c4a6e] via-[#38bdf8] to-[#e0f2fe]',
   'studio-day': 'from-[#7c2d12] via-[#ea580c] to-[#fed7aa]',
   'night-lights': 'from-black via-[#134e4a] to-[#5eead4]',
+}
+
+const TEMPLATE_ACCENT: Record<string, string> = {
+  'campus-dawn': '#246a59',
+  'assembly-hall': '#c4a574',
+  playfield: '#22c55e',
+  'garden-court': '#65a30d',
+  'crest-motto': '#854d0e',
+  'skyline-cbc': '#38bdf8',
+  'story-scroll': '#78716c',
+  'horizon-board': '#0ea5e9',
+  'studio-day': '#ea580c',
+  'night-lights': '#5eead4',
 }
 
 function updateSection(
@@ -151,13 +167,14 @@ function Field({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-slate-600">{label}</Label>
+    <div className="space-y-1">
+      <Label className="text-[11px] font-medium text-slate-500">{label}</Label>
       {children}
     </div>
   )
 }
 
+/** Compact selectable look row — color strip + name, one click to apply */
 function TemplateThumb({
   id,
   active,
@@ -168,50 +185,77 @@ function TemplateThumb({
   onSelect: () => void
 }) {
   const meta = HOMEPAGE_TEMPLATES.find((t) => t.id === id)!
+  const accent = TEMPLATE_ACCENT[id] || '#246a59'
   return (
-    <div
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={active}
       className={cn(
-        'overflow-hidden border bg-white text-left transition',
+        'group flex w-full items-stretch overflow-hidden border text-left transition',
         active
-          ? 'border-[#246a59] shadow-[0_0_0_1px_#246a59]'
-          : 'border-slate-200 hover:border-slate-300',
+          ? 'border-[#0a1f1a] bg-[#0a1f1a] text-white'
+          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
       )}
     >
-      <button type="button" onClick={onSelect} className="block w-full text-left">
-        <div
-          className={cn(
-            'relative h-20 bg-gradient-to-br',
-            TEMPLATE_PALETTES[id] || 'from-slate-700 to-slate-300',
-          )}
-        >
+      <span
+        className={cn(
+          'w-1.5 shrink-0 bg-gradient-to-b',
+          TEMPLATE_PALETTES[id] || 'from-slate-400 to-slate-200',
+        )}
+        aria-hidden
+      />
+      <span
+        className={cn(
+          'm-2 h-9 w-9 shrink-0 bg-gradient-to-br',
+          TEMPLATE_PALETTES[id],
+        )}
+        aria-hidden
+      />
+      <span className="min-w-0 flex-1 py-1.5 pr-2">
+        <span className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              'truncate text-[13px] font-semibold leading-tight',
+              active ? 'text-white' : 'text-slate-900',
+            )}
+          >
+            {meta.name}
+          </span>
           {active && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#246a59]">
-              <Check className="h-3 w-3" />
-              In use
-            </span>
+            <Check
+              className="h-3.5 w-3.5 shrink-0 text-[#a7f3d0]"
+              strokeWidth={2.5}
+            />
           )}
-        </div>
-        <div className="space-y-1 p-3">
-          <p className="text-sm font-semibold text-slate-900">{meta.name}</p>
-          <p className="text-[11px] leading-snug text-slate-500">{meta.tagline}</p>
-          <p className="text-[10px] uppercase tracking-wider text-slate-400">
-            {meta.mood}
-          </p>
-        </div>
-      </button>
-      <div className="border-t border-slate-100 px-3 pb-3">
-        <Button
-          type="button"
-          size="sm"
-          variant={active ? 'secondary' : 'default'}
-          className="mt-2 h-8 w-full rounded-none text-xs"
-          disabled={active}
-          onClick={onSelect}
+        </span>
+        <span
+          className={cn(
+            'mt-0.5 block truncate text-[10px] leading-snug',
+            active ? 'text-white/65' : 'text-slate-500',
+          )}
         >
-          {active ? 'Currently selected' : 'Use this look'}
-        </Button>
-      </div>
-    </div>
+          {meta.tagline}
+        </span>
+        <span
+          className={cn(
+            'mt-1 inline-flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.14em]',
+            active ? 'text-white/45' : 'text-slate-400',
+          )}
+        >
+          <span
+            className="inline-block h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: active ? '#a7f3d0' : accent }}
+          />
+          {meta.mood}
+        </span>
+      </span>
+      {!active && (
+        <span className="flex shrink-0 items-center pr-2.5 text-[10px] font-semibold uppercase tracking-wide text-[#246a59] opacity-0 transition group-hover:opacity-100">
+          Use
+        </span>
+      )}
+    </button>
   )
 }
 
@@ -540,107 +584,113 @@ export function WebsiteStudio() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] min-h-[520px] flex-col bg-[#f3f5f4] lg:h-[calc(100dvh-4rem)]">
-      <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Globe className="h-5 w-5 shrink-0 text-[#246a59]" />
-              <h1 className="text-lg font-semibold text-slate-900">
-                Website Studio
-              </h1>
-              {dirty ? (
-                <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                  Unsaved draft
-                </span>
-              ) : (
-                <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                  Draft synced
-                </span>
-              )}
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-[520px] flex-col bg-[#eef1ef] lg:h-[calc(100dvh-4rem)]">
+      <header className="shrink-0 border-b border-slate-200/80 bg-white px-3 py-2.5 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-[#0a1f1a] text-white">
+              <Globe className="h-4 w-4" />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Step {currentStep.step} of 3 — {currentStep.hint}
-              {publishedAt
-                ? ` · Last published ${new Date(publishedAt).toLocaleString()}`
-                : ' · Not published yet'}
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-slate-900">
+                  Website Studio
+                </h1>
+                {dirty ? (
+                  <span className="bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-800">
+                    Unsaved
+                  </span>
+                ) : (
+                  <span className="bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700">
+                    Saved
+                  </span>
+                )}
+              </div>
+              <p className="truncate text-[11px] text-slate-500">
+                {currentStep.hint}
+                {publishedAt
+                  ? ` · Published ${new Date(publishedAt).toLocaleDateString()}`
+                  : ' · Not published'}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex overflow-hidden border border-slate-200 bg-white">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex border border-slate-200 bg-white">
               <button
                 type="button"
                 title="Desktop preview"
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium',
+                  'px-2 py-1.5',
                   previewMode === 'desktop'
                     ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-50',
+                    : 'text-slate-500 hover:bg-slate-50',
                 )}
                 onClick={() => setPreviewMode('desktop')}
               >
                 <Monitor className="h-3.5 w-3.5" />
-                Desktop
               </button>
               <button
                 type="button"
                 title="Mobile preview"
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium',
+                  'px-2 py-1.5',
                   previewMode === 'mobile'
                     ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-50',
+                    : 'text-slate-500 hover:bg-slate-50',
                 )}
                 onClick={() => setPreviewMode('mobile')}
               >
                 <Smartphone className="h-3.5 w-3.5" />
-                Mobile
               </button>
             </div>
-            <Button variant="outline" size="sm" className="rounded-none" asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-none px-2.5 text-xs"
+              asChild
+            >
               <a href="/" target="_blank" rel="noreferrer">
-                <Eye className="mr-1.5 h-3.5 w-3.5" />
-                Live site
+                <Eye className="mr-1 h-3.5 w-3.5" />
+                Live
               </a>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="rounded-none"
+              className="h-8 rounded-none px-2.5 text-xs"
               onClick={handleRevert}
               disabled={
                 !published ||
                 JSON.stringify(published) === JSON.stringify(config)
               }
             >
-              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              Revert
+              <RotateCcw className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="rounded-none"
+              className="h-8 rounded-none px-2.5 text-xs"
               onClick={handleSave}
               disabled={saving || !dirty}
             >
               {saving ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Save className="mr-1.5 h-3.5 w-3.5" />
+                <Save className="mr-1 h-3.5 w-3.5" />
               )}
               Save
             </Button>
             <Button
               size="sm"
-              className="rounded-none bg-[#246a59] hover:bg-[#1a4c40]"
+              className="h-8 rounded-none bg-[#246a59] px-3 text-xs hover:bg-[#1a4c40]"
               onClick={handlePublish}
               disabled={publishing}
             >
               {publishing ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Check className="mr-1.5 h-3.5 w-3.5" />
+                <Check className="mr-1 h-3.5 w-3.5" />
               )}
               Publish
             </Button>
@@ -649,23 +699,23 @@ export function WebsiteStudio() {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="flex max-h-[48vh] w-full shrink-0 flex-col border-b border-slate-200 bg-white lg:max-h-none lg:w-[400px] lg:border-b-0 lg:border-r xl:w-[440px]">
-          <nav className="grid shrink-0 grid-cols-3 border-b border-slate-200">
+        <aside className="flex max-h-[46vh] w-full shrink-0 flex-col border-b border-slate-200 bg-white lg:max-h-none lg:w-[340px] lg:border-b-0 lg:border-r xl:w-[360px]">
+          <nav className="flex shrink-0 gap-0.5 border-b border-slate-100 bg-slate-50 p-1.5">
             {STUDIO_STEPS.map((step) => (
               <button
                 key={step.id}
                 type="button"
                 onClick={() => setTab(step.id)}
                 className={cn(
-                  'relative px-2 py-3 text-left transition',
+                  'flex flex-1 items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-semibold transition',
                   tab === step.id
-                    ? 'bg-[#246a59]/5 text-[#0a1f1a]'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800',
+                    ? 'bg-white text-[#0a1f1a] shadow-sm ring-1 ring-slate-200/80'
+                    : 'text-slate-500 hover:text-slate-800',
                 )}
               >
                 <span
                   className={cn(
-                    'mb-1 flex h-5 w-5 items-center justify-center text-[10px] font-bold',
+                    'flex h-4 w-4 items-center justify-center text-[9px] font-bold',
                     tab === step.id
                       ? 'bg-[#246a59] text-white'
                       : 'bg-slate-200 text-slate-600',
@@ -673,44 +723,36 @@ export function WebsiteStudio() {
                 >
                   {step.step}
                 </span>
-                <span className="block text-xs font-semibold sm:text-sm">
-                  {step.label}
-                </span>
-                {tab === step.id && (
-                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#246a59]" />
-                )}
+                {step.short}
               </button>
             ))}
           </nav>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
             {tab === 'look' && (
-              <div className="space-y-4">
-                <div className="border border-[#246a59]/20 bg-[#246a59]/5 p-3">
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#246a59]" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[#0a1f1a]">
-                        Current look: {activeLook.name}
-                      </p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
-                        Press <strong>Use this look</strong> on a card below to
-                        switch layouts. Your wording and images stay. Then open
-                        step 2 for school colors.
-                      </p>
-                      <button
-                        type="button"
-                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#246a59] hover:underline"
-                        onClick={() => setTab('brand')}
-                      >
-                        Next: colors &amp; hero
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
-                    </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2 bg-[#f3f7f5] px-2.5 py-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#246a59]">
+                      Active look
+                    </p>
+                    <p className="truncate text-[13px] font-semibold text-[#0a1f1a]">
+                      {activeLook.name}
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-[#246a59] hover:underline"
+                    onClick={() => setTab('brand')}
+                  >
+                    Brand
+                    <ArrowRight className="h-3 w-3" />
+                  </button>
                 </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <p className="px-0.5 text-[11px] text-slate-500">
+                  Tap a look to apply — copy &amp; images stay.
+                </p>
+                <div className="flex flex-col gap-1">
                   {HOMEPAGE_TEMPLATES.map((t) => (
                     <TemplateThumb
                       key={t.id}
@@ -724,15 +766,14 @@ export function WebsiteStudio() {
             )}
 
             {tab === 'brand' && (
-              <div className="space-y-4">
-                <div className="flex items-start gap-2 border border-slate-200 bg-slate-50 p-3">
-                  <Paintbrush className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                  <p className="text-xs leading-relaxed text-slate-600">
-                    These colors tint the look from step 1. Scroll for logo and
-                    the big hero photo. Fonts stay with the selected look.
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 bg-slate-50 px-2.5 py-2">
+                  <Paintbrush className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <p className="text-[11px] leading-snug text-slate-600">
+                    Colors tint your look. Scroll for logo &amp; hero.
                   </p>
                 </div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                   School colors
                 </p>
                 {(
@@ -1037,28 +1078,26 @@ export function WebsiteStudio() {
             )}
 
             {tab === 'sections' && (
-              <div className="space-y-4">
-                <p className="text-xs leading-relaxed text-slate-600">
-                  Toggle sections on or off, reorder the middle ones, then click
-                  a name to edit its text. Navigation, hero, and footer stay
-                  fixed in place.
+              <div className="space-y-3">
+                <p className="text-[11px] leading-snug text-slate-500">
+                  Toggle on/off, reorder middle sections, tap a name to edit.
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {config.sections.map((section) => {
                     const locked = LOCKED.includes(section.type)
                     return (
                       <div
                         key={section.id}
                         className={cn(
-                          'flex items-center gap-2 border px-2 py-2',
+                          'flex items-center gap-1.5 border px-2 py-1.5',
                           activeSection === section.type
-                            ? 'border-primary bg-primary/5'
+                            ? 'border-[#246a59] bg-[#246a59]/5'
                             : 'border-slate-200',
                         )}
                       >
                         <button
                           type="button"
-                          className="min-w-0 flex-1 text-left text-sm font-medium"
+                          className="min-w-0 flex-1 text-left text-[12px] font-medium text-slate-800"
                           onClick={() => setActiveSection(section.type)}
                         >
                           {SECTION_LABELS[section.type]}
@@ -1067,19 +1106,19 @@ export function WebsiteStudio() {
                           <>
                             <button
                               type="button"
-                              className="rounded p-1 hover:bg-slate-100"
+                              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                               onClick={() => moveSection(section.type, -1)}
                               aria-label="Move up"
                             >
-                              <ArrowUp className="h-3.5 w-3.5" />
+                              <ArrowUp className="h-3 w-3" />
                             </button>
                             <button
                               type="button"
-                              className="rounded p-1 hover:bg-slate-100"
+                              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                               onClick={() => moveSection(section.type, 1)}
                               aria-label="Move down"
                             >
-                              <ArrowDown className="h-3.5 w-3.5" />
+                              <ArrowDown className="h-3 w-3" />
                             </button>
                           </>
                         )}
@@ -1095,16 +1134,17 @@ export function WebsiteStudio() {
                   })}
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                  <h3 className="text-sm font-semibold">
-                    Edit {SECTION_LABELS[activeSection]}
+                <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+                  <h3 className="text-[12px] font-semibold text-slate-900">
+                    {SECTION_LABELS[activeSection]}
                   </h3>
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="h-7 px-2 text-[11px]"
                     onClick={() => resetSection(activeSection)}
                   >
-                    <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                    <RotateCcw className="mr-1 h-3 w-3" />
                     Reset
                   </Button>
                 </div>
