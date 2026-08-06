@@ -10,15 +10,18 @@ import {
 import { useParams } from 'next/navigation'
 import {
   ArrowDown,
+  ArrowRight,
   ArrowUp,
   Check,
   Eye,
   Globe,
   Loader2,
   Monitor,
+  Paintbrush,
   RotateCcw,
   Save,
   Smartphone,
+  Sparkles,
   Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -46,6 +49,7 @@ import {
 } from '@/lib/types/homepage-config'
 import { uploadFile } from '@/lib/services/upload'
 import { getAccessTokenFromStorage } from '@/lib/realtime/getAccessToken'
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import {
   fetchAdminHomepageConfig,
   publishHomepageConfig,
@@ -68,7 +72,46 @@ const SECTION_LABELS: Record<HomepageSectionType, string> = {
   footer: 'Footer',
 }
 
-type StudioTab = 'templates' | 'brand' | 'sections'
+type StudioTab = 'look' | 'brand' | 'sections'
+
+const STUDIO_STEPS: {
+  id: StudioTab
+  step: number
+  label: string
+  hint: string
+}[] = [
+  {
+    id: 'look',
+    step: 1,
+    label: 'Choose look',
+    hint: 'Pick a homepage layout. Your words stay the same.',
+  },
+  {
+    id: 'brand',
+    step: 2,
+    label: 'Colors & hero',
+    hint: 'School colors, logo, and the big headline photo.',
+  },
+  {
+    id: 'sections',
+    step: 3,
+    label: 'Edit content',
+    hint: 'Turn sections on/off and edit the text.',
+  },
+]
+
+const TEMPLATE_PALETTES: Record<string, string> = {
+  'campus-dawn': 'from-[#0a1f1a] via-[#246a59] to-[#a7f3d0]',
+  'assembly-hall': 'from-[#1e293b] via-[#f7f4ee] to-[#c4a574]',
+  playfield: 'from-[#166534] via-[#22c55e] to-[#fef08a]',
+  'garden-court': 'from-[#365314] via-[#86efac] to-[#ecfccb]',
+  'crest-motto': 'from-[#1c1917] via-[#854d0e] to-[#fde68a]',
+  'skyline-cbc': 'from-[#0f172a] via-[#334155] to-[#38bdf8]',
+  'story-scroll': 'from-[#292524] via-[#78716c] to-[#fafaf9]',
+  'horizon-board': 'from-[#0c4a6e] via-[#38bdf8] to-[#e0f2fe]',
+  'studio-day': 'from-[#7c2d12] via-[#ea580c] to-[#fed7aa]',
+  'night-lights': 'from-black via-[#134e4a] to-[#5eead4]',
+}
 
 function updateSection(
   config: HomepageConfig,
@@ -117,53 +160,57 @@ function Field({
 function TemplateThumb({
   id,
   active,
-  onClick,
+  onSelect,
 }: {
   id: HomepageTemplateId
   active: boolean
-  onClick: () => void
+  onSelect: () => void
 }) {
   const meta = HOMEPAGE_TEMPLATES.find((t) => t.id === id)!
-  const palettes: Record<string, string> = {
-    'campus-dawn': 'from-[#0a1f1a] via-[#246a59] to-[#a7f3d0]',
-    'assembly-hall': 'from-[#1e293b] via-[#f7f4ee] to-[#c4a574]',
-    playfield: 'from-[#166534] via-[#22c55e] to-[#fef08a]',
-    'garden-court': 'from-[#365314] via-[#86efac] to-[#ecfccb]',
-    'crest-motto': 'from-[#1c1917] via-[#854d0e] to-[#fde68a]',
-    'skyline-cbc': 'from-[#0f172a] via-[#334155] to-[#38bdf8]',
-    'story-scroll': 'from-[#292524] via-[#78716c] to-[#fafaf9]',
-    'horizon-board': 'from-[#0c4a6e] via-[#38bdf8] to-[#e0f2fe]',
-    'studio-day': 'from-[#7c2d12] via-[#ea580c] to-[#fed7aa]',
-    'night-lights': 'from-black via-[#134e4a] to-[#5eead4]',
-  }
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
-        'group w-full overflow-hidden border text-left transition',
+        'overflow-hidden border bg-white text-left transition',
         active
-          ? 'border-primary ring-2 ring-primary/30'
-          : 'border-slate-200 hover:border-primary/40',
+          ? 'border-[#246a59] shadow-[0_0_0_1px_#246a59]'
+          : 'border-slate-200 hover:border-slate-300',
       )}
     >
-      <div
-        className={cn(
-          'h-16 bg-gradient-to-br',
-          palettes[id] || 'from-slate-700 to-slate-300',
-        )}
-      />
-      <div className="space-y-0.5 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-slate-900">{meta.name}</p>
-          {active && <Check className="h-4 w-4 text-primary" />}
+      <button type="button" onClick={onSelect} className="block w-full text-left">
+        <div
+          className={cn(
+            'relative h-20 bg-gradient-to-br',
+            TEMPLATE_PALETTES[id] || 'from-slate-700 to-slate-300',
+          )}
+        >
+          {active && (
+            <span className="absolute left-2 top-2 inline-flex items-center gap-1 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#246a59]">
+              <Check className="h-3 w-3" />
+              In use
+            </span>
+          )}
         </div>
-        <p className="text-[11px] leading-snug text-slate-500">{meta.tagline}</p>
-        <p className="text-[10px] uppercase tracking-wider text-slate-400">
-          {meta.mood}
-        </p>
+        <div className="space-y-1 p-3">
+          <p className="text-sm font-semibold text-slate-900">{meta.name}</p>
+          <p className="text-[11px] leading-snug text-slate-500">{meta.tagline}</p>
+          <p className="text-[10px] uppercase tracking-wider text-slate-400">
+            {meta.mood}
+          </p>
+        </div>
+      </button>
+      <div className="border-t border-slate-100 px-3 pb-3">
+        <Button
+          type="button"
+          size="sm"
+          variant={active ? 'secondary' : 'default'}
+          className="mt-2 h-8 w-full rounded-none text-xs"
+          disabled={active}
+          onClick={onSelect}
+        >
+          {active ? 'Currently selected' : 'Use this look'}
+        </Button>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -179,13 +226,16 @@ export function WebsiteStudio() {
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [dirty, setDirty] = useState(false)
-  const [tab, setTab] = useState<StudioTab>('templates')
+  const [tab, setTab] = useState<StudioTab>('look')
   const [activeSection, setActiveSection] =
     useState<HomepageSectionType>('hero')
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>(
     'desktop',
   )
   const [uploading, setUploading] = useState(false)
+
+  // Authenticated school config — used to preview the real Programs section.
+  const { data: schoolConfig } = useSchoolConfig()
 
   const schoolName = useMemo(() => {
     const hero = getSlots<{ headline?: string }>(config, 'hero')
@@ -453,138 +503,199 @@ export function WebsiteStudio() {
     links?: HomepageNavLink[]
   }>(config, 'nav')
 
+  const activeLook =
+    HOMEPAGE_TEMPLATES.find((t) => t.id === config.templateId) ||
+    HOMEPAGE_TEMPLATES[0]
+  const currentStep = STUDIO_STEPS.find((s) => s.id === tab) || STUDIO_STEPS[0]
+
+  const applyLook = (id: HomepageTemplateId) => {
+    if (id === config.templateId) return
+    setDraft(applyTemplateKeepContent(config, id))
+    const name = HOMEPAGE_TEMPLATES.find((t) => t.id === id)?.name || id
+    toast.success(`Look applied: ${name}`, {
+      description:
+        'Your words and images were kept. Preview updates on the right.',
+    })
+  }
+
   return (
-    <div className="-m-4 flex h-[calc(100vh-4rem)] min-h-[560px] flex-col bg-slate-100 lg:-m-6">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-semibold text-slate-900">
-              Website Studio
-            </h1>
-            {dirty && (
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                Unsaved
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Swap look, keep words ·{' '}
-            {publishedAt
-              ? `Last published ${new Date(publishedAt).toLocaleString()}`
-              : 'Not published yet'}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex overflow-hidden border border-slate-200">
-            <button
-              type="button"
-              className={cn(
-                'px-2.5 py-1.5 text-xs',
-                previewMode === 'desktop'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600',
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-[520px] flex-col bg-[#f3f5f4] lg:h-[calc(100dvh-4rem)]">
+      <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Globe className="h-5 w-5 shrink-0 text-[#246a59]" />
+              <h1 className="text-lg font-semibold text-slate-900">
+                Website Studio
+              </h1>
+              {dirty ? (
+                <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                  Unsaved draft
+                </span>
+              ) : (
+                <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                  Draft synced
+                </span>
               )}
-              onClick={() => setPreviewMode('desktop')}
-            >
-              <Monitor className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              className={cn(
-                'px-2.5 py-1.5 text-xs',
-                previewMode === 'mobile'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600',
-              )}
-              onClick={() => setPreviewMode('mobile')}
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-            </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Step {currentStep.step} of 3 — {currentStep.hint}
+              {publishedAt
+                ? ` · Last published ${new Date(publishedAt).toLocaleString()}`
+                : ' · Not published yet'}
+            </p>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/" target="_blank" rel="noreferrer">
-              <Eye className="mr-1.5 h-3.5 w-3.5" />
-              Open live site
-            </a>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRevert}
-            disabled={!published || JSON.stringify(published) === JSON.stringify(config)}
-            title="Discard draft and restore the last published version"
-          >
-            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            Revert
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSave}
-            disabled={saving || !dirty}
-          >
-            {saving ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Save className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Save draft
-          </Button>
-          <Button size="sm" onClick={handlePublish} disabled={publishing}>
-            {publishing ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Check className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Publish
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex overflow-hidden border border-slate-200 bg-white">
+              <button
+                type="button"
+                title="Desktop preview"
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium',
+                  previewMode === 'desktop'
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-50',
+                )}
+                onClick={() => setPreviewMode('desktop')}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+                Desktop
+              </button>
+              <button
+                type="button"
+                title="Mobile preview"
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium',
+                  previewMode === 'mobile'
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-50',
+                )}
+                onClick={() => setPreviewMode('mobile')}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Mobile
+              </button>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-none" asChild>
+              <a href="/" target="_blank" rel="noreferrer">
+                <Eye className="mr-1.5 h-3.5 w-3.5" />
+                Live site
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-none"
+              onClick={handleRevert}
+              disabled={
+                !published ||
+                JSON.stringify(published) === JSON.stringify(config)
+              }
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              Revert
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-none"
+              onClick={handleSave}
+              disabled={saving || !dirty}
+            >
+              {saving ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Save
+            </Button>
+            <Button
+              size="sm"
+              className="rounded-none bg-[#246a59] hover:bg-[#1a4c40]"
+              onClick={handlePublish}
+              disabled={publishing}
+            >
+              {publishing ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Publish
+            </Button>
+          </div>
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <aside className="flex w-full max-w-md shrink-0 flex-col border-r border-slate-200 bg-white">
-          <div className="flex border-b border-slate-200">
-            {(
-              [
-                ['templates', 'Templates'],
-                ['brand', 'Brand'],
-                ['sections', 'Sections'],
-              ] as const
-            ).map(([id, label]) => (
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className="flex max-h-[48vh] w-full shrink-0 flex-col border-b border-slate-200 bg-white lg:max-h-none lg:w-[400px] lg:border-b-0 lg:border-r xl:w-[440px]">
+          <nav className="grid shrink-0 grid-cols-3 border-b border-slate-200">
+            {STUDIO_STEPS.map((step) => (
               <button
-                key={id}
+                key={step.id}
                 type="button"
-                onClick={() => setTab(id)}
+                onClick={() => setTab(step.id)}
                 className={cn(
-                  'flex-1 px-3 py-2.5 text-sm font-medium',
-                  tab === id
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-slate-500 hover:text-slate-800',
+                  'relative px-2 py-3 text-left transition',
+                  tab === step.id
+                    ? 'bg-[#246a59]/5 text-[#0a1f1a]'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800',
                 )}
               >
-                {label}
+                <span
+                  className={cn(
+                    'mb-1 flex h-5 w-5 items-center justify-center text-[10px] font-bold',
+                    tab === step.id
+                      ? 'bg-[#246a59] text-white'
+                      : 'bg-slate-200 text-slate-600',
+                  )}
+                >
+                  {step.step}
+                </span>
+                <span className="block text-xs font-semibold sm:text-sm">
+                  {step.label}
+                </span>
+                {tab === step.id && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#246a59]" />
+                )}
               </button>
             ))}
-          </div>
+          </nav>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            {tab === 'templates' && (
-              <div className="space-y-3">
-                <p className="text-xs text-slate-500">
-                  One-click apply keeps your copy and images. Only the layout
-                  personality changes.
-                </p>
+            {tab === 'look' && (
+              <div className="space-y-4">
+                <div className="border border-[#246a59]/20 bg-[#246a59]/5 p-3">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#246a59]" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#0a1f1a]">
+                        Current look: {activeLook.name}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
+                        Press <strong>Use this look</strong> on a card below to
+                        switch layouts. Your wording and images stay. Then open
+                        step 2 for school colors.
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#246a59] hover:underline"
+                        onClick={() => setTab('brand')}
+                      >
+                        Next: colors &amp; hero
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {HOMEPAGE_TEMPLATES.map((t) => (
                     <TemplateThumb
                       key={t.id}
                       id={t.id}
                       active={config.templateId === t.id}
-                      onClick={() => {
-                        setDraft(applyTemplateKeepContent(config, t.id))
-                        toast.success(`Applied ${t.name}`)
-                      }}
+                      onSelect={() => applyLook(t.id)}
                     />
                   ))}
                 </div>
@@ -593,9 +704,15 @@ export function WebsiteStudio() {
 
             {tab === 'brand' && (
               <div className="space-y-4">
-                <p className="text-xs text-slate-500">
-                  Colors tint every template. Fonts stay locked to the selected
-                  look.
+                <div className="flex items-start gap-2 border border-slate-200 bg-slate-50 p-3">
+                  <Paintbrush className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    These colors tint the look from step 1. Scroll for logo and
+                    the big hero photo. Fonts stay with the selected look.
+                  </p>
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  School colors
                 </p>
                 {(
                   [
@@ -662,6 +779,63 @@ export function WebsiteStudio() {
                     ))}
                   </div>
                 </Field>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <h3 className="mb-3 text-sm font-semibold">Logo</h3>
+                  {config.logoUrl ? (
+                    <div className="mb-3 flex items-center justify-between gap-3 rounded border border-slate-200 p-2">
+                      <img
+                        src={config.logoUrl}
+                        alt="School logo"
+                        className="h-12 w-12 object-contain"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setDraft({ ...config, logoUrl: undefined })
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="mb-3 text-xs text-slate-400">
+                      No logo set — the site shows an initials monogram.
+                    </p>
+                  )}
+                  <Field label="Logo URL">
+                    <Input
+                      value={config.logoUrl || ''}
+                      placeholder="https://…/logo.png"
+                      onChange={(e) =>
+                        setDraft({
+                          ...config,
+                          logoUrl: e.target.value.trim() || undefined,
+                        })
+                      }
+                    />
+                  </Field>
+                  <div className="mt-2">
+                    <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary">
+                      <Upload className="h-4 w-4" />
+                      {uploading ? 'Uploading…' : 'Upload logo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          void handleUpload(file, (url) =>
+                            setDraft({ ...config, logoUrl: url }),
+                          )
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
 
                 <div className="border-t border-slate-100 pt-4">
                   <h3 className="mb-3 text-sm font-semibold">Hero media</h3>
@@ -829,11 +1003,25 @@ export function WebsiteStudio() {
                     </Field>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#246a59] hover:underline"
+                  onClick={() => setTab('sections')}
+                >
+                  Next: edit page sections
+                  <ArrowRight className="h-3 w-3" />
+                </button>
               </div>
             )}
 
             {tab === 'sections' && (
               <div className="space-y-4">
+                <p className="text-xs leading-relaxed text-slate-600">
+                  Toggle sections on or off, reorder the middle ones, then click
+                  a name to edit its text. Navigation, hero, and footer stay
+                  fixed in place.
+                </p>
                 <div className="space-y-2">
                   {config.sections.map((section) => {
                     const locked = LOCKED.includes(section.type)
@@ -1516,14 +1704,28 @@ export function WebsiteStudio() {
           </div>
         </aside>
 
-        <main className="relative min-w-0 flex-1 overflow-hidden bg-slate-200/80 p-3">
+        <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-[#e8eeeb] p-3 sm:p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Preview · {activeLook.name}
+              {dirty ? ' · unsaved' : ''}
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Draft only — Publish to update the live site
+            </p>
+          </div>
           <div
             className={cn(
-              'mx-auto h-full overflow-auto border border-slate-300 bg-white shadow-lg',
+              'relative mx-auto h-[calc(100%-1.5rem)] overflow-hidden border border-slate-300 bg-white shadow-md',
               previewMode === 'mobile' ? 'max-w-[390px]' : 'max-w-none',
             )}
           >
-            <SchoolHomepage previewConfig={config} />
+            <div className="h-full overflow-y-auto overflow-x-hidden">
+              <SchoolHomepage
+                previewConfig={config}
+                levels={schoolConfig?.selectedLevels}
+              />
+            </div>
           </div>
         </main>
       </div>

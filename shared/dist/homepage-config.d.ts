@@ -57,7 +57,19 @@ export type HomepageSection = {
 export type HomepageConfig = {
     templateId: HomepageTemplateId;
     theme: HomepageTheme;
+    /** School logo URL (uploaded in Website Studio brand tab) */
+    logoUrl?: string;
     sections: HomepageSection[];
+};
+export type PublicSchoolGradeLevel = {
+    id: string;
+    name: string;
+};
+export type PublicSchoolLevel = {
+    id: string;
+    name: string;
+    description?: string;
+    gradeLevels: PublicSchoolGradeLevel[];
 };
 export declare function createDefaultHomepageConfig(schoolName?: string): HomepageConfig;
 export declare const homepageThemeSchema: z.ZodObject<{

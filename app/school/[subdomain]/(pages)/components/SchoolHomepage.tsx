@@ -5,6 +5,7 @@ import { useEffect, useSyncExternalStore, useState } from 'react'
 import {
   createDefaultHomepageConfig,
   type HomepageConfig,
+  type PublicSchoolLevel,
 } from '@/lib/types/homepage-config'
 import { SchoolConfiguration } from '@/lib/types/school-config'
 import brandingJson from '@/lib/data/tenant-branding.template.json'
@@ -17,6 +18,8 @@ interface SchoolHomepageProps {
   previewConfig?: HomepageConfig
   /** Published config fetched server-side (SSR) — skip the client fetch */
   initialConfig?: HomepageConfig
+  /** School levels for the programs section (SSR or studio preview) */
+  levels?: PublicSchoolLevel[]
 }
 
 function getSchoolNameFromSubdomain(subdomain: string) {
@@ -57,6 +60,7 @@ export function SchoolHomepage({
   config,
   previewConfig,
   initialConfig,
+  levels,
 }: SchoolHomepageProps) {
   const params = useParams()
   const subdomain = (params.subdomain as string) || 'school'
@@ -124,11 +128,13 @@ export function SchoolHomepage({
     <HomepageRenderer
       config={homepageConfig}
       schoolConfig={config}
+      levels={levels}
       runtime={{
         schoolName,
         subdomain,
         logoUrl: branding?.logos?.primary || undefined,
         tagline,
+        preview: !!previewConfig,
       }}
     />
   )

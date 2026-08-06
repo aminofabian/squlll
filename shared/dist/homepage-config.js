@@ -400,6 +400,7 @@ exports.homepageSectionSchema = zod_1.z.discriminatedUnion('type', [
 exports.homepageConfigSchema = zod_1.z.object({
     templateId: zod_1.z.enum(exports.HOMEPAGE_TEMPLATE_IDS),
     theme: exports.homepageThemeSchema,
+    logoUrl: zod_1.z.string().optional(),
     sections: zod_1.z.array(exports.homepageSectionSchema),
 });
 /* ------------------------------------------------------------------ */
@@ -498,6 +499,9 @@ function parseHomepageConfig(raw, schoolName = 'Our School') {
         ? source.templateId
         : base.templateId;
     const theme = parseTheme(source.theme, base.theme);
+    const logoUrl = typeof source.logoUrl === 'string' && source.logoUrl.trim().length > 0
+        ? source.logoUrl
+        : undefined;
     const sections = [];
     const seenTypes = new Set();
     if (Array.isArray(source.sections)) {
@@ -509,11 +513,14 @@ function parseHomepageConfig(raw, schoolName = 'Our School') {
             }
         }
     }
-    return {
+    const result = {
         templateId,
         theme,
         sections: sections.length > 0 ? sections : base.sections,
     };
+    if (logoUrl !== undefined)
+        result.logoUrl = logoUrl;
+    return result;
 }
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */

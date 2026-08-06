@@ -25,6 +25,8 @@ import type {
   HomepageTemplateMeta,
   HomepageTestimonial,
   HomepageTheme,
+  PublicSchoolGradeLevel,
+  PublicSchoolLevel,
 } from '@squl/shared'
 
 export type {
@@ -40,6 +42,8 @@ export type {
   HomepageTemplateMeta,
   HomepageTestimonial,
   HomepageTheme,
+  PublicSchoolGradeLevel,
+  PublicSchoolLevel,
 }
 
 export type HomepageConfigRecord = {

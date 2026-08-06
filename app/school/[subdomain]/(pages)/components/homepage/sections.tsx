@@ -23,6 +23,7 @@ import {
   type HomepageOfferingItem,
   type HomepageStatItem,
   type HomepageTestimonial,
+  type PublicSchoolLevel,
 } from '@/lib/types/homepage-config'
 import { SchoolConfiguration } from '@/lib/types/school-config'
 import { cn } from '@/lib/utils'
@@ -58,6 +59,7 @@ export function HomepageNav({
   const { slots } = data
   const links = slots.links || []
   const solid = scrolled || open || variant === 'solid'
+  const logoUrl = config.logoUrl || runtime.logoUrl
   const initials = runtime.schoolName
     .split(' ')
     .map((w) => w[0])
@@ -68,7 +70,8 @@ export function HomepageNav({
   return (
     <nav
       className={cn(
-        'fixed inset-x-0 top-0 z-50 transition-all duration-300',
+        'inset-x-0 top-0 z-50 transition-all duration-300',
+        runtime.preview ? 'absolute' : 'fixed',
         solid
           ? 'border-b border-black/10 bg-white/95 backdrop-blur-md'
           : 'border-b border-transparent bg-transparent',
@@ -78,9 +81,9 @@ export function HomepageNav({
     >
       <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex min-w-0 items-center gap-3">
-          {runtime.logoUrl ? (
+          {logoUrl ? (
             <img
-              src={runtime.logoUrl}
+              src={logoUrl}
               alt=""
               className="h-10 w-10 object-contain sm:h-11 sm:w-11"
             />
@@ -227,8 +230,12 @@ export function HomepageHero({
       <section className="relative bg-[var(--school-paper)] pt-[var(--school-nav-h)]">
         <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
           <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center border-2 border-primary bg-white shadow-[6px_6px_0_var(--primary)]">
-            {runtime.logoUrl ? (
-              <img src={runtime.logoUrl} alt="" className="h-16 w-16 object-contain" />
+            {config.logoUrl || runtime.logoUrl ? (
+              <img
+                src={config.logoUrl || runtime.logoUrl}
+                alt=""
+                className="h-16 w-16 object-contain"
+              />
             ) : (
               <Building2 className="h-12 w-12 text-primary" />
             )}
@@ -577,9 +584,12 @@ export function HomepageOfferings({
 export function HomepagePrograms({
   config,
   schoolConfig,
+  levels,
 }: {
   config: HomepageConfig
   schoolConfig?: SchoolConfiguration
+  /** Public SSR levels — preferred over schoolConfig when provided. */
+  levels?: PublicSchoolLevel[]
 }) {
   const data = getSection<{
     eyebrow?: string
@@ -591,7 +601,7 @@ export function HomepagePrograms({
   }>(config, 'programs')
   if (!data) return null
   const { slots } = data
-  const levels = schoolConfig?.selectedLevels || []
+  const programLevels = levels ?? schoolConfig?.selectedLevels ?? []
 
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
@@ -621,9 +631,9 @@ export function HomepagePrograms({
           </div>
         </Reveal>
 
-        {levels.length > 0 ? (
+        {programLevels.length > 0 ? (
           <div className="mt-12 space-y-4">
-            {levels.map((level, index) => (
+            {programLevels.map((level, index) => (
               <Reveal key={level.id} delay={index * 60}>
                 <div className="border border-black/10 bg-[var(--school-paper)] p-6 sm:p-8">
                   <div className="flex items-baseline gap-3">
@@ -884,7 +894,15 @@ export function HomepageFooter({
           <div>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center bg-primary">
-                <Building2 className="h-5 w-5 text-white" />
+                {config.logoUrl || runtime.logoUrl ? (
+                  <img
+                    src={config.logoUrl || runtime.logoUrl}
+                    alt=""
+                    className="h-10 w-10 object-contain"
+                  />
+                ) : (
+                  <Building2 className="h-5 w-5 text-white" />
+                )}
               </div>
               <div>
                 <p className="font-display text-xl leading-none tracking-tight">

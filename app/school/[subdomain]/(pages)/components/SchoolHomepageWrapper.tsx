@@ -1,7 +1,10 @@
 'use client'
 
 import { SchoolHomepage } from './SchoolHomepage'
-import type { HomepageConfig } from '@/lib/types/homepage-config'
+import type {
+  HomepageConfig,
+  PublicSchoolLevel,
+} from '@/lib/types/homepage-config'
 import { SchoolConfiguration } from '../../../../../lib/types/school-config'
 
 interface SchoolHomepageWrapperProps {
@@ -12,11 +15,14 @@ interface SchoolHomepageWrapperProps {
    * + loading spinner.
    */
   initialConfig?: HomepageConfig
+  /** School levels (curricula) for the programs section, fetched server-side. */
+  levels?: PublicSchoolLevel[]
 }
 
 export function SchoolHomepageWrapper({
   config,
   initialConfig,
+  levels,
 }: SchoolHomepageWrapperProps) {
-  return <SchoolHomepage config={config} initialConfig={initialConfig} />
+  return <SchoolHomepage config={config} initialConfig={initialConfig} levels={levels} />
 }

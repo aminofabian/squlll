@@ -1,7 +1,10 @@
 import { Suspense } from 'react'
 import { SchoolHomepageWrapper } from './(pages)/components/SchoolHomepageWrapper'
 import { ErrorBoundary } from './(pages)/components/ErrorBoundary'
-import { fetchPublicHomepageConfigServer } from './(pages)/components/homepage/homepage-api.server'
+import {
+  fetchPublicHomepageConfigServer,
+  fetchPublicSchoolLevelsServer,
+} from './(pages)/components/homepage/homepage-api.server'
 
 // Force dynamic rendering and disable caching
 export const dynamic = 'force-dynamic'
@@ -33,12 +36,15 @@ export default async function SchoolHome({
 }) {
   const { subdomain } = await params
   const schoolName = getSchoolNameFromSubdomain(subdomain)
-  const initialConfig = await fetchPublicHomepageConfigServer(subdomain, schoolName)
+  const [initialConfig, levels] = await Promise.all([
+    fetchPublicHomepageConfigServer(subdomain, schoolName),
+    fetchPublicSchoolLevelsServer(subdomain),
+  ])
 
   return (
     <ErrorBoundary>
       <Suspense fallback={<HomepageLoading />}>
-        <SchoolHomepageWrapper initialConfig={initialConfig} />
+        <SchoolHomepageWrapper initialConfig={initialConfig} levels={levels} />
       </Suspense>
     </ErrorBoundary>
   )

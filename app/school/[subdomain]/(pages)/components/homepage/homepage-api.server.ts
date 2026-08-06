@@ -1,10 +1,27 @@
 import { resolveUpstreamGraphqlEndpoint } from '@/lib/graphql-endpoint'
-import { parseHomepageConfig } from '@/lib/types/homepage-config'
-import type { HomepageConfig } from '@/lib/types/homepage-config'
+import {
+  parseHomepageConfig,
+  type HomepageConfig,
+  type PublicSchoolLevel,
+} from '@/lib/types/homepage-config'
 
 const PUBLIC_HOMEPAGE_QUERY = `
   query PublicHomepageConfig($subdomain: String!) {
     publicHomepageConfig(subdomain: $subdomain)
+  }
+`
+
+const PUBLIC_SCHOOL_LEVELS_QUERY = `
+  query PublicSchoolLevels($subdomain: String!) {
+    publicSchoolLevels(subdomain: $subdomain) {
+      id
+      name
+      description
+      gradeLevels {
+        id
+        name
+      }
+    }
   }
 `
 
@@ -36,5 +53,38 @@ export async function fetchPublicHomepageConfigServer(
   } catch {
     // Public site must still render if the backend is unreachable.
     return parseHomepageConfig(null, schoolName)
+  }
+}
+
+/**
+ * Server-side fetch of the school's levels (curricula) for the public
+ * homepage programs section. Returns [] when unavailable so the section
+ * gracefully falls back to its "coming soon" state.
+ */
+export async function fetchPublicSchoolLevelsServer(
+  subdomain: string,
+): Promise<PublicSchoolLevel[]> {
+  try {
+    const res = await fetch(
+      resolveUpstreamGraphqlEndpoint(PUBLIC_SCHOOL_LEVELS_QUERY),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-subdomain': subdomain,
+        },
+        body: JSON.stringify({
+          query: PUBLIC_SCHOOL_LEVELS_QUERY,
+          variables: { subdomain },
+        }),
+        cache: 'no-store',
+      },
+    )
+    const json = await res.json()
+    return Array.isArray(json.data?.publicSchoolLevels)
+      ? (json.data.publicSchoolLevels as PublicSchoolLevel[])
+      : []
+  } catch {
+    return []
   }
 }

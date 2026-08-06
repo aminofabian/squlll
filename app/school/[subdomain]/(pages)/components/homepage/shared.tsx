@@ -150,4 +150,6 @@ export type HomepageRuntime = {
   subdomain: string
   logoUrl?: string
   tagline?: string
+  /** Studio preview: keep nav inside the preview frame (not viewport-fixed) */
+  preview?: boolean
 }

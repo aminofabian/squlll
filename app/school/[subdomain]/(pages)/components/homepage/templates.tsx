@@ -5,6 +5,7 @@ import type {
   HomepageConfig,
   HomepageSectionType,
   HomepageTemplateId,
+  PublicSchoolLevel,
 } from '@/lib/types/homepage-config'
 import type { SchoolConfiguration } from '@/lib/types/school-config'
 import {
@@ -19,6 +20,7 @@ import {
   HomepageStats,
   HomepageTestimonials,
 } from './sections'
+import { cn } from '@/lib/utils'
 import {
   HomepageRuntime,
   HomepageShellStyles,
@@ -30,6 +32,8 @@ export type TemplateProps = {
   config: HomepageConfig
   runtime: HomepageRuntime
   schoolConfig?: SchoolConfiguration
+  /** School levels for the programs section (public SSR or studio preview) */
+  levels?: PublicSchoolLevel[]
 }
 
 type VariantMap = Partial<Record<HomepageSectionType, string>>
@@ -108,15 +112,23 @@ const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
 
 function Shell({
   config,
+  runtime,
   children,
   className,
 }: {
   config: HomepageConfig
+  runtime: HomepageRuntime
   children: ReactNode
   className?: string
 }) {
   return (
-    <div className={shellClass(config, className)} style={themeStyle(config.theme)}>
+    <div
+      className={shellClass(
+        config,
+        cn(runtime.preview && 'relative isolate overflow-x-hidden', className),
+      )}
+      style={themeStyle(config.theme)}
+    >
       <HomepageShellStyles />
       {children}
     </div>
@@ -127,6 +139,7 @@ function TemplateBody({
   config,
   runtime,
   schoolConfig,
+  levels,
   variants,
 }: TemplateProps & { variants: VariantMap }) {
   return (
@@ -174,6 +187,7 @@ function TemplateBody({
                 key={section.id}
                 config={config}
                 schoolConfig={schoolConfig}
+                levels={levels}
               />
             )
           case 'feeDownloads':
@@ -216,13 +230,14 @@ function TemplateBody({
 function makeTemplate(id: HomepageTemplateId): ComponentType<TemplateProps> {
   const variants = TEMPLATE_VARIANTS[id]
   const extraClass = SHELL_CLASS[id]
-  function Template({ config, runtime, schoolConfig }: TemplateProps) {
+  function Template({ config, runtime, schoolConfig, levels }: TemplateProps) {
     return (
-      <Shell config={config} className={extraClass}>
+      <Shell config={config} runtime={runtime} className={extraClass}>
         <TemplateBody
           config={config}
           runtime={runtime}
           schoolConfig={schoolConfig}
+          levels={levels}
           variants={variants}
         />
       </Shell>
@@ -260,9 +275,15 @@ export function HomepageRenderer({
   config,
   runtime,
   schoolConfig,
+  levels,
 }: TemplateProps) {
   const Template = REGISTRY[config.templateId] || CampusDawnTemplate
   return (
-    <Template config={config} runtime={runtime} schoolConfig={schoolConfig} />
+    <Template
+      config={config}
+      runtime={runtime}
+      schoolConfig={schoolConfig}
+      levels={levels}
+    />
   )
 }
