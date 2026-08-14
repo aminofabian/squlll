@@ -39,6 +39,8 @@ interface TimetableHealthPanelProps {
   onAddLesson?: () => void;
   onPublish?: () => void;
   onPrint?: () => void;
+  variant?: "card" | "rail";
+  hideActions?: boolean;
 }
 
 const HEALTH_COPY: Record<
@@ -127,6 +129,8 @@ export function TimetableHealthPanel({
   onAddLesson,
   onPublish,
   onPrint,
+  variant = "card",
+  hideActions = false,
 }: TimetableHealthPanelProps) {
   const fillPct =
     totalSlots > 0
@@ -168,9 +172,19 @@ export function TimetableHealthPanel({
         ? "bg-emerald-500"
         : "bg-[#246a59]";
 
+  const isRail = variant === "rail";
+
   return (
-    <section className={cn(tt.panel, "overflow-hidden")} aria-label="Timetable health">
-      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3.5 sm:px-5">
+    <section
+      className={cn(!isRail && tt.panel, "overflow-hidden")}
+      aria-label="Timetable health"
+    >
+      <div
+        className={cn(
+          "flex flex-wrap items-start justify-between gap-3",
+          isRail ? "px-3 py-3" : "px-4 py-3.5 sm:px-5",
+        )}
+      >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn(tt.pill.base, tt.pill[tone])}>
@@ -183,15 +197,17 @@ export function TimetableHealthPanel({
               </span>
             )}
           </div>
-          <p className="mt-2 text-[15px] font-semibold leading-tight tracking-[-0.02em] text-slate-900 dark:text-slate-50">
-            {scopeLabel}
-            {streamName ? (
-              <span className="ml-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
-                · {streamName}
-              </span>
-            ) : null}
-          </p>
-          <p className={cn(tt.caption, "mt-1")}>{nextStep}</p>
+          {!isRail ? (
+            <p className="mt-2 text-[15px] font-semibold leading-tight tracking-[-0.02em] text-slate-900 dark:text-slate-50">
+              {scopeLabel}
+              {streamName ? (
+                <span className="ml-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                  · {streamName}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
+          <p className={cn(tt.caption, isRail ? "mt-1.5" : "mt-1")}>{nextStep}</p>
         </div>
 
         <div className="shrink-0 text-right">
@@ -208,7 +224,7 @@ export function TimetableHealthPanel({
       </div>
 
       {totalSlots > 0 ? (
-        <div className="px-4 pb-4 sm:px-5">
+        <div className={cn(isRail ? "px-3 pb-3" : "px-4 pb-4 sm:px-5")}>
           <div
             className="h-1.5 w-full overflow-hidden rounded-none bg-slate-100 dark:bg-slate-800"
             role="progressbar"
@@ -228,7 +244,12 @@ export function TimetableHealthPanel({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2 border-t border-slate-100 px-4 py-3.5 dark:border-slate-800 sm:grid-cols-4 sm:px-5">
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-slate-800",
+          isRail ? "px-3 py-3" : "px-4 py-3.5 sm:grid-cols-4 sm:px-5",
+        )}
+      >
         <Metric icon={BookOpen} label="Lessons" value={totalLessons} />
         <Metric icon={Clock} label="Periods / day" value={periodCount} />
         <Metric
@@ -245,6 +266,7 @@ export function TimetableHealthPanel({
         />
       </div>
 
+      {!hideActions && !isRail ? (
       <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/30 sm:px-5">
         {clashCount > 0 && onReviewIssues ? (
           <Button
@@ -312,6 +334,7 @@ export function TimetableHealthPanel({
           </Button>
         ) : null}
       </div>
+      ) : null}
     </section>
   );
 }

@@ -32,6 +32,11 @@ import {
 import type { TimetableCreationMode } from "@/lib/types/timetable-allocation";
 import { TimetableHealthPanel } from "./components/TimetableHealthPanel";
 import { TimetableTeacherWorkload } from "./components/TimetableTeacherWorkload";
+import {
+  TimetableInspectorRail,
+  type TimetableInspectorTab,
+} from "./components/TimetableInspectorRail";
+import { TimetableStatusMeter } from "./components/TimetableStatusMeter";
 import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
@@ -810,12 +815,26 @@ export default function SmartTimetableNew() {
   const [autoGenerateStep, setAutoGenerateStep] = useState(0);
   const [modeEntryDismissed, setModeEntryDismissed] = useState(false);
   const [journeyHidden, setJourneyHidden] = useState(false);
+  const [inspectorTab, setInspectorTab] =
+    useState<TimetableInspectorTab | null>(null);
+  const sidebarBeforeGenerateRef = useRef(false);
 
-  const openAutoGenerate = useCallback((step = 0) => {
-    setAutoGenerateStep(step);
-    setCreationMode("automatic");
-    setAutoGenerateOpen(true);
+  const closeAutoGenerate = useCallback(() => {
+    setAutoGenerateOpen(false);
+    setIsSidebarMinimized(sidebarBeforeGenerateRef.current);
   }, []);
+
+  const openAutoGenerate = useCallback(
+    (step = 0) => {
+      setAutoGenerateStep(step);
+      setCreationMode("automatic");
+      setInspectorTab(null);
+      sidebarBeforeGenerateRef.current = isSidebarMinimized;
+      setIsSidebarMinimized(true);
+      setAutoGenerateOpen(true);
+    },
+    [isSidebarMinimized],
+  );
 
   const openSchoolPage = useCallback(
     (page: "classes" | "teachers") => {
@@ -1159,7 +1178,7 @@ export default function SmartTimetableNew() {
 
   const handleHighlightProblems = useCallback(() => {
     if (!showConflicts) toggleConflicts();
-    // Let the review panel mount before scrolling to it.
+    setInspectorTab("issues");
     requestAnimationFrame(() => {
       document
         .getElementById("timetable-review-panel")
@@ -1936,7 +1955,7 @@ export default function SmartTimetableNew() {
   return (
     <div
       data-timetable-root
-      className={cn("relative flex h-screen overflow-hidden", tt.pageBg)}
+      className={cn("relative flex min-h-0 flex-1 overflow-hidden", tt.pageBg)}
     >
       <TimetablePrintStyles />
       <TimetableSurfaceStyles />
@@ -1968,6 +1987,11 @@ export default function SmartTimetableNew() {
               onClose={closeClassSidebar}
               desktopMinimized={isSidebarMinimized}
               onToggleDesktop={toggleClassSidebar}
+              railLabel={
+                selectedGradeId
+                  ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
+                  : "All classes"
+              }
             >
             {!isSidebarMinimized || isClassDrawerOpen ? (
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 max-lg:px-3 max-lg:pb-3">
@@ -2022,29 +2046,41 @@ export default function SmartTimetableNew() {
         ))}
 
       {/* ── Main ── */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {/* ── Toolbar ── */}
         <header
           data-timetable-no-print
-          className="hidden shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-6 lg:block"
+          className="hidden shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-2 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4 lg:block"
         >
-          <div className="mx-auto flex max-w-6xl flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              {hasScheduleStructure && isSidebarMinimized && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden h-8 w-8 shrink-0 p-0 text-slate-400 hover:text-slate-600 lg:inline-flex"
+                  onClick={openClassSidebar}
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </Button>
+              )}
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
-                      Schedule
-                    </p>
-                    <h1 className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
-                      Timetable
-                    </h1>
-                  </div>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <h1 className="truncate font-display text-[17px] leading-none tracking-tight text-[#0a1f1a] dark:text-white">
+                    {selectedGradeId
+                      ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
+                      : "All classes"}
+                  </h1>
                   <RealtimeLiveIndicator />
                 </div>
-                <p className="mt-0.5 hidden items-center gap-1.5 text-[12px] text-[#1a4d42]/55 sm:flex dark:text-white/45">
+                <p className="mt-1 hidden items-center gap-1.5 text-[11px] text-[#1a4d42]/55 sm:flex dark:text-white/45">
+                  <span>Timetable</span>
                   {selectedTerm ? (
                     <>
+                      <span
+                        className="h-1 w-1 bg-[#1a4d42]/25 dark:bg-white/25"
+                        aria-hidden
+                      />
                       <span className="font-medium text-[#0a1f1a]/80 dark:text-white/70">
                         {selectedTerm.name}
                       </span>
@@ -2053,76 +2089,78 @@ export default function SmartTimetableNew() {
                           · {activeAcademicYear.name}
                         </span>
                       ) : null}
-                      <span
-                        className="h-1 w-1 bg-[#1a4d42]/25 dark:bg-white/25"
-                        aria-hidden
-                      />
                     </>
                   ) : null}
-                  <span>
-                    {selectedGradeId
-                      ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
-                      : "All classes"}
-                  </span>
                 </p>
               </div>
+            </div>
 
-              <div className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap">
-                {hasScheduleStructure && isSidebarMinimized && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="hidden h-8 w-8 p-0 text-slate-400 hover:text-slate-600 lg:inline-flex"
-                    onClick={openClassSidebar}
-                  >
-                    <PanelLeftOpen className="h-4 w-4" />
-                  </Button>
-                )}
-                {hasScheduleStructure && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="hidden h-8 gap-1.5 rounded-none border-[#246a59]/30 text-xs font-medium text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42] lg:inline-flex"
-                    onClick={() => openAutoGenerate(allocations.length ? 2 : 0)}
-                    title="Create lessons from who teaches what"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Auto-generate
-                  </Button>
-                )}
-                {selectedGradeId && hasScheduleStructure && (
-                  <Button
-                    size="sm"
-                    className="hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] text-xs font-medium text-white hover:bg-[#246a59] lg:inline-flex"
-                    onClick={() => setBulkLessonEntryOpen(true)}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add lessons
-                  </Button>
-                )}
-
-                <span
-                  className="mx-0.5 hidden h-5 w-px bg-[#1a4d42]/15 lg:block dark:bg-white/15"
-                  aria-hidden
+            <div className="flex flex-wrap items-center justify-end gap-1.5 lg:flex-nowrap">
+              {hasScheduleStructure ? (
+                <TimetableStatusMeter
+                  filled={
+                    selectedGradeId
+                      ? stats.filledSlots
+                      : termOverview.totalFilled
+                  }
+                  total={
+                    selectedGradeId
+                      ? stats.totalSlots
+                      : termOverview.totalSlots
+                  }
+                  className="mr-1 hidden xl:flex"
                 />
+              ) : null}
 
-                {totalIssueCount > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "h-8 gap-1.5 text-xs font-medium",
-                      conflictCount > 0
-                        ? "border-red-200 bg-red-50/60 text-red-700 hover:bg-red-100/70 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
-                        : "border-amber-200 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200",
-                    )}
-                    onClick={handleHighlightProblems}
-                    title="Review clashes, unmet allocations and workload breaches"
-                  >
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    {totalIssueCount} to review
-                  </Button>
-                )}
+              {totalIssueCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-8 gap-1.5 text-xs font-medium",
+                    conflictCount > 0
+                      ? "border-red-200 bg-red-50/60 text-red-700 hover:bg-red-100/70 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+                      : "border-amber-200 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200",
+                  )}
+                  onClick={handleHighlightProblems}
+                  title="Review clashes, unmet allocations and workload breaches"
+                >
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {totalIssueCount}
+                </Button>
+              )}
+
+              {hasScheduleStructure && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "hidden h-8 gap-1.5 rounded-none text-xs font-medium lg:inline-flex",
+                    autoGenerateOpen
+                      ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+                      : "border-[#246a59]/30 text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                  )}
+                  onClick={() =>
+                    autoGenerateOpen
+                      ? closeAutoGenerate()
+                      : openAutoGenerate(allocations.length ? 2 : 0)
+                  }
+                  title="Create lessons from who teaches what"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Generate
+                </Button>
+              )}
+              {selectedGradeId && hasScheduleStructure && (
+                <Button
+                  size="sm"
+                  className="hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] text-xs font-medium text-white hover:bg-[#246a59] lg:inline-flex"
+                  onClick={() => setBulkLessonEntryOpen(true)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              )}
 
                 <Popover>
                   <PopoverTrigger asChild>
@@ -2383,7 +2421,6 @@ export default function SmartTimetableNew() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
             </div>
           </div>
         </header>
@@ -2492,16 +2529,16 @@ export default function SmartTimetableNew() {
           </div>
         )}
 
-        {/* ── Content ── */}
+        {/* ── Workspace: grid + inspector ── */}
         <div
           className={cn(
-            "flex-1 overflow-y-auto",
-            showAdminMobilePanel && "hidden lg:block",
+            "flex min-h-0 flex-1",
+            showAdminMobilePanel && "hidden lg:flex",
           )}
         >
-          <div className="mx-auto max-w-6xl space-y-5 p-4 sm:space-y-6 sm:p-6 lg:p-8">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {!isOnline && hasScheduleStructure && (
-              <div data-timetable-no-print>
+              <div data-timetable-no-print className="shrink-0 px-3 pt-2">
                 <TimetableOfflineBanner />
               </div>
             )}
@@ -2509,53 +2546,58 @@ export default function SmartTimetableNew() {
             {!showTimetableWizard &&
               !isPageLoading &&
               !journeyHidden &&
+              !autoGenerateOpen &&
               !(hasAnyLessons && sharedAt && !changesSinceShare) && (
-                <TimetableJourney
-                  hasSchoolDay={hasScheduleStructure}
-                  periodCount={Math.max(
-                    periodNumbers.length,
-                    lessonPeriodsPerDay ?? 0,
-                  )}
-                  dayCount={daysPerWeekFromStore || daysPerWeek || 5}
-                  classCount={grades.length}
-                  teacherCount={teachers.length}
-                  subjectCount={subjects.length}
-                  weeklyLessonRows={allocations.length}
-                  workloadRuleCount={workloadRules.length}
-                  lessonCount={Math.max(schoolLessonCount, stats.totalLessons)}
-                  clashCount={conflictCount}
-                  issueCount={totalIssueCount}
-                  publishState={
-                    sharedAt && !changesSinceShare
-                      ? "published"
-                      : sharedAt && changesSinceShare
-                        ? "stale"
-                        : "unpublished"
-                  }
-                  onSetUpSchoolDay={() => setShowTimetableWizard(true)}
-                  onManageClasses={() => openSchoolPage("classes")}
-                  onManageTeachers={() => openSchoolPage("teachers")}
-                  onManageSubjects={() => openSchoolPage("classes")}
-                  onSetWeeklyLessons={() => openAutoGenerate(0)}
-                  onCheckWorkload={() => openAutoGenerate(1)}
-                  onGenerate={() => openAutoGenerate(allocations.length ? 2 : 0)}
-                  onFillManually={() => {
-                    setCreationMode("manual");
-                    setModeEntryDismissed(true);
-                    if (!selectedGradeId && grades.length > 0) {
-                      setSelectedGrade(grades[0].id);
+                <div data-timetable-no-print className="shrink-0">
+                  <TimetableJourney
+                    hasSchoolDay={hasScheduleStructure}
+                    periodCount={Math.max(
+                      periodNumbers.length,
+                      lessonPeriodsPerDay ?? 0,
+                    )}
+                    dayCount={daysPerWeekFromStore || daysPerWeek || 5}
+                    classCount={grades.length}
+                    teacherCount={teachers.length}
+                    subjectCount={subjects.length}
+                    weeklyLessonRows={allocations.length}
+                    workloadRuleCount={workloadRules.length}
+                    lessonCount={Math.max(schoolLessonCount, stats.totalLessons)}
+                    clashCount={conflictCount}
+                    issueCount={totalIssueCount}
+                    publishState={
+                      sharedAt && !changesSinceShare
+                        ? "published"
+                        : sharedAt && changesSinceShare
+                          ? "stale"
+                          : "unpublished"
                     }
-                  }}
-                  onReviewIssues={handleHighlightProblems}
-                  onPublish={() => setShareDrawerOpen(true)}
-                  onHide={() => setJourneyHidden(true)}
-                />
+                    onSetUpSchoolDay={() => setShowTimetableWizard(true)}
+                    onManageClasses={() => openSchoolPage("classes")}
+                    onManageTeachers={() => openSchoolPage("teachers")}
+                    onManageSubjects={() => openSchoolPage("classes")}
+                    onSetWeeklyLessons={() => openAutoGenerate(0)}
+                    onCheckWorkload={() => openAutoGenerate(1)}
+                    onGenerate={() =>
+                      openAutoGenerate(allocations.length ? 2 : 0)
+                    }
+                    onFillManually={() => {
+                      setCreationMode("manual");
+                      setModeEntryDismissed(true);
+                      if (!selectedGradeId && grades.length > 0) {
+                        setSelectedGrade(grades[0].id);
+                      }
+                    }}
+                    onReviewIssues={handleHighlightProblems}
+                    onPublish={() => setShareDrawerOpen(true)}
+                    onHide={() => setJourneyHidden(true)}
+                  />
+                </div>
               )}
 
             {(hasScheduleStructure || shouldLoadTimetableBundle) && (
               <section
                 data-timetable-print-root
-                className="overflow-hidden rounded-none border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60"
+                className="flex min-h-0 flex-1 flex-col overflow-hidden"
               >
                 <div className="hidden border-b border-slate-200 px-4 pt-4 print:block lg:px-5">
                   <h2 className="text-lg font-bold text-slate-900">
@@ -2563,40 +2605,8 @@ export default function SmartTimetableNew() {
                     {currentStream ? ` — ${currentStream.name}` : ""}
                   </h2>
                 </div>
-                <div
-                  data-timetable-no-print
-                  className="hidden border-b border-slate-100 px-4 py-3 dark:border-slate-800 lg:block lg:px-5"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-slate-100">
-                        {selectedGradeId
-                          ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
-                          : hasScheduleStructure
-                            ? "All classes"
-                            : "Preview"}
-                      </h2>
-                      <p className="mt-0.5 text-[12px] text-slate-500">
-                        {selectedGradeId
-                          ? "Click any empty period to add a lesson."
-                          : "Whole-school overview across classes"}
-                      </p>
-                    </div>
-                    {hasScheduleStructure && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 border-slate-200 text-xs text-slate-600 dark:border-slate-700"
-                        onClick={requestOpenAdvancedSchedule}
-                      >
-                        <LayoutGrid className="mr-1.5 h-3.5 w-3.5" />
-                        Edit lesson times
-                      </Button>
-                    )}
-                  </div>
-                </div>
 
-                <div className="bg-slate-50/40 p-2 dark:bg-slate-950/30 lg:p-3">
+                <div className="min-h-0 flex-1 overflow-auto bg-[#f3f7f5] p-2 dark:bg-[#071411] lg:p-3">
                   {refreshLoadFailed &&
                   !combinedGridFailed &&
                   !classGridFailed ? (
@@ -2649,40 +2659,14 @@ export default function SmartTimetableNew() {
                   ) : showGridSkeleton ? (
                     <TimetableGridSkeleton combined={!selectedGradeId} />
                   ) : !selectedGradeId ? (
-                      <AdminTimetableGrid
-                        schoolCombined
-                        periodNumbers={periodNumbers}
-                        days={days}
-                        getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
-                        getEntryFor={() => null}
-                        getCombinedEntriesFor={getCombinedEntriesFor}
-                        onCombinedLessonClick={handleCombinedLessonClick}
-                        getBreaksAfterPeriod={getBreaksAfterPeriod}
-                        getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                        hasNoTimeSlots={showEmptyScheduleState}
-                        getCleanBreakName={getCleanBreakName}
-                        getSubjectAccent={getSubjectAccentForGrid}
-                        conflictLessonIds={
-                          showConflicts ? conflictLessonIds : undefined
-                        }
-                        conflictTooltipMap={
-                          showConflicts ? conflictTooltipMap : undefined
-                        }
-                        showFullSubjectName={showFullSubjectName}
-                        highlightTeacherId={highlightTeacherId}
-                        onEditTimeslot={setEditingTimeslot}
-                        onEditBreak={setEditingBreak}
-                        onMoveBreak={handleMoveBreak}
-                        movingBreakId={movingBreakId}
-                        onCreateSchedule={() => setShowTimetableWizard(true)}
-                      />
-                  ) : (
-                    <div className="hidden lg:block">
                     <AdminTimetableGrid
+                      schoolCombined
                       periodNumbers={periodNumbers}
                       days={days}
                       getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
-                      getEntryFor={getEntryFor}
+                      getEntryFor={() => null}
+                      getCombinedEntriesFor={getCombinedEntriesFor}
+                      onCombinedLessonClick={handleCombinedLessonClick}
                       getBreaksAfterPeriod={getBreaksAfterPeriod}
                       getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
                       hasNoTimeSlots={showEmptyScheduleState}
@@ -2697,16 +2681,44 @@ export default function SmartTimetableNew() {
                       showFullSubjectName={showFullSubjectName}
                       highlightTeacherId={highlightTeacherId}
                       onEditTimeslot={setEditingTimeslot}
-                      onDeleteTimeslot={setTimeslotToDelete}
-                      onEditLesson={handleEditLesson}
-                      onDeleteLesson={setDeleteEntryConfirm}
-                      onAddLesson={handleAddLesson}
                       onEditBreak={setEditingBreak}
-                      onAddBreak={handleAddBreak}
                       onMoveBreak={handleMoveBreak}
                       movingBreakId={movingBreakId}
                       onCreateSchedule={() => setShowTimetableWizard(true)}
                     />
+                  ) : (
+                    <div className="hidden lg:block">
+                      <AdminTimetableGrid
+                        periodNumbers={periodNumbers}
+                        days={days}
+                        getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
+                        getEntryFor={getEntryFor}
+                        getBreaksAfterPeriod={getBreaksAfterPeriod}
+                        getBreaksBeforeFirstPeriod={
+                          getBreaksBeforeFirstPeriod
+                        }
+                        hasNoTimeSlots={showEmptyScheduleState}
+                        getCleanBreakName={getCleanBreakName}
+                        getSubjectAccent={getSubjectAccentForGrid}
+                        conflictLessonIds={
+                          showConflicts ? conflictLessonIds : undefined
+                        }
+                        conflictTooltipMap={
+                          showConflicts ? conflictTooltipMap : undefined
+                        }
+                        showFullSubjectName={showFullSubjectName}
+                        highlightTeacherId={highlightTeacherId}
+                        onEditTimeslot={setEditingTimeslot}
+                        onDeleteTimeslot={setTimeslotToDelete}
+                        onEditLesson={handleEditLesson}
+                        onDeleteLesson={setDeleteEntryConfirm}
+                        onAddLesson={handleAddLesson}
+                        onEditBreak={setEditingBreak}
+                        onAddBreak={handleAddBreak}
+                        onMoveBreak={handleMoveBreak}
+                        movingBreakId={movingBreakId}
+                        onCreateSchedule={() => setShowTimetableWizard(true)}
+                      />
                     </div>
                   )}
                 </div>
@@ -2714,77 +2726,241 @@ export default function SmartTimetableNew() {
             )}
 
             {hasScheduleStructure ? (
-              <TimetableHealthPanel
-                scopeLabel={selectedGradeId ? classDisplayLabel : "All classes"}
-                streamName={selectedGradeId ? currentStream?.name : null}
-                lastUpdatedIso={lastUpdated}
-                filledSlots={
-                  selectedGradeId ? stats.filledSlots : termOverview.totalFilled
-                }
-                totalSlots={
-                  selectedGradeId ? stats.totalSlots : termOverview.totalSlots
-                }
-                totalLessons={
-                  selectedGradeId ? stats.totalLessons : schoolLessonCount
-                }
-                periodCount={Math.max(
-                  periodNumbers.length,
-                  lessonPeriodsPerDay ?? 0,
-                )}
-                teacherCount={teacherLessons.length}
-                clashCount={conflictCount}
-                advisoryCount={quotaIssues.length + workloadBreaches.length}
-                hasScheduleStructure={hasScheduleStructure}
-                hasAnyLessons={hasAnyLessons}
-                publishState={
-                  sharedAt && !changesSinceShare
-                    ? "published"
-                    : sharedAt && changesSinceShare
-                      ? "stale"
-                      : "unpublished"
-                }
-                onReviewIssues={handleHighlightProblems}
-                onAutoGenerate={() => openAutoGenerate(allocations.length ? 2 : 0)}
-                onAddLesson={
-                  selectedGradeId
-                    ? () => setBulkLessonEntryOpen(true)
-                    : grades.length > 0
-                      ? () => setSelectedGrade(grades[0].id)
-                      : undefined
-                }
-                onPublish={selectedTerm ? () => setShareDrawerOpen(true) : undefined}
-                onPrint={
-                  selectedGradeId ? handlePrintClassTimetable : undefined
-                }
-              />
+              <div
+                data-timetable-no-print
+                className="space-y-3 overflow-y-auto p-3 lg:hidden"
+              >
+                <TimetableHealthPanel
+                  scopeLabel={
+                    selectedGradeId ? classDisplayLabel : "All classes"
+                  }
+                  streamName={selectedGradeId ? currentStream?.name : null}
+                  lastUpdatedIso={lastUpdated}
+                  filledSlots={
+                    selectedGradeId
+                      ? stats.filledSlots
+                      : termOverview.totalFilled
+                  }
+                  totalSlots={
+                    selectedGradeId
+                      ? stats.totalSlots
+                      : termOverview.totalSlots
+                  }
+                  totalLessons={
+                    selectedGradeId ? stats.totalLessons : schoolLessonCount
+                  }
+                  periodCount={Math.max(
+                    periodNumbers.length,
+                    lessonPeriodsPerDay ?? 0,
+                  )}
+                  teacherCount={teacherLessons.length}
+                  clashCount={conflictCount}
+                  advisoryCount={
+                    quotaIssues.length + workloadBreaches.length
+                  }
+                  hasScheduleStructure={hasScheduleStructure}
+                  hasAnyLessons={hasAnyLessons}
+                  publishState={
+                    sharedAt && !changesSinceShare
+                      ? "published"
+                      : sharedAt && changesSinceShare
+                        ? "stale"
+                        : "unpublished"
+                  }
+                  onReviewIssues={handleHighlightProblems}
+                  onAutoGenerate={() =>
+                    openAutoGenerate(allocations.length ? 2 : 0)
+                  }
+                  onAddLesson={
+                    selectedGradeId
+                      ? () => setBulkLessonEntryOpen(true)
+                      : grades.length > 0
+                        ? () => setSelectedGrade(grades[0].id)
+                        : undefined
+                  }
+                  onPublish={
+                    selectedTerm ? () => setShareDrawerOpen(true) : undefined
+                  }
+                  onPrint={
+                    selectedGradeId ? handlePrintClassTimetable : undefined
+                  }
+                />
+                {selectedGradeId ? (
+                  <TimetableSubjectInsights insights={subjectInsights} />
+                ) : null}
+                {totalIssueCount > 0 ? (
+                  <div id="timetable-review-panel" className="scroll-mt-24">
+                    <TimetableConflictsPanel
+                      teacherConflicts={teacherConflicts}
+                      roomConflicts={roomConflicts}
+                      onJumpToLesson={handleJumpToConflictEntry}
+                      quotaIssues={quotaIssues}
+                      workloadBreaches={workloadBreaches}
+                    />
+                  </div>
+                ) : null}
+              </div>
             ) : null}
+          </div>
 
-            {teacherLessons.length > 0 ? (
-              <div className={cn(tt.panel, "overflow-hidden")}>
+          {hasScheduleStructure && !autoGenerateOpen ? (
+            <TimetableInspectorRail
+              activeTab={inspectorTab}
+              onChange={(tab) => {
+                setInspectorTab(tab);
+                if (tab === "issues" && !showConflicts) toggleConflicts();
+              }}
+              issueCount={totalIssueCount}
+              teacherCount={teacherLessons.length}
+              coverageCount={subjectInsights.length}
+              showCoverage={Boolean(selectedGradeId)}
+              overview={
+                <TimetableHealthPanel
+                  variant="rail"
+                  hideActions
+                  scopeLabel={
+                    selectedGradeId ? classDisplayLabel : "All classes"
+                  }
+                  streamName={selectedGradeId ? currentStream?.name : null}
+                  lastUpdatedIso={lastUpdated}
+                  filledSlots={
+                    selectedGradeId
+                      ? stats.filledSlots
+                      : termOverview.totalFilled
+                  }
+                  totalSlots={
+                    selectedGradeId
+                      ? stats.totalSlots
+                      : termOverview.totalSlots
+                  }
+                  totalLessons={
+                    selectedGradeId ? stats.totalLessons : schoolLessonCount
+                  }
+                  periodCount={Math.max(
+                    periodNumbers.length,
+                    lessonPeriodsPerDay ?? 0,
+                  )}
+                  teacherCount={teacherLessons.length}
+                  clashCount={conflictCount}
+                  advisoryCount={
+                    quotaIssues.length + workloadBreaches.length
+                  }
+                  hasScheduleStructure={hasScheduleStructure}
+                  hasAnyLessons={hasAnyLessons}
+                  publishState={
+                    sharedAt && !changesSinceShare
+                      ? "published"
+                      : sharedAt && changesSinceShare
+                        ? "stale"
+                        : "unpublished"
+                  }
+                  onReviewIssues={handleHighlightProblems}
+                />
+              }
+              teachers={
                 <TimetableTeacherWorkload
+                  showEmpty
+                  maxHeightClass="max-h-none"
                   teachers={teacherLessons}
                   highlightTeacherId={highlightTeacherId}
                   onTeacherClick={handleTeacherHighlightClick}
                 />
-              </div>
-            ) : null}
-
-            {selectedGradeId && (
-              <TimetableSubjectInsights insights={subjectInsights} />
-            )}
-
-            {showConflicts && totalIssueCount > 0 && (
-              <div id="timetable-review-panel" className="scroll-mt-24">
-                <TimetableConflictsPanel
-                  teacherConflicts={teacherConflicts}
-                  roomConflicts={roomConflicts}
-                  onJumpToLesson={handleJumpToConflictEntry}
-                  quotaIssues={quotaIssues}
-                  workloadBreaches={workloadBreaches}
+              }
+              coverage={
+                <TimetableSubjectInsights
+                  embedded
+                  insights={subjectInsights}
                 />
-              </div>
-            )}
-          </div>
+              }
+              issues={
+                <div id="timetable-review-panel">
+                  <TimetableConflictsPanel
+                    embedded
+                    teacherConflicts={teacherConflicts}
+                    roomConflicts={roomConflicts}
+                    onJumpToLesson={handleJumpToConflictEntry}
+                    quotaIssues={quotaIssues}
+                    workloadBreaches={workloadBreaches}
+                  />
+                </div>
+              }
+            />
+          ) : null}
+
+          <TimetableAutoGenerateDrawer
+            open={autoGenerateOpen}
+            initialStep={autoGenerateStep}
+            onClose={closeAutoGenerate}
+            scopeLabel={
+              selectedGradeId
+                ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
+                : "every class this term"
+            }
+            focusedGradeId={selectedGradeId}
+            onFocusedGradeChange={setSelectedGrade}
+            termId={termIdForAllocations || ""}
+            teachers={teachers}
+            subjects={subjects}
+            grades={grades}
+            availableSlotsPerClass={availableSlotsPerClass}
+            schoolDays={daysPerWeekFromStore || 5}
+            periodNumbers={
+              periodNumbers.length > 0
+                ? periodNumbers
+                : Array.from(
+                    { length: lessonPeriodsPerDay || 8 },
+                    (_, i) => i + 1,
+                  )
+            }
+            allocations={allocations}
+            rules={workloadRules}
+            loading={allocationsLoading}
+            onCreateAllocation={createAllocation}
+            onUpdateAllocation={updateAllocation}
+            onDeleteAllocation={deleteAllocation}
+            onUpsertRules={upsertRules}
+            onRunPreflight={runPreflight}
+            onGenerate={generateTimetable}
+            onGenerated={(result) => {
+              if (result?.entries?.length) {
+                const slots = useTimetableStore.getState().timeSlots;
+                for (const row of result.entries) {
+                  if (!row.gradeLevelId) continue;
+                  const slot = slots.find(
+                    (s) => s.id === row.dayTemplatePeriodId,
+                  );
+                  useTimetableStore.getState().upsertEntry({
+                    id: row.id,
+                    subjectId: row.subjectId,
+                    teacherId: row.teacherId,
+                    timeSlotId: slot?.id ?? row.dayTemplatePeriodId,
+                    periodNumber: slot?.periodNumber,
+                    gradeId: row.gradeLevelId,
+                    streamId: row.streamId ?? null,
+                    dayOfWeek: slot?.dayOfWeek ?? 1,
+                    isDoublePeriod: row.isDoublePeriod ?? false,
+                  });
+                }
+              }
+              void reloadTimetableData();
+              if (!showConflicts) toggleConflicts();
+              closeAutoGenerate();
+              setInspectorTab("issues");
+
+              const created = result?.createdCount ?? 0;
+              const unresolved = result?.unresolvedCount ?? 0;
+              toast({
+                title: created
+                  ? `${created} lesson${created === 1 ? "" : "s"} added to the timetable`
+                  : "Nothing placed yet",
+                description: created
+                  ? unresolved > 0
+                    ? `${unresolved} left empty for you to fill later.`
+                    : "Review the grid, then publish for teachers."
+                  : "Subjects without a teacher, or lessons that could not fit, stay empty for later.",
+              });
+            }}
+          />
         </div>
       </main>
 
@@ -2890,75 +3066,6 @@ export default function SmartTimetableNew() {
           />
         </div>
       )}
-      <TimetableAutoGenerateDrawer
-        open={autoGenerateOpen}
-        initialStep={autoGenerateStep}
-        onClose={() => setAutoGenerateOpen(false)}
-        termId={termIdForAllocations || ""}
-        teachers={teachers}
-        subjects={subjects}
-        grades={grades}
-        availableSlotsPerClass={availableSlotsPerClass}
-        schoolDays={daysPerWeekFromStore || 5}
-        periodNumbers={
-          periodNumbers.length > 0
-            ? periodNumbers
-            : Array.from(
-                { length: lessonPeriodsPerDay || 8 },
-                (_, i) => i + 1,
-              )
-        }
-        allocations={allocations}
-        rules={workloadRules}
-        loading={allocationsLoading}
-        onCreateAllocation={createAllocation}
-        onUpdateAllocation={updateAllocation}
-        onDeleteAllocation={deleteAllocation}
-        onUpsertRules={upsertRules}
-        onRunPreflight={runPreflight}
-        onGenerate={generateTimetable}
-        onGenerated={(result) => {
-          if (result?.entries?.length) {
-            const slots = useTimetableStore.getState().timeSlots;
-            for (const row of result.entries) {
-              if (!row.gradeLevelId) continue;
-              const slot = slots.find((s) => s.id === row.dayTemplatePeriodId);
-              useTimetableStore.getState().upsertEntry({
-                id: row.id,
-                subjectId: row.subjectId,
-                teacherId: row.teacherId,
-                timeSlotId: slot?.id ?? row.dayTemplatePeriodId,
-                periodNumber: slot?.periodNumber,
-                gradeId: row.gradeLevelId,
-                streamId: row.streamId ?? null,
-                dayOfWeek: slot?.dayOfWeek ?? 1,
-                isDoublePeriod: row.isDoublePeriod ?? false,
-              });
-            }
-          }
-          void reloadTimetableData();
-          if (!showConflicts) toggleConflicts();
-
-          const created = result?.createdCount ?? 0;
-          const unresolved = result?.unresolvedCount ?? 0;
-          toast({
-            title: created
-              ? `${created} lesson${created === 1 ? "" : "s"} added to the timetable`
-              : "Nothing placed yet",
-            description: created
-              ? unresolved > 0
-                ? `${unresolved} left empty for you to fill later.`
-                : "Review the grid, then publish for teachers."
-              : "Subjects without a teacher, or lessons that could not fit, stay empty for later.",
-          });
-
-          requestAnimationFrame(() => {
-            document
-              .getElementById("timetable-review-panel")
-              ?.scrollIntoView({ behavior: "smooth", block: "center" });
-          });
-        }}
-      />
       <BulkBreaksDrawer
         open={bulkBreaksOpen}
         onClose={async () => {

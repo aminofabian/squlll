@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
-  CalendarDays,
   Check,
   ChevronRight,
   ClipboardList,
@@ -300,186 +299,91 @@ export function TimetableJourney({
     </ol>
   );
 
-  // Once lessons exist, shrink to a single strip so it doesn't compete with the grid.
-  if (started) {
-    return (
-      <section className={cn(tt.panel, "overflow-hidden")} aria-label="Timetable progress">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <div className="min-w-0">
-            <p className={tt.eyebrow}>
-              Step {Math.min(doneCount + 1, stops.length)} of {stops.length}
-            </p>
-            <p className="mt-1 text-[13px] font-semibold text-slate-900 dark:text-slate-100">
-              {current ? current.title : "Your timetable is published"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {current?.actionLabel && current.onAction ? (
-              <Button
-                size="sm"
-                className={cn("h-8 gap-1.5 text-xs", tt.accentBtn)}
-                onClick={current.onAction}
-              >
-                {current.actionLabel}
-              </Button>
-            ) : null}
-            {onHide ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
-                onClick={onHide}
-              >
-                Hide
-              </Button>
-            ) : null}
-          </div>
-        </div>
-        <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-          {spine}
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section
-      className={cn(tt.panel, "overflow-hidden border-l-[3px] border-l-[#246a59]")}
-      aria-label="Create your school timetable"
+      className={cn(
+        "overflow-hidden border-b border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]",
+        !started && "border-l-[3px] border-l-[#246a59]",
+      )}
+      aria-label="Timetable progress"
     >
-      {/* Header — single compact row */}
-      <div className="flex items-center justify-between gap-3 px-5 pt-4 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#246a59]/25 bg-[#246a59]/10 text-[#246a59]"
-            aria-hidden
-          >
-            <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-          </span>
-          <div className="min-w-0">
-            <p className={tt.eyebrow}>Timetable setup</p>
-            <h2 className="truncate text-[14px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-100">
-              Set up your school timetable
-            </h2>
-            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-              Complete these steps to generate a timetable for your entire
-              school.
-            </p>
-          </div>
-        </div>
-        {onHide ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 shrink-0 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
-            onClick={onHide}
-          >
-            Hide
-          </Button>
-        ) : null}
-      </div>
-
-      <div className="px-5 pt-3 sm:px-6">{spine}</div>
-
-      {/* Current step — compact row */}
-      {current ? (
-        <div className="mt-3 border-t border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {current ? (
             <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59] text-white"
+              className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#246a59] text-white"
               aria-hidden
             >
-              <current.icon className="h-4 w-4" strokeWidth={2} />
+              <current.icon className="h-3.5 w-3.5" strokeWidth={2} />
             </span>
-            <div className="min-w-0 flex-1 basis-56">
-              <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-slate-100">
-                {current.title}
-                <span className="ml-2 font-normal text-slate-400 dark:text-slate-500">
-                  Step {currentIndex + 1} of {stops.length}
-                  {current.optional ? " · optional" : ""}
-                </span>
-              </h3>
-              <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-slate-500 dark:text-slate-400">
+          ) : (
+            <span
+              className="flex h-7 w-7 shrink-0 items-center justify-center bg-emerald-600 text-white"
+              aria-hidden
+            >
+              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[#0a1f1a] dark:text-white">
+              {current ? current.title : "Your timetable is published"}
+              <span className="ml-2 font-normal text-[#1a4d42]/45 dark:text-white/40">
+                {doneCount}/{stops.length}
+                {current?.optional ? " · optional" : ""}
+              </span>
+            </p>
+            {current ? (
+              <p className="hidden truncate text-[11px] text-[#1a4d42]/55 sm:block dark:text-white/45">
                 {current.description}
               </p>
-            </div>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              {current.actionLabel && current.onAction ? (
-                <Button
-                  size="sm"
-                  className={cn("h-8 gap-1.5 text-xs", tt.accentBtn)}
-                  onClick={current.onAction}
-                >
-                  {current.actionLabel}
-                </Button>
-              ) : null}
-              {current.secondaryLabel && current.onSecondary ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 border-slate-200 text-xs dark:border-slate-700"
-                  onClick={current.onSecondary}
-                >
-                  {current.secondaryLabel}
-                </Button>
-              ) : null}
-              {current.optional ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
-                  onClick={skipCurrent}
-                >
-                  Skip for now
-                </Button>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </div>
-      ) : null}
-
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-2.5 dark:border-slate-800 sm:px-6">
-        <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          {doneCount} of {stops.length} steps completed ·{" "}
-          {Math.round((doneCount / stops.length) * 100)}% done
-        </p>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          You can leave and come back — nothing is lost.
-        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {current?.actionLabel && current.onAction ? (
+            <Button
+              size="sm"
+              className={cn("h-7 gap-1.5 text-xs", tt.accentBtn)}
+              onClick={current.onAction}
+            >
+              {current.actionLabel}
+            </Button>
+          ) : null}
+          {!started && current?.secondaryLabel && current.onSecondary ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 border-slate-200 text-xs dark:border-slate-700"
+              onClick={current.onSecondary}
+            >
+              {current.secondaryLabel}
+            </Button>
+          ) : null}
+          {current?.optional ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+              onClick={skipCurrent}
+            >
+              Skip
+            </Button>
+          ) : null}
+          {onHide ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+              onClick={onHide}
+            >
+              Hide
+            </Button>
+          ) : null}
+        </div>
       </div>
-
-      {/* Completed steps — one wrapping row of chips */}
-      {doneCount > 0 ? (
-        <ul className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-slate-100 px-5 py-2.5 dark:border-slate-800 sm:px-6">
-          {stops
-            .filter((s) => s.done && s.doneHint)
-            .map((s) => (
-              <li
-                key={s.id}
-                className="flex min-w-0 items-center gap-1.5 text-[12px] text-slate-500 dark:text-slate-400"
-              >
-                <Check
-                  className="h-3 w-3 shrink-0 text-emerald-600"
-                  strokeWidth={3}
-                  aria-hidden
-                />
-                <span className="shrink-0 font-medium text-slate-700 dark:text-slate-200">
-                  {s.title}
-                </span>
-                <span className="truncate">· {s.doneHint}</span>
-                {s.onAction ? (
-                  <button
-                    type="button"
-                    onClick={s.onAction}
-                    className="ml-1 shrink-0 text-[11px] font-medium text-[#246a59] hover:underline"
-                  >
-                    Change
-                  </button>
-                ) : null}
-              </li>
-            ))}
-        </ul>
-      ) : null}
+      <div className="border-t border-[#1a4d42]/8 px-3 py-2 dark:border-white/8 sm:px-4">
+        {spine}
+      </div>
     </section>
   );
 }

@@ -11,6 +11,8 @@ type TimetableClassDrawerProps = {
   desktopMinimized: boolean;
   onToggleDesktop: () => void;
   children: ReactNode;
+  /** Shown in the collapsed desktop rail so the selected class stays visible. */
+  railLabel?: string;
 };
 
 export function TimetableClassDrawer({
@@ -19,6 +21,7 @@ export function TimetableClassDrawer({
   desktopMinimized,
   onToggleDesktop,
   children,
+  railLabel,
 }: TimetableClassDrawerProps) {
   return (
     <>
@@ -85,7 +88,25 @@ export function TimetableClassDrawer({
           </Button>
         </div>
 
-        {children}
+        {desktopMinimized && railLabel ? (
+          <div className="hidden min-h-0 flex-1 flex-col items-center gap-3 px-1 pt-3 lg:flex">
+            <span
+              className="max-h-full truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59] [writing-mode:vertical-rl] rotate-180"
+              title={railLabel}
+            >
+              {railLabel}
+            </span>
+          </div>
+        ) : null}
+
+        <div
+          className={cn(
+            "min-h-0 flex-1 flex-col overflow-hidden",
+            desktopMinimized ? "flex lg:hidden" : "flex",
+          )}
+        >
+          {children}
+        </div>
       </aside>
     </>
   );

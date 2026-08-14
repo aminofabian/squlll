@@ -3,6 +3,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useState,
@@ -71,6 +72,9 @@ interface TimetableWeeklyLessonsPlannerProps {
   teachers: Teacher[];
   allocations: TeacherLessonAllocation[];
   availableSlotsPerClass: number;
+  /** Currently focused class on the timetable grid — keeps the planner in sync. */
+  focusedGradeId?: string | null;
+  onFocusedGradeChange?: (gradeId: string) => void;
   onCreateAllocation: (input: {
     termId: string;
     teacherId: string;
@@ -179,6 +183,8 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     teachers,
     allocations,
     availableSlotsPerClass,
+    focusedGradeId,
+    onFocusedGradeChange,
     onCreateAllocation,
     onUpdateAllocation,
     onDeleteAllocation,
@@ -197,8 +203,35 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
   );
 
   const [activeGradeId, setActiveGradeId] = useState(
-    () => firstGradeWithLessons ?? grades[0]?.id ?? "",
+    () =>
+      focusedGradeId ||
+      firstGradeWithLessons ||
+      grades[0]?.id ||
+      "",
   );
+
+  useEffect(() => {
+    if (!focusedGradeId) return;
+    const match = grades.find(
+      (g) => g.id === focusedGradeId || g.tenantGradeLevelId === focusedGradeId,
+    );
+    if (match && match.id !== activeGradeId) setActiveGradeId(match.id);
+  }, [focusedGradeId, grades, activeGradeId]);
+
+  useEffect(() => {
+    if (activeGradeId) return;
+    const fallback = firstGradeWithLessons ?? grades[0]?.id;
+    if (fallback) setActiveGradeId(fallback);
+  }, [activeGradeId, firstGradeWithLessons, grades]);
+
+  const selectGrade = (gradeId: string) => {
+    if (gradeId === activeGradeId) {
+      onFocusedGradeChange?.(gradeId);
+      return;
+    }
+    setActiveGradeId(gradeId);
+    onFocusedGradeChange?.(gradeId);
+  };
   const [drafts, setDrafts] = useState<Record<string, PlannerRow[]>>({});
   /**
    * Lesson counts entered for subjects that have no teacher yet. They can't be
@@ -659,13 +692,13 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
       <div className="flex flex-wrap gap-1">
         {grades.map((g) => {
           const total = lessonsForGrade(g.id);
-          const active = g.id === activeGradeId;
+          const active = isSameGrade(g.id, activeGradeId, grades);
           const isDirty = Boolean(drafts[g.id] || pending[g.id]);
           return (
             <button
               key={g.id}
               type="button"
-              onClick={() => setActiveGradeId(g.id)}
+              onClick={() => selectGrade(g.id)}
               className={cn(
                 "flex shrink-0 items-center gap-1 rounded-none border px-1.5 py-1 text-[11px] font-medium transition",
                 active
@@ -860,7 +893,10 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
         <span />
       </div>
 
-      <ul className="divide-y divide-slate-100 overflow-hidden rounded-none border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
+      <ul
+        key={activeGradeId}
+        className="divide-y divide-slate-100 overflow-hidden rounded-none border border-slate-200 dark:divide-slate-800 dark:border-slate-700"
+      >
         {visibleRows.map((row) => {
           const { preferred, others } = teacherOptions(
             row.subjectName,

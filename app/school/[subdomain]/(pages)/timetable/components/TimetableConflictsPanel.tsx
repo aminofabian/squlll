@@ -28,6 +28,7 @@ interface TimetableConflictsPanelProps {
   onJumpToLesson: (entryId: string) => void;
   quotaIssues?: AllocationQuotaIssue[];
   workloadBreaches?: WorkloadRuleBreach[];
+  embedded?: boolean;
 }
 
 function GroupHeader({
@@ -132,16 +133,33 @@ export function TimetableConflictsPanel({
   onJumpToLesson,
   quotaIssues = [],
   workloadBreaches = [],
+  embedded = false,
 }: TimetableConflictsPanelProps) {
   const clashTotal = teacherConflicts.length + roomConflicts.length;
   const advisoryTotal = quotaIssues.length + workloadBreaches.length;
   const total = clashTotal + advisoryTotal;
   const [expanded, setExpanded] = useState(true);
 
-  if (total === 0) return null;
+  if (total === 0) {
+    if (!embedded) return null;
+    return (
+      <div className="px-3 py-8 text-center">
+        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
+          Nothing to review
+        </p>
+        <p className={cn(tt.caption, "mt-1")}>
+          No clashes or allocation gaps in this view.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <section className={cn(tt.panel, "overflow-hidden")} aria-label="Timetable review">
+    <section
+      className={cn(!embedded && tt.panel, "overflow-hidden")}
+      aria-label="Timetable review"
+    >
+      {!embedded ? (
       <button
         type="button"
         className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
@@ -177,9 +195,17 @@ export function TimetableConflictsPanel({
           )}
         />
       </button>
+      ) : null}
 
-      {expanded && (
-        <div className="max-h-[26rem] overflow-y-auto overscroll-contain border-t border-slate-100 dark:border-slate-800">
+      {(embedded || expanded) && (
+        <div
+          className={cn(
+            "overscroll-contain",
+            embedded
+              ? "pb-3"
+              : "max-h-[26rem] overflow-y-auto border-t border-slate-100 dark:border-slate-800",
+          )}
+        >
           {clashTotal > 0 ? (
             <div className="border-b border-slate-100 dark:border-slate-800">
               <GroupHeader

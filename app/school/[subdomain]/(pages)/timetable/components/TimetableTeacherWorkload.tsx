@@ -10,6 +10,7 @@ type TimetableTeacherWorkloadProps = {
   onTeacherClick?: (teacherId: string) => void;
   className?: string;
   maxHeightClass?: string;
+  showEmpty?: boolean;
 };
 
 export function TimetableTeacherWorkload({
@@ -18,8 +19,21 @@ export function TimetableTeacherWorkload({
   onTeacherClick,
   className,
   maxHeightClass = "max-h-52",
+  showEmpty = false,
 }: TimetableTeacherWorkloadProps) {
-  if (teachers.length === 0) return null;
+  if (teachers.length === 0) {
+    if (!showEmpty) return null;
+    return (
+      <div className={cn("px-3 py-8 text-center", className)}>
+        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
+          No teachers on this grid
+        </p>
+        <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
+          Lessons in view will list who is teaching them.
+        </p>
+      </div>
+    );
+  }
 
   const maxLessons = teachers[0]?.lessonCount ?? 1;
 
