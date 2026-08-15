@@ -846,43 +846,65 @@ export default function SmartTimetableNew() {
 
   const closeAutoGenerate = useCallback(() => {
     setAutoGenerateOpen(false);
-    setIsSidebarMinimized(sidebarBeforeGenerateRef.current);
-  }, []);
+    if (!editingLesson && !shareDrawerOpen) {
+      setIsSidebarMinimized(sidebarBeforeGenerateRef.current);
+    }
+  }, [editingLesson, shareDrawerOpen]);
 
   const openAutoGenerate = useCallback(
     (step = 0) => {
       setAutoGenerateStep(step);
       setCreationMode("automatic");
       setInspectorTab(null);
-      if (!editingLesson && !autoGenerateOpen) {
+      if (!editingLesson && !autoGenerateOpen && !shareDrawerOpen) {
         sidebarBeforeGenerateRef.current = isSidebarMinimized;
       }
       setEditingLesson(null);
+      setShareDrawerOpen(false);
       setIsSidebarMinimized(true);
       setAutoGenerateOpen(true);
     },
-    [isSidebarMinimized, editingLesson, autoGenerateOpen],
+    [isSidebarMinimized, editingLesson, autoGenerateOpen, shareDrawerOpen],
   );
 
   const closeLessonEditor = useCallback(() => {
     setEditingLesson(null);
-    if (!autoGenerateOpen) {
+    if (!autoGenerateOpen && !shareDrawerOpen) {
       setIsSidebarMinimized(sidebarBeforeGenerateRef.current);
     }
-  }, [autoGenerateOpen]);
+  }, [autoGenerateOpen, shareDrawerOpen]);
 
   const openLessonEditor = useCallback(
     (lesson: any) => {
       setInspectorTab(null);
-      if (!autoGenerateOpen && !editingLesson) {
+      if (!autoGenerateOpen && !editingLesson && !shareDrawerOpen) {
         sidebarBeforeGenerateRef.current = isSidebarMinimized;
       }
       setAutoGenerateOpen(false);
+      setShareDrawerOpen(false);
       setIsSidebarMinimized(true);
       setEditingLesson(lesson);
     },
-    [autoGenerateOpen, isSidebarMinimized, editingLesson],
+    [autoGenerateOpen, isSidebarMinimized, editingLesson, shareDrawerOpen],
   );
+
+  const closeShareDrawer = useCallback(() => {
+    setShareDrawerOpen(false);
+    if (!autoGenerateOpen && !editingLesson) {
+      setIsSidebarMinimized(sidebarBeforeGenerateRef.current);
+    }
+  }, [autoGenerateOpen, editingLesson]);
+
+  const openShareDrawer = useCallback(() => {
+    setInspectorTab(null);
+    if (!autoGenerateOpen && !editingLesson && !shareDrawerOpen) {
+      sidebarBeforeGenerateRef.current = isSidebarMinimized;
+    }
+    setAutoGenerateOpen(false);
+    setEditingLesson(null);
+    setIsSidebarMinimized(true);
+    setShareDrawerOpen(true);
+  }, [autoGenerateOpen, editingLesson, shareDrawerOpen, isSidebarMinimized]);
 
   const openSchoolPage = useCallback(
     (page: "classes" | "teachers") => {
@@ -1929,7 +1951,7 @@ export default function SmartTimetableNew() {
         {hasScheduleStructure && selectedTerm ? (
           <DropdownMenuItem
             title="Saves apply immediately. Use this to publish for teachers."
-            onClick={() => setShareDrawerOpen(true)}
+            onClick={() => openShareDrawer()}
             className={ttMenu.item}
           >
             <Share2 />
@@ -2337,13 +2359,18 @@ export default function SmartTimetableNew() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className={cn(
-                        "hidden h-8 gap-1.5 text-xs lg:inline-flex",
-                        changesSinceShare
+                    className={cn(
+                      "hidden h-8 gap-1.5 text-xs lg:inline-flex",
+                      shareDrawerOpen
+                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+                        : changesSinceShare
                           ? "border-amber-300 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200"
                           : "border-slate-200 dark:border-slate-700",
-                      )}
-                      onClick={() => setShareDrawerOpen(true)}
+                    )}
+                    onClick={() =>
+                      shareDrawerOpen ? closeShareDrawer() : openShareDrawer()
+                    }
+                    aria-pressed={shareDrawerOpen}
                     >
                       <Share2 className="h-3.5 w-3.5" />
                       {sharedAt && !changesSinceShare
@@ -2426,7 +2453,7 @@ export default function SmartTimetableNew() {
                     {hasScheduleStructure && selectedTerm && (
                       <DropdownMenuItem
                         title="Saves apply immediately. Use this to publish for teachers."
-                        onClick={() => setShareDrawerOpen(true)}
+                        onClick={() => openShareDrawer()}
                         className={ttMenu.item}
                       >
                         <Share2 />
@@ -2608,6 +2635,7 @@ export default function SmartTimetableNew() {
               !journeyHidden &&
               !autoGenerateOpen &&
               !editingLesson &&
+              !shareDrawerOpen &&
               !(hasAnyLessons && sharedAt && !changesSinceShare) && (
                 <div data-timetable-no-print className="shrink-0">
                   <TimetableJourney
@@ -2649,7 +2677,7 @@ export default function SmartTimetableNew() {
                       }
                     }}
                     onReviewIssues={handleHighlightProblems}
-                    onPublish={() => setShareDrawerOpen(true)}
+                    onPublish={() => openShareDrawer()}
                     onHide={() => setJourneyHidden(true)}
                   />
                 </div>
@@ -2853,7 +2881,7 @@ export default function SmartTimetableNew() {
                         : undefined
                   }
                   onPublish={
-                    selectedTerm ? () => setShareDrawerOpen(true) : undefined
+                    selectedTerm ? () => openShareDrawer() : undefined
                   }
                   onPrint={
                     selectedGradeId ? handlePrintClassTimetable : undefined
@@ -2877,7 +2905,10 @@ export default function SmartTimetableNew() {
             ) : null}
           </div>
 
-          {hasScheduleStructure && !autoGenerateOpen && !editingLesson ? (
+          {hasScheduleStructure &&
+          !autoGenerateOpen &&
+          !editingLesson &&
+          !shareDrawerOpen ? (
             <TimetableInspectorRail
               activeTab={inspectorTab}
               onChange={(tab) => {
@@ -3040,6 +3071,55 @@ export default function SmartTimetableNew() {
             lesson={editingLesson}
             onClose={closeLessonEditor}
           />
+
+          <TimetableShareDrawer
+            open={shareDrawerOpen}
+            onOpenChange={(next) =>
+              next ? openShareDrawer() : closeShareDrawer()
+            }
+            termName={selectedTerm?.name}
+            academicYearName={activeAcademicYear?.name}
+            hasScheduleStructure={hasScheduleStructure}
+            conflictCount={conflictCount}
+            overview={termOverview}
+            classLabel={
+              selectedGradeId
+                ? `${classDisplayLabel}${currentStream ? ` — ${currentStream.name}` : ""}`
+                : undefined
+            }
+            sharedAt={sharedAt}
+            hasChangesSinceShare={changesSinceShare}
+            onMarkShared={async () => {
+              try {
+                const publishedAt = await markShared();
+                if (selectedTerm && publishedAt) {
+                  setSelectedTerm({
+                    ...selectedTerm,
+                    timetablePublishedAt: publishedAt,
+                  });
+                }
+                toast({
+                  title: "Published for teachers",
+                  description:
+                    "Teachers can now see this term's timetable. You can still edit; tell staff if you make big changes.",
+                });
+              } catch (err) {
+                toast({
+                  title: "Could not publish",
+                  description:
+                    err instanceof Error ? err.message : "Please try again.",
+                  variant: "destructive",
+                });
+                throw err;
+              }
+            }}
+            onPrint={selectedGradeId ? handlePrintClassTimetable : undefined}
+            onCopySummary={selectedGradeId ? handleCopyClassSummary : undefined}
+            onCopyTermSummary={handleCopyTermSummary}
+            onEmailStaff={handleEmailStaffSummary}
+            onExportClassCsv={selectedGradeId ? handleExportClassCsv : undefined}
+            onExportTermCsv={handleExportTermCsv}
+          />
         </div>
       </main>
 
@@ -3057,52 +3137,6 @@ export default function SmartTimetableNew() {
           setEditingBreak(null);
           reloadTimetableData();
         }}
-      />
-      <TimetableShareDrawer
-        open={shareDrawerOpen}
-        onOpenChange={setShareDrawerOpen}
-        termName={selectedTerm?.name}
-        academicYearName={activeAcademicYear?.name}
-        hasScheduleStructure={hasScheduleStructure}
-        conflictCount={conflictCount}
-        overview={termOverview}
-        classLabel={
-          selectedGradeId
-            ? `${classDisplayLabel}${currentStream ? ` — ${currentStream.name}` : ""}`
-            : undefined
-        }
-        sharedAt={sharedAt}
-        hasChangesSinceShare={changesSinceShare}
-        onMarkShared={async () => {
-          try {
-            const publishedAt = await markShared();
-            if (selectedTerm && publishedAt) {
-              setSelectedTerm({
-                ...selectedTerm,
-                timetablePublishedAt: publishedAt,
-              });
-            }
-            toast({
-              title: "Published for teachers",
-              description:
-                "Teachers can now see this term's timetable. You can still edit; tell staff if you make big changes.",
-            });
-          } catch (err) {
-            toast({
-              title: "Could not publish",
-              description:
-                err instanceof Error ? err.message : "Please try again.",
-              variant: "destructive",
-            });
-            throw err;
-          }
-        }}
-        onPrint={selectedGradeId ? handlePrintClassTimetable : undefined}
-        onCopySummary={selectedGradeId ? handleCopyClassSummary : undefined}
-        onCopyTermSummary={handleCopyTermSummary}
-        onEmailStaff={handleEmailStaffSummary}
-        onExportClassCsv={selectedGradeId ? handleExportClassCsv : undefined}
-        onExportTermCsv={handleExportTermCsv}
       />
       <BulkScheduleDrawer
         open={bulkScheduleOpen}
