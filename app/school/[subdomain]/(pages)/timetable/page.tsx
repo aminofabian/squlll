@@ -99,6 +99,11 @@ import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   PanelLeftClose,
   PanelLeftOpen,
   Clock,
@@ -172,6 +177,26 @@ import { AdminMobileSchedule } from "@/components/timetable/AdminMobileSchedule"
 import { buildAdminMobileTimetable } from "./utils/buildAdminMobileTimetable";
 import { useTimetableCore } from "@/lib/timetable";
 import type { TimetableLesson } from "@/lib/timetable/types";
+
+function ToolbarHint({
+  text,
+  children,
+}: {
+  text: string;
+  children: React.ReactElement;
+}) {
+  return (
+    <Tooltip delayDuration={250}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        className="max-w-[18rem] rounded-none px-2.5 py-1.5 text-left text-[11px] leading-snug"
+      >
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 export default function SmartTimetableNew() {
   const searchParams = useSearchParams();
@@ -1881,11 +1906,11 @@ export default function SmartTimetableNew() {
         <DropdownMenuSeparator className={ttMenu.separator} />
         {hasScheduleStructure ? (
           <DropdownMenuItem
-            onClick={() => openAutoGenerate(allocations.length ? 2 : 0)}
+            onClick={() => openAutoGenerate()}
             className={ttMenu.item}
           >
             <Sparkles />
-            Auto-generate timetable
+            Fill timetable from weekly lessons
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem
@@ -2078,14 +2103,17 @@ export default function SmartTimetableNew() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
               {hasScheduleStructure && isSidebarMinimized && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hidden h-8 w-8 shrink-0 p-0 text-slate-400 hover:text-slate-600 lg:inline-flex"
-                  onClick={openClassSidebar}
-                >
-                  <PanelLeftOpen className="h-4 w-4" />
-                </Button>
+                <ToolbarHint text="Show the class list so you can switch grade or stream.">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden h-8 w-8 shrink-0 p-0 text-slate-400 hover:text-slate-600 lg:inline-flex"
+                    onClick={openClassSidebar}
+                    aria-label="Show class list"
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                </ToolbarHint>
               )}
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -2136,53 +2164,59 @@ export default function SmartTimetableNew() {
               ) : null}
 
               {totalIssueCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-8 gap-1.5 text-xs font-medium",
-                    conflictCount > 0
-                      ? "border-red-200 bg-red-50/60 text-red-700 hover:bg-red-100/70 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
-                      : "border-amber-200 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200",
-                  )}
-                  onClick={handleHighlightProblems}
-                  title="Review clashes, unmet allocations and workload breaches"
-                >
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  {totalIssueCount}
-                </Button>
+                <ToolbarHint text="Open clashes, missing lessons, and teacher overload so you can fix them.">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 gap-1.5 text-xs font-medium",
+                      conflictCount > 0
+                        ? "border-red-200 bg-red-50/60 text-red-700 hover:bg-red-100/70 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+                        : "border-amber-200 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200",
+                    )}
+                    onClick={handleHighlightProblems}
+                  >
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {totalIssueCount}{" "}
+                    {totalIssueCount === 1 ? "issue" : "issues"}
+                  </Button>
+                </ToolbarHint>
               )}
 
               {hasScheduleStructure && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "hidden h-8 gap-1.5 rounded-none text-xs font-medium lg:inline-flex",
-                    autoGenerateOpen
-                      ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
-                      : "border-[#246a59]/30 text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
-                  )}
-                  onClick={() =>
-                    autoGenerateOpen
-                      ? closeAutoGenerate()
-                      : openAutoGenerate(allocations.length ? 2 : 0)
-                  }
-                  title="Create lessons from who teaches what"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Generate
-                </Button>
+                <ToolbarHint text="Set how many lessons each class needs each week, then place them on the grid for you.">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "hidden h-8 gap-1.5 rounded-none text-xs font-medium lg:inline-flex",
+                      autoGenerateOpen
+                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+                        : "border-[#246a59]/30 text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                    )}
+                    onClick={() =>
+                      autoGenerateOpen
+                        ? closeAutoGenerate()
+                        : openAutoGenerate()
+                    }
+                    aria-pressed={autoGenerateOpen}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Fill timetable
+                  </Button>
+                </ToolbarHint>
               )}
               {selectedGradeId && hasScheduleStructure && (
-                <Button
-                  size="sm"
-                  className="hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] text-xs font-medium text-white hover:bg-[#246a59] lg:inline-flex"
-                  onClick={() => setBulkLessonEntryOpen(true)}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add
-                </Button>
+                <ToolbarHint text="Add several lessons to this class by hand — teacher, subject, and times.">
+                  <Button
+                    size="sm"
+                    className="hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] text-xs font-medium text-white hover:bg-[#246a59] lg:inline-flex"
+                    onClick={() => setBulkLessonEntryOpen(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add lessons
+                  </Button>
+                </ToolbarHint>
               )}
 
                 <Popover>
@@ -2191,10 +2225,10 @@ export default function SmartTimetableNew() {
                       variant="ghost"
                       size="sm"
                       className="h-8 gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                      title="Grid display options"
+                      title="Change subject names, highlight clashes, or focus on one teacher"
                     >
                       <SlidersHorizontal className="h-3.5 w-3.5" />
-                      View
+                      Display
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -2299,25 +2333,26 @@ export default function SmartTimetableNew() {
                 </Popover>
 
                 {hasScheduleStructure && selectedTerm && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "hidden h-8 gap-1.5 text-xs lg:inline-flex",
-                      changesSinceShare
-                        ? "border-amber-300 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200"
-                        : "border-slate-200 dark:border-slate-700",
-                    )}
-                    title="Saves apply immediately. Use this to publish for teachers."
-                    onClick={() => setShareDrawerOpen(true)}
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                    {sharedAt && !changesSinceShare
-                      ? "Published"
-                      : changesSinceShare
-                        ? "Publish again"
-                        : "Publish"}
-                  </Button>
+                  <ToolbarHint text="Teachers only see this term after you publish. Edits save as you go — publish again when the week is ready.">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "hidden h-8 gap-1.5 text-xs lg:inline-flex",
+                        changesSinceShare
+                          ? "border-amber-300 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200"
+                          : "border-slate-200 dark:border-slate-700",
+                      )}
+                      onClick={() => setShareDrawerOpen(true)}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      {sharedAt && !changesSinceShare
+                        ? "Published"
+                        : changesSinceShare
+                          ? "Publish updates"
+                          : "Share with teachers"}
+                    </Button>
+                  </ToolbarHint>
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -2325,6 +2360,8 @@ export default function SmartTimetableNew() {
                       variant="outline"
                       size="icon"
                       className="hidden h-8 w-8 border-slate-200 bg-white text-slate-500 hover:text-slate-700 lg:inline-flex dark:border-slate-700 dark:bg-slate-900"
+                      aria-label="More timetable actions"
+                      title="Lesson times, breaks, export, print, and reset"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -2340,11 +2377,11 @@ export default function SmartTimetableNew() {
                     </DropdownMenuItem>
                     {hasScheduleStructure && (
                       <DropdownMenuItem
-                        onClick={() => openAutoGenerate(allocations.length ? 2 : 0)}
+                        onClick={() => openAutoGenerate()}
                         className={ttMenu.item}
                       >
                         <Sparkles />
-                        Create timetable for me
+                        Fill timetable from weekly lessons
                       </DropdownMenuItem>
                     )}
                     {hasScheduleStructure && (
@@ -2527,7 +2564,7 @@ export default function SmartTimetableNew() {
                     onAddLessons={() => setBulkLessonEntryOpen(true)}
                     onAutoGenerate={
                       hasScheduleStructure
-                        ? () => openAutoGenerate(allocations.length ? 2 : 0)
+                        ? () => openAutoGenerate()
                         : undefined
                     }
                     showConflicts={showConflicts}
@@ -2602,7 +2639,7 @@ export default function SmartTimetableNew() {
                     onSetWeeklyLessons={() => openAutoGenerate(0)}
                     onCheckWorkload={() => openAutoGenerate(1)}
                     onGenerate={() =>
-                      openAutoGenerate(allocations.length ? 2 : 0)
+                      openAutoGenerate()
                     }
                     onFillManually={() => {
                       setCreationMode("manual");
@@ -2806,7 +2843,7 @@ export default function SmartTimetableNew() {
                   }
                   onReviewIssues={handleHighlightProblems}
                   onAutoGenerate={() =>
-                    openAutoGenerate(allocations.length ? 2 : 0)
+                    openAutoGenerate()
                   }
                   onAddLesson={
                     selectedGradeId
@@ -3097,7 +3134,7 @@ export default function SmartTimetableNew() {
             }}
             onChooseAutomatic={() => {
               setModeEntryDismissed(true);
-              openAutoGenerate(allocations.length ? 2 : 0);
+              openAutoGenerate();
             }}
           />
         </div>

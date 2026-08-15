@@ -156,7 +156,7 @@ export function TimetableHealthPanel({
       : clashCount > 0
         ? `${clashCount} clash${clashCount === 1 ? "" : "es"} to resolve before publishing.`
         : !hasAnyLessons
-          ? "No lessons have been scheduled yet. Generate a timetable automatically or build one manually."
+          ? "No lessons on the grid yet. Fill the timetable from weekly lessons, or add them by hand."
           : emptySlots > 0
             ? `${emptySlots} empty slot${emptySlots === 1 ? "" : "s"} left to fill.`
             : publishState === "published"

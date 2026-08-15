@@ -39,7 +39,7 @@ export function TimetableMobileActionStrip({
             className="flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium text-slate-600 transition-colors active:bg-slate-50 dark:text-slate-400 dark:active:bg-slate-900"
           >
             <Plus className="h-4 w-4 opacity-80" strokeWidth={1.75} />
-            Add
+            Add lessons
           </button>
           <div className="w-px shrink-0 bg-slate-100 dark:bg-slate-800" aria-hidden />
         </>
@@ -53,7 +53,7 @@ export function TimetableMobileActionStrip({
             className="flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium text-[#246a59] transition-colors active:bg-[#246a59]/5"
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-            Auto
+            Fill timetable
           </button>
           <div
             className="w-px shrink-0 bg-slate-100 dark:bg-slate-800"
@@ -79,7 +79,7 @@ export function TimetableMobileActionStrip({
         ) : (
           <Eye className="h-4 w-4 opacity-80" strokeWidth={1.75} />
         )}
-        {conflictCount > 0 ? conflictCount : "Issues"}
+        {conflictCount > 0 ? `${conflictCount} issues` : "Issues"}
       </button>
 
       <div className="w-px shrink-0 bg-slate-100 dark:bg-slate-800" aria-hidden />

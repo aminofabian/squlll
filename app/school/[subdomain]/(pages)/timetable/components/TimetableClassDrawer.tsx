@@ -78,7 +78,16 @@ export function TimetableClassDrawer({
             size="sm"
             className="h-8 w-8 rounded-none p-0 text-[#1a4d42]/50 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white"
             onClick={onToggleDesktop}
-            aria-label={desktopMinimized ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={
+              desktopMinimized
+                ? "Show class list"
+                : "Hide class list to give the grid more room"
+            }
+            title={
+              desktopMinimized
+                ? "Show class list"
+                : "Hide class list to give the grid more room"
+            }
           >
             {desktopMinimized ? (
               <PanelLeftOpen className="h-4 w-4" />

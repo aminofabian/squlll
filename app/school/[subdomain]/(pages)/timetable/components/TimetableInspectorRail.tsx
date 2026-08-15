@@ -20,6 +20,7 @@ export type TimetableInspectorTab =
 type TabDef = {
   id: TimetableInspectorTab;
   label: string;
+  hint: string;
   icon: LucideIcon;
   badge?: number;
   hidden?: boolean;
@@ -51,16 +52,23 @@ export function TimetableInspectorRail({
   issues,
 }: TimetableInspectorRailProps) {
   const tabs: TabDef[] = [
-    { id: "overview", label: "Pulse", icon: Activity },
+    {
+      id: "overview",
+      label: "Overview",
+      hint: "How full the week is, clashes, and when it was last updated",
+      icon: Activity,
+    },
     {
       id: "teachers",
       label: "Teachers",
+      hint: "How many lessons each teacher has this week",
       icon: Users,
       badge: teacherCount > 0 ? teacherCount : undefined,
     },
     {
       id: "coverage",
-      label: "Coverage",
+      label: "Subjects",
+      hint: "Which subjects this class still needs on the grid",
       icon: BookOpen,
       badge: coverageCount > 0 ? coverageCount : undefined,
       hidden: !showCoverage,
@@ -68,6 +76,7 @@ export function TimetableInspectorRail({
     {
       id: "issues",
       label: "Issues",
+      hint: "Clashes, missing lessons, and overloaded teachers",
       icon: AlertCircle,
       badge: issueCount > 0 ? issueCount : undefined,
     },
@@ -130,7 +139,8 @@ export function TimetableInspectorRail({
             <button
               key={tab.id}
               type="button"
-              title={tab.label}
+              title={`${tab.label} — ${tab.hint}`}
+              aria-label={`${tab.label}. ${tab.hint}`}
               aria-pressed={isActive}
               onClick={() => toggle(tab.id)}
               className={cn(
