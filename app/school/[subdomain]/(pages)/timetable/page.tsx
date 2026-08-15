@@ -2732,6 +2732,19 @@ export default function SmartTimetableNew() {
                         }
                         showFullSubjectName={showFullSubjectName}
                         highlightTeacherId={highlightTeacherId}
+                        activeLessonId={
+                          editingLesson && !editingLesson.isNew
+                            ? editingLesson.id
+                            : null
+                        }
+                        activeSlot={
+                          editingLesson
+                            ? {
+                                dayOfWeek: editingLesson.dayOfWeek,
+                                timeSlotId: editingLesson.timeSlotId,
+                              }
+                            : null
+                        }
                         onEditTimeslot={setEditingTimeslot}
                         onDeleteTimeslot={setTimeslotToDelete}
                         onEditLesson={handleEditLesson}

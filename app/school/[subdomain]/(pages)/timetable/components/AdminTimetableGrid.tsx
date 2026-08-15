@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
   AlertCircle,
@@ -414,6 +414,10 @@ interface AdminTimetableGridProps {
   conflictTooltipMap?: Map<string, string>;
   showFullSubjectName?: boolean;
   highlightTeacherId?: string | null;
+  /** Lesson currently open in the editor — matched by id. */
+  activeLessonId?: string | null;
+  /** Slot currently open in the editor — used for new (empty) cells. */
+  activeSlot?: { dayOfWeek: number; timeSlotId?: string } | null;
   getSubjectAccent?: (
     subjectId: string,
     subjectName: string,
@@ -455,6 +459,8 @@ export function AdminTimetableGrid({
   conflictTooltipMap,
   showFullSubjectName,
   highlightTeacherId,
+  activeLessonId,
+  activeSlot,
   getSubjectAccent: resolveAccent,
   onEditTimeslot,
   onDeleteTimeslot,
@@ -493,6 +499,14 @@ export function AdminTimetableGrid({
       todayIndex != null && todayIndex < days.length ? todayIndex : 0,
     );
   }, [days.length, todayIndex]);
+
+  useEffect(() => {
+    if (activeLessonId || !activeSlot?.timeSlotId) return;
+    const el = document.querySelector("[data-editing-slot]");
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }, [activeLessonId, activeSlot?.dayOfWeek, activeSlot?.timeSlotId]);
 
   return (
     <div
@@ -807,6 +821,27 @@ export function AdminTimetableGrid({
                             displayEntry.teacher.id !== highlightTeacherId
                           );
 
+                          const isActiveLesson = !!(
+                            displayEntry &&
+                            (activeLessonId
+                              ? displayEntry.id === activeLessonId
+                              : activeSlot &&
+                                activeSlot.dayOfWeek === dayOfWeek &&
+                                !!activeSlot.timeSlotId &&
+                                displayEntry.timeSlotId === activeSlot.timeSlotId)
+                          );
+                          const isActiveEmpty = !!(
+                            !displayEntry &&
+                            !activeLessonId &&
+                            activeSlot &&
+                            activeSlot.dayOfWeek === dayOfWeek &&
+                            !!activeSlot.timeSlotId &&
+                            daySlot?.id === activeSlot.timeSlotId
+                          );
+                          const isEditingSomething = !!(
+                            activeLessonId || activeSlot
+                          );
+
                           if (schoolCombined) {
                             return (
                               <td
@@ -847,6 +882,10 @@ export function AdminTimetableGrid({
                                   )}
                                   hasConflict={!!hasConflict}
                                   isDimmed={isTeacherDimmed}
+                                  isActive={isActiveLesson}
+                                  isFaded={
+                                    isEditingSomething && !isActiveLesson
+                                  }
                                   isDoubleStart={isDoubleStart}
                                   isDoubleContinuation={isDoubleContinuation}
                                   connectsDoubleBelow={connectsDoubleBelow}
@@ -872,12 +911,24 @@ export function AdminTimetableGrid({
                                     "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#246a59]",
                                     "focus-visible:border-[#246a59] focus-visible:bg-[#246a59]/5 focus-visible:text-[#246a59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
                                     "disabled:cursor-not-allowed disabled:opacity-50",
+                                    isActiveEmpty &&
+                                      "relative z-[1] border-solid border-[#246a59] bg-[#246a59]/10 text-[#246a59] ring-2 ring-[#0a1f1a] ring-offset-1 ring-offset-white dark:ring-[#7eb8a8] dark:ring-offset-[#071411]",
+                                    isEditingSomething &&
+                                      !isActiveEmpty &&
+                                      "opacity-40",
                                   )}
                                   title="Add a lesson"
                                   aria-label="Add a lesson"
+                                  aria-current={isActiveEmpty ? "true" : undefined}
+                                  data-editing-slot={isActiveEmpty ? "" : undefined}
                                 >
                                   <Plus className="h-3.5 w-3.5" />
-                                  <span className="hidden text-[10px] font-medium group-hover/empty:inline group-focus-visible/empty:inline max-sm:inline">
+                                  <span
+                                    className={cn(
+                                      "hidden text-[10px] font-medium group-hover/empty:inline group-focus-visible/empty:inline max-sm:inline",
+                                      isActiveEmpty && "inline",
+                                    )}
+                                  >
                                     Add lesson
                                   </span>
                                 </button>
@@ -1375,6 +1426,8 @@ function AdminLessonCell({
   accent,
   hasConflict,
   isDimmed,
+  isActive,
+  isFaded,
   isDoubleStart,
   isDoubleContinuation,
   connectsDoubleBelow,
@@ -1385,6 +1438,8 @@ function AdminLessonCell({
   accent: SubjectAccentStyle;
   hasConflict: boolean;
   isDimmed?: boolean;
+  isActive?: boolean;
+  isFaded?: boolean;
   isDoubleStart?: boolean;
   isDoubleContinuation?: boolean;
   connectsDoubleBelow?: boolean;
@@ -1392,6 +1447,16 @@ function AdminLessonCell({
   onEdit?: (lesson: LessonEntry) => void;
   onDelete?: (lesson: LessonEntry) => void;
 }) {
+  const cellRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+    cellRef.current?.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [isActive]);
+
   const tooltipExtra = isDoubleContinuation
     ? "Double period · 2nd half"
     : isDoubleStart
@@ -1400,11 +1465,13 @@ function AdminLessonCell({
 
   return (
     <div
+      ref={cellRef}
       className={cn(
         "group/lesson relative flex cursor-pointer items-start gap-0.5 rounded-none border px-2",
         LESSON_CELL_MIN,
         (isDoubleStart || isDoubleContinuation) && "pr-6",
-        isDimmed && "opacity-40 saturate-[0.65]",
+        isDimmed && !isActive && "opacity-40 saturate-[0.65]",
+        isFaded && !isActive && "opacity-45",
         doubleBlockSurfaceClass({
           isDoubleStart,
           isDoubleContinuation,
@@ -1414,18 +1481,25 @@ function AdminLessonCell({
         hasConflict
           ? "border-red-200/90 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25"
           : "border-zinc-200/60 dark:border-zinc-700/70",
+        isActive &&
+          "z-[1] ring-2 ring-[#0a1f1a] ring-offset-1 ring-offset-white dark:ring-[#7eb8a8] dark:ring-offset-[#071411]",
       )}
       style={
         hasConflict
           ? undefined
           : {
               backgroundColor: accent.background,
-              borderColor: accent.border,
+              borderColor: isActive ? "#0a1f1a" : accent.border,
             }
       }
       role="button"
       tabIndex={0}
-      title={lessonTooltip(entry, tooltipExtra)}
+      aria-current={isActive ? "true" : undefined}
+      title={
+        isActive
+          ? `Editing · ${lessonTooltip(entry, tooltipExtra)}`
+          : lessonTooltip(entry, tooltipExtra)
+      }
       onClick={() => onEdit?.(entry)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
