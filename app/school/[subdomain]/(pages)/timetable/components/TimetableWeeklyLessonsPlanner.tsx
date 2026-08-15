@@ -52,6 +52,7 @@ import {
   gradeBandFor,
   suggestWeeklyLessons,
 } from "../utils/suggestedWeeklyLessons";
+import { abbreviateGradeShort } from "@/lib/utils/grade-display";
 
 interface PlannerRow {
   key: string;
@@ -221,8 +222,11 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
   useEffect(() => {
     if (activeGradeId) return;
     const fallback = firstGradeWithLessons ?? grades[0]?.id;
-    if (fallback) setActiveGradeId(fallback);
-  }, [activeGradeId, firstGradeWithLessons, grades]);
+    if (fallback) {
+      setActiveGradeId(fallback);
+      onFocusedGradeChange?.(fallback);
+    }
+  }, [activeGradeId, firstGradeWithLessons, grades, onFocusedGradeChange]);
 
   const selectGrade = (gradeId: string) => {
     if (gradeId === activeGradeId) {
@@ -688,28 +692,30 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
 
   return (
     <div className="space-y-2">
-      {/* Class picker */}
-      <div className="flex flex-wrap gap-1">
+      {/* Class picker — one scrolling row */}
+      <div className="-mx-0.5 flex gap-1 overflow-x-auto pb-0.5 [scrollbar-width:thin]">
         {grades.map((g) => {
           const total = lessonsForGrade(g.id);
           const active = isSameGrade(g.id, activeGradeId, grades);
           const isDirty = Boolean(drafts[g.id] || pending[g.id]);
+          const short = abbreviateGradeShort(g.name) || g.name;
           return (
             <button
               key={g.id}
               type="button"
+              title={`${g.name} · ${total} lessons`}
               onClick={() => selectGrade(g.id)}
               className={cn(
-                "flex shrink-0 items-center gap-1 rounded-none border px-1.5 py-1 text-[11px] font-medium transition",
+                "flex shrink-0 items-center gap-1 border px-1.5 py-1 text-[11px] font-medium transition",
                 active
                   ? "border-[#246a59] bg-[#246a59] text-white"
                   : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300",
               )}
             >
-              {g.name}
+              {short}
               <span
                 className={cn(
-                  "rounded-none px-1 text-[9px] font-semibold tabular-nums leading-none",
+                  "px-1 text-[9px] font-semibold tabular-nums leading-none",
                   active
                     ? "bg-white/20 text-white"
                     : total > 0
@@ -722,7 +728,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               {isDirty && (
                 <span
                   className={cn(
-                    "h-1 w-1 rounded-none",
+                    "h-1 w-1",
                     active ? "bg-white" : "bg-amber-500",
                   )}
                   aria-label="Unsaved changes"
@@ -744,7 +750,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             onClick={handleSuggest}
           >
             <Sparkles className="mr-1 h-3 w-3" />
-            Use suggested values
+            Use suggested
           </Button>
         )}
 
@@ -757,7 +763,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               className="h-7 px-2 text-[11px]"
             >
               <Plus className="mr-1 h-3 w-3" />
-              Add a subject
+              Add
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-1.5">
@@ -801,7 +807,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               disabled={copyCandidates.length === 0}
             >
               <Copy className="mr-1 h-3 w-3" />
-              Copy to other classes
+              Copy
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-60 p-2.5">
@@ -1043,9 +1049,9 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
           <p className="text-[12px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
             {availableSlotsPerClass === 0
               ? activeTotal > 0
-                ? `${activeTotal} weekly ${activeTotal === 1 ? "lesson" : "lessons"} set${activeGrade ? ` for ${activeGrade.name}` : ""} — no periods on the school day yet`
-                : `No lesson periods on the school day yet${activeGrade ? ` for ${activeGrade.name}` : ""}`
-              : `${activeTotal} of ${availableSlotsPerClass} weekly lessons assigned${activeGrade ? ` in ${activeGrade.name}` : ""}`}
+                ? `${activeTotal} lessons set — no periods on the school day yet`
+                : "No lesson periods on the school day yet"
+              : `${activeTotal}/${availableSlotsPerClass} this week`}
           </p>
           <p className={cn(tt.caption, "mt-0.5 text-[11px]")}>
             {availableSlotsPerClass === 0 ? (
@@ -1067,7 +1073,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             ) : activeTotal === 0 ? (
               "Assign all weekly lessons before continuing."
             ) : (
-              `${availableSlotsPerClass - activeTotal} free slots left for study or extra activities.`
+              `${availableSlotsPerClass - activeTotal} slots free`
             )}
           </p>
         </div>
@@ -1097,8 +1103,8 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             ) : (
               <>
                 <Check className="mr-1 h-3 w-3" />
-                Save weekly lessons
-                {dirtyGrades.length > 1 ? ` (${dirtyGrades.length} classes)` : ""}
+                Save
+                {dirtyGrades.length > 1 ? ` (${dirtyGrades.length})` : ""}
               </>
             )}
           </Button>
