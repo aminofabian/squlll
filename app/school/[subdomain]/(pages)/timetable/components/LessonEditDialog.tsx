@@ -11,9 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
   DrawerTitle,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -49,7 +47,7 @@ import {
 } from "../utils/computeTimetableConflicts";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
-import { BookOpen, Clock, X, AlertCircle } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { TeacherSelect, SubjectSelect, lessonSelectTriggerClass } from "./TimetableLessonSelects";
 
@@ -82,10 +80,12 @@ function FormSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-2">
-      <div>
-        <h3 className={tt.label}>{title}</h3>
-        {hint ? <p className={cn(tt.caption, "mt-0.5")}>{hint}</p> : null}
+    <section className="space-y-1">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className={tt.eyebrow}>{title}</h3>
+        {hint ? (
+          <p className="truncate text-[10px] text-slate-400">{hint}</p>
+        ) : null}
       </div>
       {children}
     </section>
@@ -1290,9 +1290,6 @@ Check the browser console for detailed input information.`;
   // Get timeslot and grade information
   const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
   const grade = grades.find((g) => g.id === lesson.gradeId);
-  const slotTitle = timeSlot
-    ? `${dayNameFromNumber(lesson.dayOfWeek)} · P${timeSlot.periodNumber}`
-    : dayNameFromNumber(lesson.dayOfWeek);
   const sectionName =
     lesson.gradeId && selectedStreamId
       ? (grades
@@ -1300,6 +1297,16 @@ Check the browser console for detailed input information.`;
           ?.streams?.find((s) => s.tenantStreamId === selectedStreamId)?.name ??
         null)
       : null;
+  const slotMeta = [
+    dayNameFromNumber(lesson.dayOfWeek),
+    timeSlot ? `P${timeSlot.periodNumber}` : null,
+    timeSlot?.time,
+    grade
+      ? `${grade.displayName || grade.name}${sectionName ? `-${sectionName}` : ""}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   // Filter teachers who:
   // 1. Can teach the selected grade (or show all if no grade selected)
@@ -1358,369 +1365,306 @@ Check the browser console for detailed input information.`;
         ? "Pick a subject to continue."
         : null;
 
+  const teacherHint =
+    grade && gradeQualifiedTeachers.length > 0
+      ? `${availableTeachers.length}/${gradeQualifiedTeachers.length} free`
+      : undefined;
+
+  const panel = (
+    <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-[#0c1a17]">
+      <div className="shrink-0 border-b border-[#1a4d42]/12 px-3 py-2 dark:border-white/10">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            {isLgDown ? (
+              <DrawerTitle className="truncate text-[13px] font-semibold tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+                {isNew ? "Add lesson" : "Edit lesson"}
+              </DrawerTitle>
+            ) : (
+              <h2 className="truncate text-[13px] font-semibold tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+                {isNew ? "Add lesson" : "Edit lesson"}
+              </h2>
+            )}
+            <p className="truncate text-[11px] text-[#1a4d42]/55 dark:text-white/45">
+              {slotMeta}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={cn(
+              "flex shrink-0 items-center justify-center text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white",
+              isLgDown ? "h-9 w-9" : "h-7 w-7",
+            )}
+            aria-label="Close"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-2",
+          isLgDown && "px-4 py-3",
+        )}
+      >
+        {scheduleConflict ? (
+          <div className="flex gap-1.5 border border-red-200 bg-red-50 px-2.5 py-2 dark:border-red-900/50 dark:bg-red-950/40">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
+            <div className="min-w-0 text-[11px] text-red-800 dark:text-red-200">
+              <p className="font-semibold">{scheduleConflict.title}</p>
+              <p className="mt-0.5 text-red-700/90 dark:text-red-300/90">
+                {scheduleConflict.description}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {!isNew && periodOptions.length > 0 ? (
+          <section className="space-y-1.5">
+            <p className={tt.eyebrow}>Move slot</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] font-medium text-slate-500">
+                  Day
+                </Label>
+                <Select
+                  value={String(moveDay)}
+                  onValueChange={(v) => setMoveDay(Number(v))}
+                >
+                  <SelectTrigger className={lessonSelectTriggerClass}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dayLabels.slice(0, daysPerWeek).map((label, i) => (
+                      <SelectItem key={label} value={String(i + 1)}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] font-medium text-slate-500">
+                  Period
+                </Label>
+                <Select
+                  value={String(movePeriod)}
+                  onValueChange={(v) => setMovePeriod(Number(v))}
+                >
+                  <SelectTrigger className={lessonSelectTriggerClass}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {periodOptions.map((p) => {
+                      const slot = getTimeSlotForDayAndPeriod(
+                        timeSlots,
+                        moveDay,
+                        p,
+                      );
+                      return (
+                        <SelectItem key={p} value={String(p)}>
+                          P{p}
+                          {slot?.time ? ` · ${slot.time}` : ""}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <FormSection title="Teacher" hint={teacherHint}>
+          <TeacherSelect
+            id="teacher"
+            value={
+              availableTeachers.some((t) => t.id === formData.teacherId)
+                ? formData.teacherId
+                : undefined
+            }
+            onValueChange={handleTeacherChange}
+            teachers={availableTeachers}
+            emptyLabel="No teachers available"
+          />
+
+          {availableTeachers.length === 0 ? (
+            <p className="text-[11px] text-red-600 dark:text-red-400">
+              {busyButQualifiedTeachers.length > 0
+                ? `${busyButQualifiedTeachers.length} already booked this period.`
+                : `No teachers assigned to ${grade?.name || "this grade"}.`}
+            </p>
+          ) : null}
+
+          {busyButQualifiedTeachers.length > 0 &&
+          availableTeachers.length > 0 ? (
+            <p className="text-[10px] text-amber-700 dark:text-amber-300">
+              Booked: {busyButQualifiedTeachers.map((t) => t.name).join(", ")}
+            </p>
+          ) : null}
+        </FormSection>
+
+        <FormSection title="Subject">
+          <SubjectSelect
+            id="subject"
+            value={formData.subjectId || undefined}
+            onValueChange={(value) =>
+              setFormData({ ...formData, subjectId: value })
+            }
+            subjects={availableSubjectsForTeacher}
+            disabled={!formData.teacherId || availableSubjectsForTeacher.length === 0}
+            placeholder={
+              formData.teacherId
+                ? "Select subject"
+                : "Select a teacher first"
+            }
+            emptyLabel="No subjects for this teacher"
+          />
+          {formData.teacherId &&
+          availableSubjectsForTeacher.length === 0 &&
+          selectedTeacher ? (
+            <p className="text-[11px] text-slate-500">
+              {selectedTeacher.name} has no subjects for this class.{" "}
+              {subdomain ? (
+                <Link
+                  href={`/school/${subdomain}/teachers`}
+                  className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300"
+                >
+                  Assign in Teachers
+                </Link>
+              ) : (
+                <span>Assign subjects on the Teachers page.</span>
+              )}
+            </p>
+          ) : null}
+          {subjectsForClass.length === 0 && gradeInfo ? (
+            <p className="text-[11px] text-slate-500">
+              No subjects linked to this class.{" "}
+              {subdomain ? (
+                <Link
+                  href={`/school/${subdomain}/classes`}
+                  className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300"
+                >
+                  Set up in Classes
+                </Link>
+              ) : (
+                <span>Set up subjects in Classes first.</span>
+              )}
+            </p>
+          ) : null}
+        </FormSection>
+
+        <FormSection title="Room" hint="Optional">
+          <Input
+            id="room"
+            list="lesson-known-rooms"
+            value={formData.roomNumber}
+            onChange={(e) =>
+              setFormData({ ...formData, roomNumber: e.target.value })
+            }
+            placeholder="e.g. Room 101"
+            className={lessonSelectTriggerClass}
+          />
+          <datalist id="lesson-known-rooms">
+            {knownRooms.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
+        </FormSection>
+
+        <label className="flex cursor-pointer items-start gap-2">
+          <Checkbox
+            id="doublePeriod"
+            checked={formData.isDoublePeriod}
+            onCheckedChange={(checked) =>
+              setFormData({
+                ...formData,
+                isDoublePeriod: checked === true,
+              })
+            }
+            className="mt-0.5"
+          />
+          <span>
+            <span className="block text-[12px] font-medium text-slate-900 dark:text-slate-100">
+              Two periods in a row
+            </span>
+            <span className="mt-0.5 block text-[10px] text-slate-400">
+              Uses this period and the next.
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between gap-2 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#0c1a17]",
+          isLgDown && "px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+        )}
+      >
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            disabled={isSaving}
+            className="h-8 px-2 text-[11px] text-slate-500"
+          >
+            Cancel
+          </Button>
+          {!isNew ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              className="h-8 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
+            >
+              Delete
+            </Button>
+          ) : null}
+        </div>
+        {saveBlockedReason ? (
+          <p className="hidden min-w-0 truncate text-[11px] text-slate-400 sm:block">
+            {saveBlockedReason}
+          </p>
+        ) : null}
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!!saveBlockedReason || isSaving}
+          title={saveBlockedReason ?? undefined}
+          className={cn("h-8 shrink-0 px-3 text-[12px] font-medium", tt.accentBtn)}
+        >
+          {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save changes"}
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (!isLgDown) {
+    return (
+      <aside
+        data-timetable-no-print
+        className="hidden min-h-0 w-[22rem] shrink-0 flex-col border-l border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17] lg:flex"
+      >
+        {panel}
+      </aside>
+    );
+  }
+
   return (
     <Drawer
       open={!!lesson}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
-      direction={isLgDown ? "bottom" : "right"}
+      direction="bottom"
     >
       <DrawerContent
-        className={cn(
-          "flex flex-col bg-white dark:bg-slate-950",
-          isLgDown
-            ? "max-h-[min(92dvh,720px)] rounded-none border-t border-slate-100 dark:border-slate-800"
-            : "ml-auto h-[100dvh] max-h-[100dvh] w-full max-w-md",
-        )}
-        data-vaul-drawer-direction={isLgDown ? "bottom" : "right"}
+        className="flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950"
+        data-vaul-drawer-direction="bottom"
       >
-        <DrawerHeader
-          className={cn(
-            "shrink-0 space-y-0 border-b border-slate-100 dark:border-slate-800",
-            isLgDown ? "px-5 py-4" : "px-4 py-3",
-          )}
-        >
-          <div className="flex items-start gap-2">
-            {!isLgDown ? (
-              <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-            ) : null}
-            <div className="min-w-0 flex-1">
-              <DrawerTitle
-                className={cn(
-                  "font-semibold text-slate-900 dark:text-slate-100",
-                  isLgDown ? "text-[15px] tracking-tight" : "text-sm",
-                )}
-              >
-                {isNew ? "Add lesson" : "Edit lesson"}
-              </DrawerTitle>
-              <p
-                className={cn(
-                  "text-slate-500",
-                  isLgDown ? "mt-1 text-xs" : "mt-0.5 text-[11px]",
-                )}
-              >
-                {slotTitle}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "shrink-0 text-slate-400",
-                isLgDown ? "h-10 w-10 rounded-none" : "h-7 w-7",
-              )}
-              onClick={onClose}
-              aria-label="Close"
-            >
-              <X className={isLgDown ? "h-4 w-4" : "h-3.5 w-3.5"} />
-            </Button>
-          </div>
-          <div
-            className={cn(
-              "flex flex-wrap gap-1.5",
-              isLgDown ? "mt-3 gap-2" : "mt-2.5",
-            )}
-          >
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-                isLgDown
-                  ? "rounded-none bg-slate-100 px-3 py-1 text-xs"
-                  : "rounded-none bg-slate-100 px-2 py-0.5 text-[11px]",
-              )}
-            >
-              <Clock className="h-3 w-3 text-slate-400" />
-              {dayNameFromNumber(lesson.dayOfWeek)}
-              {timeSlot
-                ? ` · P${timeSlot.periodNumber}${timeSlot.time ? ` · ${timeSlot.time}` : ""}`
-                : ""}
-            </span>
-            {grade ? (
-              <span
-                className={cn(
-                  "font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-                  isLgDown
-                    ? "rounded-none bg-slate-100 px-3 py-1 text-xs"
-                    : "rounded-none bg-slate-100 px-2 py-0.5 text-[11px]",
-                )}
-              >
-                {grade.displayName || grade.name}
-                {sectionName ? ` · ${sectionName}` : ""}
-              </span>
-            ) : null}
-          </div>
-        </DrawerHeader>
-
-        <div
-          className={cn(
-            "min-h-0 flex-1 overflow-y-auto",
-            isLgDown ? "space-y-5 px-5 py-5" : "space-y-4 px-4 py-4",
-          )}
-        >
-          {scheduleConflict ? (
-            <div className="flex gap-2 rounded-none border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/50 dark:bg-red-950/40">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
-              <div className="min-w-0 text-xs text-red-800 dark:text-red-200">
-                <p className="font-semibold">{scheduleConflict.title}</p>
-                <p className="mt-0.5 text-red-700/90 dark:text-red-300/90">
-                  {scheduleConflict.description}
-                </p>
-              </div>
-            </div>
-          ) : null}
-
-          {!isNew && periodOptions.length > 0 ? (
-            <div className={cn(tt.panelMuted, "space-y-3 p-3")}>
-              <div>
-                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  Move slot
-                </p>
-                <p className={cn(tt.caption, "mt-0.5")}>
-                  Change day or period, then save.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className={tt.label}>Day</Label>
-                  <Select
-                    value={String(moveDay)}
-                    onValueChange={(v) => setMoveDay(Number(v))}
-                  >
-                    <SelectTrigger className={lessonSelectTriggerClass}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dayLabels.slice(0, daysPerWeek).map((label, i) => (
-                        <SelectItem key={label} value={String(i + 1)}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className={tt.label}>Period</Label>
-                  <Select
-                    value={String(movePeriod)}
-                    onValueChange={(v) => setMovePeriod(Number(v))}
-                  >
-                    <SelectTrigger className={lessonSelectTriggerClass}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {periodOptions.map((p) => {
-                        const slot = getTimeSlotForDayAndPeriod(
-                          timeSlots,
-                          moveDay,
-                          p,
-                        );
-                        return (
-                          <SelectItem key={p} value={String(p)}>
-                            P{p}
-                            {slot?.time ? ` · ${slot.time}` : ""}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <FormSection
-            title="Teacher"
-            hint={
-              grade && gradeQualifiedTeachers.length > 0
-                ? `${availableTeachers.length} of ${gradeQualifiedTeachers.length} free for ${grade.displayName || grade.name}`
-                : undefined
-            }
-          >
-            <TeacherSelect
-              id="teacher"
-              value={
-                availableTeachers.some((t) => t.id === formData.teacherId)
-                  ? formData.teacherId
-                  : undefined
-              }
-              onValueChange={handleTeacherChange}
-              teachers={availableTeachers}
-              emptyLabel="No teachers available"
-            />
-
-            {availableTeachers.length === 0 ? (
-              <p className="text-[11px] text-red-600 dark:text-red-400">
-                {busyButQualifiedTeachers.length > 0
-                  ? `${busyButQualifiedTeachers.length} qualified teacher(s) already booked this period.`
-                  : `No teachers assigned to ${grade?.name || "this grade"}.`}
-              </p>
-            ) : null}
-
-            {busyButQualifiedTeachers.length > 0 &&
-            availableTeachers.length > 0 ? (
-              <div className="rounded-none border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 dark:border-amber-900/40 dark:bg-amber-950/30">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
-                  Already booked
-                </p>
-                <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-200/90">
-                  {busyButQualifiedTeachers.map((t) => t.name).join(", ")}
-                </p>
-              </div>
-            ) : null}
-          </FormSection>
-
-          <FormSection title="Subject">
-            {!formData.teacherId ? (
-              <p className="rounded-none border border-dashed border-slate-200 px-3 py-2.5 text-[11px] text-slate-500 dark:border-slate-700">
-                Select a teacher to see their subjects.
-              </p>
-            ) : (
-              <SubjectSelect
-                id="subject"
-                value={formData.subjectId || undefined}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, subjectId: value })
-                }
-                subjects={availableSubjectsForTeacher}
-                disabled={availableSubjectsForTeacher.length === 0}
-                emptyLabel="No subjects for this teacher"
-              />
-            )}
-            {formData.teacherId &&
-            availableSubjectsForTeacher.length === 0 &&
-            selectedTeacher ? (
-              <p className="text-[11px] text-slate-500">
-                {selectedTeacher.name} has no subjects for this class.{" "}
-                {subdomain ? (
-                  <Link
-                    href={`/school/${subdomain}/teachers`}
-                    className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300"
-                  >
-                    Assign in Teachers
-                  </Link>
-                ) : (
-                  <span>Assign subjects on the Teachers page.</span>
-                )}
-              </p>
-            ) : null}
-            {subjectsForClass.length === 0 && gradeInfo ? (
-              <p className="text-[11px] text-slate-500">
-                No subjects linked to this class.{" "}
-                {subdomain ? (
-                  <Link
-                    href={`/school/${subdomain}/classes`}
-                    className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300"
-                  >
-                    Set up in Classes
-                  </Link>
-                ) : (
-                  <span>Set up subjects in Classes first.</span>
-                )}
-              </p>
-            ) : null}
-          </FormSection>
-
-          <FormSection title="Room" hint="Optional">
-            <Input
-              id="room"
-              list="lesson-known-rooms"
-              value={formData.roomNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, roomNumber: e.target.value })
-              }
-              placeholder="e.g. Room 101"
-              className={lessonSelectTriggerClass}
-            />
-            <datalist id="lesson-known-rooms">
-              {knownRooms.map((r) => (
-                <option key={r} value={r} />
-              ))}
-            </datalist>
-          </FormSection>
-
-          <label
-            className={cn(
-              "flex cursor-pointer items-start gap-2.5 rounded-none border px-3 py-2.5 transition-colors",
-              formData.isDoublePeriod
-                ? "border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-900/60"
-                : "border-slate-200 hover:border-slate-300 dark:border-slate-700",
-            )}
-          >
-            <Checkbox
-              id="doublePeriod"
-              checked={formData.isDoublePeriod}
-              onCheckedChange={(checked) =>
-                setFormData({
-                  ...formData,
-                  isDoublePeriod: checked === true,
-                })
-              }
-              className="mt-0.5"
-            />
-            <div className="min-w-0">
-              <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                Two periods in a row
-              </span>
-              <p className={cn(tt.caption, "mt-0.5")}>
-                Uses this period and the next on the same day.
-              </p>
-            </div>
-          </label>
-        </div>
-
-        <DrawerFooter
-          className={cn(
-            "shrink-0 border-t border-slate-100 dark:border-slate-800",
-            isLgDown
-              ? "px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
-              : "px-4 py-3",
-          )}
-        >
-          {saveBlockedReason ? (
-            <p className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-              <AlertCircle className="h-3 w-3 shrink-0 text-slate-400" />
-              {saveBlockedReason}
-            </p>
-          ) : null}
-          <div className={cn("flex w-full gap-2", isLgDown && "gap-3")}>
-            {!isNew ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                className={cn(
-                  "h-9 shrink-0 px-3 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40",
-                  isLgDown && "h-11 text-sm",
-                )}
-              >
-                Delete
-              </Button>
-            ) : null}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              disabled={isSaving}
-              className={cn("h-9 flex-1 text-xs", isLgDown && "h-11 text-sm")}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!!saveBlockedReason || isSaving}
-              className={cn(
-                "h-9 flex-1 text-xs font-medium",
-                tt.accentBtn,
-                isLgDown && "h-11 text-sm",
-              )}
-            >
-              {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save changes"}
-            </Button>
-          </div>
-        </DrawerFooter>
+        {panel}
       </DrawerContent>
     </Drawer>
   );

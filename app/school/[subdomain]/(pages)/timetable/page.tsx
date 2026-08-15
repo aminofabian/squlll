@@ -829,11 +829,34 @@ export default function SmartTimetableNew() {
       setAutoGenerateStep(step);
       setCreationMode("automatic");
       setInspectorTab(null);
-      sidebarBeforeGenerateRef.current = isSidebarMinimized;
+      if (!editingLesson && !autoGenerateOpen) {
+        sidebarBeforeGenerateRef.current = isSidebarMinimized;
+      }
+      setEditingLesson(null);
       setIsSidebarMinimized(true);
       setAutoGenerateOpen(true);
     },
-    [isSidebarMinimized],
+    [isSidebarMinimized, editingLesson, autoGenerateOpen],
+  );
+
+  const closeLessonEditor = useCallback(() => {
+    setEditingLesson(null);
+    if (!autoGenerateOpen) {
+      setIsSidebarMinimized(sidebarBeforeGenerateRef.current);
+    }
+  }, [autoGenerateOpen]);
+
+  const openLessonEditor = useCallback(
+    (lesson: any) => {
+      setInspectorTab(null);
+      if (!autoGenerateOpen && !editingLesson) {
+        sidebarBeforeGenerateRef.current = isSidebarMinimized;
+      }
+      setAutoGenerateOpen(false);
+      setIsSidebarMinimized(true);
+      setEditingLesson(lesson);
+    },
+    [autoGenerateOpen, isSidebarMinimized, editingLesson],
   );
 
   const openSchoolPage = useCallback(
@@ -1162,7 +1185,7 @@ export default function SmartTimetableNew() {
       setSelectedGrade(entry.gradeId);
       const subject = state.subjects.find((s) => s.id === entry.subjectId);
       const teacher = state.teachers.find((t) => t.id === entry.teacherId);
-      setEditingLesson({
+      openLessonEditor({
         ...entry,
         subject: subject ?? { id: entry.subjectId, name: "Unknown" },
         teacher: teacher ?? {
@@ -1173,7 +1196,7 @@ export default function SmartTimetableNew() {
       });
       if (!showConflicts) toggleConflicts();
     },
-    [setSelectedGrade, showConflicts, toggleConflicts],
+    [setSelectedGrade, showConflicts, toggleConflicts, openLessonEditor],
   );
 
   const handleHighlightProblems = useCallback(() => {
@@ -1445,14 +1468,14 @@ export default function SmartTimetableNew() {
         });
         return;
       }
-      setEditingLesson({
+      openLessonEditor({
         gradeId: selectedGradeId,
         dayOfWeek,
         timeSlotId: resolvedSlotId,
         isNew: true,
       });
     },
-    [selectedGradeId, toast, openClassSidebar],
+    [selectedGradeId, toast, openClassSidebar, openLessonEditor],
   );
 
   const handleEditLesson = useCallback(
@@ -1466,7 +1489,7 @@ export default function SmartTimetableNew() {
       isDoublePeriod?: boolean;
     }) => {
       const full = selectedGradeEntries.find((e) => e.id === entry.id);
-      setEditingLesson(
+      openLessonEditor(
         full
           ? { ...full, isNew: false }
           : {
@@ -1477,7 +1500,7 @@ export default function SmartTimetableNew() {
             },
       );
     },
-    [selectedGradeEntries],
+    [selectedGradeEntries, openLessonEditor],
   );
 
   const handleAdminMobileLessonClick = useCallback(
@@ -2547,6 +2570,7 @@ export default function SmartTimetableNew() {
               !isPageLoading &&
               !journeyHidden &&
               !autoGenerateOpen &&
+              !editingLesson &&
               !(hasAnyLessons && sharedAt && !changesSinceShare) && (
                 <div data-timetable-no-print className="shrink-0">
                   <TimetableJourney
@@ -2803,7 +2827,7 @@ export default function SmartTimetableNew() {
             ) : null}
           </div>
 
-          {hasScheduleStructure && !autoGenerateOpen ? (
+          {hasScheduleStructure && !autoGenerateOpen && !editingLesson ? (
             <TimetableInspectorRail
               activeTab={inspectorTab}
               onChange={(tab) => {
@@ -2961,16 +2985,15 @@ export default function SmartTimetableNew() {
               });
             }}
           />
+
+          <LessonEditDialog
+            lesson={editingLesson}
+            onClose={closeLessonEditor}
+          />
         </div>
       </main>
 
       {/* ── Dialogs & Drawers ── */}
-      <LessonEditDialog
-        lesson={editingLesson}
-        onClose={() => {
-          setEditingLesson(null);
-        }}
-      />
       <TimeslotEditDialog
         timeslot={editingTimeslot}
         onClose={() => {
