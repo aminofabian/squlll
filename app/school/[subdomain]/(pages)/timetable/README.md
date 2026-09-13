@@ -113,7 +113,7 @@ The biggest intuitiveness win: every surface answers "am I done?" with the same 
 | 3.12 | Bulk save errors sanitized | ✅ Bulk lesson main save now routes through `sanitizeTimetableUserMessage` (bulk breaks already did) |
 | 3.13 | Break dialog: no `alert()`, preserve custom names | ✅ Save/delete errors go through toasts with sanitized text; the name is only auto-filled when it still matches the previous type's default |
 | 3.14 | Schedule preview caption | ✅ "Periods only — breaks you add next will extend the day." |
-| 3.15 | Week templates cleanup | ✅ Loads full details on mount, single "Refresh" button (Basics/Full Details gone), no success toast, actionable empty state, and corrected reset copy verified against the store behavior |
+| 3.15 | Week templates cleanup | ⚠️ Moot — the component (`WeekTemplateManager`) was later found to be **dead** and was removed in Phase 5 |
 | 3.16 | Wizard copy/draft/skip | ✅ "Build my own" copy now says "Start with lunch, add more" (matches behavior); skip is gated by a confirmation and in-progress answers persist to `localStorage` (keyed by subdomain) and rehydrate; success copy now points to the recommended auto-fill path |
 
 ---
@@ -149,14 +149,16 @@ Deleted (all confirmed referenced only by each other and `components/index.ts`):
 
 > ⚠️ **Note:** `TimetableGrid` here is the page-local `timetable/components/TimetableGrid.tsx`. The shared `frontend/components/timetable/TimetableGrid.tsx` used by the student/teacher pages is a *different* component and was left untouched.
 
-### More dead code found during verification (not deleted — outside the approved list)
+### Additional dead code (also removed)
 
-These are also referenced only by themselves and are safe to remove on request:
+A post-delete verification pass found six more zero-reference files. These are now deleted too:
 
 | File | Notes |
 |---|---|
-| `components/WeekTemplateManager.tsx` | Dead — flagged "not wired (legacy)" in `TIMETABLE_UI_AUDIT.md`. **Consequence:** Phase 3.15's work targeted this dead component |
-| `components/TeacherManagementModal.tsx` | Dead; still exported from the barrel |
+| `components/WeekTemplateManager.tsx` | Was flagged "not wired (legacy)" in `TIMETABLE_UI_AUDIT.md`. **Consequence:** the Phase 3.15 work targeted this dead component |
+| `components/TeacherManagementModal.tsx` | Was exported from the barrel |
+| `components/types.ts` | Only consumed by the deleted `LessonSummaryPanel` / `WeeklyOverview` family |
+| `components/index.ts` | The page-local barrel — nothing imported it |
 | `CreateTimeSlotsExample.tsx` | Dev example, unused |
 | `debug-store-button.tsx` | Dev debug button, unused |
 
