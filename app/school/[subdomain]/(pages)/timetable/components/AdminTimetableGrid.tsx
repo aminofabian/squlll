@@ -39,9 +39,75 @@ const T_CELL_SM = "text-[10px] leading-tight";
 const ROW_H = "h-9 min-h-[36px]";
 const LESSON_CELL_MIN = "min-h-[36px] py-1";
 const DOUBLE_ROW_H = "min-h-[72px]";
-const TIME_COL_W = "w-[108px] md:w-[120px]";
+const TIME_COL_W = "max-md:w-[108px]";
 const TIME_RAIL_MIN = "min-h-[36px]";
 const TD_PAD = "p-0.5";
+
+// Resizable column widths (desktop). Widths are persisted per school.
+const TIME_COL_DEFAULT_W = 120;
+const DAY_COL_DEFAULT_W = 96;
+const COL_W_MIN = 60;
+const COL_W_MAX = 420;
+const TIME_COL_W_MIN = 88;
+const TIME_COL_W_MAX = 280;
+
+/** Column key: the time rail, or a day index. */
+type ColKey = "time" | number;
+
+const clampColumnWidth = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, Math.round(value)));
+
+/**
+ * Drag handle on a column's right edge (desktop only). Drag to resize,
+ * double-click to reset, or focus it and use ←/→ (Shift for bigger steps).
+ */
+function ColumnResizeHandle({
+  label,
+  width,
+  min,
+  max,
+  active,
+  onPointerDown,
+  onKeyDown,
+  onReset,
+}: {
+  label: string;
+  width: number;
+  min: number;
+  max: number;
+  active: boolean;
+  onPointerDown: (event: React.PointerEvent) => void;
+  onKeyDown: (event: React.KeyboardEvent) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={`Resize ${label} column`}
+      aria-valuenow={clampColumnWidth(width, min, max)}
+      aria-valuemin={min}
+      aria-valuemax={max}
+      tabIndex={0}
+      title="Drag to resize · double-click to reset"
+      onPointerDown={onPointerDown}
+      onKeyDown={onKeyDown}
+      onDoubleClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onReset();
+      }}
+      className={cn(
+        "absolute right-0 top-0 z-30 hidden h-full w-2 cursor-col-resize touch-none select-none md:block",
+        "before:absolute before:inset-y-0 before:right-0 before:w-px before:bg-transparent before:transition-colors",
+        // Reveal the grip when the whole header cell is hovered, so the affordance
+        // is discoverable without adding always-on chrome to every column edge.
+        "group-hover/col:before:bg-[#246a59]/30 hover:before:bg-[#246a59]/50 focus-visible:outline-none focus-visible:before:bg-[#246a59]",
+        active && "before:w-0.5 before:bg-[#246a59]",
+      )}
+    />
+  );
+}
 
 const BREAK_ROW_H = "min-h-[36px]";
 const BREAK_LABEL =
@@ -439,6 +505,8 @@ interface AdminTimetableGridProps {
   className?: string;
   /** Show all classes in each cell (whole-school view). */
   schoolCombined?: boolean;
+  /** localStorage key (per school) under which resized column widths are saved. */
+  columnWidthStorageKey?: string;
   getCombinedEntriesFor?: (dayOfWeek: number, period: number) => LessonEntry[];
   onCombinedLessonClick?: (entry: LessonEntry) => void;
 }
@@ -474,6 +542,7 @@ export function AdminTimetableGrid({
   onCreateSchedule,
   className,
   schoolCombined = false,
+  columnWidthStorageKey,
   getCombinedEntriesFor,
   onCombinedLessonClick,
 }: AdminTimetableGridProps) {
@@ -489,6 +558,168 @@ export function AdminTimetableGrid({
     () => (isMobile ? [mobileDayIndex] : days.map((_, index) => index)),
     [isMobile, mobileDayIndex, days],
   );
+
+  // ── Resizable columns (desktop) ─────────────────────────────
+  const [timeColWidth, setTimeColWidth] = useState(TIME_COL_DEFAULT_W);
+  const [dayColWidths, setDayColWidths] = useState<Record<number, number>>({});
+  const [resizingCol, setResizingCol] = useState<ColKey | null>(null);
+  const resizeDragRef = useRef<{
+    key: ColKey;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
+  const widthsHydratedRef = useRef(false);
+
+  // Restore this school's saved widths.
+  useEffect(() => {
+    if (!columnWidthStorageKey || typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(columnWidthStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { time?: unknown; days?: unknown };
+      if (typeof parsed.time === "number") {
+        setTimeColWidth(
+          clampColumnWidth(parsed.time, TIME_COL_W_MIN, TIME_COL_W_MAX),
+        );
+      }
+      if (parsed.days && typeof parsed.days === "object") {
+        const next: Record<number, number> = {};
+        for (const [rawIndex, value] of Object.entries(
+          parsed.days as Record<string, unknown>,
+        )) {
+          const index = Number(rawIndex);
+          if (Number.isInteger(index) && typeof value === "number") {
+            next[index] = clampColumnWidth(value, COL_W_MIN, COL_W_MAX);
+          }
+        }
+        setDayColWidths(next);
+      }
+    } catch {
+      // Ignore malformed / unavailable storage.
+    }
+  }, [columnWidthStorageKey]);
+
+  // Persist on change, but skip the initial mount write.
+  useEffect(() => {
+    if (!widthsHydratedRef.current) {
+      widthsHydratedRef.current = true;
+      return;
+    }
+    if (!columnWidthStorageKey || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        columnWidthStorageKey,
+        JSON.stringify({ time: timeColWidth, days: dayColWidths }),
+      );
+    } catch {
+      // Ignore quota / private-mode failures.
+    }
+  }, [timeColWidth, dayColWidths, columnWidthStorageKey]);
+
+  const getColumnWidth = (key: ColKey) =>
+    key === "time" ? timeColWidth : (dayColWidths[key] ?? DAY_COL_DEFAULT_W);
+
+  const setColumnWidthValue = (key: ColKey, next: number) => {
+    if (key === "time") setTimeColWidth(next);
+    else setDayColWidths((prev) => ({ ...prev, [key]: next }));
+  };
+
+  const resetColumn = (key: ColKey) => {
+    if (key === "time") {
+      setTimeColWidth(TIME_COL_DEFAULT_W);
+      return;
+    }
+    setDayColWidths((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const beginColumnResize = (event: React.PointerEvent, key: ColKey) => {
+    if (isMobile) return;
+    event.preventDefault();
+    event.stopPropagation();
+    resizeDragRef.current = {
+      key,
+      startX: event.clientX,
+      startWidth: getColumnWidth(key),
+    };
+    setResizingCol(key);
+    try {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is best-effort.
+    }
+  };
+
+  const nudgeColumn = (event: React.KeyboardEvent, key: ColKey) => {
+    if (isMobile) return;
+    const isTime = key === "time";
+    const min = isTime ? TIME_COL_W_MIN : COL_W_MIN;
+    const max = isTime ? TIME_COL_W_MAX : COL_W_MAX;
+    const current = getColumnWidth(key);
+    const step = event.shiftKey ? 24 : 8;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setColumnWidthValue(key, clampColumnWidth(current - step, min, max));
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setColumnWidthValue(key, clampColumnWidth(current + step, min, max));
+    } else if (event.key === "Home" || event.key === "Enter") {
+      event.preventDefault();
+      resetColumn(key);
+    }
+  };
+
+  useEffect(() => {
+    if (!resizingCol) return;
+    const isTime = resizingCol === "time";
+    const min = isTime ? TIME_COL_W_MIN : COL_W_MIN;
+    const max = isTime ? TIME_COL_W_MAX : COL_W_MAX;
+
+    const onMove = (event: PointerEvent) => {
+      const drag = resizeDragRef.current;
+      if (!drag) return;
+      const next = clampColumnWidth(
+        drag.startWidth + (event.clientX - drag.startX),
+        min,
+        max,
+      );
+      const key = drag.key;
+      if (key === "time") setTimeColWidth(next);
+      else setDayColWidths((prev) => ({ ...prev, [key]: next }));
+    };
+    const onEnd = () => {
+      resizeDragRef.current = null;
+      setResizingCol(null);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+    window.addEventListener("pointercancel", onEnd);
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      window.removeEventListener("pointercancel", onEnd);
+      document.body.style.userSelect = previousUserSelect;
+    };
+  }, [resizingCol]);
+
+  const tableStyle = isMobile
+    ? undefined
+    : {
+        width:
+          timeColWidth +
+          visibleDayIndices.reduce(
+            (sum, dayIndex) =>
+              sum + (dayColWidths[dayIndex] ?? DAY_COL_DEFAULT_W),
+            0,
+          ),
+        minWidth: "100%",
+      };
 
   useEffect(() => {
     setTodayIndex((new Date().getDay() + 6) % 7);
@@ -551,18 +782,28 @@ export function AdminTimetableGrid({
       <div className="overflow-x-auto">
         <table
           className={cn(
-            "w-full min-w-0 border-collapse",
-            schoolCombined
-              ? "table-fixed md:min-w-[520px]"
-              : "table-auto md:min-w-[580px]",
+            "w-full min-w-0 border-collapse table-auto md:table-fixed",
+            schoolCombined ? "md:min-w-[520px]" : "md:min-w-[580px]",
           )}
+          style={tableStyle}
           aria-label={schoolCombined ? "Whole-school timetable" : "Timetable"}
         >
+          {!isMobile ? (
+            <colgroup>
+              <col style={{ width: timeColWidth }} />
+              {visibleDayIndices.map((dayIndex) => (
+                <col
+                  key={dayIndex}
+                  style={{ width: dayColWidths[dayIndex] ?? DAY_COL_DEFAULT_W }}
+                />
+              ))}
+            </colgroup>
+          ) : null}
           <thead>
             <tr className="border-b border-zinc-200/90 dark:border-zinc-800">
               <th
                 className={cn(
-                  "sticky left-0 z-20 border-r border-zinc-200/90 bg-zinc-100/95 px-1.5 py-1.5 text-left dark:border-zinc-800 dark:bg-zinc-900/95",
+                  "group/col sticky left-0 z-20 border-r border-zinc-200/90 bg-zinc-100/95 px-1.5 py-1.5 text-left dark:border-zinc-800 dark:bg-zinc-900/95",
                   TIME_COL_W,
                 )}
                 scope="col"
@@ -570,6 +811,16 @@ export function AdminTimetableGrid({
                 <span className={cn(T_CELL_SM, "font-semibold text-zinc-500")}>
                   When
                 </span>
+                <ColumnResizeHandle
+                  label="time"
+                  width={timeColWidth}
+                  min={TIME_COL_W_MIN}
+                  max={TIME_COL_W_MAX}
+                  active={resizingCol === "time"}
+                  onPointerDown={(event) => beginColumnResize(event, "time")}
+                  onKeyDown={(event) => nudgeColumn(event, "time")}
+                  onReset={() => resetColumn("time")}
+                />
               </th>
               {visibleDayIndices.map((index) => {
                 const isToday = todayIndex === index;
@@ -579,13 +830,13 @@ export function AdminTimetableGrid({
                     scope="col"
                     aria-current={isToday ? "date" : undefined}
                     className={cn(
-                      "border-r border-zinc-200/60 px-1 py-1.5 text-center last:border-r-0 dark:border-zinc-800",
+                      "group/col relative border-r border-zinc-200/60 px-1 py-1.5 text-center last:border-r-0 dark:border-zinc-800",
                       isToday
                         ? "bg-[#246a59]/10 dark:bg-[#246a59]/15"
                         : "bg-zinc-100/70 dark:bg-zinc-900/70",
                       schoolCombined
-                        ? "min-w-[68px] md:min-w-[76px]"
-                        : "min-w-[80px] md:min-w-[92px]",
+                        ? "max-md:min-w-[68px]"
+                        : "max-md:min-w-[80px]",
                     )}
                   >
                     <span
@@ -604,6 +855,18 @@ export function AdminTimetableGrid({
                         Today
                       </span>
                     ) : null}
+                    <ColumnResizeHandle
+                      label={days[index]}
+                      width={dayColWidths[index] ?? DAY_COL_DEFAULT_W}
+                      min={COL_W_MIN}
+                      max={COL_W_MAX}
+                      active={resizingCol === index}
+                      onPointerDown={(event) =>
+                        beginColumnResize(event, index)
+                      }
+                      onKeyDown={(event) => nudgeColumn(event, index)}
+                      onReset={() => resetColumn(index)}
+                    />
                   </th>
                 );
               })}

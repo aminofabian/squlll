@@ -200,6 +200,30 @@ Applied across the chrome: page shell/toolbar, health panel, journey, conflicts,
 
 **Deliberate exception:** the dense data grid (`AdminTimetableGrid`) and its skeleton keep a neutral zinc surface with ≤10px micro type. That's an intentional "neutral data plane inside a tinted shell" choice — everything around it is on tokens.
 
+### Resizable columns (data grid)
+
+Desktop admins can widen any column in the grid — useful when editing the last period of the week, where the day columns get cramped. 
+
+**Where:** `components/AdminTimetableGrid.tsx` (desktop only; mobile keeps the day-tabs layout).
+
+| Column | Default | Min | Max |
+|---|---|---|---|
+| Time rail ("When") | 120px | 88px | 280px |
+| Day columns | 96px | 60px | 420px |
+
+**Interaction**
+- **Drag** the hairline handle on a header's right edge. Hovering anywhere on the header reveals that column's grip (so it's discoverable without always-on chrome); it stays bright while dragging and is visible when focused.
+- **Double-click** a handle to reset that column to its default.
+- **Keyboard:** focus a handle and use `←`/`→` to nudge 8px (`Shift` = 24px); `Home` or `Enter` resets.
+
+**Accessibility:** each handle is a `role="separator"` with `aria-orientation="vertical"`, `aria-valuenow`/`min`/`max`, `tabIndex=0`, and a `Resize <column> column` label.
+
+**How it lays out:** the desktop table renders a `<colgroup>` with a `<col>` per column and `table-auto md:table-fixed`; the table's inline `width` is the sum of the column widths with `minWidth: 100%`. The wrapper is `overflow-x-auto`, so widening past the viewport — including the last column — reveals horizontal scroll and yields more editing space rather than squashing neighbours.
+
+**Persistence:** widths are saved to `localStorage` under the `columnWidthStorageKey` prop, hydrated on mount and written on change (the initial mount write is skipped). The combined view and the class view use separate per-school keys (`timetable-column-widths-<subdomain>-all` / `-class`), so each keeps its own layout. This is per-device, not per-account.
+
+Cell padding and type in the grid are small/rem-based, so widening a column increases the breathing room around the same content; row heights (`min-h`) stay fixed.
+
 ---
 
 ## Validation plan

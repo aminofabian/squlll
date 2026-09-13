@@ -2791,6 +2791,7 @@ export default function SmartTimetableNew() {
                   ) : !selectedGradeId ? (
                     <AdminTimetableGrid
                       schoolCombined
+                      columnWidthStorageKey={`timetable-column-widths-${subdomain}-all`}
                       periodNumbers={periodNumbers}
                       days={days}
                       getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
@@ -2819,6 +2820,7 @@ export default function SmartTimetableNew() {
                   ) : (
                     <div className="hidden lg:block">
                       <AdminTimetableGrid
+                        columnWidthStorageKey={`timetable-column-widths-${subdomain}-class`}
                         periodNumbers={periodNumbers}
                         days={days}
                         getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
