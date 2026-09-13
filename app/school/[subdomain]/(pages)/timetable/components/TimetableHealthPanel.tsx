@@ -80,36 +80,45 @@ function Metric({
     <Wrapper
       {...(onClick ? { type: "button" as const, onClick } : {})}
       className={cn(
-        "flex min-w-0 items-center gap-2.5 rounded-none border border-slate-200/70 bg-slate-50/60 px-3 py-2.5 text-left dark:border-slate-800 dark:bg-slate-900/40",
+        "flex min-w-0 items-center gap-2.5 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-left dark:border-white/10 dark:bg-white/[0.02]",
         onClick &&
-          "transition-colors hover:border-slate-300 hover:bg-white dark:hover:border-slate-700 dark:hover:bg-slate-900",
+          "transition-colors hover:border-[#1a4d42]/20 hover:bg-white dark:hover:border-white/20 dark:hover:bg-white/[0.04]",
+        onClick && tt.focus,
       )}
     >
       <span
         className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-none",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-none ring-1 ring-inset",
           tone === "danger"
-            ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300"
+            ? "bg-red-100 text-red-600 ring-red-200/70 dark:bg-red-900/40 dark:text-red-300 dark:ring-red-900/50"
             : tone === "success"
-              ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"
-              : "bg-white text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+              ? "bg-emerald-100 text-emerald-600 ring-emerald-200/70 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-900/50"
+              : "bg-white text-[#1a4d42]/55 ring-[#1a4d42]/8 dark:bg-white/5 dark:text-white/45 dark:ring-white/10",
         )}
         aria-hidden
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        <span
+          className={cn(
+            "block truncate font-medium",
+            tt.text.caption,
+            tt.ink.muted,
+          )}
+        >
           {label}
         </span>
         <span
           className={cn(
-            "block text-[14px] font-semibold tabular-nums leading-tight tracking-[-0.01em]",
+            tt.text.title,
+            tt.numeral,
+            "block",
             tone === "danger"
               ? "text-red-600 dark:text-red-400"
               : tone === "success"
                 ? "text-emerald-600 dark:text-emerald-400"
-                : "text-slate-900 dark:text-slate-100",
+                : tt.ink.strong,
           )}
         >
           {value}
@@ -175,7 +184,10 @@ export function TimetableHealthPanel({
         <button
           type="button"
           onClick={() => setDetailsOpen(true)}
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left"
+          className={cn(
+            "flex w-full items-center gap-2.5 px-3.5 py-3 text-left",
+            tt.focus,
+          )}
           aria-expanded={false}
         >
           <span className={cn(tt.pill.base, tt.pill[tone])}>
@@ -183,10 +195,17 @@ export function TimetableHealthPanel({
             {healthLabel}
           </span>
           <p className={cn(tt.caption, "min-w-0 flex-1 truncate")}>{nextStep}</p>
-          <span className="shrink-0 text-[13px] font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+          <span
+            className={cn(
+              tt.text.body,
+              tt.numeral,
+              tt.ink.strong,
+              "shrink-0 font-semibold",
+            )}
+          >
             {fillPct}%
           </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+          <ChevronDown className={cn("h-4 w-4 shrink-0", tt.ink.faint)} />
         </button>
       </section>
     );
@@ -216,10 +235,10 @@ export function TimetableHealthPanel({
             )}
           </div>
           {!isRail ? (
-            <p className="mt-2 text-[15px] font-semibold leading-tight tracking-[-0.02em] text-slate-900 dark:text-slate-50">
+            <p className={cn(tt.text.title, tt.ink.strong, "mt-2")}>
               {scopeLabel}
               {streamName ? (
-                <span className="ml-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                <span className={cn(tt.text.body, tt.ink.muted, "ml-1.5 font-medium")}>
                   · {streamName}
                 </span>
               ) : null}
@@ -230,9 +249,9 @@ export function TimetableHealthPanel({
 
         <div className="shrink-0 text-right">
           {totalSlots > 0 ? (
-            <p className="text-[24px] font-semibold leading-none tabular-nums tracking-[-0.03em] text-slate-900 dark:text-slate-50">
+            <p className={cn(tt.text.metric, tt.numeral, tt.ink.strong)}>
               {fillPct}
-              <span className="text-[14px] font-medium text-slate-400">%</span>
+              <span className={cn(tt.ink.faint, "text-[13px] font-medium")}>%</span>
             </p>
           ) : null}
           <div className="mt-1.5 flex justify-end">
@@ -244,7 +263,7 @@ export function TimetableHealthPanel({
       {totalSlots > 0 ? (
         <div className={cn(isRail ? "px-3 pb-3" : "px-4 pb-4 sm:px-5")}>
           <div
-            className="h-1.5 w-full overflow-hidden rounded-none bg-slate-100 dark:bg-slate-800"
+            className="h-1.5 w-full overflow-hidden rounded-none bg-[#1a4d42]/8 dark:bg-white/10"
             role="progressbar"
             aria-valuenow={fillPct}
             aria-valuemin={0}
@@ -256,7 +275,7 @@ export function TimetableHealthPanel({
               style={{ width: `${Math.max(fillPct, filledSlots > 0 ? 2 : 0)}%` }}
             />
           </div>
-          <p className="mt-1.5 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+          <p className={cn(tt.text.caption, tt.numeral, tt.ink.faint, "mt-1.5")}>
             {filledSlots} of {totalSlots} lesson periods scheduled
           </p>
         </div>
@@ -264,7 +283,8 @@ export function TimetableHealthPanel({
 
       <div
         className={cn(
-          "grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-slate-800",
+          "grid grid-cols-2 gap-2 border-t",
+          tt.border.hair,
           isRail ? "px-3 py-3" : "px-4 py-3.5 sm:grid-cols-4 sm:px-5",
         )}
       >
@@ -285,11 +305,19 @@ export function TimetableHealthPanel({
       </div>
 
       {!hideActions && !isRail ? (
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/30 sm:px-5">
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-2 border-t bg-[#f8fbfa] px-4 py-3 dark:bg-white/[0.02] sm:px-5",
+          tt.border.hair,
+        )}
+      >
         {clashCount > 0 && onReviewIssues ? (
           <Button
             size="sm"
-            className="h-8 gap-1.5 bg-red-600 text-xs text-white hover:bg-red-700"
+            className={cn(
+              "h-8 gap-1.5 bg-red-600 text-white hover:bg-red-700",
+              tt.text.small,
+            )}
             onClick={onReviewIssues}
           >
             <AlertTriangle className="h-3.5 w-3.5" />
@@ -300,7 +328,7 @@ export function TimetableHealthPanel({
         {emptySlots > 0 && onAutoGenerate ? (
           <Button
             size="sm"
-            className={cn("h-8 gap-1.5 text-xs", tt.accentBtn)}
+            className={cn("h-8 gap-1.5", tt.text.small, tt.accentBtn)}
             onClick={onAutoGenerate}
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -312,7 +340,10 @@ export function TimetableHealthPanel({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 gap-1.5 border-slate-200 text-xs dark:border-slate-700"
+            className={cn(
+              "h-8 gap-1.5 border-[#1a4d42]/15 dark:border-white/15",
+              tt.text.small,
+            )}
             onClick={onAddLesson}
           >
             Add lessons manually
@@ -324,9 +355,10 @@ export function TimetableHealthPanel({
             size="sm"
             variant={emptySlots > 0 ? "outline" : "default"}
             className={cn(
-              "h-8 gap-1.5 text-xs",
+              "h-8 gap-1.5",
+              tt.text.small,
               emptySlots > 0
-                ? "border-slate-200 dark:border-slate-700"
+                ? "border-[#1a4d42]/15 dark:border-white/15"
                 : tt.accentBtn,
             )}
             onClick={onPublish}
@@ -344,7 +376,11 @@ export function TimetableHealthPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+            className={cn(
+              "h-8 gap-1.5 hover:text-[#0a1f1a] dark:hover:text-white",
+              tt.text.small,
+              tt.ink.muted,
+            )}
             onClick={onPrint}
           >
             <Printer className="h-3.5 w-3.5" />
@@ -355,11 +391,16 @@ export function TimetableHealthPanel({
       ) : null}
 
       {collapsible ? (
-        <div className="border-t border-slate-100 px-4 py-2 dark:border-slate-800 sm:px-5">
+        <div className={cn("border-t px-4 py-2 sm:px-5", tt.border.hair)}>
           <button
             type="button"
             onClick={() => setDetailsOpen(false)}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400"
+            className={cn(
+              "inline-flex items-center gap-1 font-medium hover:text-[#0a1f1a] dark:hover:text-white",
+              tt.text.caption,
+              tt.ink.muted,
+              tt.focus,
+            )}
           >
             <ChevronUp className="h-3 w-3" />
             Hide details

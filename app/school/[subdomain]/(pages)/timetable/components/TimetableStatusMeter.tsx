@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 import { getTimetableReadiness } from "../utils/getTimetableReadiness";
 
 type TimetableStatusMeterProps = {
@@ -57,14 +58,27 @@ export function TimetableStatusMeter({
           style={{ width: `${Math.max(pct, filled > 0 ? 4 : 0)}%` }}
         />
       </div>
-      <span className="whitespace-nowrap text-[11px] font-medium tabular-nums text-[#1a4d42]/65 dark:text-white/55">
+      <span
+        className={cn(
+          tt.text.caption,
+          tt.numeral,
+          tt.ink.base,
+          "whitespace-nowrap font-medium",
+        )}
+      >
         {pct}%
         {clashCount > 0 ? (
           <span className="ml-1 font-normal text-red-500">
             · {clashCount} clash{clashCount === 1 ? "" : "es"}
           </span>
         ) : null}
-        <span className="ml-1 hidden font-normal text-[#1a4d42]/40 xl:inline dark:text-white/35">
+        <span
+          className={cn(
+            tt.numeral,
+            tt.ink.faint,
+            "ml-1 hidden font-normal xl:inline",
+          )}
+        >
           {filled}/{total}
         </span>
       </span>

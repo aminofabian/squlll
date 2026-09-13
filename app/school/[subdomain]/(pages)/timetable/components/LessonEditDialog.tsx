@@ -84,7 +84,7 @@ function FormSection({
       <div className="flex items-baseline justify-between gap-2">
         <h3 className={tt.eyebrow}>{title}</h3>
         {hint ? (
-          <p className="truncate text-[10px] text-slate-400">{hint}</p>
+          <p className={cn("truncate", tt.text.micro, tt.ink.faint)}>{hint}</p>
         ) : null}
       </div>
       {children}
@@ -1369,15 +1369,15 @@ Check the browser console for detailed input information.`;
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             {isLgDown ? (
-              <DrawerTitle className="truncate text-[13px] font-semibold tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+              <DrawerTitle className={cn("truncate font-semibold", tt.text.body, tt.ink.strong)}>
                 {isNew ? "Add lesson" : "Edit lesson"}
               </DrawerTitle>
             ) : (
-              <h2 className="truncate text-[13px] font-semibold tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+              <h2 className={cn("truncate font-semibold", tt.text.body, tt.ink.strong)}>
                 {isNew ? "Add lesson" : "Edit lesson"}
               </h2>
             )}
-            <p className="truncate text-[11px] text-[#1a4d42]/55 dark:text-white/45">
+            <p className={cn("truncate", tt.text.caption, tt.ink.muted)}>
               {slotMeta}
             </p>
           </div>
@@ -1385,7 +1385,9 @@ Check the browser console for detailed input information.`;
             type="button"
             onClick={onClose}
             className={cn(
-              "flex shrink-0 items-center justify-center text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white",
+              "flex shrink-0 items-center justify-center",
+              tt.iconBtn,
+              tt.focus,
               isLgDown ? "h-9 w-9" : "h-7 w-7",
             )}
             aria-label="Close"
@@ -1404,7 +1406,7 @@ Check the browser console for detailed input information.`;
         {saveError ? (
           <div className="flex gap-1.5 border border-red-200 bg-red-50 px-2.5 py-2 dark:border-red-900/50 dark:bg-red-950/40">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
-            <p className="min-w-0 text-[11px] text-red-800 dark:text-red-200">
+            <p className={cn("min-w-0", tt.text.caption, "text-red-800 dark:text-red-200")}>
               {saveError}
             </p>
           </div>
@@ -1414,7 +1416,7 @@ Check the browser console for detailed input information.`;
           <div className="space-y-2 border border-red-200 bg-red-50 px-2.5 py-2 dark:border-red-900/50 dark:bg-red-950/40">
             <div className="flex gap-1.5">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
-              <div className="min-w-0 text-[11px] text-red-800 dark:text-red-200">
+              <div className={cn("min-w-0", tt.text.caption, "text-red-800 dark:text-red-200")}>
                 <p className="font-semibold">{liveIssue.title}</p>
                 <p className="mt-0.5 text-red-700/90 dark:text-red-300/90">
                   {liveIssue.description}
@@ -1423,7 +1425,7 @@ Check the browser console for detailed input information.`;
             </div>
             {availableTeachers.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5 pl-5">
-                <span className="text-[10px] font-medium text-red-800/80 dark:text-red-200/80">
+                <span className={cn("font-medium", tt.text.micro, "text-red-800/80 dark:text-red-200/80")}>
                   Try instead:
                 </span>
                 {availableTeachers.slice(0, 3).map((t) => (
@@ -1431,7 +1433,11 @@ Check the browser console for detailed input information.`;
                     key={t.id}
                     type="button"
                     onClick={() => handleTeacherChange(t.id)}
-                    className="border border-red-300 bg-white px-2 py-0.5 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200"
+                    className={cn(
+                      "border border-red-300 bg-white px-2 py-0.5 font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
+                      tt.text.micro,
+                      tt.focus,
+                    )}
                   >
                     {t.name}
                   </button>
@@ -1445,15 +1451,15 @@ Check the browser console for detailed input information.`;
           <section className="space-y-1.5">
             <p className={tt.eyebrow}>Move slot</p>
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] font-medium text-slate-500">
+              <div className="space-y-1.5">
+                <Label className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
                   Day
                 </Label>
                 <Select
                   value={String(moveDay)}
                   onValueChange={(v) => setMoveDay(Number(v))}
                 >
-                  <SelectTrigger className={lessonSelectTriggerClass}>
+                  <SelectTrigger className={cn(lessonSelectTriggerClass, "border-[#1a4d42]/12 focus:ring-[#246a59]/35 dark:border-white/10")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1465,15 +1471,15 @@ Check the browser console for detailed input information.`;
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] font-medium text-slate-500">
+              <div className="space-y-1.5">
+                <Label className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
                   Period
                 </Label>
                 <Select
                   value={String(movePeriod)}
                   onValueChange={(v) => setMovePeriod(Number(v))}
                 >
-                  <SelectTrigger className={lessonSelectTriggerClass}>
+                  <SelectTrigger className={cn(lessonSelectTriggerClass, "border-[#1a4d42]/12 focus:ring-[#246a59]/35 dark:border-white/10")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1510,14 +1516,18 @@ Check the browser console for detailed input information.`;
             <button
               type="button"
               onClick={applySuggestion}
-              className="inline-flex items-center gap-1 border border-[#246a59]/30 bg-[#246a59]/5 px-2 py-0.5 text-[10px] font-medium text-[#246a59] transition-colors hover:bg-[#246a59]/10"
+              className={cn(
+                "inline-flex items-center gap-1 border border-[#246a59]/30 bg-[#246a59]/5 px-2 py-0.5 font-medium text-[#246a59] transition-colors hover:bg-[#246a59]/10 dark:text-[#7eb8a8]",
+                tt.text.micro,
+                tt.focus,
+              )}
             >
               Suggested: {suggestedTeacher.name} — free this period
             </button>
           ) : null}
 
           {availableTeachers.length === 0 ? (
-            <p className="text-[11px] text-red-600 dark:text-red-400">
+            <p className={cn(tt.text.caption, "text-red-600 dark:text-red-400")}>
               {busyButQualifiedTeachers.length > 0
                 ? `Everyone who teaches this is already booked this period.`
                 : `No teachers assigned to ${grade?.name || "this grade"}.`}
@@ -1526,7 +1536,7 @@ Check the browser console for detailed input information.`;
 
           {busyButQualifiedTeachers.length > 0 &&
           availableTeachers.length > 0 ? (
-            <p className="text-[10px] text-amber-700 dark:text-amber-300">
+            <p className={cn(tt.text.micro, "text-amber-700 dark:text-amber-300")}>
               Booked: {busyButQualifiedTeachers.map((t) => t.name).join(", ")}
             </p>
           ) : null}
@@ -1545,7 +1555,7 @@ Check the browser console for detailed input information.`;
           {formData.subjectId &&
           availableTeachers.length === 0 &&
           busyButQualifiedTeachers.length > 0 ? (
-            <p className="text-[11px] text-amber-700 dark:text-amber-300">
+            <p className={cn(tt.text.caption, "text-amber-700 dark:text-amber-300")}>
               Everyone who teaches{" "}
               {subjects.find((s) => s.id === formData.subjectId)?.name ??
                 "this subject"}{" "}
@@ -1556,12 +1566,15 @@ Check the browser console for detailed input information.`;
           selectedTeacher &&
           subjectsForSelectedTeacher(selectedTeacher, subjectsForClass).length ===
             0 ? (
-            <p className="text-[11px] text-slate-500">
+            <p className={cn(tt.text.caption, tt.ink.muted)}>
               {selectedTeacher.name} has no subjects for this class.{" "}
               {subdomain ? (
                 <Link
                   href={`/school/${subdomain}/teachers`}
-                  className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300"
+                  className={cn(
+                    "font-medium underline underline-offset-2 text-[#246a59] dark:text-[#7eb8a8]",
+                    tt.focus,
+                  )}
                 >
                   Assign in Teachers
                 </Link>
@@ -1571,12 +1584,15 @@ Check the browser console for detailed input information.`;
             </p>
           ) : null}
           {subjectsForClass.length === 0 && gradeInfo ? (
-            <p className="text-[11px] text-slate-500">
+            <p className={cn(tt.text.caption, tt.ink.muted)}>
               No subjects linked to this class.{" "}
               {subdomain ? (
                 <Link
                   href={`/school/${subdomain}/classes`}
-                  className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-300"
+                  className={cn(
+                    "font-medium underline underline-offset-2 text-[#246a59] dark:text-[#7eb8a8]",
+                    tt.focus,
+                  )}
                 >
                   Set up in Classes
                 </Link>
@@ -1596,7 +1612,7 @@ Check the browser console for detailed input information.`;
               setFormData({ ...formData, roomNumber: e.target.value })
             }
             placeholder="e.g. Room 101"
-            className={lessonSelectTriggerClass}
+            className={cn(lessonSelectTriggerClass, "border-[#1a4d42]/12 focus:ring-[#246a59]/35 dark:border-white/10")}
           />
           <datalist id="lesson-known-rooms">
             {knownRooms.map((r) => (
@@ -1618,10 +1634,10 @@ Check the browser console for detailed input information.`;
             className="mt-0.5"
           />
           <span>
-            <span className="block text-[12px] font-medium text-slate-900 dark:text-slate-100">
+            <span className={cn("block font-medium", tt.text.small, tt.ink.strong)}>
               Two periods in a row
             </span>
-            <span className="mt-0.5 block text-[10px] text-slate-400">
+            <span className={cn("mt-0.5 block", tt.text.micro, tt.ink.faint)}>
               Uses this period and the next.
             </span>
           </span>
@@ -1630,7 +1646,7 @@ Check the browser console for detailed input information.`;
 
       <div className="flex shrink-0 flex-col border-t border-[#1a4d42]/10 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
         {saveBlockedReason ? (
-          <p className="px-3 pt-2 text-[11px] text-slate-500 sm:hidden">
+          <p className={cn("px-3 pt-2 sm:hidden", tt.text.caption, tt.ink.muted)}>
             {saveBlockedReason}
           </p>
         ) : null}
@@ -1646,7 +1662,7 @@ Check the browser console for detailed input information.`;
               size="sm"
               onClick={onClose}
               disabled={isSaving}
-              className="h-8 px-2 text-[11px] text-slate-500"
+              className={cn("h-8 px-2", tt.text.caption, tt.ink.muted, tt.focus)}
             >
               Cancel
             </Button>
@@ -1656,14 +1672,18 @@ Check the browser console for detailed input information.`;
                 size="sm"
                 onClick={handleDelete}
                 disabled={isSaving}
-                className="h-8 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                className={cn(
+                  "h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40",
+                  tt.text.caption,
+                  tt.focus,
+                )}
               >
                 Delete
               </Button>
             ) : null}
           </div>
           {saveBlockedReason ? (
-            <p className="hidden min-w-0 truncate text-[11px] text-slate-400 sm:block">
+            <p className={cn("hidden min-w-0 truncate sm:block", tt.text.caption, tt.ink.faint)}>
               {saveBlockedReason}
             </p>
           ) : null}
@@ -1672,7 +1692,7 @@ Check the browser console for detailed input information.`;
             onClick={handleSave}
             disabled={!!saveBlockedReason || isSaving}
             title={saveBlockedReason ?? undefined}
-            className={cn("h-8 shrink-0 px-3 text-[12px] font-medium", tt.accentBtn)}
+            className={cn("h-8 shrink-0 px-3 font-medium", tt.text.small, tt.accentBtn, tt.focus)}
           >
             {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save changes"}
           </Button>
@@ -1701,7 +1721,10 @@ Check the browser console for detailed input information.`;
       direction="bottom"
     >
       <DrawerContent
-        className="flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950"
+        className={cn(
+          "flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t bg-white dark:bg-[#0c1a17]",
+          tt.border.hair,
+        )}
         data-vaul-drawer-direction="bottom"
       >
         {panel}

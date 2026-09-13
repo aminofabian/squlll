@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 
 type TimetableClassDrawerProps = {
   open: boolean;
@@ -53,13 +54,23 @@ export function TimetableClassDrawer({
         {/* Mobile sheet header */}
         <div className="shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-[max(0.625rem,env(safe-area-inset-top))] lg:hidden dark:border-white/10 dark:bg-[#0c1a17]">
           <div className="flex items-center justify-between gap-3 py-1.5">
-            <h2 className="font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
+            <h2
+              className={cn(
+                "font-display",
+                tt.text.display,
+                "font-normal text-[#0a1f1a] dark:text-white",
+              )}
+            >
               Choose a class
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-none px-3 py-2 text-[14px] font-semibold text-[#246a59] active:opacity-60"
+              className={cn(
+                tt.text.title,
+                tt.focus,
+                "rounded-none px-3 py-2 text-[#246a59] active:opacity-60",
+              )}
             >
               Done
             </button>
@@ -100,7 +111,10 @@ export function TimetableClassDrawer({
         {desktopMinimized && railLabel ? (
           <div className="hidden min-h-0 flex-1 flex-col items-center gap-3 px-1 pt-3 lg:flex">
             <span
-              className="max-h-full truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59] [writing-mode:vertical-rl] rotate-180"
+              className={cn(
+                tt.text.micro,
+                "max-h-full truncate font-semibold uppercase tracking-[0.16em] text-[#246a59] [writing-mode:vertical-rl] rotate-180",
+              )}
               title={railLabel}
             >
               {railLabel}

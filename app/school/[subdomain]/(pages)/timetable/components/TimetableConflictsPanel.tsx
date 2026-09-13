@@ -62,13 +62,20 @@ function GroupHeader({
         <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 text-[13px] font-semibold text-slate-900 dark:text-slate-100">
+        <p
+          className={cn(
+            "flex items-center gap-2 font-semibold",
+            tt.text.body,
+            tt.ink.strong,
+          )}
+        >
           {title}
           <span
             className={cn(
               tt.pill.base,
               tone === "danger" ? tt.pill.danger : tt.pill.warn,
               "px-2 py-0.5",
+              tt.numeral,
             )}
           >
             {count}
@@ -94,21 +101,27 @@ function ClashCard({
   const Icon = kind === "teacher" ? User : DoorClosed;
   return (
     <li className="rounded-none border border-red-200/80 bg-red-50/40 p-3 dark:border-red-900/50 dark:bg-red-950/20">
-      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+      <p
+        className={cn(
+          "flex items-center gap-1.5 font-semibold",
+          tt.text.small,
+          tt.ink.strong,
+        )}
+      >
         <Icon className="h-3.5 w-3.5 shrink-0 text-red-500" strokeWidth={2.25} />
         {subject}
-        <span className="font-normal text-slate-500 dark:text-slate-400">
+        <span className={cn("font-normal", tt.ink.muted)}>
           is double-booked
         </span>
       </p>
-      <ul className="mt-2 space-y-1">
+      <ul className="mt-2 space-y-1.5">
         {entries.map((e) => (
           <li
             key={e.id}
-            className="flex items-center justify-between gap-2 rounded-none bg-white/80 px-2.5 py-1.5 dark:bg-slate-900/50"
+            className="flex items-center justify-between gap-2 rounded-none bg-white/80 px-2.5 py-1.5 dark:bg-white/5"
           >
-            <span className="min-w-0 truncate text-[11px] text-slate-600 dark:text-slate-300">
-              <span className="font-medium text-slate-900 dark:text-slate-100">
+            <span className={cn("min-w-0 truncate", tt.text.caption, tt.ink.base)}>
+              <span className={cn("font-medium", tt.ink.strong)}>
                 {dayNameFromNumber(e.dayOfWeek)} {e.timeSlot}
               </span>
               {" · "}
@@ -118,7 +131,10 @@ function ClashCard({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-6 shrink-0 gap-0.5 px-2 text-[11px] font-medium text-[#246a59] hover:bg-[#246a59]/10 hover:text-[#1a4d42]"
+              className={cn(
+                "h-6 shrink-0 gap-1 px-2.5 font-medium text-[#246a59] hover:bg-[#246a59]/10 hover:text-[#1a4d42]",
+                tt.text.caption,
+              )}
               onClick={() => onJumpToLesson(e.id)}
             >
               Fix
@@ -150,7 +166,7 @@ export function TimetableConflictsPanel({
     if (!embedded) return null;
     return (
       <div className="px-3 py-8 text-center">
-        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
+        <p className={cn("font-medium", tt.text.body, tt.ink.strong)}>
           Nothing to review
         </p>
         <p className={cn(tt.caption, "mt-1")}>
@@ -168,7 +184,10 @@ export function TimetableConflictsPanel({
       {!embedded ? (
       <button
         type="button"
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+        className={cn(
+          "flex w-full items-center gap-3 px-4 py-3.5 text-left",
+          tt.focus,
+        )}
         onClick={() => setExpanded((e) => !e)}
         aria-expanded={expanded}
       >
@@ -184,10 +203,17 @@ export function TimetableConflictsPanel({
           <AlertTriangle className="h-4 w-4" strokeWidth={2.25} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold text-slate-900 dark:text-slate-100">
+          <span
+            className={cn(
+              "block font-semibold",
+              tt.text.body,
+              tt.ink.strong,
+              tt.numeral,
+            )}
+          >
             Review {total} {total === 1 ? "item" : "items"}
           </span>
-          <span className={cn(tt.caption, "block")}>
+          <span className={cn(tt.caption, tt.numeral, "block")}>
             {clashTotal > 0
               ? `${clashTotal} clash${clashTotal === 1 ? "" : "es"} must be fixed before sharing`
               : "Nothing blocking — a few things worth a look"}
@@ -196,7 +222,8 @@ export function TimetableConflictsPanel({
         </span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 text-slate-400 transition-transform",
+            "h-4 w-4 shrink-0 transition-transform",
+            tt.ink.faint,
             expanded && "rotate-180",
           )}
         />
@@ -209,11 +236,11 @@ export function TimetableConflictsPanel({
             "overscroll-contain",
             embedded
               ? "pb-3"
-              : "max-h-[26rem] overflow-y-auto border-t border-slate-100 dark:border-slate-800",
+              : cn("max-h-[26rem] overflow-y-auto border-t", tt.border.hair),
           )}
         >
           {clashTotal > 0 ? (
-            <div className="border-b border-slate-100 dark:border-slate-800">
+            <div className={cn("border-b", tt.border.hair)}>
               <GroupHeader
                 icon={ShieldAlert}
                 title="Clashes"
@@ -264,20 +291,30 @@ export function TimetableConflictsPanel({
                     key={`quota-${i}`}
                     className="rounded-none border border-amber-200/80 bg-amber-50/40 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
                   >
-                    <p className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                    <p
+                      className={cn(
+                        "flex items-center gap-1.5 font-semibold",
+                        tt.text.small,
+                        tt.ink.strong,
+                      )}
+                    >
                       <Scale className="h-3.5 w-3.5 shrink-0 text-amber-600" />
                       {issue.type === "under"
                         ? "Fewer lessons than allocated"
                         : "More lessons than allocated"}
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    <p className={cn("mt-1", tt.text.caption, tt.ink.base)}>
                       {issue.message}
                     </p>
                     {onReviewAllocations ? (
                       <button
                         type="button"
                         onClick={onReviewAllocations}
-                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#246a59] hover:underline"
+                        className={cn(
+                          "mt-1.5 inline-flex items-center gap-1.5 font-medium text-[#246a59] hover:underline",
+                          tt.text.caption,
+                          tt.focus,
+                        )}
                       >
                         Review allocations
                         <ArrowRight className="h-3 w-3" />
@@ -290,18 +327,28 @@ export function TimetableConflictsPanel({
                     key={`rule-${i}`}
                     className="rounded-none border border-amber-200/80 bg-amber-50/40 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
                   >
-                    <p className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                    <p
+                      className={cn(
+                        "flex items-center gap-1.5 font-semibold",
+                        tt.text.small,
+                        tt.ink.strong,
+                      )}
+                    >
                       <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-600" />
                       Workload rule stretched
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    <p className={cn("mt-1", tt.text.caption, tt.ink.base)}>
                       {breach.message}
                     </p>
                     {onCheckWorkload ? (
                       <button
                         type="button"
                         onClick={onCheckWorkload}
-                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#246a59] hover:underline"
+                        className={cn(
+                          "mt-1.5 inline-flex items-center gap-1.5 font-medium text-[#246a59] hover:underline",
+                          tt.text.caption,
+                          tt.focus,
+                        )}
                       >
                         Check workload rules
                         <ArrowRight className="h-3 w-3" />

@@ -166,6 +166,42 @@ A post-delete verification pass found six more zero-reference files. These are n
 
 ---
 
+## Design system
+
+The whole flow shares one token layer in `utils/timetableTheme.ts` (`tt`). The polish pass replaced ad-hoc values with these tokens — keep using them.
+
+**Voice:** sharp-edged (border-radius 0, enforced by `TimetableSurfaceStyles`), forest-green ledger accent on a warm off-white canvas, muted semantics, tabular numbers.
+
+### Palette
+| Role | Token | Value |
+|---|---|---|
+| Ink (headings) | `tt.ink.strong` | `#0a1f1a` / white |
+| Body | `tt.ink.base` | `#1a4d42`/70 / white/60 |
+| Secondary | `tt.ink.muted` | `#1a4d42`/55 / white/45 |
+| Tertiary | `tt.ink.faint` | `#1a4d42`/40 / white/35 |
+| Accent | `tt.accent` / `tt.accentBtn` | `#246a59` / ink fill |
+| Canvas | `tt.pageBg` | `#f3f7f5` / `#071411` |
+| Panel | `tt.panel` / `tt.panelMuted` | white / `#f8fbfa` (+ `#0c1a17` dark) |
+| Rule | `tt.border.hair` / `.soft` / `.row` | `#1a4d42`/10–12 |
+
+### Type scale (the only sizes allowed)
+`tt.text.micro` 10 · `caption` 11 · `small` 12 · `body` 13 · `title` 14 · `display` 17 · `metric` 24 (all include leading). Semantic tones stay red/amber/emerald; subject/class tints come from `getSubjectAccent` / `getGradeStreamAccent` and are intentionally outside the neutral scale.
+
+### Rules
+1. Type comes from `tt.text`. No one-off `text-[Npx]`.
+2. Neutrals come from `tt.ink`, never slate/zinc/gray.
+3. Dividers and borders come from `tt.border`.
+4. Numeric readouts get `tt.numeral` (tabular-nums).
+5. Interactive elements get `tt.focus`; icon buttons use `tt.iconBtn`.
+6. Primary/selected actions use the forest accent (`tt.accentBtn`, `bg-[#0a1f1a]`), not ad-hoc colors.
+
+### Status
+Applied across the chrome: page shell/toolbar, health panel, journey, conflicts, subject insights, share drawer, inspector rail, all dialogs, the setup wizard + planner + auto-fill drawer, the mobile toolbar, class sidebar/drawer/context bar, workload/summary/search, and the bulk drawers.
+
+**Deliberate exception:** the dense data grid (`AdminTimetableGrid`) and its skeleton keep a neutral zinc surface with ≤10px micro type. That's an intentional "neutral data plane inside a tinted shell" choice — everything around it is on tokens.
+
+---
+
 ## Validation plan
 
 - **Per phase:** run the existing suite (`utils/allocationPreflight.test.ts` + project tests); manual pass of the acceptance criteria above on a 360×640 viewport and a 1280px desktop.

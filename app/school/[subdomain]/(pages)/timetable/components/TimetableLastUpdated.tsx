@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 
 interface TimetableLastUpdatedProps {
   isoTimestamp?: string | null;
@@ -43,7 +45,7 @@ export function TimetableLastUpdated({ isoTimestamp }: TimetableLastUpdatedProps
   if (!isoTimestamp) return null;
 
   return (
-    <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+    <p className={cn(tt.text.caption, tt.ink.muted, "flex items-center gap-1.5")}>
       <Clock className="h-3 w-3 shrink-0" />
       Last change saved {formatRelative(isoTimestamp)}
     </p>

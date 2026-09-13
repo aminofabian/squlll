@@ -2,6 +2,7 @@
 
 import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 import type { TeacherWeeklyLesson } from "../hooks/useTimetableData";
 
 type TimetableTeacherWorkloadProps = {
@@ -25,10 +26,10 @@ export function TimetableTeacherWorkload({
     if (!showEmpty) return null;
     return (
       <div className={cn("px-3 py-8 text-center", className)}>
-        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
+        <p className={cn(tt.text.body, "font-medium", tt.ink.strong)}>
           No teachers on this grid
         </p>
-        <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
+        <p className={cn("mt-1", tt.text.small, tt.ink.muted)}>
           Lessons in view will list who is teaching them.
         </p>
       </div>
@@ -40,10 +41,10 @@ export function TimetableTeacherWorkload({
   return (
     <div className={cn("px-4 py-3", className)}>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
-          Teachers this week
-        </p>
-        <span className="text-[10px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+        <p className={tt.eyebrow}>Teachers this week</p>
+        <span
+          className={cn(tt.text.micro, "font-medium", tt.numeral, tt.ink.faint)}
+        >
           {teachers.length} teaching
         </span>
       </div>
@@ -69,31 +70,40 @@ export function TimetableTeacherWorkload({
                   : {})}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-none px-2.5 py-2 text-left transition-colors",
+                  onTeacherClick && tt.focus,
                   onTeacherClick &&
-                    "active:bg-slate-100 dark:active:bg-slate-800/60",
+                    "active:bg-[#e8f2ef] dark:active:bg-white/10",
                   isHighlighted
-                    ? "bg-primary/10 ring-1 ring-primary/20 dark:bg-primary/15"
-                    : "hover:bg-slate-50 dark:hover:bg-slate-800/40",
+                    ? "bg-[#246a59]/10 ring-1 ring-[#246a59]/20 dark:bg-[#246a59]/20"
+                    : tt.rowHover,
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-none text-[10px] font-bold tabular-nums",
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-none font-bold",
+                    tt.text.micro,
+                    tt.numeral,
                     index === 0
-                      ? "bg-primary/15 text-primary dark:bg-primary/20"
-                      : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+                      ? "bg-[#246a59]/15 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#7eb8a8]"
+                      : cn("bg-[#e8f2ef] dark:bg-white/10", tt.ink.muted),
                   )}
                   aria-hidden
                 >
                   {index + 1}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <span
+                    className={cn(
+                      "block truncate font-medium",
+                      tt.text.title,
+                      tt.ink.strong,
+                    )}
+                  >
                     {teacher.name}
                   </span>
-                  <span className="mt-1 block h-1 overflow-hidden rounded-none bg-slate-100 dark:bg-slate-800">
+                  <span className="mt-1 block h-1 overflow-hidden rounded-none bg-[#e8f2ef] dark:bg-white/10">
                     <span
-                      className="block h-full rounded-none bg-primary/60 dark:bg-primary/50"
+                      className="block h-full rounded-none bg-[#246a59]/60 dark:bg-[#246a59]/50"
                       style={{
                         width: `${Math.max(8, (teacher.lessonCount / maxLessons) * 100)}%`,
                       }}
@@ -101,10 +111,17 @@ export function TimetableTeacherWorkload({
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="block text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                  <span
+                    className={cn(
+                      "block",
+                      tt.text.title,
+                      tt.numeral,
+                      tt.ink.strong,
+                    )}
+                  >
                     {teacher.lessonCount}
                   </span>
-                  <span className="block text-[10px] text-slate-400 dark:text-slate-500">
+                  <span className={cn("block", tt.text.micro, tt.ink.faint)}>
                     {teacher.lessonCount === 1 ? "lesson" : "lessons"}
                   </span>
                 </span>
@@ -115,7 +132,13 @@ export function TimetableTeacherWorkload({
       </ul>
 
       {onTeacherClick ? (
-        <p className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+        <p
+          className={cn(
+            "mt-2 flex items-center gap-1.5",
+            tt.text.micro,
+            tt.ink.faint,
+          )}
+        >
           <Users className="h-3 w-3 shrink-0" aria-hidden />
           Tap a teacher to highlight their lessons on the grid
         </p>

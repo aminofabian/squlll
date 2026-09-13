@@ -104,19 +104,28 @@ export function TimetableInspectorRail({
       data-timetable-no-print
       className={cn(
         "hidden min-h-0 shrink-0 lg:flex",
-        "border-l border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]",
+        "border-l bg-[#f8fbfa] dark:bg-[#0c1a17]",
+        tt.border.soft,
       )}
     >
       {open ? (
-        <div className="flex min-h-0 w-[20.5rem] flex-col">
-          <div className="flex items-center justify-between gap-2 border-b border-[#1a4d42]/10 px-3 py-2 dark:border-white/10">
+        <div className="flex min-h-0 w-[21rem] flex-col">
+          <div
+            className={cn(
+              "flex items-center justify-between gap-2 border-b px-3.5 py-2.5",
+              tt.border.hair,
+            )}
+          >
             <p className={tt.eyebrow}>
               {visibleTabs.find((tab) => tab.id === activeTab)?.label ?? "Inspect"}
             </p>
             <button
               type="button"
               onClick={() => onChange(null)}
-              className="px-1.5 py-0.5 text-[11px] font-medium text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/45 dark:hover:text-white"
+              className={cn(
+                "px-2 py-1 text-[11px] font-medium text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/45 dark:hover:text-white",
+                tt.focus,
+              )}
             >
               Close
             </button>
@@ -129,7 +138,10 @@ export function TimetableInspectorRail({
 
       <nav
         aria-label="Timetable inspector"
-        className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-[#1a4d42]/10 py-2 dark:border-white/10"
+        className={cn(
+          "flex w-12 shrink-0 flex-col items-center gap-1.5 border-l py-2.5",
+          tt.border.hair,
+        )}
       >
         {visibleTabs.map((tab) => {
           const Icon = tab.icon;
@@ -144,7 +156,8 @@ export function TimetableInspectorRail({
               aria-pressed={isActive}
               onClick={() => toggle(tab.id)}
               className={cn(
-                "relative flex h-9 w-9 items-center justify-center transition-colors",
+                "relative flex h-10 w-10 items-center justify-center transition-colors",
+                tt.focus,
                 isActive
                   ? "bg-[#0a1f1a] text-white dark:bg-[#246a59]"
                   : isHot
@@ -156,7 +169,7 @@ export function TimetableInspectorRail({
               {tab.badge != null && tab.badge > 0 ? (
                 <span
                   className={cn(
-                    "absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center px-0.5 text-[8px] font-bold tabular-nums leading-none text-white",
+                    "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center px-1 text-[9px] font-bold tabular-nums leading-none text-white",
                     isHot ? "bg-red-600" : "bg-[#246a59]",
                   )}
                 >

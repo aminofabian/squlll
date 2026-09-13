@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 
 interface GradeClassSearchProps {
   value: string;
@@ -41,7 +42,10 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
       <div className={cn("space-y-1.5", className)}>
         <div className="relative">
           <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400"
+            className={cn(
+              "pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2",
+              tt.ink.faint,
+            )}
             aria-hidden
           />
           <Input
@@ -55,7 +59,8 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
             autoComplete="off"
             aria-label="Search classes by name, level, or section"
             className={cn(
-              "h-9 border-zinc-200 bg-white pl-8 pr-8 text-[13px] shadow-sm placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/80",
+              "h-9 border-[#1a4d42]/12 bg-white pl-8 pr-8 shadow-sm placeholder:text-[#1a4d42]/40 dark:border-white/10 dark:bg-[#0c1a17] dark:placeholder:text-white/35",
+              tt.text.body,
               inputClassName,
             )}
           />
@@ -63,7 +68,11 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
             <button
               type="button"
               onClick={() => onChange("")}
-              className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-none text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+              className={cn(
+                "absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-none hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white",
+                tt.ink.faint,
+                tt.focus,
+              )}
               aria-label="Clear class search"
             >
               <X className="h-3.5 w-3.5" />
@@ -71,7 +80,7 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
           )}
         </div>
         {showCount && (
-          <p className="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
+          <p className={cn(tt.text.caption, tt.numeral, tt.ink.muted)}>
             {resultCount === 0 ? (
               <>No classes match &ldquo;{value.trim()}&rdquo;</>
             ) : (
@@ -83,7 +92,7 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
           </p>
         )}
         {!isFiltering && totalCount != null && totalCount > 8 && (
-          <p className="text-[10px] text-zinc-400">Press / to focus search</p>
+          <p className={cn(tt.text.micro, tt.ink.faint)}>Press / to focus search</p>
         )}
       </div>
     );

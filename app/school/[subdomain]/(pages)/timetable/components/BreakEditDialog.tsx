@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import {
   ALL_BREAK_TYPE_OPTIONS,
@@ -314,36 +316,36 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
   return (
     <Drawer open={!!breakData} onOpenChange={onClose} direction="right">
-      <DrawerContent className="w-full sm:w-[500px] h-full flex flex-col">
-        <DrawerHeader className="border-b px-6 py-4">
+      <DrawerContent className="flex h-full w-full flex-col rounded-none sm:w-[500px]">
+        <DrawerHeader className="border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 py-4 dark:border-white/10 dark:bg-[#071411]">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <DrawerTitle className="text-xl font-bold flex items-center gap-3">
+              <DrawerTitle className={cn("flex items-center gap-3", tt.text.display, tt.ink.strong)}>
                 <span className="text-2xl">{formData.icon}</span>
                 <span>{isNew ? "Add Break" : "Edit Break"}</span>
               </DrawerTitle>
-              <DrawerDescription className="mt-2">
+              <DrawerDescription className={cn("mt-2", tt.text.small, tt.ink.muted)}>
                 {isNew
                   ? "Add a new break time to the timetable schedule."
                   : "Edit the break details including type, duration, and timing."}
               </DrawerDescription>
             </div>
             <DrawerClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className={cn("h-8 w-8 hover:bg-[#e8f2ef] dark:hover:bg-white/5", tt.ink.base, tt.focus)}>
                 <X className="h-5 w-5" />
               </Button>
             </DrawerClose>
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+        <div className="flex-1 space-y-5 overflow-y-auto bg-white px-6 py-6 dark:bg-[#0c1a17]">
           {/* Break Type */}
-          <div className="space-y-2">
-            <Label htmlFor="type" className="text-sm font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="type" className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
               Break Type
             </Label>
             <Select value={formData.type} onValueChange={handleTypeChange}>
-              <SelectTrigger id="type" className="h-11">
+              <SelectTrigger id="type" className={cn("h-11 border-[#1a4d42]/12 dark:border-white/10")}>
                 <div className="flex items-center gap-2">
                   {selectedType && (
                     <>
@@ -367,8 +369,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           </div>
 
           {/* Break Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
               Break Name
             </Label>
             <Input
@@ -378,13 +380,13 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                 setFormData({ ...formData, name: e.target.value })
               }
               placeholder="e.g., Morning Break"
-              className="h-11"
+              className="h-11 border-[#1a4d42]/12 dark:border-white/10"
             />
           </div>
 
           {/* After Period */}
-          <div className="space-y-2">
-            <Label htmlFor="afterPeriod" className="text-sm font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="afterPeriod" className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
               Position
             </Label>
             <Select
@@ -393,7 +395,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                 setFormData({ ...formData, afterPeriod: parseInt(value) })
               }
             >
-              <SelectTrigger id="afterPeriod" className="h-11">
+              <SelectTrigger id="afterPeriod" className={cn("h-11 border-[#1a4d42]/12 dark:border-white/10")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -419,7 +421,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                   ))}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-slate-500">
+            <p className={cn(tt.text.caption, tt.ink.muted, tt.numeral)}>
               {formData.afterPeriod === 0
                 ? "Break appears before all periods."
                 : `Break appears after Period ${formData.afterPeriod} (before Period ${formData.afterPeriod + 1}).`}
@@ -427,8 +429,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           </div>
 
           {/* Duration */}
-          <div className="space-y-2">
-            <Label htmlFor="duration" className="text-sm font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="duration" className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
               Duration (minutes)
             </Label>
             <Input
@@ -443,15 +445,15 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                   durationMinutes: parseInt(e.target.value) || 15,
                 })
               }
-              className="h-11"
+              className={cn("h-11 border-[#1a4d42]/12 dark:border-white/10", tt.numeral)}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className={cn(tt.text.caption, tt.ink.faint, tt.numeral)}>
               Typical: 15 min (short), 45 min (lunch)
             </p>
           </div>
 
           {/* Apply to All Days */}
-          <div className="flex items-center space-x-3 p-4 border rounded-none bg-muted/50">
+          <div className="flex items-center space-x-3 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/[0.02]">
             <Checkbox
               id="applyToAllDays"
               checked={applyToAllDays}
@@ -459,7 +461,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
             />
             <Label
               htmlFor="applyToAllDays"
-              className="cursor-pointer font-medium flex-1"
+              className={cn("flex-1 cursor-pointer font-medium", tt.text.small, tt.ink.strong)}
             >
               Apply to all weekdays (Monday-Friday)
             </Label>
@@ -471,12 +473,12 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
             style={{ borderColor: formData.color }}
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded-none">
+              <div className="flex h-12 w-12 items-center justify-center bg-[#e8f2ef] text-3xl dark:bg-white/10">
                 {formData.icon}
               </div>
               <div className="flex-1">
-                <div className="font-bold text-base">{formData.name}</div>
-                <div className="text-sm text-muted-foreground">
+                <div className={cn(tt.text.title, tt.ink.strong)}>{formData.name}</div>
+                <div className={cn(tt.text.body, tt.ink.muted, tt.numeral)}>
                   {formData.durationMinutes} minutes • After Period{" "}
                   {formData.afterPeriod}
                 </div>
@@ -485,13 +487,13 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           </div>
         </div>
 
-        <DrawerFooter className="border-t px-6 py-4">
-          <div className="flex gap-3 w-full">
+        <DrawerFooter className="gap-3 border-t border-[#1a4d42]/12 bg-[#f8fbfa] px-6 py-4 dark:border-white/10 dark:bg-[#071411]">
+          <div className="flex w-full gap-3">
             {!isNew && (
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                className="flex-1"
+                className={cn("flex-1", tt.focus)}
               >
                 Delete
               </Button>
@@ -500,14 +502,14 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
               variant="outline"
               onClick={onClose}
               disabled={isSaving}
-              className="flex-1"
+              className={cn("flex-1 border-[#1a4d42]/12 hover:bg-[#e8f2ef] dark:border-white/10 dark:hover:bg-white/10", tt.ink.base, tt.focus)}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={!formData.name.trim() || isSaving}
-              className="flex-1"
+              className={cn("flex-1", tt.accentBtn, tt.focus)}
             >
               {isSaving ? (
                 <>

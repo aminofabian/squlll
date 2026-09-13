@@ -65,7 +65,7 @@ export function TimetableModeEntry({
     >
       {/* Atmosphere — flat wash, no soft orbs */}
       <div
-        className="absolute inset-0 bg-slate-950/50 transition-opacity duration-300"
+        className="absolute inset-0 bg-[#0a1f1a]/50 transition-opacity duration-300"
         style={{ opacity: visible ? 1 : 0 }}
         aria-hidden
       />
@@ -88,16 +88,16 @@ export function TimetableModeEntry({
                 <CalendarClock className="h-5 w-5" strokeWidth={1.75} />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
+                <p className={cn(tt.text.micro, "font-semibold uppercase tracking-[0.16em] text-[#246a59] dark:text-[#7eb8a8]")}>
                   Structure ready
                 </p>
                 <h2
                   id="timetable-mode-entry-title"
-                  className="mt-1 font-display text-[1.35rem] tracking-tight text-[#0a1f1a] dark:text-white sm:text-[1.5rem]"
+                  className={cn("mt-1 font-display", tt.text.display, tt.ink.strong)}
                 >
                   How should we fill this timetable?
                 </h2>
-                <p className={cn(tt.caption, "mt-1.5 max-w-lg text-[13px]")}>
+                <p className={cn(tt.body, "mt-1.5 max-w-lg")}>
                   Pick a path. You can always switch later — generate drafts you
                   can edit, or place every lesson by hand.
                 </p>
@@ -109,7 +109,12 @@ export function TimetableModeEntry({
                 {structureBits.map((bit) => (
                   <span
                     key={bit}
-                    className="inline-flex items-center gap-1 rounded-none border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    className={cn(
+                      tt.text.caption,
+                      tt.ink.base,
+                      tt.numeral,
+                      "inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-1 font-medium dark:border-white/10 dark:bg-white/[0.02]",
+                    )}
                   >
                     <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                     {bit}
@@ -124,32 +129,35 @@ export function TimetableModeEntry({
             <button
               type="button"
               onClick={onChooseManual}
-              className="group relative overflow-hidden border border-slate-200 bg-white p-5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500 dark:hover:bg-slate-950"
+              className={cn(
+                tt.focus,
+                "group relative overflow-hidden border border-[#1a4d42]/12 bg-white p-5 text-left transition-colors hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:border-[#246a59]/50 dark:hover:bg-white/[0.03]",
+              )}
             >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex h-10 w-10 items-center justify-center bg-[#0a1f1a] text-white">
                   <PenLine className="h-4.5 w-4.5" strokeWidth={1.75} />
                 </div>
-                <Layers3 className="h-4 w-4 text-slate-300 transition group-hover:text-slate-500" />
+                <Layers3 className={cn(tt.ink.faint, "h-4 w-4 transition group-hover:text-[#246a59]")} />
               </div>
-              <p className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-50">
+              <p className={cn(tt.text.title, tt.ink.strong)}>
                 Build manually
               </p>
-              <p className={cn(tt.caption, "mt-1.5 text-[12.5px]")}>
+              <p className={cn(tt.caption, "mt-1.5")}>
                 Place each lesson yourself. Best when you already know who
                 teaches where, or you want full control cell by cell.
               </p>
-              <ul className="mt-4 space-y-1.5 text-[12px] text-slate-600 dark:text-slate-400">
+              <ul className={cn(tt.text.small, tt.ink.base, "mt-4 space-y-1.5")}>
                 <li className="flex items-center gap-2">
-                  <span className="h-1 w-1 bg-slate-400" />
+                  <span className="h-1 w-1 bg-[#1a4d42]/35" />
                   Tap any empty cell to add a lesson
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="h-1 w-1 bg-slate-400" />
+                  <span className="h-1 w-1 bg-[#1a4d42]/35" />
                   Clashes checked as you go
                 </li>
               </ul>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-900 transition group-hover:gap-2.5 dark:text-slate-100">
+              <span className={cn(tt.text.small, tt.ink.strong, "mt-5 inline-flex items-center gap-1.5 font-semibold transition group-hover:gap-2.5")}>
                 Continue manually
                 <ArrowRight className="h-3.5 w-3.5" />
               </span>
@@ -159,9 +167,12 @@ export function TimetableModeEntry({
             <button
               type="button"
               onClick={onChooseAutomatic}
-              className="group relative overflow-hidden border border-[#246a59] bg-[#246a59]/[0.04] p-5 text-left transition-colors hover:bg-[#246a59]/[0.08] dark:bg-[#246a59]/10 dark:hover:bg-[#246a59]/15"
+              className={cn(
+                tt.focus,
+                "group relative overflow-hidden border border-[#246a59] bg-[#246a59]/[0.04] p-5 text-left transition-colors hover:bg-[#246a59]/[0.08] dark:bg-[#246a59]/10 dark:hover:bg-[#246a59]/15",
+              )}
             >
-              <div className="absolute right-0 top-0 bg-[#246a59] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
+              <div className={cn(tt.text.micro, "absolute right-0 top-0 bg-[#246a59] px-2.5 py-1 font-semibold uppercase tracking-[0.12em] text-white")}>
                 Recommended
               </div>
               <div className="mb-4 flex items-center justify-between pr-24">
@@ -170,14 +181,14 @@ export function TimetableModeEntry({
                 </div>
                 <Wand2 className="h-4 w-4 text-[#246a59]/50 transition group-hover:text-[#246a59]" />
               </div>
-              <p className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-50">
+              <p className={cn(tt.text.title, tt.ink.strong)}>
                 Auto-fill
               </p>
-              <p className={cn(tt.caption, "mt-1.5 text-[12.5px]")}>
+              <p className={cn(tt.caption, "mt-1.5")}>
                 Tell us who teaches what, set workload limits, then generate a
                 balanced draft you can refine on the grid.
               </p>
-              <ul className="mt-4 space-y-1.5 text-[12px] text-slate-600 dark:text-slate-400">
+              <ul className={cn(tt.text.small, tt.ink.base, "mt-4 space-y-1.5")}>
                 <li className="flex items-center gap-2">
                   <span className="h-1 w-1 bg-[#246a59]" />
                   Allocations → rules → generate
@@ -187,21 +198,21 @@ export function TimetableModeEntry({
                   Review clashes & quotas after
                 </li>
               </ul>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#246a59] transition group-hover:gap-2.5">
+              <span className={cn(tt.text.small, "mt-5 inline-flex items-center gap-1.5 font-semibold text-[#246a59] transition group-hover:gap-2.5 dark:text-[#7eb8a8]")}>
                 Set up & auto-fill
                 <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </button>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
-            <p className="text-[11px] text-slate-400">
+          <div className={cn(tt.border.hair, "mt-5 flex items-center justify-between gap-3 border-t pt-4")}>
+            <p className={cn(tt.text.caption, tt.ink.faint)}>
               Tip: you can reopen auto-fill anytime from the ⋮ menu.
             </p>
             <button
               type="button"
               onClick={onSkip}
-              className="shrink-0 text-[12px] font-medium text-slate-500 underline-offset-2 hover:text-slate-800 hover:underline dark:hover:text-slate-200"
+              className={cn(tt.focus, tt.text.small, tt.ink.muted, "shrink-0 font-medium underline-offset-2 hover:text-[#0a1f1a] hover:underline dark:hover:text-white")}
             >
               Skip for now
             </button>

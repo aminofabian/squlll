@@ -296,7 +296,8 @@ export function TimetableJourney({
         const isCurrent = i === currentIndex;
         const isSkipped = skipped.has(stop.id) && !stop.done;
         const chipClass = cn(
-          "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[11px] font-medium",
+          "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 font-medium",
+          tt.text.caption,
           stop.attention
             ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
             : stop.done
@@ -304,18 +305,21 @@ export function TimetableJourney({
               : isCurrent
                 ? "border-[#246a59] bg-[#246a59] text-white"
                 : isSkipped
-                  ? "border-dashed border-slate-300 bg-transparent text-slate-400 dark:border-slate-600 dark:text-slate-500"
-                  : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400",
+                  ? "border-dashed border-[#1a4d42]/20 bg-transparent dark:border-white/20"
+                  : cn("border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#071411]", tt.ink.muted),
+          !stop.done && tt.focus,
         );
         const badgeClass = cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center rounded-none text-[9px] font-bold tabular-nums",
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded-none font-bold",
+          tt.text.micro,
+          tt.numeral,
           stop.attention
             ? "bg-amber-500 text-white"
             : stop.done
               ? "bg-emerald-600 text-white"
               : isCurrent
                 ? "bg-white/25 text-white"
-                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+                : cn("bg-[#e8f2ef] dark:bg-white/10", tt.ink.muted),
         );
         const chipInner = (
           <>
@@ -354,7 +358,7 @@ export function TimetableJourney({
             )}
             {i < stops.length - 1 ? (
               <ChevronRight
-                className="h-3 w-3 shrink-0 text-slate-300 dark:text-slate-600"
+                className={cn("h-3 w-3 shrink-0", tt.ink.faint)}
                 aria-hidden
               />
             ) : null}
@@ -367,7 +371,8 @@ export function TimetableJourney({
   return (
     <section
       className={cn(
-        "overflow-hidden border-b border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]",
+        "overflow-hidden border-b bg-white dark:bg-[#0c1a17]",
+        tt.border.soft,
         !started && "border-l-[3px] border-l-[#246a59]",
       )}
       aria-label="Timetable progress"
@@ -390,21 +395,27 @@ export function TimetableJourney({
             </span>
           )}
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[#0a1f1a] dark:text-white">
+            <p className={cn("truncate font-semibold", tt.text.body, tt.ink.strong)}>
               {current ? current.title : "Your timetable is shared"}
-              <span className="ml-2 font-normal text-[#1a4d42]/45 dark:text-white/40">
+              <span className={cn("ml-2 font-normal", tt.ink.faint)}>
                 <span className="sm:hidden">
                   Step {Math.min(currentIndex + 1, stops.length)} of{" "}
                   {stops.length}
                 </span>
-                <span className="hidden sm:inline">
+                <span className="hidden sm:inline tabular-nums">
                   {doneCount}/{stops.length}
                 </span>
                 {current?.optional ? " · optional" : ""}
               </span>
             </p>
             {current ? (
-              <p className="line-clamp-2 text-[11px] text-[#1a4d42]/55 sm:line-clamp-none sm:truncate dark:text-white/45">
+              <p
+                className={cn(
+                  "line-clamp-2 sm:line-clamp-none sm:truncate",
+                  tt.text.caption,
+                  tt.ink.muted,
+                )}
+              >
                 {current.description}
               </p>
             ) : null}
@@ -414,7 +425,7 @@ export function TimetableJourney({
           {current?.actionLabel && current.onAction ? (
             <Button
               size="sm"
-              className={cn("h-10 gap-1.5 text-xs sm:h-7", tt.accentBtn)}
+              className={cn("h-10 gap-1.5 sm:h-7", tt.text.small, tt.accentBtn)}
               onClick={current.onAction}
             >
               {current.actionLabel}
@@ -424,7 +435,10 @@ export function TimetableJourney({
             <Button
               size="sm"
               variant="outline"
-              className="h-10 border-slate-200 text-xs sm:h-7 dark:border-slate-700"
+              className={cn(
+                "h-10 border-[#1a4d42]/15 sm:h-7 dark:border-white/15",
+                tt.text.small,
+              )}
               onClick={current.onSecondary}
             >
               {current.secondaryLabel}
@@ -434,7 +448,11 @@ export function TimetableJourney({
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 text-xs text-slate-500 hover:text-slate-800 sm:h-7 dark:text-slate-400"
+              className={cn(
+                "h-9 sm:h-7 hover:text-[#0a1f1a] dark:hover:text-white",
+                tt.text.small,
+                tt.ink.muted,
+              )}
               onClick={skipCurrent}
             >
               Skip
@@ -444,7 +462,11 @@ export function TimetableJourney({
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 text-xs text-slate-500 hover:text-slate-800 sm:h-7 dark:text-slate-400"
+              className={cn(
+                "h-9 sm:h-7 hover:text-[#0a1f1a] dark:hover:text-white",
+                tt.text.small,
+                tt.ink.muted,
+              )}
               onClick={onHide}
             >
               Hide
@@ -452,12 +474,22 @@ export function TimetableJourney({
           ) : null}
         </div>
       </div>
-      <div className="border-t border-[#1a4d42]/8 px-3 py-2 dark:border-white/8 sm:px-4">
+      <div
+        className={cn(
+          "border-t px-3 py-2 sm:px-4",
+          tt.border.hair,
+        )}
+      >
         <div className="mb-1.5 sm:hidden">
           <button
             type="button"
             onClick={() => setShowAllSteps((v) => !v)}
-            className="text-[11px] font-medium text-[#1a4d42]/60 underline-offset-2 hover:underline dark:text-white/50"
+            className={cn(
+              "font-medium underline-offset-2 hover:underline",
+              tt.text.caption,
+              tt.ink.muted,
+              tt.focus,
+            )}
             aria-expanded={showAllSteps}
           >
             {showAllSteps ? "Hide steps" : "Show all steps"}

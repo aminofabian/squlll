@@ -26,6 +26,7 @@ import { ALL_BREAK_TYPE_OPTIONS } from '@/lib/utils/timetable-break-types';
 import { SCHOOL_DAYS } from '@/lib/constants/breakTypes';
 import { sanitizeTimetableUserMessage } from '@/lib/utils/timetable-user-messages';
 import { useTimetableWeekDays } from '../hooks/useTimetableWeekDays';
+import { tt } from '../utils/timetableTheme';
 
 interface BulkBreaksDrawerProps {
   open: boolean;
@@ -405,9 +406,9 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
         side="right"
         className="w-full sm:max-w-[600px] overflow-y-auto"
       >
-        <SheetHeader className="border-b pb-4 px-8">
-          <SheetTitle className="text-lg font-semibold">Create Bulk Breaks</SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground">
+        <SheetHeader className={`border-b pb-4 px-8 ${tt.border.hair}`}>
+          <SheetTitle className={tt.text.display}>Create Bulk Breaks</SheetTitle>
+          <SheetDescription className={`${tt.text.small} ${tt.ink.muted}`}>
             Add multiple breaks to your timetable at once. Each break can have different types and timing.
           </SheetDescription>
         </SheetHeader>
@@ -416,9 +417,9 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
           {/* Break Entries */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-foreground">
+              <Label className={`${tt.text.title} ${tt.ink.strong}`}>
                 Breaks {' '}
-                <span className="text-xs font-normal text-muted-foreground">
+                <span className={`${tt.text.small} font-normal ${tt.ink.muted} ${tt.numeral}`}>
                   ({breakEntries.length} configured)
                 </span>
               </Label>
@@ -427,7 +428,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                 size="sm"
                 variant="outline"
                 onClick={addBreakEntry}
-                className="h-7 px-2 text-xs rounded-none flex items-center gap-1"
+                className={`h-7 px-2 ${tt.text.small} rounded-none flex items-center gap-1`}
               >
                 <Plus className="h-3 w-3" />
                 Add Break
@@ -435,12 +436,12 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
             </div>
             
             {isLoadingPeriods ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className={`flex items-center gap-2 ${tt.text.small} ${tt.ink.muted}`}>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 Loading periods...
               </div>
             ) : availablePeriods.length <= 1 ? (
-              <div className="text-xs text-muted-foreground">
+              <div className={`${tt.text.small} ${tt.ink.muted}`}>
                 No periods available. Please create a week template first.
               </div>
             ) : (
@@ -448,20 +449,20 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                 {breakEntries.map((entry, index) => {
                   const breakType = BREAK_TYPES.find(t => t.value === entry.type);
                   return (
-                    <div key={entry.id} className="border p-3 bg-muted/20">
+                    <div key={entry.id} className={`border p-3 bg-[#f8fbfa] dark:bg-white/[0.02] ${tt.border.soft}`}>
                       <div className="flex items-start gap-2">
-                        <span className="flex h-5 w-5 items-center justify-center bg-primary/10 text-xs font-semibold text-primary mt-1">
+                        <span className={`flex h-5 w-5 items-center justify-center bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#7eb8a8] mt-1 ${tt.text.small} font-semibold ${tt.numeral}`}>
                           {index + 1}
                         </span>
                         <div className="flex-1 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1">
-                              <Label className="text-xs text-muted-foreground">Break Type</Label>
+                              <Label className={`${tt.text.small} ${tt.ink.muted}`}>Break Type</Label>
                               <Select 
                                 value={entry.type} 
                                 onValueChange={(value) => updateBreakEntry(entry.id, { type: value })}
                               >
-                                <SelectTrigger className="h-8 text-xs rounded-none">
+                                <SelectTrigger className={`h-8 ${tt.text.small} rounded-none`}>
                                   <SelectValue>
                                     <div className="flex items-center gap-1.5">
                                       <span>{breakType?.icon}</span>
@@ -483,12 +484,12 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                             </div>
                             
                             <div className="space-y-1">
-                              <Label className="text-xs text-muted-foreground">After Period</Label>
+                              <Label className={`${tt.text.small} ${tt.ink.muted}`}>After Period</Label>
                               <Select 
                                 value={entry.afterPeriod.toString()} 
                                 onValueChange={(value) => updateBreakEntry(entry.id, { afterPeriod: parseInt(value) })}
                               >
-                                <SelectTrigger className="h-8 text-xs rounded-none">
+                                <SelectTrigger className={`h-8 ${tt.text.small} rounded-none`}>
                                   <SelectValue>
                                     {entry.afterPeriod === 0 ? 'Before Period 0' : `After Period ${entry.afterPeriod}`}
                                   </SelectValue>
@@ -505,14 +506,14 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                           </div>
                           
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Duration (minutes)</Label>
+                            <Label className={`${tt.text.small} ${tt.ink.muted}`}>Duration (minutes)</Label>
                             <Input
                               type="number"
                               min="5"
                               max="120"
                               value={entry.durationMinutes}
                               onChange={(e) => updateBreakEntry(entry.id, { durationMinutes: e.target.value })}
-                              className="h-8 text-xs rounded-none"
+                              className={`h-8 ${tt.text.small} rounded-none`}
                             />
                           </div>
                         </div>
@@ -545,11 +546,11 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                 onCheckedChange={(checked) => setApplyToAllDays(checked === true)}
                 className="h-4 w-4"
               />
-              <Label htmlFor="applyToAllDays" className="text-sm font-medium text-foreground cursor-pointer">
+              <Label htmlFor="applyToAllDays" className={`${tt.text.title} ${tt.ink.strong} cursor-pointer`}>
                 Apply to all days of the week
               </Label>
             </div>
-            <p className="text-xs text-muted-foreground pl-6">
+            <p className={`${tt.text.small} ${tt.ink.muted} pl-6`}>
               {applyToAllDays
                 ? 'All breaks will be added to all days in your week template.'
                 : 'All breaks will only be added to the days you pick below.'}
@@ -561,10 +562,10 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                   return (
                     <label
                       key={d.value}
-                      className={`flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                      className={`flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 font-medium transition-colors ${tt.text.small} ${
                         active
-                          ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                          ? 'border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white'
+                          : 'border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/60'
                       }`}
                     >
                       <Checkbox
@@ -572,7 +573,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                         onCheckedChange={() => toggleDay(d.value)}
                         className={`h-3.5 w-3.5 ${
                           active
-                            ? 'border-white data-[state=checked]:bg-white data-[state=checked]:text-slate-900'
+                            ? 'border-white data-[state=checked]:bg-white data-[state=checked]:text-[#0a1f1a]'
                             : ''
                         }`}
                       />
@@ -585,7 +586,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
           </div>
 
           {/* Actions */}
-          <div className="border-t pt-4 mt-6">
+          <div className={`border-t pt-4 mt-6 ${tt.border.hair}`}>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -598,7 +599,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
               <Button
                 onClick={handleSubmit}
                 disabled={isCreating || breakEntries.length === 0}
-                className="flex-1 h-9 rounded-none"
+                className={`flex-1 h-9 rounded-none ${tt.accentBtn}`}
               >
                 {isCreating ? (
                   <>

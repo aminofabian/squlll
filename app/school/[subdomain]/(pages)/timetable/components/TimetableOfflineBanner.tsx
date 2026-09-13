@@ -1,6 +1,7 @@
 "use client";
 
 import { WifiOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
 
 export function TimetableOfflineBanner() {
@@ -13,7 +14,7 @@ export function TimetableOfflineBanner() {
         className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400"
         aria-hidden
       />
-      <p className={tt.caption}>
+      <p className={cn(tt.text.small, tt.ink.muted)}>
         <strong className="font-semibold text-amber-900 dark:text-amber-200">
           You&apos;re offline
         </strong>{" "}

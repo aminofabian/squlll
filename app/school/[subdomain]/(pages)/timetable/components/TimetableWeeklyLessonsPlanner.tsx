@@ -139,7 +139,7 @@ function Stepper({
   return (
     <div
       className={cn(
-        "inline-flex h-7 items-center overflow-hidden rounded-none border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950",
+        "inline-flex h-7 items-center overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#071411]",
         (muted || disabled) && "opacity-60",
         disabled && "cursor-not-allowed",
       )}
@@ -149,7 +149,7 @@ function Stepper({
         aria-label={`Fewer ${ariaLabel}`}
         disabled={disabled || value <= 0}
         onClick={() => onChange(clamp(value - 1))}
-        className="flex h-full w-6 items-center justify-center text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-900"
+        className={cn(tt.focus, tt.ink.faint, "flex h-full w-6 items-center justify-center transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] disabled:opacity-30 dark:hover:bg-white/5 dark:hover:text-white")}
       >
         <Minus className="h-2.5 w-2.5" />
       </button>
@@ -160,10 +160,10 @@ function Stepper({
         value={value}
         onChange={(e) => onChange(clamp(Number(e.target.value.replace(/\D/g, "")) || 0))}
         className={cn(
-          "h-full w-6 border-0 bg-transparent p-0 text-center text-[12px] font-semibold tabular-nums outline-none",
-          value > 0
-            ? "text-slate-900 dark:text-slate-100"
-            : "text-slate-300 dark:text-slate-600",
+          tt.text.small,
+          tt.numeral,
+          "h-full w-6 border-0 bg-transparent p-0 text-center font-semibold outline-none",
+          value > 0 ? tt.ink.strong : tt.ink.faint,
         )}
       />
       <button
@@ -171,7 +171,7 @@ function Stepper({
         aria-label={`More ${ariaLabel}`}
         disabled={disabled || (max != null && value >= max)}
         onClick={() => onChange(clamp(value + 1))}
-        className="flex h-full w-6 items-center justify-center text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-900"
+        className={cn(tt.focus, tt.ink.faint, "flex h-full w-6 items-center justify-center transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] disabled:opacity-30 dark:hover:bg-white/5 dark:hover:text-white")}
       >
         <Plus className="h-2.5 w-2.5" />
       </button>
@@ -716,21 +716,28 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               title={`${g.name} · ${total} lessons`}
               onClick={() => selectGrade(g.id)}
               className={cn(
-                "flex shrink-0 items-center gap-1 border px-1.5 py-1 text-[11px] font-medium transition",
+                tt.focus,
+                tt.text.caption,
+                "flex shrink-0 items-center gap-1 border px-1.5 py-1 font-medium transition",
                 active
-                  ? "border-[#246a59] bg-[#246a59] text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300",
+                  ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59]"
+                  : cn(
+                      tt.border.soft,
+                      tt.ink.base,
+                      "bg-white hover:border-[#246a59]/40 dark:bg-[#071411]",
+                    ),
               )}
             >
               {short}
               <span
                 className={cn(
-                  "px-1 text-[9px] font-semibold tabular-nums leading-none",
+                  tt.numeral,
+                  "px-1 text-[9px] font-semibold leading-none",
                   active
                     ? "bg-white/20 text-white"
                     : total > 0
                       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                      : "bg-slate-100 text-slate-400 dark:bg-slate-800",
+                      : cn(tt.ink.faint, "bg-[#e8f2ef] dark:bg-white/10"),
                 )}
               >
                 {total}
@@ -756,7 +763,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             type="button"
             size="sm"
             variant="outline"
-            className="h-7 px-2 text-[11px]"
+            className={cn("h-7 px-2", tt.text.caption)}
             onClick={handleSuggest}
           >
             <Sparkles className="mr-1 h-3 w-3" />
@@ -770,7 +777,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               type="button"
               size="sm"
               variant="outline"
-              className="h-7 px-2 text-[11px]"
+              className={cn("h-7 px-2", tt.text.caption)}
             >
               <Plus className="mr-1 h-3 w-3" />
               Add
@@ -782,7 +789,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               value={subjectQuery}
               onChange={(e) => setSubjectQuery(e.target.value)}
               placeholder="Search subjects…"
-              className="h-7 text-[11px]"
+              className={cn("h-7", tt.text.caption)}
             />
             <div className="mt-1.5 max-h-52 overflow-y-auto">
               {addableSubjects.map((s) => (
@@ -790,14 +797,14 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   key={s.id}
                   type="button"
                   onClick={() => handleAddSubject(s)}
-                  className="flex w-full items-center justify-between gap-2 rounded-none px-1.5 py-1 text-left text-[11px] text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
+                  className={cn(tt.focus, tt.text.caption, tt.ink.base, tt.rowHover, "flex w-full items-center justify-between gap-2 rounded-none px-1.5 py-1 text-left")}
                 >
                   {s.name}
-                  <Plus className="h-3 w-3 shrink-0 text-slate-400" />
+                  <Plus className={cn(tt.ink.faint, "h-3 w-3 shrink-0")} />
                 </button>
               ))}
               {addableSubjects.length === 0 && (
-                <p className={cn(tt.caption, "px-2 py-2 text-center text-[11px]")}>
+                <p className={cn(tt.caption, "px-2 py-2 text-center")}>
                   {subjectQuery
                     ? "No subject matches that name."
                     : "Every subject is already listed."}
@@ -813,7 +820,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               type="button"
               size="sm"
               variant="outline"
-              className="h-7 px-2 text-[11px]"
+              className={cn("h-7 px-2", tt.text.caption)}
               disabled={copyCandidates.length === 0}
             >
               <Copy className="mr-1 h-3 w-3" />
@@ -821,17 +828,17 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-60 p-2.5">
-            <p className="text-[11px] font-semibold text-slate-800 dark:text-slate-100">
+            <p className={cn(tt.text.caption, "font-semibold", tt.ink.strong)}>
               Copy {activeGrade?.name}&apos;s lesson counts to:
             </p>
-            <p className={cn(tt.caption, "mt-0.5 text-[11px]")}>
+            <p className={cn(tt.caption, "mt-0.5")}>
               Teachers are left alone — only the numbers are copied.
             </p>
             <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto">
               {copyCandidates.map(({ grade, shared }) => (
                 <label
                   key={grade.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-none px-1 py-0.5 text-[11px] text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
+                  className={cn(tt.text.caption, tt.ink.base, tt.rowHover, "flex cursor-pointer items-center gap-2 rounded-none px-1 py-0.5")}
                 >
                   <Checkbox
                     checked={copyTargets.includes(grade.id)}
@@ -844,7 +851,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                     }
                   />
                   <span className="min-w-0 flex-1 truncate">{grade.name}</span>
-                  <span className="text-[9px] text-slate-400">
+                  <span className={cn(tt.numeral, tt.ink.faint, "text-[9px]")}>
                     {shared} match
                   </span>
                 </label>
@@ -853,7 +860,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             <div className="mt-2 flex items-center justify-between gap-2">
               <button
                 type="button"
-                className="text-[10px] text-slate-500 hover:underline"
+                className={cn(tt.focus, tt.text.micro, tt.ink.muted, "hover:underline")}
                 onClick={() =>
                   setCopyTargets(
                     copyTargets.length
@@ -867,7 +874,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               <Button
                 type="button"
                 size="sm"
-                className={cn("h-6 text-[11px]", tt.accentBtn)}
+                className={cn("h-6", tt.text.caption, tt.accentBtn)}
                 disabled={!copyTargets.length}
                 onClick={handleCopy}
               >
@@ -881,7 +888,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
           {rows.some((r) => r.lessonsPerWeek === 0) && (
             <button
               type="button"
-              className="text-[10px] text-slate-500 hover:underline"
+              className={cn(tt.focus, tt.text.micro, tt.ink.muted, "hover:underline")}
               onClick={() => setHideEmpty((v) => !v)}
             >
               {hideEmpty ? "Show all subjects" : "Hide unused subjects"}
@@ -890,7 +897,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
           {(drafts[activeGradeId] || pending[activeGradeId]) && (
             <button
               type="button"
-              className="inline-flex items-center gap-1 text-[10px] text-slate-500 hover:underline"
+              className={cn(tt.focus, tt.text.micro, tt.ink.muted, "inline-flex items-center gap-1 hover:underline")}
               onClick={handleResetGrade}
             >
               <Undo2 className="h-2.5 w-2.5" />
@@ -911,7 +918,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
 
       <ul
         key={activeGradeId}
-        className="divide-y divide-slate-100 overflow-hidden rounded-none border border-slate-200 dark:divide-slate-800 dark:border-slate-700"
+        className="divide-y divide-[#1a4d42]/10 overflow-hidden rounded-none border border-[#1a4d42]/12 dark:divide-white/10 dark:border-white/10"
       >
         {visibleRows.map((row) => {
           const { preferred, others } = teacherOptions(
@@ -925,22 +932,23 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             <li
               key={row.key}
               className={cn(
-                "grid items-center gap-1.5 bg-white px-2 py-1.5 sm:grid-cols-[minmax(0,1fr)_4.75rem_4.75rem_8.5rem_1.25rem] dark:bg-slate-950",
-                row.lessonsPerWeek === 0 && "bg-slate-50/60 dark:bg-slate-900/40",
+                "grid items-center gap-1.5 bg-white px-2 py-1.5 sm:grid-cols-[minmax(0,1fr)_4.75rem_4.75rem_8.5rem_1.25rem] dark:bg-[#071411]",
+                row.lessonsPerWeek === 0 && "bg-[#f8fbfa] dark:bg-white/[0.02]",
               )}
             >
               <div className="min-w-0">
                 <p
                   className={cn(
-                    "truncate text-[12px] leading-tight",
+                    tt.text.small,
+                    "truncate leading-tight",
                     row.lessonsPerWeek > 0
-                      ? "font-medium text-slate-900 dark:text-slate-100"
-                      : "text-slate-500 dark:text-slate-400",
+                      ? cn("font-medium", tt.ink.strong)
+                      : tt.ink.muted,
                   )}
                 >
                   {row.subjectName}
                   {row.streamName && (
-                    <span className="font-normal text-slate-400">
+                    <span className={cn("font-normal", tt.ink.faint)}>
                       {" "}
                       · {row.streamName} only
                     </span>
@@ -985,7 +993,8 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               >
                 <SelectTrigger
                   className={cn(
-                    "h-7 text-[11px]",
+                    "h-7",
+                    tt.text.caption,
                     needsTeacher && "border-amber-400",
                   )}
                 >
@@ -995,7 +1004,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   <SelectItem value="__none__">No teacher yet</SelectItem>
                   {preferred.length > 0 && (
                     <SelectGroup>
-                      <SelectLabel className="text-[10px]">
+                      <SelectLabel className={tt.text.micro}>
                         Teaches {row.subjectName}
                       </SelectLabel>
                       {preferred.map((t) => (
@@ -1007,7 +1016,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   )}
                   {others.length > 0 && (
                     <SelectGroup>
-                      <SelectLabel className="text-[10px]">
+                      <SelectLabel className={tt.text.micro}>
                         Other teachers
                       </SelectLabel>
                       {others.map((t) => (
@@ -1031,7 +1040,9 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   })
                 }
                 className={cn(
-                  "hidden h-6 w-6 items-center justify-center rounded-none text-slate-300 transition hover:bg-slate-100 hover:text-slate-600 sm:flex dark:hover:bg-slate-800",
+                  tt.focus,
+                  tt.ink.faint,
+                  "hidden h-6 w-6 items-center justify-center rounded-none transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] sm:flex dark:hover:bg-white/10 dark:hover:text-white",
                   row.lessonsPerWeek === 0 && !row.teacherId && "invisible",
                 )}
               >
@@ -1042,8 +1053,8 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
         })}
 
         {visibleRows.length === 0 && (
-          <li className="bg-white px-2 py-4 text-center dark:bg-slate-950">
-            <p className={cn(tt.caption, "text-[11px]")}>
+          <li className="bg-white px-2 py-4 text-center dark:bg-[#071411]">
+            <p className={tt.caption}>
               {rows.length === 0
                 ? `Use “Add a subject” to list what ${activeGrade?.name ?? "this class"} learns each week.`
                 : `No lessons set for ${activeGrade?.name ?? "this class"} yet.`}
@@ -1060,14 +1071,14 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
         )}
       >
         <div className="min-w-0">
-          <p className="text-[12px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
+          <p className={cn(tt.text.small, tt.numeral, "font-semibold leading-tight", tt.ink.strong)}>
             {availableSlotsPerClass === 0
               ? activeTotal > 0
                 ? `${activeTotal} lessons set — no periods on the school day yet`
                 : "No lesson periods on the school day yet"
               : `${activeTotal}/${availableSlotsPerClass} this week`}
           </p>
-          <p className={cn(tt.caption, "mt-0.5 text-[11px]")}>
+          <p className={cn(tt.caption, "mt-0.5")}>
             {availableSlotsPerClass === 0 ? (
               <span className="text-red-600 dark:text-red-400">
                 Set up lesson times first — until the school day has periods,
@@ -1076,7 +1087,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   <button
                     type="button"
                     onClick={onSetUpSchoolDay}
-                    className="font-medium text-red-700 underline underline-offset-2 hover:text-red-800 dark:text-red-300"
+                    className={cn(tt.focus, "font-medium text-red-700 underline underline-offset-2 hover:text-red-800 dark:text-red-300")}
                   >
                     Set up the school day
                   </button>
@@ -1102,11 +1113,11 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
           {activeTotal > 0 ? (
             <div className="mt-1">
               {confirmClearGradeFor === activeGradeId ? (
-                <span className="inline-flex flex-wrap items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                <span className={cn(tt.text.micro, tt.ink.muted, "inline-flex flex-wrap items-center gap-2")}>
                   Clear all lessons for {activeGrade?.name ?? "this class"}?
                   <button
                     type="button"
-                    className="font-medium text-red-600 hover:underline dark:text-red-400"
+                    className={cn(tt.focus, "font-medium text-red-600 hover:underline dark:text-red-400")}
                     onClick={() => {
                       handleClearGrade();
                       setConfirmClearGradeFor(null);
@@ -1116,7 +1127,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   </button>
                   <button
                     type="button"
-                    className="font-medium text-slate-500 hover:underline dark:text-slate-400"
+                    className={cn(tt.focus, tt.ink.muted, "font-medium hover:underline")}
                     onClick={() => setConfirmClearGradeFor(null)}
                   >
                     Cancel
@@ -1125,7 +1136,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               ) : (
                 <button
                   type="button"
-                  className="text-[10px] text-slate-500 hover:underline"
+                  className={cn(tt.focus, tt.text.micro, tt.ink.muted, "hover:underline")}
                   onClick={() => setConfirmClearGradeFor(activeGradeId)}
                 >
                   Clear this class
@@ -1139,7 +1150,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
           <Button
             type="button"
             size="sm"
-            className={cn("h-7 text-[11px]", tt.accentBtn)}
+            className={cn("h-7", tt.text.caption, tt.numeral, tt.accentBtn)}
             disabled={!dirtyGrades.length || saving}
             onClick={() => void handleSave()}
           >

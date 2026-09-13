@@ -486,17 +486,17 @@ export function BulkLessonEntryDrawer({
   return (
     <Drawer open={open} onOpenChange={onClose} direction="right">
       <DrawerContent
-        className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-white dark:bg-slate-950 sm:max-w-xl"
+        className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-white dark:bg-[#0c1a17] sm:max-w-xl"
         data-vaul-drawer-direction="right"
       >
-        <DrawerHeader className="shrink-0 space-y-0 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <DrawerHeader className={cn("shrink-0 space-y-0 border-b px-4 py-3", tt.border.hair)}>
           <div className="flex items-start gap-2">
-            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            <BookOpen className={cn("mt-0.5 h-4 w-4 shrink-0", tt.ink.faint)} />
             <div className="min-w-0 flex-1">
-              <DrawerTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <DrawerTitle className={cn(tt.text.title, tt.ink.strong)}>
                 Bulk add lessons
               </DrawerTitle>
-              <p className="mt-0.5 text-[11px] text-slate-500">
+              <p className={cn("mt-0.5", tt.text.caption, tt.ink.muted)}>
                 Add the same lessons to one or more days, or duplicate a filled
                 day.
               </p>
@@ -505,7 +505,7 @@ export function BulkLessonEntryDrawer({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0 text-slate-400"
+              className={cn("h-7 w-7 shrink-0", tt.ink.faint)}
               onClick={onClose}
               aria-label="Close"
             >
@@ -538,10 +538,11 @@ export function BulkLessonEntryDrawer({
                   <label
                     key={d.value}
                     className={cn(
-                      "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                      "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 font-medium transition-colors",
+                      tt.text.small,
                       active
-                        ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white"
+                        : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/60",
                     )}
                   >
                     <Checkbox
@@ -549,7 +550,7 @@ export function BulkLessonEntryDrawer({
                       onCheckedChange={() => toggleDay(d.value)}
                       className={cn(
                         "h-3.5 w-3.5",
-                        active && "border-white data-[state=checked]:bg-white data-[state=checked]:text-slate-900",
+                        active && "border-white data-[state=checked]:bg-white data-[state=checked]:text-[#0a1f1a]",
                       )}
                     />
                     {d.name}
@@ -561,7 +562,7 @@ export function BulkLessonEntryDrawer({
 
           <div className={cn(tt.panelMuted, "space-y-3 p-3")}>
             <div>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <p className={cn("font-semibold", tt.text.small, tt.ink.strong)}>
                 Duplicate a filled day
               </p>
               <p className={cn(tt.caption, "mt-0.5")}>
@@ -603,10 +604,11 @@ export function BulkLessonEntryDrawer({
                       <label
                         key={d.value}
                         className={cn(
-                          "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 text-xs transition-colors",
+                          tt.text.small,
+                          "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 transition-colors",
                           active
-                            ? "border-slate-700 bg-slate-100 text-slate-800 dark:border-slate-400 dark:bg-slate-800 dark:text-slate-100"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900",
+                            ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white"
+                            : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/60",
                         )}
                       >
                         <Checkbox
@@ -621,9 +623,9 @@ export function BulkLessonEntryDrawer({
               </div>
             </div>
             {duplicatePlan ? (
-              <div className="space-y-2 rounded-none border border-slate-900/20 bg-white p-2.5 dark:border-slate-100/20 dark:bg-slate-950">
-                <p className="text-xs text-slate-700 dark:text-slate-200">
-                  Will copy <strong>{duplicatePlan.requests.length}</strong> lesson
+              <div className="space-y-2 rounded-none border border-[#1a4d42]/20 bg-white p-2.5 dark:border-white/20 dark:bg-[#0c1a17]">
+                <p className={cn(tt.text.small, tt.ink.base)}>
+                  Will copy <strong className={tt.numeral}>{duplicatePlan.requests.length}</strong> lesson
                   {duplicatePlan.requests.length !== 1 ? "s" : ""} from{" "}
                   <strong>{duplicatePlan.sourceName}</strong> →{" "}
                   <strong>{duplicatePlan.targetNames}</strong>.
@@ -636,7 +638,7 @@ export function BulkLessonEntryDrawer({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-9 flex-1 text-xs"
+                    className={cn("h-9 flex-1", tt.text.small)}
                     disabled={isDuplicating}
                     onClick={() => setDuplicatePlan(null)}
                   >
@@ -645,7 +647,7 @@ export function BulkLessonEntryDrawer({
                   <Button
                     type="button"
                     size="sm"
-                    className="h-9 flex-1 gap-1.5 bg-zinc-900 text-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
+                    className={cn("h-9 flex-1 gap-1.5", tt.text.small, tt.accentBtn)}
                     disabled={isDuplicating}
                     onClick={handleConfirmDuplicate}
                   >
@@ -662,7 +664,7 @@ export function BulkLessonEntryDrawer({
               <Button
                 type="button"
                 size="sm"
-                className="h-9 w-full gap-1.5 bg-zinc-900 text-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
+                className={cn("h-9 w-full gap-1.5", tt.text.small, tt.accentBtn)}
                 disabled={
                   !duplicateSourceDay ||
                   duplicateTargetDays.length === 0 ||
@@ -681,8 +683,8 @@ export function BulkLessonEntryDrawer({
             )}
           </div>
 
-          <div className="rounded-none border border-dashed border-slate-200 p-3 dark:border-slate-700">
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+          <div className="rounded-none border border-dashed border-[#1a4d42]/12 p-3 dark:border-white/10">
+            <p className={cn("font-medium", tt.text.small, tt.ink.base)}>
               Or load into the form
             </p>
             <p className={cn(tt.caption, "mt-0.5 mb-2")}>
@@ -705,7 +707,7 @@ export function BulkLessonEntryDrawer({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-9 shrink-0 gap-1 text-xs"
+                className={cn("h-9 shrink-0 gap-1", tt.text.small)}
                 disabled={!copySourceDay || !effectiveGradeId}
                 onClick={handleCopyFromDay}
               >
@@ -725,7 +727,7 @@ export function BulkLessonEntryDrawer({
                 variant="outline"
                 size="sm"
                 onClick={addBlankEntry}
-                className="h-7 gap-1 text-xs"
+                className={cn("h-7 gap-1", tt.text.small)}
               >
                 <Plus className="h-3 w-3" />
                 Add row
@@ -733,14 +735,14 @@ export function BulkLessonEntryDrawer({
             </div>
 
             {entries.length === 0 ? (
-              <div className="rounded-none border border-dashed border-slate-200 py-8 text-center dark:border-slate-700">
-                <BookOpen className="mx-auto mb-2 h-7 w-7 text-slate-300" />
-                <p className="text-xs text-slate-500">No lessons added yet</p>
+              <div className="rounded-none border border-dashed border-[#1a4d42]/12 py-8 text-center dark:border-white/10">
+                <BookOpen className={cn("mx-auto mb-2 h-7 w-7", tt.ink.faint)} />
+                <p className={cn(tt.text.small, tt.ink.muted)}>No lessons added yet</p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={addBlankEntry}
-                  className="mt-3 h-8 text-xs"
+                  className={cn("mt-3 h-8", tt.text.small)}
                 >
                   Add first row
                 </Button>
@@ -750,7 +752,7 @@ export function BulkLessonEntryDrawer({
                 {sortedEntryRows.map((entry) => (
                   <div
                     key={entry.id}
-                    className="rounded-none border border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-700 dark:bg-slate-900/40"
+                    className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa]/50 p-2.5 dark:border-white/10 dark:bg-[#0c1a17]/40"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <span className={tt.label}>
@@ -762,7 +764,7 @@ export function BulkLessonEntryDrawer({
                         <button
                           type="button"
                           onClick={() => removeEntry(entry.id)}
-                          className="rounded-none p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                          className={cn("rounded-none p-1 hover:bg-red-50 hover:text-red-600", tt.ink.faint, tt.focus)}
                           aria-label="Remove lesson row"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -827,7 +829,7 @@ export function BulkLessonEntryDrawer({
                       <div className="space-y-1">
                         <Label className={tt.label}>Room</Label>
                         <div className="relative">
-                          <MapPin className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" />
+                          <MapPin className={cn("absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2", tt.ink.faint)} />
                           <Input
                             list="bulk-known-rooms"
                             value={entry.roomNumber}
@@ -837,7 +839,7 @@ export function BulkLessonEntryDrawer({
                               })
                             }
                             placeholder="Optional"
-                            className="h-8 pl-7 text-xs"
+                            className={cn("h-8 pl-7", tt.text.small)}
                           />
                         </div>
                       </div>
@@ -855,14 +857,14 @@ export function BulkLessonEntryDrawer({
           </datalist>
 
           {entries.length > 0 && selectedGrade ? (
-            <div className="flex items-start gap-2 rounded-none border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
-              <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+            <div className={cn("flex items-start gap-2 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]/50", tt.text.small, tt.ink.base)}>
+              <Calendar className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", tt.ink.faint)} />
               <span>
-                <strong className="font-semibold text-slate-800 dark:text-slate-100">
+                <strong className={cn("font-semibold", tt.ink.strong, tt.numeral)}>
                   {willCreateCount}
                 </strong>{" "}
                 lesson{willCreateCount !== 1 ? "s" : ""} for{" "}
-                <strong className="font-semibold text-slate-800 dark:text-slate-100">
+                <strong className={cn("font-semibold", tt.ink.strong)}>
                   {selectedGrade.displayName || selectedGrade.name}
                 </strong>
                 {selectedDayLabels.length > 0
@@ -876,14 +878,14 @@ export function BulkLessonEntryDrawer({
           ) : null}
         </div>
 
-        <DrawerFooter className="shrink-0 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+        <DrawerFooter className={cn("shrink-0 border-t px-4 py-3", tt.border.hair)}>
           <div className="flex w-full gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={onClose}
               disabled={isSaving}
-              className="h-9 flex-1 text-xs"
+              className={cn("h-9 flex-1", tt.text.small)}
             >
               Cancel
             </Button>
@@ -896,7 +898,7 @@ export function BulkLessonEntryDrawer({
                 !effectiveGradeId ||
                 !termId
               }
-              className="h-9 flex-1 gap-1.5 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
+              className={cn("h-9 flex-1 gap-1.5 font-medium", tt.text.small, tt.accentBtn)}
             >
               {isSaving ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

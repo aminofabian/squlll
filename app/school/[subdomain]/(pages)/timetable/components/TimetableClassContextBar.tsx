@@ -33,11 +33,14 @@ function StatCell({
       <p className={tt.label}>{label}</p>
       <p
         className={cn(
-          "mt-1 flex items-center gap-1.5 text-[14px] font-semibold tabular-nums tracking-[-0.01em] text-slate-900 dark:text-slate-100",
+          tt.text.title,
+          tt.ink.strong,
+          tt.numeral,
+          "mt-1 flex items-center gap-1.5",
           valueClassName,
         )}
       >
-        {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
+        {Icon && <Icon className={cn(tt.ink.faint, "h-3.5 w-3.5 shrink-0")} />}
         {value}
       </p>
     </div>
@@ -66,10 +69,10 @@ export function TimetableClassContextBar({
     >
       <div className="min-w-0">
         <p className={tt.label}>Editing</p>
-        <p className="mt-0.5 text-[15px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-slate-50">
+        <p className={cn(tt.text.title, tt.ink.strong, "mt-0.5")}>
           {classLabel}
           {streamName ? (
-            <span className="font-medium text-slate-500"> · {streamName}</span>
+            <span className={cn(tt.ink.muted, "font-medium")}> · {streamName}</span>
           ) : null}
         </p>
         <TimetableLastUpdated isoTimestamp={lastUpdatedIso} />

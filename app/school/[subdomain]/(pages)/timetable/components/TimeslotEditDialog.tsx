@@ -18,6 +18,8 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { tt } from '../utils/timetableTheme';
 
 interface TimeslotEditDialogProps {
   timeslot: TimeSlot | null;
@@ -163,15 +165,15 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
 
   return (
     <Drawer open={!!timeslot} onOpenChange={onClose} direction="right">
-      <DrawerContent className="w-full sm:w-[500px] lg:w-[600px] h-full flex flex-col">
-        <DrawerHeader className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b-2 border-primary/20 px-6 py-5">
+      <DrawerContent className="flex h-full w-full flex-col rounded-none sm:w-[500px] lg:w-[600px]">
+        <DrawerHeader className="border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 py-5 dark:border-white/10 dark:bg-[#071411]">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-            <DrawerTitle className="text-2xl font-bold text-primary flex items-center gap-3">
+            <DrawerTitle className={cn("flex items-center gap-3", tt.text.metric, tt.ink.strong, tt.numeral)}>
               <span className="text-3xl">⏰</span>
               <span>Edit Period {timeslot.periodNumber}</span>
             </DrawerTitle>
-              <DrawerDescription className="mt-2">
+              <DrawerDescription className={cn("mt-2", tt.text.small, tt.ink.muted)}>
                 Update this period's start time, end time, and duration.
               </DrawerDescription>
             </div>
@@ -179,7 +181,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-primary hover:bg-primary/10"
+                className={cn("h-8 w-8 hover:bg-[#e8f2ef] dark:hover:bg-white/5", tt.ink.base, tt.focus)}
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -187,10 +189,10 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-gradient-to-b from-background to-primary/5">
+        <div className="flex-1 space-y-6 overflow-y-auto bg-white px-6 py-6 dark:bg-[#0c1a17]">
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-2 text-sm">
+            <div className={cn("border border-red-200 bg-red-50 px-3 py-2 text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400", tt.text.body)}>
               {error}
             </div>
           )}
@@ -198,7 +200,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           {/* Primary: Start & End Times */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="startTime" className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+              <Label htmlFor="startTime" className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
                 Start time
               </Label>
               <Input
@@ -207,11 +209,11 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
                 value={formData.startTime}
                 onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
                 disabled={loading}
-                className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
+                className={cn("h-10 border border-[#1a4d42]/12 bg-white font-medium focus:border-[#246a59] focus:ring-1 focus:ring-[#246a59]/35 dark:border-white/10 dark:bg-[#0c1a17]", tt.text.body, tt.ink.strong)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="endTime" className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+              <Label htmlFor="endTime" className={cn("font-medium", tt.text.caption, tt.ink.muted)}>
                 End time
               </Label>
               <Input
@@ -220,21 +222,21 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
                 value={formData.endTime}
                 onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
                 disabled={loading}
-                className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
+                className={cn("h-10 border border-[#1a4d42]/12 bg-white font-medium focus:border-[#246a59] focus:ring-1 focus:ring-[#246a59]/35 dark:border-white/10 dark:bg-[#0c1a17]", tt.text.body, tt.ink.strong)}
               />
             </div>
           </div>
           {formData.startTime && formData.endTime && !isValidDuration ? (
-            <p className="text-xs font-medium text-red-600 dark:text-red-400">
+            <p className={cn("font-medium", tt.text.small, "text-red-600 dark:text-red-400")}>
               End time must be after the start time.
             </p>
           ) : null}
 
           {/* Label (optional) */}
           <div className="space-y-1.5">
-            <Label htmlFor="label" className="text-sm text-slate-700 dark:text-slate-300 font-medium flex items-center gap-2">
+            <Label htmlFor="label" className={cn("flex items-center gap-2 font-medium", tt.text.caption, tt.ink.muted)}>
               <span>Label</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">(optional)</span>
+              <span className={cn("font-normal", tt.text.caption, tt.ink.faint)}>(optional)</span>
             </Label>
             <Input
               id="label"
@@ -243,16 +245,18 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
               onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
               placeholder="e.g., Double Period"
               disabled={loading}
-              className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
+              className={cn("h-10 border border-[#1a4d42]/12 bg-white font-medium focus:border-[#246a59] focus:ring-1 focus:ring-[#246a59]/35 dark:border-white/10 dark:bg-[#0c1a17]", tt.text.body, tt.ink.strong)}
             />
           </div>
 
           {/* Summary Info - Clean and Minimal */}
-          <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-sm">
-            <span className="text-slate-700 dark:text-slate-300 font-medium">Duration</span>
-            <span className={`font-bold text-lg ${
-              isValidDuration ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
-            }`}>
+          <div className={cn("flex items-center justify-between border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]", tt.text.body)}>
+            <span className={cn("font-medium", tt.ink.base)}>Duration</span>
+            <span className={cn(
+              tt.text.display,
+              tt.numeral,
+              isValidDuration ? tt.ink.strong : 'text-red-600 dark:text-red-400'
+            )}>
               {isValidDuration ? `${duration} min` : 'Invalid'}
             </span>
           </div>
@@ -260,26 +264,26 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           {/* Warning - Subtle */}
           <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
             <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
-            <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+            <p className={cn(tt.text.small, "text-amber-800 dark:text-amber-200")}>
               This change will affect all lessons scheduled in this period across all grades.
             </p>
           </div>
 
           {/* Preview */}
-          <div className="border-l-4 border-primary bg-slate-50 dark:bg-slate-800 p-5 shadow-sm">
+          <div className="border-l-4 border-[#246a59] bg-[#f8fbfa] p-5 shadow-sm dark:bg-white/[0.02]">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 flex items-center justify-center text-4xl text-primary">
+              <div className="flex h-16 w-16 items-center justify-center bg-[#246a59]/10 text-4xl text-[#246a59] dark:text-[#7eb8a8]">
                 ⏰
               </div>
               <div className="flex-1">
-                <div className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-1">
+                <div className={cn("mb-1", tt.text.display, tt.ink.strong, tt.numeral)}>
                   Period {timeslot.periodNumber}
                 </div>
-                <div className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                <div className={cn("font-medium", tt.text.body, tt.ink.base)}>
                   {formData.displayTime || 'Enter time range'}
                 </div>
                 {isValidDuration && (
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <div className={cn("mt-1", tt.text.caption, tt.ink.faint, tt.numeral)}>
                     Duration: {duration} minutes
                   </div>
                 )}
@@ -288,15 +292,15 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           </div>
         </div>
 
-        <DrawerFooter className="bg-gradient-to-t from-primary/10 via-primary/5 to-background border-t-2 border-primary/20 px-6 py-4 gap-3">
-          <div className="flex items-center justify-end w-full gap-3">
-            <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold h-10">
+        <DrawerFooter className="gap-3 border-t border-[#1a4d42]/12 bg-[#f8fbfa] px-6 py-4 dark:border-white/10 dark:bg-[#071411]">
+          <div className="flex w-full items-center justify-end gap-3">
+            <Button variant="outline" onClick={onClose} disabled={loading} className={cn("h-10 flex-1 border border-[#1a4d42]/12 font-semibold hover:bg-[#e8f2ef] dark:border-white/10 dark:hover:bg-white/10", tt.ink.base, tt.focus)}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={!isValidDuration || loading || !formData.startTime || !formData.endTime}
-              className="flex-1 bg-primary hover:bg-primary/90 text-white font-semibold shadow-sm disabled:opacity-50 h-10"
+              className={cn("h-10 flex-1 font-semibold disabled:opacity-50", tt.accentBtn, tt.focus)}
             >
               {loading ? (
                 <>

@@ -28,7 +28,8 @@ export function TimetableGridError({
     return (
       <div
         className={cn(
-          "flex items-start gap-2 rounded-none border border-red-200/70 bg-red-50/60 px-3 py-2 text-sm text-red-700",
+          tt.text.body,
+          "flex items-start gap-2 rounded-none border border-red-200/70 bg-red-50/60 px-3 py-2 text-red-700",
           "dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400",
           className,
         )}
@@ -36,9 +37,9 @@ export function TimetableGridError({
       >
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-medium leading-snug">{title}</p>
+          <p className={cn(tt.text.body, "font-medium")}>{title}</p>
           {description ? (
-            <p className="mt-0.5 text-[11px] leading-snug text-red-600/80 dark:text-red-400/70">
+            <p className={cn(tt.text.caption, "mt-0.5 text-red-600/80 dark:text-red-400/70")}>
               {description}
             </p>
           ) : null}
@@ -48,7 +49,10 @@ export function TimetableGridError({
             variant="ghost"
             size="sm"
             onClick={onRetry}
-            className="h-9 shrink-0 gap-1 px-2 text-xs text-red-600 hover:bg-red-100/80 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/40"
+            className={cn(
+              tt.text.small,
+              "h-9 shrink-0 gap-1 px-2 text-red-600 hover:bg-red-100/80 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/40",
+            )}
           >
             <RefreshCw className="h-3 w-3" />
             Retry
@@ -70,10 +74,15 @@ export function TimetableGridError({
       <div className="mb-3 rounded-none bg-red-100 p-3 dark:bg-red-900/40">
         <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-400" />
       </div>
-      <h3 className={cn(tt.label, "mb-1 text-base font-semibold text-red-800 dark:text-red-300")}>
+      <h3 className={cn(tt.text.display, "mb-1 text-red-800 dark:text-red-300")}>
         {title}
       </h3>
-      <p className="mb-4 max-w-md text-sm text-red-600/80 dark:text-red-400/70">
+      <p
+        className={cn(
+          tt.text.title,
+          "mb-4 max-w-md font-normal text-red-600/80 dark:text-red-400/70",
+        )}
+      >
         {description}
       </p>
       {onRetry && (
@@ -95,7 +104,9 @@ export function RetryingSpinner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 text-xs text-slate-500",
+        tt.text.small,
+        tt.ink.muted,
+        "flex items-center gap-2",
         className,
       )}
       role="status"

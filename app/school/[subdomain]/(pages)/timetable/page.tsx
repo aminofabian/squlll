@@ -2129,7 +2129,10 @@ export default function SmartTimetableNew() {
         {/* ── Toolbar ── */}
         <header
           data-timetable-no-print
-          className="hidden shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-2 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4 lg:block"
+          className={cn(
+            "hidden shrink-0 border-b bg-[#f8fbfa]/95 px-3 py-2 backdrop-blur-md dark:bg-[#071411]/95 sm:px-4 lg:block",
+            tt.border.soft,
+          )}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -2138,7 +2141,10 @@ export default function SmartTimetableNew() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="hidden h-8 w-8 shrink-0 p-0 text-slate-400 hover:text-slate-600 lg:inline-flex"
+                    className={cn(
+                      "hidden h-8 w-8 shrink-0 p-0 lg:inline-flex hover:text-[#0a1f1a] dark:hover:text-white",
+                      tt.ink.faint,
+                    )}
                     onClick={openClassSidebar}
                     aria-label="Show class list"
                   >
@@ -2148,14 +2154,20 @@ export default function SmartTimetableNew() {
               )}
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <h1 className="truncate font-display text-[17px] leading-none tracking-tight text-[#0a1f1a] dark:text-white">
+                  <h1 className={cn("truncate font-display", tt.text.display, tt.ink.strong)}>
                     {selectedGradeId
                       ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
                       : "All classes"}
                   </h1>
                   <RealtimeLiveIndicator />
                 </div>
-                <p className="mt-1 hidden items-center gap-1.5 text-[11px] text-[#1a4d42]/55 sm:flex dark:text-white/45">
+                <p
+                  className={cn(
+                    "mt-1 hidden items-center gap-1.5 sm:flex",
+                    tt.text.caption,
+                    tt.ink.muted,
+                  )}
+                >
                   <span>Timetable</span>
                   {selectedTerm ? (
                     <>
@@ -2163,11 +2175,11 @@ export default function SmartTimetableNew() {
                         className="h-1 w-1 bg-[#1a4d42]/25 dark:bg-white/25"
                         aria-hidden
                       />
-                      <span className="font-medium text-[#0a1f1a]/80 dark:text-white/70">
+                      <span className={cn("font-medium", tt.ink.base)}>
                         {selectedTerm.name}
                       </span>
                       {activeAcademicYear?.name ? (
-                        <span className="text-[#1a4d42]/40">
+                        <span className={tt.ink.faint}>
                           · {activeAcademicYear.name}
                         </span>
                       ) : null}
@@ -2201,7 +2213,9 @@ export default function SmartTimetableNew() {
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "h-8 gap-1.5 text-xs font-medium",
+                      "h-8 gap-1.5 font-medium",
+                      tt.text.small,
+                      tt.numeral,
                       conflictCount > 0
                         ? "border-red-200 bg-red-50/60 text-red-700 hover:bg-red-100/70 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
                         : "border-amber-200 bg-amber-50/60 text-amber-800 hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200",
@@ -2221,7 +2235,8 @@ export default function SmartTimetableNew() {
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "hidden h-8 gap-1.5 rounded-none text-xs font-medium lg:inline-flex",
+                      "hidden h-8 gap-1.5 rounded-none font-medium lg:inline-flex",
+                      tt.text.small,
                       autoGenerateOpen
                         ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
                         : "border-[#246a59]/30 text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
@@ -2242,7 +2257,10 @@ export default function SmartTimetableNew() {
                 <ToolbarHint text="Add several lessons to this class by hand — teacher, subject, and times.">
                   <Button
                     size="sm"
-                    className="hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] text-xs font-medium text-white hover:bg-[#246a59] lg:inline-flex"
+                    className={cn(
+                      "hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] font-medium text-white hover:bg-[#246a59] lg:inline-flex",
+                      tt.text.small,
+                    )}
                     onClick={() => setBulkLessonEntryOpen(true)}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -2256,7 +2274,11 @@ export default function SmartTimetableNew() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      className={cn(
+                        "h-8 gap-1.5 hover:text-[#0a1f1a] dark:hover:text-white",
+                        tt.text.small,
+                        tt.ink.muted,
+                      )}
                       title="Change subject names, highlight clashes, or focus on one teacher"
                     >
                       <SlidersHorizontal className="h-3.5 w-3.5" />

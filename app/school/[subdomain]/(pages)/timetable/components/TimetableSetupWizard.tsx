@@ -53,6 +53,7 @@ import {
   TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS,
 } from "@/lib/utils/timetable-setup";
 import { cn } from "@/lib/utils";
+import { tt } from "../utils/timetableTheme";
 
 const WIZARD_STEPS = [
   { id: 1, name: "Times", description: "When school runs" },
@@ -180,10 +181,16 @@ function formatTimeFriendly(hhmm: string): string {
 
 function wizardChipClass(selected: boolean) {
   return cn(
-    "shrink-0 rounded-none border px-2.5 py-1.5 text-sm font-medium transition-colors",
+    "shrink-0 rounded-none border px-2.5 py-1.5 transition-colors",
+    tt.text.title,
+    tt.numeral,
+    tt.focus,
     selected
-      ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+      ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59]"
+      : cn(
+          "border-[#1a4d42]/12 bg-white hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17]",
+          tt.ink.base,
+        ),
   );
 }
 
@@ -201,11 +208,15 @@ function WizardQuestion({
   return (
     <section
       aria-labelledby={`wizard-q-${number}-title`}
-      className="rounded-none border border-slate-200/70 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40 sm:p-4"
+      className={cn(tt.panel, "p-3 sm:p-4")}
     >
       <div className="mb-3 flex items-start gap-2.5">
         <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-slate-100 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-[#e8f2ef] font-semibold dark:bg-white/10",
+            tt.text.caption,
+            tt.ink.base,
+          )}
           aria-hidden
         >
           {number}
@@ -213,12 +224,14 @@ function WizardQuestion({
         <div className="min-w-0">
           <h3
             id={`wizard-q-${number}-title`}
-            className="text-sm font-medium text-slate-900 dark:text-slate-100"
+            className={cn(tt.text.title, tt.ink.strong)}
           >
             {title}
           </h3>
           {hint ? (
-            <p className="mt-0.5 text-xs text-slate-400">{hint}</p>
+            <p className={cn("mt-0.5", tt.text.small, tt.ink.faint)}>
+              {hint}
+            </p>
           ) : null}
         </div>
       </div>
@@ -236,7 +249,9 @@ function FieldRow({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={cn(tt.text.small, "font-medium", tt.ink.muted)}>
+        {label}
+      </p>
       {children}
     </div>
   );
@@ -256,10 +271,15 @@ function SchoolDayPreview({
   weekLabel: string;
 }) {
   return (
-    <div className="border-b border-slate-200/80 bg-slate-50/80 px-6 py-2.5 dark:border-slate-800 dark:bg-slate-900/50 sm:px-8">
-      <p className="text-sm text-slate-600 dark:text-slate-300">
+    <div
+      className={cn(
+        "border-b bg-[#f8fbfa] px-6 py-2.5 dark:bg-white/[0.02] sm:px-8",
+        tt.border.hair,
+      )}
+    >
+      <p className={cn(tt.text.title, tt.ink.base)}>
         <span className="font-medium">{startFriendly} → {dayEndFriendly}</span>
-        <span className="text-slate-400 dark:text-slate-500">
+        <span className={cn(tt.ink.faint, tt.numeral)}>
           {" "}
           · {periodCountNum}×{periodDurationNum} min · {weekLabel}
         </span>
@@ -274,23 +294,36 @@ function BreakDayPreview({
   dayPreview: ReturnType<typeof buildDayTimelinePreview>;
 }) {
   return (
-    <div className="border-b border-slate-200/80 bg-slate-50/80 px-6 py-2.5 dark:border-slate-800 dark:bg-slate-900/50 sm:px-8">
+    <div
+      className={cn(
+        "border-b bg-[#f8fbfa] px-6 py-2.5 dark:bg-white/[0.02] sm:px-8",
+        tt.border.hair,
+      )}
+    >
       {dayPreview.length === 0 ? (
-        <p className="text-sm text-slate-500">Lessons only</p>
+        <p className={cn(tt.text.title, tt.ink.muted)}>Lessons only</p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {dayPreview.map((row, i) =>
             row.kind === "period" ? (
               <span
                 key={`p-${i}`}
-                className="rounded-none border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                className={cn(
+                  "rounded-none border border-[#1a4d42]/12 bg-white px-2.5 py-1 font-medium dark:border-white/10 dark:bg-[#0c1a17]",
+                  tt.text.small,
+                  tt.ink.base,
+                  tt.numeral,
+                )}
               >
                 Lesson {row.period}
               </span>
             ) : (
               <span
                 key={`b-${i}`}
-                className="rounded-none border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100"
+                className={cn(
+                  "rounded-none border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100",
+                  tt.text.small,
+                )}
                 title={`${row.durationMinutes} min`}
               >
                 {row.icon} {row.label}
@@ -321,14 +354,19 @@ function ClassesSummaryPreview({
   totalCount: number;
 }) {
   return (
-    <div className="border-b border-slate-200/80 bg-slate-50/80 px-6 py-2.5 dark:border-slate-800 dark:bg-slate-900/50 sm:px-8">
-      <p className="text-sm text-slate-600 dark:text-slate-300">
+    <div
+      className={cn(
+        "border-b bg-[#f8fbfa] px-6 py-2.5 dark:bg-white/[0.02] sm:px-8",
+        tt.border.hair,
+      )}
+    >
+      <p className={cn(tt.text.title, tt.ink.base)}>
         <span className="font-medium">{startFriendly} → {dayEndFriendly}</span>
-        <span className="text-slate-400 dark:text-slate-500">
+        <span className={cn(tt.ink.faint, tt.numeral)}>
           {" "}
           · {periodCountNum}×{periodDurationNum} min · {weekLabel}
         </span>
-        <span className="text-slate-400 dark:text-slate-500">
+        <span className={cn(tt.ink.faint, tt.numeral)}>
           {" "}
           · {selectedCount}/{totalCount} selected
         </span>
@@ -980,15 +1018,12 @@ export function TimetableSetupWizard({
       "Break";
 
     return (
-      <li
-        key={b.id}
-        className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-2.5 dark:border-white/10 dark:bg-[#071411]"
-      >
+      <li key={b.id} className={cn(tt.panelMuted, "p-2.5")}>
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={b.type}
             onChange={(e) => onCustomBreakTypeChange(b.id, e.target.value)}
-            className={cn(onboardingInputClass, "h-9 min-w-[8.5rem] flex-1 text-sm")}
+            className={cn(onboardingInputClass, "h-9 min-w-[8.5rem] flex-1", tt.text.title)}
             aria-label={`${displayName} type`}
           >
             {BREAK_TYPE_CHIPS.map((typeValue) => {
@@ -1006,7 +1041,13 @@ export function TimetableSetupWizard({
             })}
           </select>
 
-          <label className="inline-flex items-center gap-1.5 text-xs text-[#1a4d42]/55">
+          <label
+            className={cn(
+              "inline-flex items-center gap-1.5",
+              tt.text.small,
+              tt.ink.muted,
+            )}
+          >
             <Input
               type="number"
               min={1}
@@ -1017,7 +1058,7 @@ export function TimetableSetupWizard({
                 const raw = e.target.value.replace(/\D/g, "");
                 updateBreakDraft(b.id, { durationMinutes: raw });
               }}
-              className={cn(onboardingInputClass, "h-9 w-14 px-2 text-sm")}
+              className={cn(onboardingInputClass, "h-9 w-14 px-2", tt.text.title)}
               aria-label={`${displayName} duration in minutes`}
             />
             min
@@ -1030,7 +1071,7 @@ export function TimetableSetupWizard({
                 afterPeriod: Number(e.target.value),
               })
             }
-            className={cn(onboardingInputClass, "h-9 min-w-[9rem] flex-1 text-sm")}
+            className={cn(onboardingInputClass, "h-9 min-w-[9rem] flex-1", tt.text.title)}
             aria-label={`When ${displayName} happens`}
           >
             <option value={0}>Before lesson 1</option>
@@ -1083,13 +1124,17 @@ export function TimetableSetupWizard({
       return (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+            <p className={cn(tt.text.title, tt.ink.strong)}>
               Pick a different day shape
             </p>
             <button
               type="button"
               onClick={() => setBreaksPanel("review")}
-              className="text-xs font-medium text-[#246a59] hover:underline"
+              className={cn(
+                "font-medium text-[#246a59] hover:underline dark:text-[#7eb8a8]",
+                tt.text.small,
+                tt.focus,
+              )}
             >
               Cancel
             </button>
@@ -1104,8 +1149,9 @@ export function TimetableSetupWizard({
                     onClick={() => selectBreakMode(opt.mode)}
                     className={cn(
                       "flex w-full items-start gap-3 rounded-none border px-3 py-2.5 text-left transition-colors",
+                      tt.focus,
                       selected
-                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59]"
                         : "border-[#1a4d42]/12 bg-white text-[#0a1f1a] hover:border-[#246a59]/35 dark:border-white/12 dark:bg-[#0c1a17] dark:text-white",
                     )}
                   >
@@ -1124,12 +1170,15 @@ export function TimetableSetupWizard({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium">{opt.title}</span>
+                        <span className={tt.text.title}>{opt.title}</span>
                         {opt.badge ? (
                           <span
                             className={cn(
-                              "text-[10px] font-semibold uppercase tracking-wide",
-                              selected ? "text-white/55" : "text-[#246a59]",
+                              "font-semibold uppercase tracking-wide",
+                              tt.text.micro,
+                              selected
+                                ? "text-white/55"
+                                : "text-[#246a59] dark:text-[#7eb8a8]",
                             )}
                           >
                             {opt.badge}
@@ -1138,10 +1187,9 @@ export function TimetableSetupWizard({
                       </span>
                       <span
                         className={cn(
-                          "mt-0.5 block text-xs",
-                          selected
-                            ? "text-white/65"
-                            : "text-[#1a4d42]/50 dark:text-white/45",
+                          "mt-0.5 block",
+                          tt.text.small,
+                          selected ? "text-white/65" : tt.ink.muted,
                         )}
                       >
                         {opt.subtitle}
@@ -1160,19 +1208,23 @@ export function TimetableSetupWizard({
       return (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+            <p className={cn(tt.text.title, tt.ink.strong)}>
               Edit breaks
             </p>
             <button
               type="button"
               onClick={() => setBreaksPanel("review")}
-              className="text-xs font-medium text-[#246a59] hover:underline"
+              className={cn(
+                "font-medium text-[#246a59] hover:underline dark:text-[#7eb8a8]",
+                tt.text.small,
+                tt.focus,
+              )}
             >
               Done
             </button>
           </div>
           {breaks.length === 0 ? (
-            <p className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-3 text-sm text-[#1a4d42]/55 dark:border-white/10 dark:bg-[#071411]">
+            <p className={cn(tt.panelMuted, "px-3 py-3", tt.text.title, tt.ink.muted)}>
               No breaks yet — add one below, or pick a day shape.
             </p>
           ) : (
@@ -1181,7 +1233,12 @@ export function TimetableSetupWizard({
           <button
             type="button"
             onClick={addAnotherBreak}
-            className="flex w-full items-center justify-center gap-2 rounded-none border border-dashed border-[#1a4d42]/25 bg-transparent px-3 py-2 text-sm font-medium text-[#1a4d42]/70 transition-colors hover:border-[#246a59]/40 hover:bg-[#f3f7f5] dark:text-white/60"
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-none border border-dashed border-[#1a4d42]/25 bg-transparent px-3 py-2 font-medium transition-colors hover:border-[#246a59]/40 hover:bg-[#f3f7f5]",
+              tt.text.title,
+              tt.ink.base,
+              tt.focus,
+            )}
           >
             <Plus className="h-4 w-4" />
             Add break
@@ -1189,7 +1246,11 @@ export function TimetableSetupWizard({
           <button
             type="button"
             onClick={() => setBreaksPanel("patterns")}
-            className="w-full text-center text-xs font-medium text-[#1a4d42]/45 hover:text-[#246a59] hover:underline dark:text-white/40"
+            className={cn(
+              "w-full text-center font-medium text-[#1a4d42]/45 hover:text-[#246a59] hover:underline dark:text-white/40 dark:hover:text-[#7eb8a8]",
+              tt.text.small,
+              tt.focus,
+            )}
           >
             Or start from a different day shape
           </button>
@@ -1201,9 +1262,9 @@ export function TimetableSetupWizard({
     /* review — confirm-first: default is already applied */
     return (
       <div className="space-y-4">
-        <div className="rounded-none border border-[#1a4d42]/12 bg-white p-3 dark:border-white/10 dark:bg-[#0c1a17] sm:p-4">
+        <div className={cn(tt.panel, "p-3 sm:p-4")}>
           <div className="mb-3">
-            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+            <p className={cn(tt.text.title, tt.ink.strong)}>
               {selectedPreset === "none"
                 ? "No breaks for now"
                 : isCustomized
@@ -1211,14 +1272,14 @@ export function TimetableSetupWizard({
                   : presetLabel}
             </p>
             {selectedPreset !== "none" && !isCustomized ? (
-              <p className="mt-0.5 text-xs text-[#1a4d42]/45">
+              <p className={cn("mt-0.5", tt.text.small, tt.ink.faint)}>
                 Pre-filled for you — continue if this matches your school
               </p>
             ) : null}
           </div>
 
           {selectedPreset === "none" || breaks.length === 0 ? (
-            <p className="text-sm text-[#1a4d42]/55 dark:text-white/50">
+            <p className={cn(tt.text.title, tt.ink.muted)}>
               Lessons only. You can add breaks later from the timetable.
             </p>
           ) : (
@@ -1233,13 +1294,29 @@ export function TimetableSetupWizard({
                 return (
                   <li
                     key={b.id}
-                    className="flex items-center justify-between gap-2 border border-[#1a4d42]/10 bg-[#f8fbfa] px-2.5 py-2.5 text-sm dark:border-white/10 dark:bg-[#071411]"
+                    className={cn(
+                      tt.panelMuted,
+                      "flex items-center justify-between gap-2 px-2.5 py-2.5",
+                    )}
                   >
-                    <span className="flex min-w-0 items-center gap-2 truncate font-medium text-[#0a1f1a] dark:text-white">
+                    <span
+                      className={cn(
+                        "flex min-w-0 items-center gap-2 truncate",
+                        tt.text.title,
+                        tt.ink.strong,
+                      )}
+                    >
                       <span aria-hidden>{icon}</span>
                       <span className="truncate">{name}</span>
                     </span>
-                    <span className="shrink-0 text-xs text-[#1a4d42]/50 dark:text-white/45">
+                    <span
+                      className={cn(
+                        "shrink-0",
+                        tt.text.small,
+                        tt.ink.muted,
+                        tt.numeral,
+                      )}
+                    >
                       {b.durationMinutes || "—"} min · {whenLabel(b.afterPeriod)}
                     </span>
                   </li>
@@ -1253,14 +1330,23 @@ export function TimetableSetupWizard({
           <button
             type="button"
             onClick={() => setBreaksPanel("edit")}
-            className="text-left text-sm font-medium text-[#246a59] hover:underline"
+            className={cn(
+              "text-left text-[#246a59] hover:underline dark:text-[#7eb8a8]",
+              tt.text.title,
+              tt.focus,
+            )}
           >
             {breaks.length === 0 ? "Add breaks" : "Change times or names"}
           </button>
           <button
             type="button"
             onClick={() => setBreaksPanel("patterns")}
-            className="text-left text-sm text-[#1a4d42]/50 hover:text-[#246a59] hover:underline dark:text-white/40 sm:text-right"
+            className={cn(
+              "text-left hover:text-[#246a59] hover:underline dark:hover:text-[#7eb8a8] sm:text-right",
+              tt.text.title,
+              tt.ink.muted,
+              tt.focus,
+            )}
           >
             This isn&apos;t our day shape
           </button>
@@ -1300,11 +1386,17 @@ export function TimetableSetupWizard({
           </div>
 
           {gradeLevelsLoading ? (
-            <p className="py-6 text-center text-sm text-slate-500">
+            <p className={cn("py-6 text-center", tt.text.title, tt.ink.muted)}>
               Loading classes…
             </p>
           ) : gradeLevelsWithStreams.length === 0 ? (
-            <p className="rounded-none border border-slate-200/70 bg-slate-50/50 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
+            <p
+              className={cn(
+                "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-4 text-center dark:border-white/10 dark:bg-white/[0.02]",
+                tt.text.title,
+                tt.ink.muted,
+              )}
+            >
               No classes yet — finish school setup first.
             </p>
           ) : (
@@ -1322,7 +1414,13 @@ export function TimetableSetupWizard({
                 return (
                   <div key={gl.gradeLevelId}>
                     {gl.streams.length > 0 && (
-                      <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <p
+                        className={cn(
+                          "mb-1.5 font-medium",
+                          tt.text.small,
+                          tt.ink.muted,
+                        )}
+                      >
                         {gradeName}
                       </p>
                     )}
@@ -1335,8 +1433,8 @@ export function TimetableSetupWizard({
                               className={cn(
                                 "flex cursor-pointer items-center gap-2.5 rounded-none border px-3 py-2 transition-colors",
                                 checked
-                                  ? "border-slate-900 bg-slate-50 dark:border-slate-100 dark:bg-slate-800/60"
-                                  : "border-slate-200/70 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/30",
+                                  ? "border-[#0a1f1a] bg-[#246a59]/10 dark:border-[#246a59] dark:bg-[#246a59]/20"
+                                  : "border-[#1a4d42]/12 bg-white hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17]",
                               )}
                             >
                               <Checkbox
@@ -1345,7 +1443,7 @@ export function TimetableSetupWizard({
                                   toggleScopeKey(key, c === true)
                                 }
                               />
-                              <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                              <span className={cn(tt.text.title, tt.ink.strong)}>
                                 {gl.streams.length > 0
                                   ? label
                                   : gradeName}
@@ -1362,7 +1460,7 @@ export function TimetableSetupWizard({
           )}
 
           {scopeTargets.length > 0 && (
-            <p className="text-xs text-slate-500">
+            <p className={cn(tt.text.small, tt.ink.muted, tt.numeral)}>
               {scopeTargets.length} timetable{scopeTargets.length === 1 ? "" : "s"}:{" "}
               {scopeSummaryLabel(scopeTargets)}
             </p>
@@ -1406,7 +1504,13 @@ export function TimetableSetupWizard({
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2.5 text-sm text-slate-500">
+                <label
+                  className={cn(
+                    "flex items-center gap-2.5",
+                    tt.text.title,
+                    tt.ink.muted,
+                  )}
+                >
                   Custom
                   <Input
                     type="time"
@@ -1414,9 +1518,10 @@ export function TimetableSetupWizard({
                     onChange={(e) => setStartTime(e.target.value)}
                     className={cn(
                       onboardingInputClass,
-                      "h-9 w-[7.5rem] px-2 text-sm",
+                      "h-9 w-[7.5rem] px-2",
+                      tt.text.title,
                       !START_OPTIONS.some((p) => p.value === startTime) &&
-                        "border-slate-900 ring-1 ring-slate-900/20 dark:border-slate-100",
+                        "border-[#0a1f1a] ring-1 ring-[#0a1f1a]/20 dark:border-[#246a59]",
                     )}
                     aria-label="Custom start time"
                   />
@@ -1440,7 +1545,13 @@ export function TimetableSetupWizard({
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2.5 text-sm text-slate-500">
+                <label
+                  className={cn(
+                    "flex items-center gap-2.5",
+                    tt.text.title,
+                    tt.ink.muted,
+                  )}
+                >
                   Other
                   <Input
                     id="custom-lesson-length"
@@ -1461,9 +1572,10 @@ export function TimetableSetupWizard({
                     }}
                     className={cn(
                       onboardingInputClass,
-                      "h-9 w-16 px-2 text-sm",
+                      "h-9 w-16 px-2",
+                      tt.text.title,
                       isCustomLessonLength &&
-                        "border-slate-900 ring-1 ring-slate-900/20 dark:border-slate-100",
+                        "border-[#0a1f1a] ring-1 ring-[#0a1f1a]/20 dark:border-[#246a59]",
                     )}
                     aria-label="Custom lesson length in minutes"
                   />
@@ -1488,7 +1600,13 @@ export function TimetableSetupWizard({
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2.5 text-sm text-slate-500">
+                <label
+                  className={cn(
+                    "flex items-center gap-2.5",
+                    tt.text.title,
+                    tt.ink.muted,
+                  )}
+                >
                   Other
                   <Input
                     id="custom-lessons-per-day"
@@ -1509,9 +1627,10 @@ export function TimetableSetupWizard({
                     }}
                     className={cn(
                       onboardingInputClass,
-                      "h-9 w-16 px-2 text-sm",
+                      "h-9 w-16 px-2",
+                      tt.text.title,
                       isCustomPeriodCount &&
-                        "border-slate-900 ring-1 ring-slate-900/20 dark:border-slate-100",
+                        "border-[#0a1f1a] ring-1 ring-[#0a1f1a]/20 dark:border-[#246a59]",
                     )}
                     aria-label="Custom number of lessons per day"
                   />
@@ -1573,7 +1692,7 @@ export function TimetableSetupWizard({
                   </div>
                 )}
                 {!showPickDays && (
-                  <p className="text-xs text-slate-400">{weekLabel}</p>
+                  <p className={cn(tt.text.small, tt.ink.faint)}>{weekLabel}</p>
                 )}
               </WizardQuestion>
             </StepBody>

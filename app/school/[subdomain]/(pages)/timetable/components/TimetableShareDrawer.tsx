@@ -64,29 +64,35 @@ function CheckRow({
       ) : optional ? (
         <span
           aria-hidden
-          className="mt-0.5 h-3.5 w-3.5 shrink-0 border border-dashed border-slate-300 dark:border-slate-600"
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 border border-dashed border-[#1a4d42]/20 dark:border-white/20"
         />
       ) : (
-        <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-300" />
+        <Circle className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", tt.ink.faint)} />
       )}
       <div className="min-w-0">
         <p
           className={cn(
-            "flex flex-wrap items-center gap-1.5 text-[12px] font-medium leading-snug",
-            ok
-              ? "text-slate-900 dark:text-slate-100"
-              : "text-slate-600 dark:text-slate-300",
+            "flex flex-wrap items-center gap-1.5 font-medium",
+            tt.text.small,
+            tt.numeral,
+            ok ? tt.ink.strong : tt.ink.base,
           )}
         >
           <span>{label}</span>
           {optional ? (
-            <span className="inline-flex items-center border border-dashed border-slate-300 px-1 py-px text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:border-slate-600 dark:text-slate-500 lg:text-[9px]">
+            <span
+              className={cn(
+                "inline-flex items-center border border-dashed border-[#1a4d42]/20 px-1 py-px font-medium uppercase tracking-wide dark:border-white/20",
+                tt.text.micro,
+                tt.ink.faint,
+              )}
+            >
               Optional
             </span>
           ) : null}
         </p>
         {detail ? (
-          <p className="mt-0.5 text-[11px] leading-snug text-slate-400 lg:text-[10px]">
+          <p className={cn("mt-0.5", tt.text.caption, tt.ink.faint, tt.numeral)}>
             {detail}
           </p>
         ) : null}
@@ -113,7 +119,14 @@ function ExtraChips({ items }: { items: ExtraAction[] }) {
             type="button"
             onClick={item.run}
             title={item.label}
-            className="inline-flex h-9 items-center gap-1.5 border border-slate-200 px-2.5 text-[12px] font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:h-7 lg:gap-1 lg:px-2 lg:text-[10px]"
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 border border-[#1a4d42]/12 px-2.5 font-medium transition-colors",
+              "hover:border-[#1a4d42]/25 hover:bg-[#f8fbfa] dark:border-white/10 dark:hover:bg-white/10",
+              "lg:h-7 lg:gap-1.5 lg:px-2",
+              tt.text.small,
+              tt.ink.base,
+              tt.focus,
+            )}
           >
             <Icon className="h-4 w-4 lg:h-3 lg:w-3" />
             {item.label}
@@ -260,22 +273,25 @@ export function TimetableShareDrawer({
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             {isDesktopDock ? (
-              <h2 className="truncate text-[13px] font-semibold tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+              <h2 className={cn("truncate font-semibold tracking-[-0.02em]", tt.text.body, tt.ink.strong)}>
                 Share with teachers
               </h2>
             ) : (
-              <DrawerTitle className="truncate text-[13px] font-semibold tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+              <DrawerTitle className={cn("truncate font-semibold tracking-[-0.02em]", tt.text.body, tt.ink.strong)}>
                 Share with teachers
               </DrawerTitle>
             )}
-            <p className="truncate text-[11px] text-[#1a4d42]/55 dark:text-white/45">
+            <p className={cn("truncate", tt.text.caption, tt.ink.muted)}>
               {termLine || "Teachers cannot see this term until you publish"}
             </p>
           </div>
           <button
             type="button"
             onClick={close}
-            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white lg:h-7 lg:w-7"
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white lg:h-7 lg:w-7",
+              tt.focus,
+            )}
             aria-label="Close"
           >
             <X className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
@@ -284,16 +300,16 @@ export function TimetableShareDrawer({
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-2">
-        <p className="text-[11px] leading-snug text-slate-500">
+        <p className={cn(tt.text.caption, tt.ink.muted)}>
           Share so staff can see the week. You can still edit afterwards —
           share again if you make big changes.
         </p>
 
-        <div className="flex flex-wrap items-center gap-2 border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-900/40">
-          <span className={cn(tt.pill.base, tt.pill[verdictTone[readiness.verdict]])}>
+        <div className="flex flex-wrap items-center gap-2 border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.02]">
+          <span className={cn(tt.pill.base, tt.pill[verdictTone[readiness.verdict]], tt.numeral)}>
             {readiness.label}
           </span>
-          <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+          <p className={cn("min-w-0 flex-1", tt.text.caption, tt.ink.muted, tt.numeral)}>
             {readiness.nextStep}
           </p>
         </div>
@@ -301,7 +317,8 @@ export function TimetableShareDrawer({
         {sharedAt ? (
           <div
             className={cn(
-              "border px-2.5 py-1.5 text-[11px] leading-snug",
+              "border px-2.5 py-1.5",
+              tt.text.caption,
               hasChangesSinceShare
                 ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
                 : "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100",
@@ -345,7 +362,7 @@ export function TimetableShareDrawer({
           </ul>
         </section>
 
-        <section className="space-y-1.5 border border-dashed border-slate-200 px-2.5 py-2 dark:border-slate-700">
+        <section className="space-y-1.5 border border-dashed border-[#1a4d42]/12 px-2.5 py-2 dark:border-white/10">
           <p className={tt.eyebrow}>Recommended</p>
           <ul className="space-y-1.5">
             <CheckRow
@@ -359,11 +376,11 @@ export function TimetableShareDrawer({
 
         {incompleteGrades.length > 0 ? (
           <div className="border border-amber-200/90 bg-amber-50/80 px-2.5 py-2 dark:border-amber-800 dark:bg-amber-950/30">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-900 dark:text-amber-100">
+            <p className={cn("flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-100", tt.text.caption)}>
               <AlertTriangle className="h-3.5 w-3.5" />
               Sparse classes
             </p>
-            <ul className="mt-1 space-y-0.5 text-[11px] text-amber-800/90 dark:text-amber-200/90 lg:text-[10px]">
+            <ul className={cn("mt-1 space-y-0.5 text-amber-800/90 dark:text-amber-200/90", tt.text.caption, tt.numeral)}>
               {incompleteGrades.slice(0, 5).map((g) => (
                 <li key={g.gradeId}>
                   {g.label}: {g.completionPercentage}%
@@ -377,7 +394,7 @@ export function TimetableShareDrawer({
         ) : null}
 
         {classLabel ? (
-          <p className="text-[11px] text-slate-400 lg:text-[10px]">
+          <p className={cn(tt.text.caption, tt.ink.faint)}>
             Viewing {classLabel} — print and class CSV apply to this class.
           </p>
         ) : null}
@@ -402,7 +419,7 @@ export function TimetableShareDrawer({
 
       <div className="shrink-0 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#0c1a17]">
         {blockedReason ? (
-          <p className="mb-2 flex items-start gap-1.5 border border-amber-200 bg-amber-50 px-2 py-1.5 text-[12px] leading-snug text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 lg:text-[11px]">
+          <p className={cn("mb-2 flex items-start gap-1.5 border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100", tt.text.small)}>
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span className="min-w-0">{blockedReason}</span>
           </p>
@@ -412,7 +429,7 @@ export function TimetableShareDrawer({
             variant="ghost"
             size="sm"
             onClick={close}
-            className="h-9 px-3 text-[12px] text-slate-500 lg:h-8 lg:px-2 lg:text-[11px]"
+            className={cn("h-9 px-3 lg:h-8 lg:px-2", tt.text.small, tt.ink.muted)}
           >
             Cancel
           </Button>
@@ -421,7 +438,8 @@ export function TimetableShareDrawer({
             disabled={!canMarkReady || busy}
             title={blockedReason ?? undefined}
             className={cn(
-              "h-9 shrink-0 px-3 text-[12px] font-medium lg:h-8",
+              "h-9 shrink-0 px-3 font-medium lg:h-8",
+              tt.text.small,
               tt.accentBtn,
             )}
             onClick={async () => {
@@ -461,7 +479,10 @@ export function TimetableShareDrawer({
       direction="bottom"
     >
       <DrawerContent
-        className="flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950"
+        className={cn(
+          "flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t bg-white dark:bg-[#0c1a17]",
+          tt.border.hair,
+        )}
         data-vaul-drawer-direction="bottom"
       >
         {panel}
