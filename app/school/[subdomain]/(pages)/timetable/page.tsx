@@ -804,6 +804,14 @@ export default function SmartTimetableNew() {
   const [addingPeriods, setAddingPeriods] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
+  // Whole-school grid is opt-in: landing shows a class picker until the user
+  // asks for it (toolbar button or sidebar "All classes").
+  const [schoolWideView, setSchoolWideView] = useState(false);
+  const [lastClass, setLastClass] = useState<{
+    gradeId: string;
+    streamId: string | null;
+    label: string;
+  } | null>(null);
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [dayTemplates, setDayTemplates] = useState<any[]>([]);
@@ -1214,6 +1222,17 @@ export default function SmartTimetableNew() {
     [selectedGradeId, setSelectedGrade, setSelectedStream],
   );
 
+  const schoolWideActive = !selectedGradeId && schoolWideView;
+
+  const exitWholeSchoolView = useCallback(() => {
+    setSchoolWideView(false);
+    if (lastClass) {
+      setSelectedGrade(lastClass.gradeId);
+      setSelectedStream(lastClass.streamId);
+      setLastClass(null);
+    }
+  }, [lastClass, setSelectedGrade, setSelectedStream]);
+
   const openClassSidebar = useCallback(() => {
     if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
       setIsSidebarMinimized(false);
@@ -1267,6 +1286,27 @@ export default function SmartTimetableNew() {
 
   const classDisplayLabel =
     currentGrade?.displayName || currentGrade?.name || "Class";
+
+  const openWholeSchoolView = useCallback(() => {
+    if (selectedGradeId) {
+      setLastClass({
+        gradeId: selectedGradeId,
+        streamId: selectedStreamId,
+        label: `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`,
+      });
+    }
+    setSchoolWideView(true);
+    setSelectedGrade(null);
+    setSelectedStream(null);
+    setIsClassDrawerOpen(false);
+  }, [
+    selectedGradeId,
+    selectedStreamId,
+    classDisplayLabel,
+    currentStream,
+    setSelectedGrade,
+    setSelectedStream,
+  ]);
 
   const handlePrintClassTimetable = useCallback(() => {
     if (!selectedGradeId) {
@@ -2112,6 +2152,7 @@ export default function SmartTimetableNew() {
                       selectedStreamId={sidebarSelectedStreamId}
                       allClassesSelected={selectedGradeId === null}
                       onSelectAllClasses={() => {
+                        setSchoolWideView(true);
                         setSelectedGrade(null);
                         setIsClassDrawerOpen(false);
                       }}
@@ -2157,7 +2198,9 @@ export default function SmartTimetableNew() {
                   <h1 className={cn("truncate font-display", tt.text.display, tt.ink.strong)}>
                     {selectedGradeId
                       ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
-                      : "All classes"}
+                      : schoolWideView
+                        ? "All classes"
+                        : "Choose a class"}
                   </h1>
                   <RealtimeLiveIndicator />
                 </div>
@@ -2187,6 +2230,38 @@ export default function SmartTimetableNew() {
                   ) : null}
                 </p>
               </div>
+              {hasScheduleStructure ? (
+                <ToolbarHint
+                  text={
+                    schoolWideActive
+                      ? "Go back to one class's timetable."
+                      : "See every class side by side on one grid."
+                  }
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-pressed={schoolWideActive}
+                    onClick={
+                      schoolWideActive ? exitWholeSchoolView : openWholeSchoolView
+                    }
+                    className={cn(
+                      "h-8 shrink-0 gap-1.5 rounded-none font-medium",
+                      tt.text.small,
+                      schoolWideActive
+                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+                        : "border-[#246a59]/30 text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                    )}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    {schoolWideActive
+                      ? lastClass
+                        ? `Back to ${lastClass.label}`
+                        : "Close whole school"
+                      : "Whole school"}
+                  </Button>
+                </ToolbarHint>
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-1.5 lg:flex-nowrap">
@@ -2789,6 +2864,7 @@ export default function SmartTimetableNew() {
                       periodCount={periodNumbers.length || lessonPeriodsPerDay || 7}
                     />
                   ) : !selectedGradeId ? (
+                    schoolWideView ? (
                     <AdminTimetableGrid
                       schoolCombined
                       columnWidthStorageKey={`timetable-column-widths-${subdomain}-all`}
@@ -2817,6 +2893,79 @@ export default function SmartTimetableNew() {
                       movingBreakId={movingBreakId}
                       onCreateSchedule={() => setShowTimetableWizard(true)}
                     />
+                    ) : (
+                      <div className="flex h-full min-h-[320px] items-center justify-center p-4">
+                        <div
+                          className={cn(
+                            "w-full max-w-md border bg-[#f8fbfa] p-6 text-center dark:bg-[#0c1a17]",
+                            tt.border.hair,
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "mx-auto flex h-10 w-10 items-center justify-center border bg-[#f3f7f5] dark:bg-[#071411]",
+                              tt.border.hair,
+                            )}
+                          >
+                            <LayoutGrid className={cn("h-4 w-4", tt.ink.muted)} />
+                          </div>
+                          <h3
+                            className={cn(
+                              "mt-3 font-display",
+                              tt.text.title,
+                              tt.ink.strong,
+                            )}
+                          >
+                            Choose a class
+                          </h3>
+                          <p className={cn("mt-1", tt.text.small, tt.ink.muted)}>
+                            Pick a class from the list to view and edit its
+                            timetable.
+                          </p>
+                          {grades.length > 0 ? (
+                            <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                              {grades.slice(0, 12).map((grade) => (
+                                <button
+                                  key={grade.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSchoolWideView(false);
+                                    setSelectedGrade(grade.id);
+                                  }}
+                                  className={cn(
+                                    "rounded-none border px-2.5 py-1.5 font-medium transition-colors",
+                                    tt.text.small,
+                                    tt.border.hair,
+                                    tt.ink.base,
+                                    "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
+                                  )}
+                                >
+                                  {grade.displayName || grade.name}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                          <div className={cn("mt-5 border-t pt-4", tt.border.hair)}>
+                            <p className={cn(tt.text.caption, tt.ink.muted)}>
+                              Need the bigger picture?
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "mt-2 h-8 gap-1.5 rounded-none font-medium",
+                                tt.text.small,
+                              )}
+                              onClick={() => setSchoolWideView(true)}
+                            >
+                              <LayoutGrid className="h-3.5 w-3.5" />
+                              View whole school
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
                   ) : (
                     <div className="hidden lg:block">
                       <AdminTimetableGrid

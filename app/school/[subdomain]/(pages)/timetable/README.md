@@ -166,6 +166,23 @@ A post-delete verification pass found six more zero-reference files. These are n
 
 ---
 
+## Whole-school view is opt-in (shipped)
+
+The whole-school grid no longer renders by default when you land on the page. The default flow is now **open page → pick a class → edit that class's timetable**, with the whole-school grid one click away.
+
+**Landing state (no class selected):** a "Choose a class" empty state in the grid area — quick class chips (up to 12) plus a "View whole school" button. The sidebar remains the full class list.
+
+**"Whole school" toolbar button** (left of the title, `LayoutGrid` icon):
+- From a class: switches to the whole-school grid, remembering the class. The button becomes "Back to {class}" while you're in the whole-school view, so toggling back is one click.
+- The sidebar "All classes" item enters the same view (without the one-click return).
+- Clicking any lesson chip inside the whole-school grid still jumps straight into that class.
+
+**Implementation:** `schoolWideView` + `lastClass` state in `page.tsx`; grid selection is `!selectedGradeId ? (schoolWideView ? <combined grid> : <class picker>) : <class grid>`. Entering the whole-school view clears the class selection, so every scope-aware surface (status meter, health panel, share drawer) stays consistent — they already treat "no class selected" as school scope.
+
+Mobile keeps its own panel and is unchanged.
+
+---
+
 ## Design system
 
 The whole flow shares one token layer in `utils/timetableTheme.ts` (`tt`). The polish pass replaced ad-hoc values with these tokens — keep using them.
