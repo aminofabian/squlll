@@ -1,25 +1,39 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { getTimetableReadiness } from "../utils/getTimetableReadiness";
 
 type TimetableStatusMeterProps = {
   filled: number;
   total: number;
+  /** Clashes force the meter red even when the grid is nearly full. */
+  clashCount?: number;
   className?: string;
 };
 
 export function TimetableStatusMeter({
   filled,
   total,
+  clashCount = 0,
   className,
 }: TimetableStatusMeterProps) {
   if (total <= 0) return null;
-  const pct = Math.min(100, Math.round((filled / total) * 100));
+  const { fillPct: pct, verdict } = getTimetableReadiness({
+    hasScheduleStructure: true,
+    hasAnyLessons: filled > 0,
+    filledSlots: filled,
+    totalSlots: total,
+    clashCount,
+  });
 
   return (
     <div
       className={cn("flex min-w-0 items-center gap-2", className)}
-      title={`${filled} of ${total} lesson periods scheduled`}
+      title={
+        clashCount > 0
+          ? `${filled} of ${total} lesson periods scheduled · ${clashCount} clash${clashCount === 1 ? "" : "es"}`
+          : `${filled} of ${total} lesson periods scheduled`
+      }
     >
       <div
         className="h-1 w-16 overflow-hidden bg-[#1a4d42]/10 dark:bg-white/10 sm:w-20"
@@ -32,17 +46,24 @@ export function TimetableStatusMeter({
         <div
           className={cn(
             "h-full transition-[width]",
-            pct >= 85
-              ? "bg-emerald-500"
-              : pct > 0
-                ? "bg-[#246a59]"
-                : "bg-transparent",
+            verdict === "clashes"
+              ? "bg-red-500"
+              : verdict === "ready"
+                ? "bg-emerald-500"
+                : filled > 0
+                  ? "bg-[#246a59]"
+                  : "bg-transparent",
           )}
           style={{ width: `${Math.max(pct, filled > 0 ? 4 : 0)}%` }}
         />
       </div>
       <span className="whitespace-nowrap text-[11px] font-medium tabular-nums text-[#1a4d42]/65 dark:text-white/55">
         {pct}%
+        {clashCount > 0 ? (
+          <span className="ml-1 font-normal text-red-500">
+            · {clashCount} clash{clashCount === 1 ? "" : "es"}
+          </span>
+        ) : null}
         <span className="ml-1 hidden font-normal text-[#1a4d42]/40 xl:inline dark:text-white/35">
           {filled}/{total}
         </span>

@@ -20,6 +20,11 @@ import {
 import type { TimetableTermOverview } from "../hooks/useTimetableTermOverview";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
+import {
+  getTimetableReadiness,
+  type TimetablePublishState,
+  type TimetableReadinessVerdict,
+} from "../utils/getTimetableReadiness";
 
 interface TimetableShareDrawerProps {
   open: boolean;
@@ -123,17 +128,39 @@ export function TimetableShareDrawer({
   const noClashes = conflictCount === 0;
   const hasLessons = overview.gradesWithLessons > 0;
   const mostlyFilled = overview.overallPercentage >= 50;
-  const canMarkReady =
-    termReady && hasScheduleStructure && noClashes && hasLessons;
+  const publishState: TimetablePublishState = sharedAt
+    ? hasChangesSinceShare
+      ? "stale"
+      : "published"
+    : "unpublished";
+  const readiness = getTimetableReadiness({
+    hasTerm: termReady,
+    hasScheduleStructure,
+    hasAnyLessons: hasLessons,
+    filledSlots: overview.totalFilled,
+    totalSlots: overview.totalSlots,
+    clashCount: conflictCount,
+    publishState,
+  });
+  const canMarkReady = readiness.canPublish;
+
+  const verdictTone: Record<TimetableReadinessVerdict, keyof typeof tt.pill> = {
+    "no-structure": "neutral",
+    "not-started": "neutral",
+    clashes: "danger",
+    "in-progress": "info",
+    almost: "info",
+    ready: "success",
+  };
 
   const blockedReason = !termReady
     ? "Choose a term first."
     : !hasScheduleStructure
       ? "Set lesson times first."
       : !hasLessons
-        ? "Add lessons before publishing."
+        ? "Add lessons before sharing."
         : !noClashes
-          ? "Fix clashes before publishing."
+          ? "Fix clashes before sharing."
           : null;
 
   const incompleteGrades = overview.byGrade.filter(
@@ -201,9 +228,18 @@ export function TimetableShareDrawer({
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-2">
         <p className="text-[11px] leading-snug text-slate-500">
-          Publish so staff can see the week. You can still edit afterwards —
-          publish again if you make big changes.
+          Share so staff can see the week. You can still edit afterwards —
+          share again if you make big changes.
         </p>
+
+        <div className="flex flex-wrap items-center gap-2 border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-900/40">
+          <span className={cn(tt.pill.base, tt.pill[verdictTone[readiness.verdict]])}>
+            {readiness.label}
+          </span>
+          <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+            {readiness.nextStep}
+          </p>
+        </div>
 
         {sharedAt ? (
           <div
@@ -221,7 +257,7 @@ export function TimetableShareDrawer({
         ) : null}
 
         <section className="space-y-1.5">
-          <p className={tt.eyebrow}>Ready?</p>
+          <p className={tt.eyebrow}>Before you share</p>
           <ul className="space-y-1.5">
             <CheckRow
               ok={termReady}
@@ -249,10 +285,16 @@ export function TimetableShareDrawer({
                   : "No teacher or room is double-booked"
               }
             />
+          </ul>
+        </section>
+
+        <section className="space-y-1.5">
+          <p className={tt.eyebrow}>Recommended</p>
+          <ul className="space-y-1.5">
             <CheckRow
               ok={mostlyFilled}
               label="Mostly filled (50%+)"
-              detail={`${overview.overallPercentage}% of slots filled across classes`}
+              detail={`${overview.overallPercentage}% of slots filled across classes · optional`}
             />
           </ul>
         </section>
@@ -332,7 +374,7 @@ export function TimetableShareDrawer({
             }
           }}
         >
-          {busy ? "Publishing…" : "Publish for teachers"}
+          {busy ? "Sharing…" : "Share with teachers"}
         </Button>
       </div>
     </div>

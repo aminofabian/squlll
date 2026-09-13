@@ -27,6 +27,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { humanizeWeekTemplateError } from '@/lib/utils/timetable-setup';
+import { formatClockTime } from '../utils/formatClockTime';
 
 interface WeekTemplate {
   id: string;
@@ -79,7 +81,7 @@ export function WeekTemplateManager() {
 
   // Load templates on mount
   useEffect(() => {
-    loadTemplates(false);
+    loadTemplates(true);
   }, []);
 
   const loadTemplates = async (includeDetails = false) => {
@@ -88,15 +90,13 @@ export function WeekTemplateManager() {
       const result = await loadWeekTemplates(includeDetails);
       setTemplates(result);
       setShowDetails(includeDetails);
-      toast({
-        title: 'Success',
-        description: `Loaded ${result.length} week template(s)`,
-      });
     } catch (error) {
       console.error('Failed to load week templates:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to load week templates',
+        description: humanizeWeekTemplateError(
+          error instanceof Error ? error.message : 'Failed to load week templates',
+        ),
         variant: 'destructive',
       });
     } finally {
@@ -126,7 +126,9 @@ export function WeekTemplateManager() {
       console.error('Failed to update week template:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update week template',
+        description: humanizeWeekTemplateError(
+          error instanceof Error ? error.message : 'Failed to update week template',
+        ),
         variant: 'destructive',
       });
     } finally {
@@ -160,16 +162,18 @@ export function WeekTemplateManager() {
       await loadTemplates(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to rebuild periods';
-      
+
       // Check if this is the "entries exist" error
       if (errorMessage.includes('cannot rebuild periods') && errorMessage.includes('timetable entries exist')) {
-        setRebuildError(errorMessage);
+        setRebuildError(
+          'This template already has lessons scheduled. Rebuilding will delete them — continue only if you want to remove those lessons.',
+        );
         setShowForceConfirm(true);
       } else {
         console.error('Failed to rebuild week template periods:', error);
         toast({
           title: 'Error',
-          description: errorMessage,
+          description: humanizeWeekTemplateError(errorMessage),
           variant: 'destructive',
         });
         setShowRebuildDialog(false);
@@ -214,8 +218,8 @@ export function WeekTemplateManager() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
-            <Button 
-              onClick={() => loadTemplates(false)} 
+            <Button
+              onClick={() => loadTemplates(true)}
               disabled={loading}
               variant="outline"
             >
@@ -227,23 +231,7 @@ export function WeekTemplateManager() {
               ) : (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Load Templates (Basic)
-                </>
-              )}
-            </Button>
-            <Button 
-              onClick={() => loadTemplates(true)} 
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Load Templates (Full Details)
+                  Refresh
                 </>
               )}
             </Button>
@@ -251,7 +239,7 @@ export function WeekTemplateManager() {
 
           {templates.length === 0 && !loading && (
             <p className="text-sm text-muted-foreground">
-              No week templates found. Click the button above to load templates.
+              No week templates yet. Set up your school day to create one.
             </p>
           )}
 
@@ -303,7 +291,7 @@ export function WeekTemplateManager() {
                                   </Badge>
                                   <span className="text-sm font-medium">
                                     <Clock className="inline h-3 w-3 mr-1" />
-                                    {day.startTime}
+                                    {formatClockTime(day.startTime)}
                                   </span>
                                   <span className="text-sm text-muted-foreground">
                                     {day.periodCount} periods
@@ -326,7 +314,7 @@ export function WeekTemplateManager() {
                                     >
                                       <div className="font-medium">Period {period.periodNumber}</div>
                                       <div className="text-muted-foreground">
-                                        {period.startTime.substring(0, 5)} - {period.endTime.substring(0, 5)}
+                                        {formatClockTime(period.startTime)} – {formatClockTime(period.endTime)}
                                       </div>
                                     </div>
                                   ))}
@@ -350,7 +338,8 @@ export function WeekTemplateManager() {
           <DialogHeader>
             <DialogTitle>Update Week Template</DialogTitle>
             <DialogDescription>
-              Update the default start time for {selectedTemplate?.name}. This will reset all day templates and periods.
+              All days shift to the new start time and their periods are rebuilt from it.
+              If lessons are already scheduled, the update is blocked so nothing is lost.
             </DialogDescription>
           </DialogHeader>
           

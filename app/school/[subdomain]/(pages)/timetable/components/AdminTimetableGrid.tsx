@@ -1115,6 +1115,10 @@ function CombinedLessonCell({
   highlightTeacherId?: string | null;
   onSelect?: (entry: LessonEntry) => void;
 }) {
+  // Declared before the empty-cell early return so hook order stays stable when
+  // a slot goes from 0 → 1 entries (adding the first lesson in combined view).
+  const [expanded, setExpanded] = useState(false);
+
   if (entries.length === 0) {
     return (
       <div
@@ -1136,7 +1140,6 @@ function CombinedLessonCell({
   const twoColumn = entries.length > 1;
   const manyEntries = entries.length >= 15;
   const multiClass = entries.length > 1;
-  const [expanded, setExpanded] = useState(false);
 
   return (
     <TooltipProvider delayDuration={250}>

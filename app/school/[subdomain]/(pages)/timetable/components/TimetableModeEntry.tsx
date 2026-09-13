@@ -16,6 +16,8 @@ import { tt } from "../utils/timetableTheme";
 interface TimetableModeEntryProps {
   onChooseManual: () => void;
   onChooseAutomatic: () => void;
+  /** Dismiss the chooser without committing to a method. */
+  onSkip: () => void;
   className?: string;
   /** Optional context for the chooser copy */
   termLabel?: string | null;
@@ -31,6 +33,7 @@ interface TimetableModeEntryProps {
 export function TimetableModeEntry({
   onChooseManual,
   onChooseAutomatic,
+  onSkip,
   className,
   termLabel,
   classLabel,
@@ -168,7 +171,7 @@ export function TimetableModeEntry({
                 <Wand2 className="h-4 w-4 text-[#246a59]/50 transition group-hover:text-[#246a59]" />
               </div>
               <p className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-50">
-                Auto-generate
+                Auto-fill
               </p>
               <p className={cn(tt.caption, "mt-1.5 text-[12.5px]")}>
                 Tell us who teaches what, set workload limits, then generate a
@@ -185,7 +188,7 @@ export function TimetableModeEntry({
                 </li>
               </ul>
               <span className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#246a59] transition group-hover:gap-2.5">
-                Set up & generate
+                Set up & auto-fill
                 <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </button>
@@ -193,11 +196,11 @@ export function TimetableModeEntry({
 
           <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
             <p className="text-[11px] text-slate-400">
-              Tip: you can reopen auto-generate anytime from the ⋮ menu.
+              Tip: you can reopen auto-fill anytime from the ⋮ menu.
             </p>
             <button
               type="button"
-              onClick={onChooseManual}
+              onClick={onSkip}
               className="shrink-0 text-[12px] font-medium text-slate-500 underline-offset-2 hover:text-slate-800 hover:underline dark:hover:text-slate-200"
             >
               Skip for now

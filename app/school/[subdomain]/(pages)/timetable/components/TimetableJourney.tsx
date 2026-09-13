@@ -74,6 +74,8 @@ interface Stop {
   description: string;
   icon: LucideIcon;
   done: boolean;
+  /** Done, but with advisories worth a look — rendered amber, not green. */
+  attention?: boolean;
   doneHint?: string;
   optional?: boolean;
   actionLabel?: string;
@@ -217,27 +219,31 @@ export function TimetableJourney({
         "We show anything that needs your attention — a teacher booked twice, or a class short of lessons — and take you straight to it.",
       icon: AlertTriangle,
       done: lessonCount > 0 && clashCount === 0,
+      attention: lessonCount > 0 && clashCount === 0 && issueCount > 0,
       doneHint:
-        lessonCount > 0 && clashCount === 0
-          ? issueCount > 0
-            ? `Nothing clashing · ${issueCount} thing${issueCount === 1 ? "" : "s"} to look at`
-            : "Nothing clashing"
-          : undefined,
-      actionLabel: issueCount > 0 ? `Review ${issueCount}` : undefined,
+        lessonCount === 0
+          ? undefined
+          : clashCount > 0
+            ? `${clashCount} clash${clashCount === 1 ? "" : "es"} to fix`
+            : issueCount > 0
+              ? `Nothing clashing · ${issueCount} thing${issueCount === 1 ? "" : "s"} worth a look`
+              : "Nothing clashing",
+      actionLabel:
+        lessonCount > 0 && issueCount > 0 ? `Review ${issueCount}` : undefined,
       onAction: issueCount > 0 ? onReviewIssues : undefined,
     },
     {
       id: "share",
       label: "Share",
-      title: "Share with your staff",
+      title: "Share with teachers",
       description:
-        "Publish when you're happy and every teacher sees their own lessons. You can still make changes and publish again.",
+        "Share when you're happy and every teacher sees their own lessons. You can still make changes and share again.",
       icon: Share2,
       done: publishState === "published",
       doneHint:
         publishState === "published" ? "Teachers can see it" : undefined,
       actionLabel:
-        publishState === "stale" ? "Publish again" : "Publish for teachers",
+        publishState === "stale" ? "Share again" : "Share with teachers",
       onAction: onPublish,
     },
   ];
@@ -262,28 +268,38 @@ export function TimetableJourney({
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[11px] font-medium",
-                stop.done
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                  : isCurrent
-                    ? "border-[#246a59] bg-[#246a59] text-white"
-                    : isSkipped
-                      ? "border-dashed border-slate-300 bg-transparent text-slate-400 dark:border-slate-600 dark:text-slate-500"
-                      : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400",
+                stop.attention
+                  ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                  : stop.done
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : isCurrent
+                      ? "border-[#246a59] bg-[#246a59] text-white"
+                      : isSkipped
+                        ? "border-dashed border-slate-300 bg-transparent text-slate-400 dark:border-slate-600 dark:text-slate-500"
+                        : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400",
               )}
               aria-current={isCurrent ? "step" : undefined}
             >
               <span
                 className={cn(
                   "flex h-4 w-4 shrink-0 items-center justify-center rounded-none text-[9px] font-bold tabular-nums",
-                  stop.done
-                    ? "bg-emerald-600 text-white"
-                    : isCurrent
-                      ? "bg-white/25 text-white"
-                      : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+                  stop.attention
+                    ? "bg-amber-500 text-white"
+                    : stop.done
+                      ? "bg-emerald-600 text-white"
+                      : isCurrent
+                        ? "bg-white/25 text-white"
+                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
                 )}
                 aria-hidden
               >
-                {stop.done ? <Check className="h-2.5 w-2.5" /> : i + 1}
+                {stop.attention ? (
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                ) : stop.done ? (
+                  <Check className="h-2.5 w-2.5" />
+                ) : (
+                  i + 1
+                )}
               </span>
               {stop.label}
             </span>
@@ -326,7 +342,7 @@ export function TimetableJourney({
           )}
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[#0a1f1a] dark:text-white">
-              {current ? current.title : "Your timetable is published"}
+              {current ? current.title : "Your timetable is shared"}
               <span className="ml-2 font-normal text-[#1a4d42]/45 dark:text-white/40">
                 {doneCount}/{stops.length}
                 {current?.optional ? " · optional" : ""}

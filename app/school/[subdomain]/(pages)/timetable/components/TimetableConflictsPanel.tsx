@@ -183,9 +183,9 @@ export function TimetableConflictsPanel({
           </span>
           <span className={cn(tt.caption, "block")}>
             {clashTotal > 0
-              ? `${clashTotal} must be fixed before publishing`
-              : "Nothing blocking — a few things worth checking"}
-            {advisoryTotal > 0 ? ` · ${advisoryTotal} to check` : ""}
+              ? `${clashTotal} clash${clashTotal === 1 ? "" : "es"} must be fixed before sharing`
+              : "Nothing blocking — a few things worth a look"}
+            {advisoryTotal > 0 ? ` · ${advisoryTotal} to review` : ""}
           </span>
         </span>
         <ChevronDown
@@ -210,7 +210,7 @@ export function TimetableConflictsPanel({
             <div className="border-b border-slate-100 dark:border-slate-800">
               <GroupHeader
                 icon={ShieldAlert}
-                title="Must fix"
+                title="Clashes"
                 hint="The same teacher or room is booked twice at once."
                 count={clashTotal}
                 tone="danger"
@@ -242,7 +242,7 @@ export function TimetableConflictsPanel({
             <div>
               <GroupHeader
                 icon={Info}
-                title="Worth checking"
+                title="Coverage gaps & workload notes"
                 hint="Allocations not fully met and workload rules stretched."
                 count={advisoryTotal}
                 tone="warn"

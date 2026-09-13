@@ -789,6 +789,7 @@ export default function SmartTimetableNew() {
   // State
   const [showFullSubjectName, setShowFullSubjectName] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
+  const [lessonSaving, setLessonSaving] = useState(false);
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
   const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
@@ -876,6 +877,8 @@ export default function SmartTimetableNew() {
 
   const openLessonEditor = useCallback(
     (lesson: any) => {
+      // Ignore new edit requests while a save is in flight.
+      if (lessonSaving) return;
       setInspectorTab(null);
       if (!autoGenerateOpen && !editingLesson && !shareDrawerOpen) {
         sidebarBeforeGenerateRef.current = isSidebarMinimized;
@@ -885,7 +888,13 @@ export default function SmartTimetableNew() {
       setIsSidebarMinimized(true);
       setEditingLesson(lesson);
     },
-    [autoGenerateOpen, isSidebarMinimized, editingLesson, shareDrawerOpen],
+    [
+      autoGenerateOpen,
+      isSidebarMinimized,
+      editingLesson,
+      shareDrawerOpen,
+      lessonSaving,
+    ],
   );
 
   const closeShareDrawer = useCallback(() => {
@@ -1932,7 +1941,7 @@ export default function SmartTimetableNew() {
             className={ttMenu.item}
           >
             <Sparkles />
-            Fill timetable from weekly lessons
+            Auto-fill from weekly lessons
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem
@@ -1950,12 +1959,12 @@ export default function SmartTimetableNew() {
         ) : null}
         {hasScheduleStructure && selectedTerm ? (
           <DropdownMenuItem
-            title="Saves apply immediately. Use this to publish for teachers."
+            title="Saves apply immediately. Use this to share with teachers."
             onClick={() => openShareDrawer()}
             className={ttMenu.item}
           >
             <Share2 />
-            Publish for teachers
+            Share with teachers
           </DropdownMenuItem>
         ) : null}
         {selectedGradeId &&
@@ -2181,7 +2190,8 @@ export default function SmartTimetableNew() {
                       ? stats.totalSlots
                       : termOverview.totalSlots
                   }
-                  className="mr-1 hidden xl:flex"
+                  clashCount={conflictCount}
+                  className="mr-1 hidden lg:flex"
                 />
               ) : null}
 
@@ -2224,7 +2234,7 @@ export default function SmartTimetableNew() {
                     aria-pressed={autoGenerateOpen}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Fill timetable
+                    Auto-fill timetable
                   </Button>
                 </ToolbarHint>
               )}
@@ -2355,7 +2365,7 @@ export default function SmartTimetableNew() {
                 </Popover>
 
                 {hasScheduleStructure && selectedTerm && (
-                  <ToolbarHint text="Teachers only see this term after you publish. Edits save as you go — publish again when the week is ready.">
+                  <ToolbarHint text="Teachers only see this term after you share it. Edits save as you go — share again when the week is ready.">
                     <Button
                       variant="outline"
                       size="sm"
@@ -2374,9 +2384,9 @@ export default function SmartTimetableNew() {
                     >
                       <Share2 className="h-3.5 w-3.5" />
                       {sharedAt && !changesSinceShare
-                        ? "Published"
+                        ? "Shared"
                         : changesSinceShare
-                          ? "Publish updates"
+                          ? "Share updates"
                           : "Share with teachers"}
                     </Button>
                   </ToolbarHint>
@@ -2408,7 +2418,7 @@ export default function SmartTimetableNew() {
                         className={ttMenu.item}
                       >
                         <Sparkles />
-                        Fill timetable from weekly lessons
+                        Auto-fill from weekly lessons
                       </DropdownMenuItem>
                     )}
                     {hasScheduleStructure && (
@@ -2452,12 +2462,12 @@ export default function SmartTimetableNew() {
                     </DropdownMenuItem>
                     {hasScheduleStructure && selectedTerm && (
                       <DropdownMenuItem
-                        title="Saves apply immediately. Use this to publish for teachers."
+                        title="Saves apply immediately. Use this to share with teachers."
                         onClick={() => openShareDrawer()}
                         className={ttMenu.item}
                       >
                         <Share2 />
-                        Publish for teachers
+                        Share with teachers
                       </DropdownMenuItem>
                     )}
                     {selectedGradeId && (
@@ -3025,6 +3035,7 @@ export default function SmartTimetableNew() {
             onDeleteAllocation={deleteAllocation}
             onUpsertRules={upsertRules}
             onRunPreflight={runPreflight}
+            existingLessonCount={schoolLessonCount}
             onGenerate={generateTimetable}
             onGenerated={(result) => {
               if (result?.entries?.length) {
@@ -3061,7 +3072,7 @@ export default function SmartTimetableNew() {
                 description: created
                   ? unresolved > 0
                     ? `${unresolved} left empty for you to fill later.`
-                    : "Review the grid, then publish for teachers."
+                    : "Review the grid, then share with teachers."
                   : "Subjects without a teacher, or lessons that could not fit, stay empty for later.",
               });
             }}
@@ -3070,6 +3081,8 @@ export default function SmartTimetableNew() {
           <LessonEditDialog
             lesson={editingLesson}
             onClose={closeLessonEditor}
+            onRequestDelete={(l) => setDeleteEntryConfirm(l)}
+            onSavingChange={setLessonSaving}
           />
 
           <TimetableShareDrawer
@@ -3099,13 +3112,13 @@ export default function SmartTimetableNew() {
                   });
                 }
                 toast({
-                  title: "Published for teachers",
+                  title: "Shared with teachers",
                   description:
                     "Teachers can now see this term's timetable. You can still edit; tell staff if you make big changes.",
                 });
               } catch (err) {
                 toast({
-                  title: "Could not publish",
+                  title: "Could not share",
                   description:
                     err instanceof Error ? err.message : "Please try again.",
                   variant: "destructive",
@@ -3170,6 +3183,7 @@ export default function SmartTimetableNew() {
               setModeEntryDismissed(true);
               openAutoGenerate();
             }}
+            onSkip={() => setModeEntryDismissed(true)}
           />
         </div>
       )}

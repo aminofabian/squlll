@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
@@ -95,6 +95,12 @@ function FormSection({
 interface LessonEditDialogProps {
   lesson: (EnrichedTimetableEntry & { isNew?: boolean }) | null;
   onClose: () => void;
+  /** Hand deletion to the page so it can reuse the grid's confirm + undo flow. */
+  onRequestDelete?: (
+    lesson: EnrichedTimetableEntry & { isNew?: boolean },
+  ) => void;
+  /** Tell the page a save is in flight so the grid can block more edits. */
+  onSavingChange?: (saving: boolean) => void;
 }
 
 function useIsLgDown() {
@@ -111,7 +117,12 @@ function useIsLgDown() {
   return isLgDown;
 }
 
-export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
+export function LessonEditDialog({
+  lesson,
+  onClose,
+  onRequestDelete,
+  onSavingChange,
+}: LessonEditDialogProps) {
   const {
     subjects,
     teachers,
@@ -137,6 +148,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   const subdomain = params?.subdomain as string | undefined;
   const knownRooms = useKnownRoomNumbers();
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Filter to only active teachers - memoized to prevent infinite loops
   const activeTeachers = useMemo(
@@ -152,6 +164,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   });
   const [moveDay, setMoveDay] = useState(1);
   const [movePeriod, setMovePeriod] = useState(1);
+  // Tracks which lesson the form has been seeded for, so store data arriving
+  // late never resets what the user has already typed.
+  const seededLessonKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    onSavingChange?.(isSaving);
+    // If the dialog unmounts mid-save (e.g. it closes on success), make sure the
+    // page is told the save is over so it doesn't block further edits.
+    return () => onSavingChange?.(false);
+  }, [isSaving, onSavingChange]);
 
   const { dayLabels, daysPerWeek } = useTimetableWeekDays();
   const periodOptions = useMemo(
@@ -171,7 +193,22 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   }, [lesson, loadSubjects, loadTeachers]);
 
   useEffect(() => {
-    if (lesson && !lesson.isNew) {
+    if (!lesson) {
+      seededLessonKeyRef.current = null;
+      return;
+    }
+
+    const lessonKey = lesson.isNew
+      ? `new-${lesson.dayOfWeek}-${lesson.timeSlotId ?? ""}`
+      : `edit-${lesson.id}`;
+
+    // Seed exactly once per lesson. Store data arriving later (subjects,
+    // teachers, entries) must never overwrite what the user has typed.
+    if (seededLessonKeyRef.current === lessonKey) return;
+    seededLessonKeyRef.current = lessonKey;
+    setSaveError(null);
+
+    if (!lesson.isNew) {
       const slot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
       setMoveDay(lesson.dayOfWeek);
       setMovePeriod(slot?.periodNumber ?? 1);
@@ -181,56 +218,22 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         roomNumber: lesson.roomNumber || "",
         isDoublePeriod: !!(lesson as any).isDoublePeriod,
       });
-    } else if (lesson && lesson.isNew) {
-      const clickedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
-      const targetPeriods = lessonTargetPeriods(
-        clickedSlot?.periodNumber,
-        false,
-      );
-      const busyTeacherIds = getBusyTeacherIds(
-        lesson.dayOfWeek,
-        targetPeriods,
-        entries,
-        timeSlots,
-      );
-
-      const grade = grades.find((g) => g.id === lesson.gradeId);
-
-      const classSubjects = subjectsForTimetableGrade(
-        lesson.gradeId,
-        grades,
-        subjects,
-        schoolConfigGetters,
-      );
-
-      const eligibleForGrade = activeTeachers.filter((teacher) => {
-        return (
-          teacherCanTeachGrade(teacher, grade?.name) &&
-          !busyTeacherIds.has(teacher.id)
-        );
-      });
-
-      const firstTeacher = eligibleForGrade[0];
-      const firstTeacherSubjects = firstTeacher
-        ? subjectsForSelectedTeacher(firstTeacher, classSubjects)
-        : [];
-
+    } else {
+      // No prefill — a suggestion chip is offered instead, so the user always
+      // makes the choice deliberately.
       setFormData({
-        subjectId: firstTeacherSubjects[0]?.id ?? "",
-        teacherId: firstTeacher?.id ?? "",
+        subjectId: "",
+        teacherId: "",
         roomNumber: "",
         isDoublePeriod: false,
       });
     }
-  }, [
-    lesson,
-    subjects,
-    activeTeachers,
-    entries,
-    grades,
-    schoolConfigGetters,
-    timeSlots,
-  ]);
+  }, [lesson, timeSlots]);
+
+  const failSave = (message: string) => {
+    setSaveError(message);
+    setIsSaving(false);
+  };
 
   const handleSave = async () => {
     if (!lesson) return;
@@ -239,22 +242,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     const termId = selectedTerm?.id || selectedTermId;
 
     if (!termId) {
-      toast({
-        title: "Choose a term first",
-        description:
-          "Use the term selector in the top bar, then try saving again.",
-        variant: "destructive",
-      });
+      failSave(
+        "Choose a term first. Use the term selector in the top bar, then try saving again.",
+      );
       return;
     }
 
     if (!selectedTerm?.academicYear?.name) {
-      toast({
-        title: "School year missing",
-        description:
-          "This term is not linked to a school year. Pick another term or contact support.",
-        variant: "destructive",
-      });
+      failSave(
+        "This term is not linked to a school year. Pick another term or contact support.",
+      );
       return;
     }
 
@@ -279,11 +276,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           !formData.teacherId ||
           !lesson.timeSlotId
         ) {
-          toast({
-            title: "Fill in all fields",
-            description: "Choose a subject and teacher before saving.",
-            variant: "destructive",
-          });
+          failSave("Choose a subject and teacher before saving.");
           setIsSaving(false);
           return;
         }
@@ -293,24 +286,18 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           grades,
         );
         if (!tenantGradeLevelId) {
-          toast({
-            title: "Class not found",
-            description:
-              "Could not resolve this class for saving. Try selecting the class again.",
-            variant: "destructive",
-          });
+          failSave(
+            "Could not resolve this class for saving. Try selecting the class again.",
+          );
           setIsSaving(false);
           return;
         }
 
         const clickedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
         if (!clickedSlot) {
-          toast({
-            title: "This period is not set up for this class",
-            description:
-              "The timetable structure for this grade may be missing. Open “Set up timetable” and include this class, or pick a different class.",
-            variant: "destructive",
-          });
+          failSave(
+            "The timetable structure for this class may be missing. Open “Set up timetable” and include this class, or pick a different class.",
+          );
           setIsSaving(false);
           return;
         }
@@ -319,11 +306,9 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           clickedSlot.dayOfWeek != null &&
           clickedSlot.dayOfWeek !== lesson.dayOfWeek
         ) {
-          toast({
-            title: "Wrong day for this period",
-            description: "Please close and click Add again on the correct day.",
-            variant: "destructive",
-          });
+          failSave(
+            "Wrong day for this period. Please close and click Add again on the correct day.",
+          );
           setIsSaving(false);
           return;
         }
@@ -339,13 +324,9 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             nextPeriodNumber,
           );
           if (!nextSlot) {
-            toast({
-              title: "No next period",
-              description:
-                "This lesson needs the following period free for a double lesson.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
+            failSave(
+              "This lesson needs the following period free for a double lesson.",
+            );
             return;
           }
           const nextTaken = entries.some(
@@ -354,12 +335,9 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
               getOccupiedPeriodNumbers(e, timeSlots).includes(nextPeriodNumber),
           );
           if (nextTaken) {
-            toast({
-              title: "Next period is taken",
-              description: "Clear the following period before adding a double lesson.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
+            failSave(
+              "Clear the following period before adding a double lesson.",
+            );
             return;
           }
         }
@@ -376,12 +354,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           timeSlots,
         });
         if (!createConflict.ok) {
-          toast({
-            title: createConflict.title,
-            description: createConflict.description,
-            variant: "destructive",
-          });
-          setIsSaving(false);
+          failSave(`${createConflict.title} — ${createConflict.description}`);
           return;
         }
 
@@ -432,12 +405,9 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             "Time slot has invalid ID format (likely mock data):",
             timeSlot,
           );
-          toast({
-            title: "Please refresh the page",
-            description:
-              "Lesson times did not load correctly. Refresh and try again.",
-            variant: "destructive",
-          });
+          failSave(
+            "Lesson times did not load correctly. Refresh and try again.",
+          );
           setIsSaving(false);
           return;
         }
@@ -463,19 +433,13 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
                 id.includes("dayTemplatePeriodId") || id.includes("timeSlotId"),
             )
           ) {
-            toast({
-              title: "Please refresh the page",
-              description:
-                "Lesson times did not load correctly. Refresh and try again.",
-              variant: "destructive",
-            });
+            failSave(
+              "Lesson times did not load correctly. Refresh and try again.",
+            );
           } else {
-            toast({
-              title: "Could not save lesson",
-              description:
-                "Something did not load correctly. Refresh the page and try again.",
-              variant: "destructive",
-            });
+            failSave(
+              "Something did not load correctly. Refresh the page and try again.",
+            );
           }
           setIsSaving(false);
           return;
@@ -484,32 +448,26 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         // Validate IDs exist
         if (!subject) {
           console.error("Subject not found:", formData.subjectId);
-          toast({
-            title: "Error",
-            description: `Subject ID ${formData.subjectId} not found in store`,
-            variant: "destructive",
-          });
+          failSave(
+            "That subject is no longer available. Refresh the page and try again.",
+          );
           setIsSaving(false);
           return;
         }
         if (!teacher) {
           console.error("Teacher not found or inactive:", formData.teacherId);
-          toast({
-            title: "Error",
-            description: `Teacher ID ${formData.teacherId} not found or is inactive`,
-            variant: "destructive",
-          });
+          failSave(
+            "That teacher is no longer available. Refresh the page and try again.",
+          );
           setIsSaving(false);
           return;
         }
 
         if (!timeSlot) {
           console.error("TimeSlot not found:", lesson.timeSlotId);
-          toast({
-            title: "Error",
-            description: `TimeSlot ID ${lesson.timeSlotId} not found in store`,
-            variant: "destructive",
-          });
+          failSave(
+            "That lesson time is no longer available. Refresh the page and try again.",
+          );
           setIsSaving(false);
           return;
         }
@@ -808,12 +766,9 @@ Check the browser console for detailed input information.`;
               e.id !== lesson.id,
           );
           if (slotTaken) {
-            toast({
-              title: "That slot is already filled",
-              description: `Pick another period or day for ${dayNameFromNumber(moveDay)}.`,
-              variant: "destructive",
-            });
-            setIsSaving(false);
+            failSave(
+              `That slot is already filled. Pick another period or day for ${dayNameFromNumber(moveDay)}.`,
+            );
             return;
           }
 
@@ -830,12 +785,7 @@ Check the browser console for detailed input information.`;
             excludeEntryId: lesson.id,
           });
           if (!moveConflict.ok) {
-            toast({
-              title: moveConflict.title,
-              description: moveConflict.description,
-              variant: "destructive",
-            });
-            setIsSaving(false);
+            failSave(`${moveConflict.title} — ${moveConflict.description}`);
             return;
           }
 
@@ -897,33 +847,23 @@ Check the browser console for detailed input information.`;
         }
 
         if (!targetSlot && movePeriod) {
-          toast({
-            title: "Invalid period",
-            description: "That period is not available on the selected day.",
-            variant: "destructive",
-          });
+          failSave("That period is not available on the selected day.");
           setIsSaving(false);
           return;
         }
 
         // Update existing entry via GraphQL mutation
         if (!lesson.id) {
-          toast({
-            title: "Error",
-            description: "Entry ID is missing. Cannot update entry.",
-            variant: "destructive",
-          });
+          failSave(
+            "This lesson could not be identified. Refresh the page and try again.",
+          );
           setIsSaving(false);
           return;
         }
 
         // Validate required fields
         if (!formData.subjectId || !formData.teacherId) {
-          toast({
-            title: "Error",
-            description: "Subject and Teacher are required fields.",
-            variant: "destructive",
-          });
+          failSave("Choose a subject and teacher before saving.");
           setIsSaving(false);
           return;
         }
@@ -940,13 +880,9 @@ Check the browser console for detailed input information.`;
             currentPeriod + 1,
           );
           if (!nextSlot) {
-            toast({
-              title: "No next period",
-              description:
-                "This lesson needs the following period free for a double lesson.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
+            failSave(
+              "This lesson needs the following period free for a double lesson.",
+            );
             return;
           }
           const nextTaken = entries.some(
@@ -958,12 +894,9 @@ Check the browser console for detailed input information.`;
               ),
           );
           if (nextTaken) {
-            toast({
-              title: "Next period is taken",
-              description: "Clear the following period before using a double lesson.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
+            failSave(
+              "Clear the following period before using a double lesson.",
+            );
             return;
           }
         }
@@ -986,12 +919,7 @@ Check the browser console for detailed input information.`;
           excludeEntryId: lesson.id,
         });
         if (!editConflict.ok) {
-          toast({
-            title: editConflict.title,
-            description: editConflict.description,
-            variant: "destructive",
-          });
-          setIsSaving(false);
+          failSave(`${editConflict.title} — ${editConflict.description}`);
           return;
         }
 
@@ -1131,11 +1059,7 @@ Check the browser console for detailed input information.`;
       }
     } catch (error) {
       console.error("Error saving lesson:", error);
-      toast({
-        title: "Could not save lesson",
-        description: sanitizeTimetableUserMessage(error),
-        variant: "destructive",
-      });
+      failSave(sanitizeTimetableUserMessage(error));
     } finally {
       setIsSaving(false);
     }
@@ -1144,7 +1068,14 @@ Check the browser console for detailed input information.`;
   const handleDelete = async () => {
     if (!lesson || lesson.isNew) return;
 
-    if (!confirm("Are you sure you want to delete this lesson?")) {
+    if (onRequestDelete) {
+      // Hand off to the page so deletion reuses the grid's confirm + undo.
+      onRequestDelete(lesson);
+      onClose();
+      return;
+    }
+
+    if (!confirm("Delete this lesson? You can undo from the grid.")) {
       return;
     }
 
@@ -1161,11 +1092,7 @@ Check the browser console for detailed input information.`;
       onClose();
     } catch (error) {
       console.error("Error deleting lesson:", error);
-      toast({
-        title: "Could not remove lesson",
-        description: sanitizeTimetableUserMessage(error),
-        variant: "destructive",
-      });
+      failSave(sanitizeTimetableUserMessage(error));
     } finally {
       setIsSaving(false);
     }
@@ -1243,42 +1170,52 @@ Check the browser console for detailed input information.`;
     timeSlots,
   ]);
 
-  useEffect(() => {
-    if (!lesson || !formData.teacherId) return;
-    if (!busyTeacherIds.has(formData.teacherId)) return;
+  const moveTargetIssue = useMemo(() => {
+    if (!lesson || lesson.isNew) return null;
+    const targetSlot = getTimeSlotForDayAndPeriod(timeSlots, moveDay, movePeriod);
+    const isMoving =
+      targetSlot &&
+      (moveDay !== lesson.dayOfWeek || targetSlot.id !== lesson.timeSlotId);
+    if (!isMoving || !targetSlot) return null;
+    const slotTaken = entries.some(
+      (e) =>
+        e.gradeId === lesson.gradeId &&
+        e.dayOfWeek === moveDay &&
+        e.timeSlotId === targetSlot.id &&
+        e.id !== lesson.id,
+    );
+    if (!slotTaken) return null;
+    return {
+      title: "That slot is already filled",
+      description: `Pick another period or day for ${dayNameFromNumber(moveDay)}.`,
+    };
+  }, [lesson, moveDay, movePeriod, timeSlots, entries]);
 
-    const grade = grades.find((g) => g.id === lesson.gradeId);
-    const classSubjects = subjectsForTimetableGrade(
-      lesson.gradeId,
-      grades,
-      subjects,
-      schoolConfigGetters,
+  const doublePeriodIssue = useMemo(() => {
+    if (!lesson || !formData.isDoublePeriod) return null;
+    const day = effectiveScheduling.day;
+    const nextPeriod = effectiveScheduling.periods[1];
+    if (!nextPeriod) return null;
+    const nextSlot = getTimeSlotForDayAndPeriod(timeSlots, day, nextPeriod);
+    if (!nextSlot) {
+      return {
+        title: "No next period",
+        description:
+          "This lesson needs the following period free for a double lesson.",
+      };
+    }
+    const nextTaken = entries.some(
+      (e) =>
+        e.id !== (!lesson.isNew ? lesson.id : undefined) &&
+        e.dayOfWeek === day &&
+        getOccupiedPeriodNumbers(e, timeSlots).includes(nextPeriod),
     );
-    const replacement = activeTeachers.find(
-      (teacher) =>
-        teacherCanTeachGrade(teacher, grade?.name) &&
-        !busyTeacherIds.has(teacher.id),
-    );
-    const replacementSubjects = subjectsForSelectedTeacher(
-      replacement,
-      classSubjects,
-    );
-    setFormData((prev) => ({
-      ...prev,
-      teacherId: replacement?.id ?? "",
-      subjectId: replacementSubjects.some((s) => s.id === prev.subjectId)
-        ? prev.subjectId
-        : (replacementSubjects[0]?.id ?? ""),
-    }));
-  }, [
-    lesson,
-    formData.teacherId,
-    busyTeacherIds,
-    activeTeachers,
-    grades,
-    subjects,
-    schoolConfigGetters,
-  ]);
+    if (!nextTaken) return null;
+    return {
+      title: "Next period is taken",
+      description: "Clear the following period before using a double lesson.",
+    };
+  }, [lesson, formData.isDoublePeriod, effectiveScheduling, entries, timeSlots]);
 
   if (!lesson) return null;
 
@@ -1308,20 +1245,6 @@ Check the browser console for detailed input information.`;
     .filter(Boolean)
     .join(" · ");
 
-  // Filter teachers who:
-  // 1. Can teach the selected grade (or show all if no grade selected)
-  // 2. Are NOT already scheduled at this timeslot
-  const availableTeachers = activeTeachers.filter((teacher) => {
-    const isAvailable = !busyTeacherIds.has(teacher.id);
-    return teacherCanTeachGrade(teacher, grade?.name) && isAvailable;
-  });
-
-  // Separate list: teachers who can teach this grade but are busy (for display purposes)
-  const busyButQualifiedTeachers = activeTeachers.filter((teacher) => {
-    const isBusy = busyTeacherIds.has(teacher.id);
-    return teacherCanTeachGrade(teacher, grade?.name) && isBusy;
-  });
-
   const gradeQualifiedTeachers = activeTeachers.filter((teacher) =>
     teacherCanTeachGrade(teacher, grade?.name),
   );
@@ -1336,13 +1259,32 @@ Check the browser console for detailed input information.`;
     schoolConfigGetters,
   );
 
-  const availableSubjectsForTeacher = subjectsForSelectedTeacher(
-    selectedTeacher,
-    subjectsForClass,
-    !isNew ? { includeSubjectId: formData.subjectId } : undefined,
+  // Subject-first: once a subject is chosen, only offer teachers who teach it.
+  const teachersForSubject = formData.subjectId
+    ? gradeQualifiedTeachers.filter((teacher) =>
+        subjectsForSelectedTeacher(teacher, subjectsForClass).some(
+          (s) => s.id === formData.subjectId,
+        ),
+      )
+    : gradeQualifiedTeachers;
+
+  const availableTeachers = teachersForSubject.filter(
+    (teacher) => !busyTeacherIds.has(teacher.id),
+  );
+  const busyButQualifiedTeachers = teachersForSubject.filter((teacher) =>
+    busyTeacherIds.has(teacher.id),
   );
 
+  // Keep the selected teacher visible in the dropdown even when booked — we
+  // never silently swap a user's choice.
+  const teacherOptions =
+    selectedTeacher &&
+    !availableTeachers.some((t) => t.id === selectedTeacher.id)
+      ? [...availableTeachers, selectedTeacher]
+      : availableTeachers;
+
   const handleTeacherChange = (teacherId: string) => {
+    setSaveError(null);
     const teacher = activeTeachers.find((t) => t.id === teacherId);
     const teacherSubjects = subjectsForSelectedTeacher(teacher, subjectsForClass);
     const keepCurrentSubject = teacherSubjects.some(
@@ -1357,8 +1299,59 @@ Check the browser console for detailed input information.`;
     });
   };
 
-  const saveBlockedReason = scheduleConflict
-    ? "Resolve the clash above before saving."
+  const handleSubjectChange = (subjectId: string) => {
+    setSaveError(null);
+    const teacherStillTeaches =
+      !selectedTeacher ||
+      subjectsForSelectedTeacher(selectedTeacher, subjectsForClass).some(
+        (s) => s.id === subjectId,
+      );
+    setFormData({
+      ...formData,
+      subjectId,
+      teacherId: teacherStillTeaches ? formData.teacherId : "",
+    });
+  };
+
+  // One-tap suggestion for a new lesson — never auto-filled.
+  const suggestedTeacher =
+    isNew && !formData.teacherId ? (availableTeachers[0] ?? null) : null;
+  const applySuggestion = () => {
+    if (!suggestedTeacher) return;
+    setSaveError(null);
+    const teacherSubjects = subjectsForSelectedTeacher(
+      suggestedTeacher,
+      subjectsForClass,
+    );
+    const subjectId =
+      formData.subjectId &&
+      teacherSubjects.some((s) => s.id === formData.subjectId)
+        ? formData.subjectId
+        : (teacherSubjects[0]?.id ?? "");
+    setFormData({ ...formData, teacherId: suggestedTeacher.id, subjectId });
+  };
+
+  // ── Live blocking rules: anything that stops a save is shown up-front ──
+  const effectiveTermId = selectedTerm?.id || selectedTermId;
+  const termIssue = !effectiveTermId
+    ? {
+        title: "Choose a term first",
+        description:
+          "Use the term selector in the top bar, then try saving again.",
+      }
+    : selectedTerm && !selectedTerm.academicYear?.name
+      ? {
+          title: "School year missing",
+          description:
+            "This term is not linked to a school year. Pick another term or contact support.",
+        }
+      : null;
+
+  const liveIssue =
+    termIssue ?? scheduleConflict ?? moveTargetIssue ?? doublePeriodIssue;
+
+  const saveBlockedReason = liveIssue
+    ? liveIssue.title
     : !formData.teacherId
       ? "Pick a teacher to continue."
       : !formData.subjectId
@@ -1408,15 +1401,43 @@ Check the browser console for detailed input information.`;
           isLgDown && "px-4 py-3",
         )}
       >
-        {scheduleConflict ? (
+        {saveError ? (
           <div className="flex gap-1.5 border border-red-200 bg-red-50 px-2.5 py-2 dark:border-red-900/50 dark:bg-red-950/40">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
-            <div className="min-w-0 text-[11px] text-red-800 dark:text-red-200">
-              <p className="font-semibold">{scheduleConflict.title}</p>
-              <p className="mt-0.5 text-red-700/90 dark:text-red-300/90">
-                {scheduleConflict.description}
-              </p>
+            <p className="min-w-0 text-[11px] text-red-800 dark:text-red-200">
+              {saveError}
+            </p>
+          </div>
+        ) : null}
+
+        {liveIssue ? (
+          <div className="space-y-2 border border-red-200 bg-red-50 px-2.5 py-2 dark:border-red-900/50 dark:bg-red-950/40">
+            <div className="flex gap-1.5">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
+              <div className="min-w-0 text-[11px] text-red-800 dark:text-red-200">
+                <p className="font-semibold">{liveIssue.title}</p>
+                <p className="mt-0.5 text-red-700/90 dark:text-red-300/90">
+                  {liveIssue.description}
+                </p>
+              </div>
             </div>
+            {availableTeachers.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-1.5 pl-5">
+                <span className="text-[10px] font-medium text-red-800/80 dark:text-red-200/80">
+                  Try instead:
+                </span>
+                {availableTeachers.slice(0, 3).map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => handleTeacherChange(t.id)}
+                    className="border border-red-300 bg-white px-2 py-0.5 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200"
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -1479,20 +1500,26 @@ Check the browser console for detailed input information.`;
         <FormSection title="Teacher" hint={teacherHint}>
           <TeacherSelect
             id="teacher"
-            value={
-              availableTeachers.some((t) => t.id === formData.teacherId)
-                ? formData.teacherId
-                : undefined
-            }
+            value={formData.teacherId || undefined}
             onValueChange={handleTeacherChange}
-            teachers={availableTeachers}
+            teachers={teacherOptions}
             emptyLabel="No teachers available"
           />
+
+          {suggestedTeacher ? (
+            <button
+              type="button"
+              onClick={applySuggestion}
+              className="inline-flex items-center gap-1 border border-[#246a59]/30 bg-[#246a59]/5 px-2 py-0.5 text-[10px] font-medium text-[#246a59] transition-colors hover:bg-[#246a59]/10"
+            >
+              Suggested: {suggestedTeacher.name} — free this period
+            </button>
+          ) : null}
 
           {availableTeachers.length === 0 ? (
             <p className="text-[11px] text-red-600 dark:text-red-400">
               {busyButQualifiedTeachers.length > 0
-                ? `${busyButQualifiedTeachers.length} already booked this period.`
+                ? `Everyone who teaches this is already booked this period.`
                 : `No teachers assigned to ${grade?.name || "this grade"}.`}
             </p>
           ) : null}
@@ -1509,21 +1536,26 @@ Check the browser console for detailed input information.`;
           <SubjectSelect
             id="subject"
             value={formData.subjectId || undefined}
-            onValueChange={(value) =>
-              setFormData({ ...formData, subjectId: value })
-            }
-            subjects={availableSubjectsForTeacher}
-            disabled={!formData.teacherId || availableSubjectsForTeacher.length === 0}
-            placeholder={
-              formData.teacherId
-                ? "Select subject"
-                : "Select a teacher first"
-            }
-            emptyLabel="No subjects for this teacher"
+            onValueChange={handleSubjectChange}
+            subjects={subjectsForClass}
+            disabled={subjectsForClass.length === 0}
+            placeholder="Select subject"
+            emptyLabel="No subjects for this class"
           />
+          {formData.subjectId &&
+          availableTeachers.length === 0 &&
+          busyButQualifiedTeachers.length > 0 ? (
+            <p className="text-[11px] text-amber-700 dark:text-amber-300">
+              Everyone who teaches{" "}
+              {subjects.find((s) => s.id === formData.subjectId)?.name ??
+                "this subject"}{" "}
+              is busy this period.
+            </p>
+          ) : null}
           {formData.teacherId &&
-          availableSubjectsForTeacher.length === 0 &&
-          selectedTeacher ? (
+          selectedTeacher &&
+          subjectsForSelectedTeacher(selectedTeacher, subjectsForClass).length ===
+            0 ? (
             <p className="text-[11px] text-slate-500">
               {selectedTeacher.name} has no subjects for this class.{" "}
               {subdomain ? (
@@ -1596,47 +1628,55 @@ Check the browser console for detailed input information.`;
         </label>
       </div>
 
-      <div
-        className={cn(
-          "flex shrink-0 items-center justify-between gap-2 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#0c1a17]",
-          isLgDown && "px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
-        )}
-      >
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            disabled={isSaving}
-            className="h-8 px-2 text-[11px] text-slate-500"
-          >
-            Cancel
-          </Button>
-          {!isNew ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              className="h-8 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
-            >
-              Delete
-            </Button>
-          ) : null}
-        </div>
+      <div className="flex shrink-0 flex-col border-t border-[#1a4d42]/10 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
         {saveBlockedReason ? (
-          <p className="hidden min-w-0 truncate text-[11px] text-slate-400 sm:block">
+          <p className="px-3 pt-2 text-[11px] text-slate-500 sm:hidden">
             {saveBlockedReason}
           </p>
         ) : null}
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={!!saveBlockedReason || isSaving}
-          title={saveBlockedReason ?? undefined}
-          className={cn("h-8 shrink-0 px-3 text-[12px] font-medium", tt.accentBtn)}
+        <div
+          className={cn(
+            "flex items-center justify-between gap-2 px-3 py-2",
+            isLgDown && "px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+          )}
         >
-          {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save changes"}
-        </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              disabled={isSaving}
+              className="h-8 px-2 text-[11px] text-slate-500"
+            >
+              Cancel
+            </Button>
+            {!isNew ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isSaving}
+                className="h-8 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
+              >
+                Delete
+              </Button>
+            ) : null}
+          </div>
+          {saveBlockedReason ? (
+            <p className="hidden min-w-0 truncate text-[11px] text-slate-400 sm:block">
+              {saveBlockedReason}
+            </p>
+          ) : null}
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!!saveBlockedReason || isSaving}
+            title={saveBlockedReason ?? undefined}
+            className={cn("h-8 shrink-0 px-3 text-[12px] font-medium", tt.accentBtn)}
+          >
+            {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save changes"}
+          </Button>
+        </div>
       </div>
     </div>
   );

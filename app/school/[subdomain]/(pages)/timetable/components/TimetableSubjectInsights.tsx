@@ -74,8 +74,8 @@ export function TimetableSubjectInsights({
               Subject coverage
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
-              {insights.length} item{insights.length !== 1 ? "s" : ""} to review
-              for this class
+              {insights.length} coverage gap{insights.length !== 1 ? "s" : ""} in
+              this class
             </p>
           </div>
         </div>

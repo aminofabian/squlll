@@ -53,7 +53,7 @@ export function TimetableMobileActionStrip({
             className="flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium text-[#246a59] transition-colors active:bg-[#246a59]/5"
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-            Fill timetable
+            Auto-fill timetable
           </button>
           <div
             className="w-px shrink-0 bg-slate-100 dark:bg-slate-800"

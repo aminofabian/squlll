@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
+import { sanitizeTimetableUserMessage } from '@/lib/utils/timetable-user-messages';
 import { useTimeSlots } from '@/lib/hooks/useTimeSlots';
 import type { TimeSlot } from '@/lib/types/timetable';
 import {
@@ -37,7 +38,6 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isParsingDisplayTime = useRef(false);
 
   // Helper functions
   const calculateDurationFromTimes = (start: string, end: string): number | null => {
@@ -49,16 +49,6 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
     return endTotalMinutes - startTotalMinutes;
   };
 
-  const calculateEndTimeFromDuration = (start: string, durationMinutes: number): string => {
-    if (!start || durationMinutes <= 0) return '';
-    const [hours, minutes] = start.split(':').map(Number);
-    const startTotalMinutes = hours * 60 + minutes;
-    const endTotalMinutes = startTotalMinutes + durationMinutes;
-    const endHours = Math.floor(endTotalMinutes / 60);
-    const endMins = endTotalMinutes % 60;
-    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
-  };
-
   const formatDisplayTime = (start: string, end: string): string => {
     if (!start || !end) return '';
     const formatTime = (time24: string) => {
@@ -68,38 +58,6 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
       return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
     };
     return `${formatTime(start)} – ${formatTime(end)}`;
-  };
-
-  const parseDisplayTime = (displayTime: string): { startTime: string; endTime: string } | null => {
-    if (!displayTime) return null;
-    
-    // Match patterns like "8:00 AM – 8:45 AM" or "8:00 AM - 8:45 AM"
-    const timePattern = /(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i;
-    const match = displayTime.match(timePattern);
-    
-    if (!match) return null;
-    
-    const parse12HourTime = (hours: number, minutes: number, period: string): string => {
-      let hour24 = hours;
-      if (period.toUpperCase() === 'PM' && hours !== 12) {
-        hour24 = hours + 12;
-      } else if (period.toUpperCase() === 'AM' && hours === 12) {
-        hour24 = 0;
-      }
-      return `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    };
-    
-    const startHours = parseInt(match[1], 10);
-    const startMinutes = parseInt(match[2], 10);
-    const startPeriod = match[3];
-    const endHours = parseInt(match[4], 10);
-    const endMinutes = parseInt(match[5], 10);
-    const endPeriod = match[6];
-    
-    return {
-      startTime: parse12HourTime(startHours, startMinutes, startPeriod),
-      endTime: parse12HourTime(endHours, endMinutes, endPeriod),
-    };
   };
 
   useEffect(() => {
@@ -127,13 +85,8 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
     }
   }, [formData.startTime, formData.endTime]);
 
-  // Update display time when start/end times change (skip if we're parsing display time)
+  // Keep the display label in sync with the start/end times
   useEffect(() => {
-    if (isParsingDisplayTime.current) {
-      isParsingDisplayTime.current = false;
-      return;
-    }
-    
     if (formData.startTime && formData.endTime) {
       const newDisplayTime = formatDisplayTime(formData.startTime, formData.endTime);
       setFormData(prev => ({ ...prev, displayTime: newDisplayTime }));
@@ -199,8 +152,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
 
       onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update time slot';
-      setError(errorMessage);
+      setError(sanitizeTimetableUserMessage(err));
       console.error('Error updating time slot:', err);
     } finally {
       setLoading(false);
@@ -220,7 +172,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
               <span>Edit Period {timeslot.periodNumber}</span>
             </DrawerTitle>
               <DrawerDescription className="mt-2">
-                Update the time slot details including start time, end time, and duration.
+                Update this period's start time, end time, and duration.
               </DrawerDescription>
             </div>
             <DrawerClose asChild>
@@ -243,49 +195,40 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
             </div>
           )}
 
-          {/* Primary: Display Time - Simple and Clear */}
-          <div className="space-y-1.5">
-            <Label htmlFor="displayTime" className="text-sm text-slate-700 dark:text-slate-300 font-medium flex items-center gap-2">
-              <span>Time Range</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">(required)</span>
-            </Label>
-            <Input
-              id="displayTime"
-              type="text"
-              value={formData.displayTime}
-              onChange={(e) => {
-                const newDisplayTime = e.target.value;
-                setFormData(prev => ({ ...prev, displayTime: newDisplayTime }));
-                
-                // Try to parse and update start/end times
-                const parsed = parseDisplayTime(newDisplayTime);
-                if (parsed) {
-                  isParsingDisplayTime.current = true;
-                  const formattedDisplayTime = formatDisplayTime(parsed.startTime, parsed.endTime);
-                  setFormData(prev => ({
-                    ...prev,
-                    displayTime: formattedDisplayTime,
-                    startTime: parsed.startTime,
-                    endTime: parsed.endTime,
-                  }));
-                }
-              }}
-              onBlur={(e) => {
-                const parsed = parseDisplayTime(e.target.value);
-                if (!parsed && formData.startTime && formData.endTime) {
-                  const regenerated = formatDisplayTime(formData.startTime, formData.endTime);
-                  setFormData(prev => ({ ...prev, displayTime: regenerated }));
-                }
-              }}
-              disabled={loading}
-              className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
-              placeholder="8:00 AM – 8:45 AM"
-            />
-            <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-              <span>💡</span>
-              <span>Enter time range in format: "8:00 AM – 8:45 AM"</span>
-            </p>
+          {/* Primary: Start & End Times */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="startTime" className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                Start time
+              </Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                disabled={loading}
+                className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="endTime" className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                End time
+              </Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                disabled={loading}
+                className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
+              />
+            </div>
           </div>
+          {formData.startTime && formData.endTime && !isValidDuration ? (
+            <p className="text-xs font-medium text-red-600 dark:text-red-400">
+              End time must be after the start time.
+            </p>
+          ) : null}
 
           {/* Label (optional) */}
           <div className="space-y-1.5">
@@ -304,46 +247,6 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
             />
           </div>
 
-          {/* Secondary: Time Details - Collapsible/Expandable Info */}
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors list-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-3">
-              <span className="flex items-center gap-2">
-                <span>Advanced: Edit Start & End Times</span>
-                <span className="text-xs">▼</span>
-              </span>
-            </summary>
-            <div className="mt-3 space-y-3 pt-3 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="startTime" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Start Time
-                  </Label>
-                  <Input
-                    id="startTime"
-                    type="time"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                    disabled={loading}
-                    className="h-10 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="endTime" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    End Time
-                  </Label>
-                  <Input
-                    id="endTime"
-                    type="time"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                    disabled={loading}
-                    className="h-10 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
-                  />
-                </div>
-              </div>
-            </div>
-          </details>
-
           {/* Summary Info - Clean and Minimal */}
           <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-sm">
             <span className="text-slate-700 dark:text-slate-300 font-medium">Duration</span>
@@ -358,7 +261,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
             <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
             <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-              This change will affect all lessons scheduled in this time slot across all grades.
+              This change will affect all lessons scheduled in this period across all grades.
             </p>
           </div>
 

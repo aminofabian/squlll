@@ -17,8 +17,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
 import { TimetableLastUpdated } from "./TimetableLastUpdated";
-
-type Health = "empty" | "progress" | "attention" | "ready";
+import {
+  getTimetableReadiness,
+  type TimetableReadinessVerdict,
+} from "../utils/getTimetableReadiness";
 
 interface TimetableHealthPanelProps {
   scopeLabel: string;
@@ -43,14 +45,16 @@ interface TimetableHealthPanelProps {
   hideActions?: boolean;
 }
 
-const HEALTH_COPY: Record<
-  Health,
-  { label: string; tone: keyof typeof tt.pill; icon: LucideIcon }
+const VERDICT_STYLE: Record<
+  TimetableReadinessVerdict,
+  { tone: keyof typeof tt.pill; icon: LucideIcon }
 > = {
-  empty: { label: "Not started", tone: "neutral", icon: Circle },
-  progress: { label: "In progress", tone: "info", icon: Clock },
-  attention: { label: "Needs attention", tone: "danger", icon: AlertTriangle },
-  ready: { label: "Ready to publish", tone: "success", icon: CheckCircle2 },
+  "no-structure": { tone: "neutral", icon: Circle },
+  "not-started": { tone: "neutral", icon: Circle },
+  clashes: { tone: "danger", icon: AlertTriangle },
+  "in-progress": { tone: "info", icon: Clock },
+  almost: { tone: "info", icon: Clock },
+  ready: { tone: "success", icon: CheckCircle2 },
 };
 
 function Metric({
@@ -132,43 +136,24 @@ export function TimetableHealthPanel({
   variant = "card",
   hideActions = false,
 }: TimetableHealthPanelProps) {
-  const fillPct =
-    totalSlots > 0
-      ? Math.min(100, Math.round((filledSlots / totalSlots) * 100))
-      : 0;
-  const emptySlots = Math.max(0, totalSlots - filledSlots);
+  const readiness = getTimetableReadiness({
+    hasScheduleStructure,
+    hasAnyLessons,
+    filledSlots,
+    totalSlots,
+    clashCount,
+    advisoryCount,
+    publishState,
+  });
+  const { fillPct, emptySlots, nextStep } = readiness;
   const issueTotal = clashCount + advisoryCount;
-
-  const health: Health =
-    clashCount > 0
-      ? "attention"
-      : !hasAnyLessons
-        ? "empty"
-        : fillPct >= 85
-          ? "ready"
-          : "progress";
-
-  const { label: healthLabel, tone, icon: HealthIcon } = HEALTH_COPY[health];
-
-  const nextStep =
-    !hasScheduleStructure
-      ? "Set the school day before adding lessons."
-      : clashCount > 0
-        ? `${clashCount} clash${clashCount === 1 ? "" : "es"} to resolve before publishing.`
-        : !hasAnyLessons
-          ? "No lessons on the grid yet. Fill the timetable from weekly lessons, or add them by hand."
-          : emptySlots > 0
-            ? `${emptySlots} empty slot${emptySlots === 1 ? "" : "s"} left to fill.`
-            : publishState === "published"
-              ? "Published. Teachers can see this timetable."
-              : publishState === "stale"
-                ? "Edited since publishing — publish again so staff see the changes."
-                : "Every slot is filled with no clashes. Ready to publish.";
+  const { tone, icon: HealthIcon } = VERDICT_STYLE[readiness.verdict];
+  const healthLabel = readiness.label;
 
   const barTone =
-    health === "attention"
+    readiness.verdict === "clashes"
       ? "bg-red-500"
-      : health === "ready"
+      : readiness.verdict === "ready"
         ? "bg-emerald-500"
         : "bg-[#246a59]";
 
@@ -193,7 +178,7 @@ export function TimetableHealthPanel({
             </span>
             {issueTotal > 0 && advisoryCount > 0 && (
               <span className={cn(tt.pill.base, tt.pill.warn)}>
-                {advisoryCount} to check
+                {advisoryCount} to review
               </span>
             )}
           </div>
@@ -286,7 +271,7 @@ export function TimetableHealthPanel({
             onClick={onAutoGenerate}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            {hasAnyLessons ? "Fill remaining slots" : "Auto-generate draft"}
+            Auto-fill timetable
           </Button>
         ) : null}
 
@@ -315,10 +300,10 @@ export function TimetableHealthPanel({
           >
             <Share2 className="h-3.5 w-3.5" />
             {publishState === "published"
-              ? "Published"
+              ? "Shared with teachers"
               : publishState === "stale"
-                ? "Publish again"
-                : "Publish for teachers"}
+                ? "Share again"
+                : "Share with teachers"}
           </Button>
         ) : null}
 
