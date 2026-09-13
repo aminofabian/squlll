@@ -926,6 +926,7 @@ export function AdminTimetableGrid({
                                   <span
                                     className={cn(
                                       "hidden text-[10px] font-medium group-hover/empty:inline group-focus-visible/empty:inline max-sm:inline",
+                                      periodIndex === 0 && "inline",
                                       isActiveEmpty && "inline",
                                     )}
                                   >
@@ -1473,8 +1474,10 @@ function AdminLessonCell({
         "group/lesson relative flex cursor-pointer items-start gap-0.5 rounded-none border px-2",
         LESSON_CELL_MIN,
         (isDoubleStart || isDoubleContinuation) && "pr-6",
-        isDimmed && !isActive && "opacity-40 saturate-[0.65]",
-        isFaded && !isActive && "opacity-45",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
+        isFaded && !isActive
+          ? "opacity-45"
+          : isDimmed && !isActive && "opacity-40 saturate-[0.65]",
         doubleBlockSurfaceClass({
           isDoubleStart,
           isDoubleContinuation,

@@ -68,7 +68,7 @@ export function TimetableClassSidebar({
               type="button"
               onClick={onSelectAllClasses}
               className={cn(
-                "mb-0.5 w-full rounded-none px-2.5 py-1.5 text-left text-[12px] font-medium tracking-tight transition-colors",
+                "mb-0.5 w-full rounded-none px-2.5 py-2.5 text-left text-[13px] font-medium tracking-tight transition-colors",
                 selectedGradeId === null
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
@@ -83,7 +83,7 @@ export function TimetableClassSidebar({
                     : "text-zinc-400",
                 )}
               >
-                All classes
+                {allGradesCount} class{allGradesCount === 1 ? "" : "es"}
               </span>
             </button>
           </li>
@@ -114,7 +114,7 @@ export function TimetableClassSidebar({
                   type="button"
                   onClick={() => onSelectGrade(g.id)}
                   className={cn(
-                    "w-full rounded-none px-2.5 py-1.5 text-left text-[12px] font-medium tracking-tight transition-colors",
+                    "w-full rounded-none px-2.5 py-2.5 text-left text-[13px] font-medium tracking-tight transition-colors",
                     active
                       ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                       : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",

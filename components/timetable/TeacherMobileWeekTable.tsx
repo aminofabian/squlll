@@ -438,18 +438,27 @@ function LessonCell({
     }
 
     if (viewType === "admin") {
-      const teacherInitials = lesson.teacher.name
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join("")
-        .slice(0, 2);
+      const teacherMissing = Boolean(
+        (lesson as { teacherMissing?: boolean }).teacherMissing,
+      );
+      const teacherInitials = teacherMissing
+        ? ""
+        : lesson.teacher.name
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((part) => part[0]?.toUpperCase() ?? "")
+            .join("")
+            .slice(0, 2);
 
       return (
         <button
           type="button"
           onClick={() => onLessonClick?.(lesson, dayOfWeek, periodNumber)}
-          aria-label={`${lesson.subject.name}, ${lesson.teacher.name}, tap to edit`}
+          aria-label={
+            teacherMissing
+              ? `${lesson.subject.name}, no teacher set, tap to edit`
+              : `${lesson.subject.name}, ${lesson.teacher.name}, tap to edit`
+          }
           className={cn(
             "flex min-h-[42px] w-full min-w-0 max-w-full flex-col items-center justify-center px-1 py-2 text-center active:opacity-80",
             isCurrent ? "bg-transparent" : palette.bg,
@@ -467,15 +476,24 @@ function LessonCell({
           >
             {shortCode}
           </span>
-          {teacherInitials && !isCurrent ? (
-            <span className="mt-1.5 text-[8px] leading-none text-slate-500 dark:text-slate-400">
-              {teacherInitials}
-            </span>
+          {!isCurrent ? (
+            teacherMissing ? (
+              <span className="mt-1.5 text-[8px] italic leading-none text-slate-400 dark:text-slate-500">
+                No teacher
+              </span>
+            ) : teacherInitials ? (
+              <span className="mt-1.5 text-[8px] leading-none text-slate-500 dark:text-slate-400">
+                {teacherInitials}
+              </span>
+            ) : null
           ) : null}
         </button>
       );
     }
 
+    const classMissing = Boolean(
+      (lesson as { classMissing?: boolean }).classMissing,
+    );
     const subtitle = formatGradeShort(
       lesson.grade.displayName || "",
       lesson.grade.name,
@@ -504,7 +522,12 @@ function LessonCell({
           {shortCode}
         </span>
         {subtitle && !isCurrent ? (
-          <span className="mt-0.5 text-[8px] leading-none text-slate-500 dark:text-slate-400">
+          <span
+            className={cn(
+              "mt-0.5 text-[8px] leading-none text-slate-500 dark:text-slate-400",
+              classMissing && "italic text-slate-400 dark:text-slate-500",
+            )}
+          >
             {subtitle}
           </span>
         ) : null}

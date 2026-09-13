@@ -24,6 +24,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import {
   ALL_BREAK_TYPE_OPTIONS,
   breakTypeToFormValue,
@@ -44,6 +46,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
     loadDayTemplatePeriods,
     loadBreaks,
   } = useTimetableStore();
+  const { toast } = useToast();
 
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -86,15 +89,23 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
   const handleTypeChange = (type: string) => {
     const selectedType = getBreakTypeOption(type);
-    if (selectedType) {
-      setFormData({
-        ...formData,
-        type,
-        name: selectedType.label,
-        icon: selectedType.icon,
-        color: selectedType.color,
-      });
-    }
+    if (!selectedType) return;
+
+    // Only replace the name when the user has not typed a custom one — i.e.
+    // the current name is still the previous type's default (or empty).
+    const previousType = getBreakTypeOption(formData.type);
+    const currentName = formData.name.trim();
+    const shouldAutoFillName =
+      !currentName ||
+      (previousType ? currentName === previousType.label : false);
+
+    setFormData({
+      ...formData,
+      type,
+      name: shouldAutoFillName ? selectedType.label : formData.name,
+      icon: selectedType.icon,
+      color: selectedType.color,
+    });
   };
 
   const handleSave = async () => {
@@ -267,7 +278,11 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
       }
     } catch (error) {
       console.error("Error saving break:", error);
-      alert(error instanceof Error ? error.message : "Failed to save break");
+      toast({
+        title: "Could not save break",
+        description: sanitizeTimetableUserMessage(error),
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -281,9 +296,11 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         onClose();
       } catch (error) {
         console.error("Failed to delete break:", error);
-        alert(
-          error instanceof Error ? error.message : "Failed to delete break",
-        );
+        toast({
+          title: "Could not delete break",
+          description: sanitizeTimetableUserMessage(error),
+          variant: "destructive",
+        });
       } finally {
         setIsSaving(false);
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Eye, EyeOff, Plus, Sparkles } from "lucide-react";
+import { AlertCircle, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TimetableMobileActionStripProps = {
@@ -65,21 +65,24 @@ export function TimetableMobileActionStrip({
       <button
         type="button"
         onClick={onToggleConflicts}
+        aria-pressed={showConflicts}
         className={cn(
-          "flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium transition-colors active:bg-slate-50 dark:active:bg-slate-900",
-          conflictCount > 0
-            ? "text-red-600 dark:text-red-400"
-            : showConflicts
-              ? "text-primary"
-              : "text-slate-600 dark:text-slate-400",
+          "flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium transition-colors",
+          showConflicts
+            ? conflictCount > 0
+              ? "bg-red-600 text-white dark:bg-red-500"
+              : "bg-[#0a1f1a] text-white dark:bg-slate-200 dark:text-slate-900"
+            : conflictCount > 0
+              ? "text-red-600 active:bg-red-50 dark:text-red-400 dark:active:bg-red-950/40"
+              : "text-slate-600 active:bg-slate-50 dark:text-slate-400 dark:active:bg-slate-900",
         )}
       >
-        {showConflicts ? (
-          <EyeOff className="h-4 w-4 opacity-80" strokeWidth={1.75} />
-        ) : (
-          <Eye className="h-4 w-4 opacity-80" strokeWidth={1.75} />
-        )}
-        {conflictCount > 0 ? `${conflictCount} issues` : "Issues"}
+        <AlertCircle className="h-4 w-4 shrink-0 opacity-90" strokeWidth={1.75} />
+        {showConflicts
+          ? "Hide issues"
+          : conflictCount > 0
+            ? `${conflictCount} issue${conflictCount === 1 ? "" : "s"}`
+            : "No issues"}
       </button>
 
       <div className="w-px shrink-0 bg-slate-100 dark:bg-slate-800" aria-hidden />

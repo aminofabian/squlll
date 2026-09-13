@@ -2545,7 +2545,11 @@ export default function SmartTimetableNew() {
           <div className="fixed inset-x-0 top-[4.3125rem] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-0 flex flex-col overflow-hidden lg:hidden">
             {showGridSkeleton ? (
               <div className="flex flex-1 flex-col overflow-hidden bg-white p-2 dark:bg-slate-950">
-                <TimetableGridSkeleton combined={false} />
+                <TimetableGridSkeleton
+                  combined={false}
+                  daysPerWeek={daysPerWeekFromStore || daysPerWeek || 5}
+                  periodCount={periodNumbers.length || lessonPeriodsPerDay || 7}
+                />
               </div>
             ) : showEmptyScheduleState ? (
               <div className="flex flex-1 items-center justify-center px-4 py-10 text-center">
@@ -2689,6 +2693,7 @@ export default function SmartTimetableNew() {
                     onReviewIssues={handleHighlightProblems}
                     onPublish={() => openShareDrawer()}
                     onHide={() => setJourneyHidden(true)}
+                    storageKey={`timetable-journey-skipped-${subdomain}-${termIdForShare ?? ""}`}
                   />
                 </div>
               )}
@@ -2756,7 +2761,11 @@ export default function SmartTimetableNew() {
                       ) : null}
                     </div>
                   ) : showGridSkeleton ? (
-                    <TimetableGridSkeleton combined={!selectedGradeId} />
+                    <TimetableGridSkeleton
+                      combined={!selectedGradeId}
+                      daysPerWeek={daysPerWeekFromStore || daysPerWeek || 5}
+                      periodCount={periodNumbers.length || lessonPeriodsPerDay || 7}
+                    />
                   ) : !selectedGradeId ? (
                     <AdminTimetableGrid
                       schoolCombined
@@ -2843,6 +2852,7 @@ export default function SmartTimetableNew() {
                 className="space-y-3 overflow-y-auto p-3 lg:hidden"
               >
                 <TimetableHealthPanel
+                  collapsible
                   scopeLabel={
                     selectedGradeId ? classDisplayLabel : "All classes"
                   }
@@ -2908,6 +2918,8 @@ export default function SmartTimetableNew() {
                       onJumpToLesson={handleJumpToConflictEntry}
                       quotaIssues={quotaIssues}
                       workloadBreaches={workloadBreaches}
+                      onReviewAllocations={() => openAutoGenerate(0)}
+                      onCheckWorkload={() => openAutoGenerate(1)}
                     />
                   </div>
                 ) : null}
@@ -2996,6 +3008,8 @@ export default function SmartTimetableNew() {
                     onJumpToLesson={handleJumpToConflictEntry}
                     quotaIssues={quotaIssues}
                     workloadBreaches={workloadBreaches}
+                    onReviewAllocations={() => openAutoGenerate(0)}
+                    onCheckWorkload={() => openAutoGenerate(1)}
                   />
                 </div>
               }
@@ -3036,6 +3050,10 @@ export default function SmartTimetableNew() {
             onUpsertRules={upsertRules}
             onRunPreflight={runPreflight}
             existingLessonCount={schoolLessonCount}
+            onSetUpSchoolDay={() => {
+              closeAutoGenerate();
+              setShowTimetableWizard(true);
+            }}
             onGenerate={generateTimetable}
             onGenerated={(result) => {
               if (result?.entries?.length) {

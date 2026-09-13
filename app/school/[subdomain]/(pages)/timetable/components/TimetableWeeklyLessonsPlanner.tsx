@@ -91,6 +91,8 @@ interface TimetableWeeklyLessonsPlannerProps {
     preferredDoubleLessons?: number;
   }) => Promise<void>;
   onDeleteAllocation: (id: string) => Promise<void>;
+  /** Jump to the school-day setup when there are no periods to plan into. */
+  onSetUpSchoolDay?: () => void;
 }
 
 /**
@@ -124,25 +126,28 @@ function Stepper({
   max,
   ariaLabel,
   muted,
+  disabled = false,
 }: {
   value: number;
   onChange: (next: number) => void;
   max?: number;
   ariaLabel: string;
   muted?: boolean;
+  disabled?: boolean;
 }) {
   const clamp = (n: number) => Math.max(0, Math.min(max ?? 40, n));
   return (
     <div
       className={cn(
         "inline-flex h-7 items-center overflow-hidden rounded-none border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950",
-        muted && "opacity-60",
+        (muted || disabled) && "opacity-60",
+        disabled && "cursor-not-allowed",
       )}
     >
       <button
         type="button"
         aria-label={`Fewer ${ariaLabel}`}
-        disabled={value <= 0}
+        disabled={disabled || value <= 0}
         onClick={() => onChange(clamp(value - 1))}
         className="flex h-full w-6 items-center justify-center text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-900"
       >
@@ -151,6 +156,7 @@ function Stepper({
       <input
         aria-label={ariaLabel}
         inputMode="numeric"
+        disabled={disabled}
         value={value}
         onChange={(e) => onChange(clamp(Number(e.target.value.replace(/\D/g, "")) || 0))}
         className={cn(
@@ -163,7 +169,7 @@ function Stepper({
       <button
         type="button"
         aria-label={`More ${ariaLabel}`}
-        disabled={max != null && value >= max}
+        disabled={disabled || (max != null && value >= max)}
         onClick={() => onChange(clamp(value + 1))}
         className="flex h-full w-6 items-center justify-center text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-900"
       >
@@ -189,6 +195,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     onCreateAllocation,
     onUpdateAllocation,
     onDeleteAllocation,
+    onSetUpSchoolDay,
   }: TimetableWeeklyLessonsPlannerProps,
   ref,
 ) {
@@ -248,6 +255,9 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
   const [saving, setSaving] = useState(false);
   const [copyTargets, setCopyTargets] = useState<string[]>([]);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [confirmClearGradeFor, setConfirmClearGradeFor] = useState<string | null>(
+    null,
+  );
   const [addOpen, setAddOpen] = useState(false);
   const [subjectQuery, setSubjectQuery] = useState("");
 
@@ -894,7 +904,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
       <div className="hidden items-center gap-1.5 px-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.75rem_4.75rem_8.5rem_1.25rem]">
         <span className={tt.eyebrow}>Subject</span>
         <span className={cn(tt.eyebrow, "text-center")}>Lessons</span>
-        <span className={cn(tt.eyebrow, "text-center")}>Doubles</span>
+        <span className={cn(tt.eyebrow, "text-center")} title="Double periods — two of this subject back-to-back">Doubles</span>
         <span className={tt.eyebrow}>Teacher</span>
         <span />
       </div>
@@ -956,19 +966,22 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               </div>
 
               <div className="flex items-center justify-between gap-1.5 sm:justify-center">
-                <span className={cn(tt.eyebrow, "sm:hidden")}>Doubles</span>
+                <span className={cn(tt.eyebrow, "sm:hidden")} title="Double periods — two of this subject back-to-back">Doubles</span>
                 <Stepper
                   ariaLabel={`${row.subjectName} double lessons`}
                   value={row.doubleLessons}
                   max={maxDoubles}
                   muted={maxDoubles === 0}
+                  disabled={maxDoubles === 0}
                   onChange={(n) => patchRow(row.key, { doubleLessons: n })}
                 />
               </div>
 
               <Select
-                value={row.teacherId || undefined}
-                onValueChange={(v) => patchRow(row.key, { teacherId: v })}
+                value={row.teacherId || "__none__"}
+                onValueChange={(v) =>
+                  patchRow(row.key, { teacherId: v === "__none__" ? "" : v })
+                }
               >
                 <SelectTrigger
                   className={cn(
@@ -979,6 +992,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   <SelectValue placeholder="Assign teacher" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">No teacher yet</SelectItem>
                   {preferred.length > 0 && (
                     <SelectGroup>
                       <SelectLabel className="text-[10px]">
@@ -1057,7 +1071,16 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             {availableSlotsPerClass === 0 ? (
               <span className="text-red-600 dark:text-red-400">
                 Set up lesson times first — until the school day has periods,
-                there&apos;s nowhere to place these lessons.
+                there&apos;s nowhere to place these lessons.{" "}
+                {onSetUpSchoolDay ? (
+                  <button
+                    type="button"
+                    onClick={onSetUpSchoolDay}
+                    className="font-medium text-red-700 underline underline-offset-2 hover:text-red-800 dark:text-red-300"
+                  >
+                    Set up the school day
+                  </button>
+                ) : null}
               </span>
             ) : overCapacity > 0 ? (
               <span className="text-red-600 dark:text-red-400">
@@ -1076,18 +1099,43 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               `${availableSlotsPerClass - activeTotal} slots free`
             )}
           </p>
+          {activeTotal > 0 ? (
+            <div className="mt-1">
+              {confirmClearGradeFor === activeGradeId ? (
+                <span className="inline-flex flex-wrap items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                  Clear all lessons for {activeGrade?.name ?? "this class"}?
+                  <button
+                    type="button"
+                    className="font-medium text-red-600 hover:underline dark:text-red-400"
+                    onClick={() => {
+                      handleClearGrade();
+                      setConfirmClearGradeFor(null);
+                    }}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    className="font-medium text-slate-500 hover:underline dark:text-slate-400"
+                    onClick={() => setConfirmClearGradeFor(null)}
+                  >
+                    Cancel
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="text-[10px] text-slate-500 hover:underline"
+                  onClick={() => setConfirmClearGradeFor(activeGradeId)}
+                >
+                  Clear this class
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2">
-          {activeTotal > 0 && (
-            <button
-              type="button"
-              className="text-[10px] text-slate-500 hover:underline"
-              onClick={handleClearGrade}
-            >
-              Start over
-            </button>
-          )}
           <Button
             type="button"
             size="sm"

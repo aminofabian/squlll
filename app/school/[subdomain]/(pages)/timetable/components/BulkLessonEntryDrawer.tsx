@@ -45,10 +45,7 @@ import {
 } from "./TimetableLessonSelects";
 import type { CreateEntryRequest } from "@/lib/types/timetable";
 import { useKnownRoomNumbers } from "../hooks/useKnownRoomNumbers";
-import {
-  resolveGradeForSchoolConfig,
-  subjectsForTimetableGrade,
-} from "../utils/resolveGradeForSchoolConfig";
+import { subjectsForTimetableGrade } from "../utils/resolveGradeForSchoolConfig";
 import { useTimetableWeekDays } from "../hooks/useTimetableWeekDays";
 import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import { normalizeRoomNumber } from "../utils/normalizeRoomNumber";
@@ -129,6 +126,12 @@ export function BulkLessonEntryDrawer({
   const [copySourceDay, setCopySourceDay] = useState<string>("");
   const [duplicateSourceDay, setDuplicateSourceDay] = useState<string>("");
   const [duplicateTargetDays, setDuplicateTargetDays] = useState<number[]>([]);
+  const [duplicatePlan, setDuplicatePlan] = useState<{
+    requests: CreateEntryRequest[];
+    skipped: number;
+    sourceName: string;
+    targetNames: string;
+  } | null>(null);
   const [entries, setEntries] = useState<LessonEntry[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -151,6 +154,7 @@ export function BulkLessonEntryDrawer({
     setCopySourceDay("");
     setDuplicateSourceDay("");
     setDuplicateTargetDays([]);
+    setDuplicatePlan(null);
     setEntries([blankRow()]);
     void loadSubjects(gradeToLoad || undefined).catch(() => {});
     void loadTeachers().catch(() => {});
@@ -213,6 +217,7 @@ export function BulkLessonEntryDrawer({
   };
 
   const toggleDuplicateTarget = (dayValue: number) => {
+    setDuplicatePlan(null);
     setDuplicateTargetDays((prev) => {
       if (prev.includes(dayValue)) {
         return prev.filter((d) => d !== dayValue);
@@ -234,6 +239,34 @@ export function BulkLessonEntryDrawer({
         prev.map((e) => (e.id === id ? { ...e, ...updates } : e)),
       ),
     [],
+  );
+
+  // Target slots already filled for the currently selected days. Shared by the
+  // main save flow so it applies the same skip rule as the duplicate flow.
+  const occupiedOnSelected = useMemo(
+    () =>
+      new Set(
+        timetableEntries
+          .filter(
+            (e) =>
+              e.gradeId === effectiveGradeId &&
+              selectedDays.includes(e.dayOfWeek),
+          )
+          .map((e) => `${e.dayOfWeek}:${e.timeSlotId}`),
+      ),
+    [timetableEntries, effectiveGradeId, selectedDays],
+  );
+
+  const blockedOnSelected = useMemo(
+    () =>
+      selectedDays.reduce(
+        (sum, day) =>
+          sum +
+          entries.filter((e) => occupiedOnSelected.has(`${day}:${e.timeSlotId}`))
+            .length,
+        0,
+      ),
+    [selectedDays, entries, occupiedOnSelected],
   );
 
   const handleCopyFromDay = () => {
@@ -269,7 +302,7 @@ export function BulkLessonEntryDrawer({
     });
   };
 
-  const handleDuplicateDayToTargets = async () => {
+  const handleDuplicateDayToTargets = () => {
     const sourceDay = Number(duplicateSourceDay);
     if (!effectiveGradeId || !termId || !sourceDay) return;
     if (duplicateTargetDays.length === 0) {
@@ -332,22 +365,30 @@ export function BulkLessonEntryDrawer({
 
     const skipped =
       sourceEntries.length * duplicateTargetDays.length - requests.length;
+    const sourceName = weekDays.find((d) => d.value === sourceDay)?.name ?? "day";
+    const targetNames = duplicateTargetDays
+      .map((d) => weekDays.find((w) => w.value === d)?.name)
+      .filter(Boolean)
+      .join(", ");
+
+    // Preview first — write only after the user confirms.
+    setDuplicatePlan({ requests, skipped, sourceName, targetNames });
+  };
+
+  const handleConfirmDuplicate = async () => {
+    if (!duplicatePlan || !effectiveGradeId || !termId) return;
+    const { requests, skipped, sourceName, targetNames } = duplicatePlan;
 
     setIsDuplicating(true);
     try {
       await bulkCreateEntries(termId, effectiveGradeId, requests);
-      const sourceName =
-        weekDays.find((d) => d.value === sourceDay)?.name ?? "day";
-      const targetNames = duplicateTargetDays
-        .map((d) => weekDays.find((w) => w.value === d)?.name)
-        .filter(Boolean)
-        .join(", ");
       toast({
         title: `${requests.length} lesson${requests.length !== 1 ? "s" : ""} copied`,
         description: `From ${sourceName} to ${targetNames}${
           skipped > 0 ? ` (${skipped} slot${skipped !== 1 ? "s" : ""} skipped — already filled)` : ""
         }`,
       });
+      setDuplicatePlan(null);
       onClose();
     } catch (err) {
       toast({
@@ -389,31 +430,46 @@ export function BulkLessonEntryDrawer({
     setIsSaving(true);
     try {
       const requests: CreateEntryRequest[] = selectedDays.flatMap((day) =>
-        entries.map((e) => ({
-          gradeId: effectiveGradeId,
-          subjectId: e.subjectId,
-          teacherId: e.teacherId,
-          timeSlotId: e.timeSlotId,
-          dayOfWeek: day,
-          roomNumber:
-            normalizeRoomNumber(e.roomNumber ?? "", knownRooms) || undefined,
-        })),
+        entries
+          .filter((e) => !occupiedOnSelected.has(`${day}:${e.timeSlotId}`))
+          .map((e) => ({
+            gradeId: effectiveGradeId,
+            subjectId: e.subjectId,
+            teacherId: e.teacherId,
+            timeSlotId: e.timeSlotId,
+            dayOfWeek: day,
+            roomNumber:
+              normalizeRoomNumber(e.roomNumber ?? "", knownRooms) || undefined,
+          })),
       );
+
+      if (requests.length === 0) {
+        toast({
+          title: "All slots already filled",
+          description:
+            "Every period on the selected days already has a lesson. Remove or edit those first.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       await bulkCreateEntries(termId, effectiveGradeId, requests);
       const dayLabels = selectedDays
         .map((d) => weekDays.find((w) => w.value === d)?.name)
         .filter(Boolean)
         .join(", ");
+      const skipped = entries.length * selectedDays.length - requests.length;
       toast({
         title: `${requests.length} lesson${requests.length !== 1 ? "s" : ""} created`,
-        description: dayLabels,
+        description: `${dayLabels}${
+          skipped > 0 ? ` (${skipped} slot${skipped !== 1 ? "s" : ""} skipped — already filled)` : ""
+        }`,
       });
       onClose();
     } catch (err) {
       toast({
         title: "Could not save lessons",
-        description: err instanceof Error ? err.message : "Try again.",
+        description: sanitizeTimetableUserMessage(err),
         variant: "destructive",
       });
     } finally {
@@ -424,6 +480,8 @@ export function BulkLessonEntryDrawer({
   const selectedDayLabels = selectedDays
     .map((d) => weekDays.find((w) => w.value === d)?.name)
     .filter(Boolean);
+  const plannedCount = entries.length * selectedDays.length;
+  const willCreateCount = Math.max(plannedCount - blockedOnSelected, 0);
 
   return (
     <Drawer open={open} onOpenChange={onClose} direction="right">
@@ -514,6 +572,7 @@ export function BulkLessonEntryDrawer({
               value={duplicateSourceDay}
               onValueChange={(v) => {
                 setDuplicateSourceDay(v);
+                setDuplicatePlan(null);
                 const src = Number(v);
                 setDuplicateTargetDays((prev) => prev.filter((d) => d !== src));
               }}
@@ -561,25 +620,65 @@ export function BulkLessonEntryDrawer({
                   })}
               </div>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              className="h-9 w-full gap-1.5 bg-zinc-900 text-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
-              disabled={
-                !duplicateSourceDay ||
-                duplicateTargetDays.length === 0 ||
-                !effectiveGradeId ||
-                isDuplicating
-              }
-              onClick={handleDuplicateDayToTargets}
-            >
-              {isDuplicating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-              Duplicate to selected days
-            </Button>
+            {duplicatePlan ? (
+              <div className="space-y-2 rounded-none border border-slate-900/20 bg-white p-2.5 dark:border-slate-100/20 dark:bg-slate-950">
+                <p className="text-xs text-slate-700 dark:text-slate-200">
+                  Will copy <strong>{duplicatePlan.requests.length}</strong> lesson
+                  {duplicatePlan.requests.length !== 1 ? "s" : ""} from{" "}
+                  <strong>{duplicatePlan.sourceName}</strong> →{" "}
+                  <strong>{duplicatePlan.targetNames}</strong>.
+                  {duplicatePlan.skipped > 0
+                    ? ` ${duplicatePlan.skipped} already-filled slot${duplicatePlan.skipped !== 1 ? "s" : ""} will be skipped.`
+                    : ""}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 flex-1 text-xs"
+                    disabled={isDuplicating}
+                    onClick={() => setDuplicatePlan(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 flex-1 gap-1.5 bg-zinc-900 text-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
+                    disabled={isDuplicating}
+                    onClick={handleConfirmDuplicate}
+                  >
+                    {isDuplicating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                className="h-9 w-full gap-1.5 bg-zinc-900 text-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
+                disabled={
+                  !duplicateSourceDay ||
+                  duplicateTargetDays.length === 0 ||
+                  !effectiveGradeId ||
+                  isDuplicating
+                }
+                onClick={handleDuplicateDayToTargets}
+              >
+                {isDuplicating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                Duplicate to selected days
+              </Button>
+            )}
           </div>
 
           <div className="rounded-none border border-dashed border-slate-200 p-3 dark:border-slate-700">
@@ -760,15 +859,17 @@ export function BulkLessonEntryDrawer({
               <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span>
                 <strong className="font-semibold text-slate-800 dark:text-slate-100">
-                  {entries.length * selectedDays.length}
+                  {willCreateCount}
                 </strong>{" "}
-                lesson{entries.length * selectedDays.length !== 1 ? "s" : ""}{" "}
-                for{" "}
+                lesson{willCreateCount !== 1 ? "s" : ""} for{" "}
                 <strong className="font-semibold text-slate-800 dark:text-slate-100">
                   {selectedGrade.displayName || selectedGrade.name}
                 </strong>
                 {selectedDayLabels.length > 0
                   ? ` · ${selectedDayLabels.join(", ")}`
+                  : ""}
+                {blockedOnSelected > 0
+                  ? ` · ${blockedOnSelected} already-filled slot${blockedOnSelected !== 1 ? "s" : ""} will be skipped`
                   : ""}
               </span>
             </div>
@@ -790,7 +891,10 @@ export function BulkLessonEntryDrawer({
               size="sm"
               onClick={handleSave}
               disabled={
-                isSaving || entries.length === 0 || !effectiveGradeId || !termId
+                isSaving ||
+                willCreateCount === 0 ||
+                !effectiveGradeId ||
+                !termId
               }
               className="h-9 flex-1 gap-1.5 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
             >
@@ -801,7 +905,7 @@ export function BulkLessonEntryDrawer({
               )}
               {isSaving
                 ? "Creating…"
-                : `Create ${entries.length * selectedDays.length || ""} lesson${entries.length * selectedDays.length !== 1 ? "s" : ""}`}
+                : `Create ${willCreateCount || ""} lesson${willCreateCount !== 1 ? "s" : ""}`}
             </Button>
           </div>
         </DrawerFooter>

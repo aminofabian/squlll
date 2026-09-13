@@ -496,6 +496,83 @@ function weekdaySummary(days: Set<number>): string {
     .join(", ");
 }
 
+const WIZARD_DRAFT_STORAGE_PREFIX = "squl_timetable_wizard_draft_";
+
+type WizardDraft = {
+  step: number;
+  startTime: string;
+  periodDuration: string;
+  periodCount: string;
+  breakMode: BreakMode;
+  selectedPreset: BreakMode;
+  breaks: TimetableBreakDraft[];
+  selectedScopeKeys: string[];
+  activeWeekdays: number[];
+};
+
+/** Reads the in-progress wizard answers for one school (keyed by subdomain). */
+function readWizardDraft(subdomain: string): WizardDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      `${WIZARD_DRAFT_STORAGE_PREFIX}${subdomain}`,
+    );
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const draft = parsed as Partial<WizardDraft>;
+    if (
+      typeof draft.step !== "number" ||
+      typeof draft.startTime !== "string" ||
+      typeof draft.periodDuration !== "string" ||
+      typeof draft.periodCount !== "string" ||
+      typeof draft.breakMode !== "string" ||
+      typeof draft.selectedPreset !== "string" ||
+      !Array.isArray(draft.breaks) ||
+      !Array.isArray(draft.selectedScopeKeys) ||
+      !Array.isArray(draft.activeWeekdays)
+    ) {
+      return null;
+    }
+    return {
+      step: draft.step,
+      startTime: draft.startTime,
+      periodDuration: draft.periodDuration,
+      periodCount: draft.periodCount,
+      breakMode: draft.breakMode as BreakMode,
+      selectedPreset: draft.selectedPreset as BreakMode,
+      breaks: draft.breaks as TimetableBreakDraft[],
+      selectedScopeKeys: draft.selectedScopeKeys as string[],
+      activeWeekdays: draft.activeWeekdays as number[],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeWizardDraft(subdomain: string, draft: WizardDraft): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      `${WIZARD_DRAFT_STORAGE_PREFIX}${subdomain}`,
+      JSON.stringify(draft),
+    );
+  } catch {
+    // Storage can be unavailable (e.g. private browsing) — never block setup.
+  }
+}
+
+function clearWizardDraft(subdomain: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(
+      `${WIZARD_DRAFT_STORAGE_PREFIX}${subdomain}`,
+    );
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 export interface TimetableSetupWizardProps {
   onComplete: () => void | Promise<void>;
   onFailed?: (message: string) => void | Promise<void>;
@@ -537,6 +614,9 @@ export function TimetableSetupWizard({
   );
   const [showPickDays, setShowPickDays] = useState(false);
   const [breaksPanel, setBreaksPanel] = useState<BreaksPanel>("review");
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  /** Avoids writing the defaults back over a stored draft before we hydrate it. */
+  const [draftHydrated, setDraftHydrated] = useState(false);
   const breaksListEndRef = useRef<HTMLDivElement>(null);
 
   const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
@@ -616,6 +696,54 @@ export function TimetableSetupWizard({
       })),
     );
   }, [breakMode, periodCountNum]);
+
+  // Resume an in-progress setup so reopening the wizard doesn't lose answers.
+  useEffect(() => {
+    const draft = readWizardDraft(subdomain);
+    if (draft) {
+      if (draft.step >= 1 && draft.step <= TOTAL_STEPS) setStep(draft.step);
+      setStartTime(draft.startTime);
+      setPeriodDuration(draft.periodDuration);
+      setPeriodCount(draft.periodCount);
+      setBreakMode(draft.breakMode);
+      setSelectedPreset(draft.selectedPreset);
+      setBreaks(draft.breaks);
+      setSelectedScopeKeys(new Set(draft.selectedScopeKeys));
+      if (draft.activeWeekdays.length > 0) {
+        setActiveWeekdays(new Set(draft.activeWeekdays));
+      }
+      setBreaksPanel(draft.breakMode === "custom" ? "edit" : "review");
+    }
+    setDraftHydrated(true);
+  }, [subdomain]);
+
+  // Persist answers so they survive a page reload or a later return.
+  useEffect(() => {
+    if (!draftHydrated) return;
+    writeWizardDraft(subdomain, {
+      step,
+      startTime,
+      periodDuration,
+      periodCount,
+      breakMode,
+      selectedPreset,
+      breaks,
+      selectedScopeKeys: Array.from(selectedScopeKeys),
+      activeWeekdays: Array.from(activeWeekdays),
+    });
+  }, [
+    draftHydrated,
+    subdomain,
+    step,
+    startTime,
+    periodDuration,
+    periodCount,
+    breakMode,
+    selectedPreset,
+    breaks,
+    selectedScopeKeys,
+    activeWeekdays,
+  ]);
 
   const selectBreakMode = (mode: BreakMode) => {
     setSelectedPreset(mode);
@@ -709,10 +837,19 @@ export function TimetableSetupWizard({
     });
   };
 
-  const handleSkip = () => {
+  const performSkip = () => {
     const tenantId = getTenantIdFromCookies();
     if (tenantId) markTimetableWizardComplete(tenantId);
     onSkip();
+  };
+
+  const handleSkip = () => {
+    // Past step 1 the user has entered real answers — confirm before leaving.
+    if (step > 1) {
+      setShowSkipConfirm(true);
+      return;
+    }
+    performSkip();
   };
 
   const validateStep = (): string | null => {
@@ -796,6 +933,7 @@ export function TimetableSetupWizard({
 
       const tenantId = getTenantIdFromCookies();
       if (tenantId) markTimetableWizardComplete(tenantId);
+      clearWizardDraft(subdomain);
 
       toast({
         title:
@@ -803,7 +941,7 @@ export function TimetableSetupWizard({
             ? "Your timetable is ready"
             : `${created} class timetables are ready`,
         description:
-          "Now tap a class and add subjects to each lesson slot.",
+          "Next: tell us who teaches what, then auto-fill the timetable — or fill the grid by hand.",
       });
 
       await onComplete();
@@ -1483,27 +1621,53 @@ export function TimetableSetupWizard({
   };
 
   return (
-    <OnboardingShell
-      subdomain={subdomain}
-      currentStep={step}
-      totalSteps={TOTAL_STEPS}
-      steps={[...WIZARD_STEPS]}
-      onBack={handleBack}
-      onSkip={handleSkip}
-      skipLabel="I'll do this later"
-      onContinue={() => void handleContinue()}
-      continueLabel={
-        step === TOTAL_STEPS
-          ? isSubmitting
-            ? "May take a few minutes…"
-            : "Make my timetables"
-          : `Next: ${WIZARD_STEPS[step]?.name ?? "Continue"}`
-      }
-      showSkip={!isSubmitting}
-      isContinueDisabled={isSubmitting}
-      isLoading={isSubmitting}
-    >
-      {renderStepContent()}
-    </OnboardingShell>
+    <>
+      <OnboardingShell
+        subdomain={subdomain}
+        currentStep={step}
+        totalSteps={TOTAL_STEPS}
+        steps={[...WIZARD_STEPS]}
+        onBack={handleBack}
+        onSkip={handleSkip}
+        skipLabel="I'll do this later"
+        onContinue={() => void handleContinue()}
+        continueLabel={
+          step === TOTAL_STEPS
+            ? isSubmitting
+              ? "May take a few minutes…"
+              : "Make my timetables"
+            : `Next: ${WIZARD_STEPS[step]?.name ?? "Continue"}`
+        }
+        showSkip={!isSubmitting}
+        isContinueDisabled={isSubmitting}
+        isLoading={isSubmitting}
+      >
+        {renderStepContent()}
+      </OnboardingShell>
+
+      <AlertDialog open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave without finishing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {
+                "Your timetable isn't set up yet. We'll keep your answers, so you can pick up where you left off."
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep setting up</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowSkipConfirm(false);
+                performSkip();
+              }}
+            >
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

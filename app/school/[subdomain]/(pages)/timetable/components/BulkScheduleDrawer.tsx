@@ -843,6 +843,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           <span className="text-[11px] font-semibold text-primary uppercase tracking-wide">Schedule Preview</span>
                         </div>
                         {isValid ? (
+                          <>
                           <div className="grid grid-cols-2 gap-2 text-[11px]">
                             <div className="space-y-0.5">
                               <span className="text-muted-foreground block text-[9px]">Day starts</span>
@@ -863,6 +864,10 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                               </span>
                             </div>
                           </div>
+                          <p className="mt-1.5 text-[9px] leading-snug text-muted-foreground">
+                            Periods only — breaks you add next will extend the day.
+                          </p>
+                          </>
                         ) : (
                           <p className="text-[11px] text-muted-foreground text-center py-0.5">
                             Enter values to see preview

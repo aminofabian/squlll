@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Circle,
   Clock,
   Layers,
@@ -43,6 +46,8 @@ interface TimetableHealthPanelProps {
   onPrint?: () => void;
   variant?: "card" | "rail";
   hideActions?: boolean;
+  /** On phones, start as a one-line summary that expands on tap. */
+  collapsible?: boolean;
 }
 
 const VERDICT_STYLE: Record<
@@ -135,6 +140,7 @@ export function TimetableHealthPanel({
   onPrint,
   variant = "card",
   hideActions = false,
+  collapsible = false,
 }: TimetableHealthPanelProps) {
   const readiness = getTimetableReadiness({
     hasScheduleStructure,
@@ -158,6 +164,33 @@ export function TimetableHealthPanel({
         : "bg-[#246a59]";
 
   const isRail = variant === "rail";
+  const [detailsOpen, setDetailsOpen] = useState(!collapsible);
+
+  if (collapsible && !detailsOpen) {
+    return (
+      <section
+        className={cn(tt.panel, "overflow-hidden")}
+        aria-label="Timetable health"
+      >
+        <button
+          type="button"
+          onClick={() => setDetailsOpen(true)}
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left"
+          aria-expanded={false}
+        >
+          <span className={cn(tt.pill.base, tt.pill[tone])}>
+            <HealthIcon className="h-3 w-3" strokeWidth={2.5} />
+            {healthLabel}
+          </span>
+          <p className={cn(tt.caption, "min-w-0 flex-1 truncate")}>{nextStep}</p>
+          <span className="shrink-0 text-[13px] font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+            {fillPct}%
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -319,6 +352,19 @@ export function TimetableHealthPanel({
           </Button>
         ) : null}
       </div>
+      ) : null}
+
+      {collapsible ? (
+        <div className="border-t border-slate-100 px-4 py-2 dark:border-slate-800 sm:px-5">
+          <button
+            type="button"
+            onClick={() => setDetailsOpen(false)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400"
+          >
+            <ChevronUp className="h-3 w-3" />
+            Hide details
+          </button>
+        </div>
       ) : null}
     </section>
   );

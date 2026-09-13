@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 
 interface TimetableLastUpdatedProps {
@@ -16,7 +17,12 @@ function formatRelative(iso: string): string {
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours} hr ago`;
   const days = Math.floor(hours / 24);
-  if (days === 1) return "yesterday";
+  // Past a day, include the clock time so "before or after lunch?" is answerable.
+  const clock = new Date(iso).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  if (days === 1) return `yesterday, ${clock}`;
   if (days < 7) return `${days} days ago`;
   return new Date(iso).toLocaleString(undefined, {
     dateStyle: "medium",
@@ -25,6 +31,15 @@ function formatRelative(iso: string): string {
 }
 
 export function TimetableLastUpdated({ isoTimestamp }: TimetableLastUpdatedProps) {
+  // Re-render on a timer so the relative time stays honest while the tab is open.
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!isoTimestamp) return;
+    const id = window.setInterval(() => setTick((t) => t + 1), 60000);
+    return () => window.clearInterval(id);
+  }, [isoTimestamp]);
+
   if (!isoTimestamp) return null;
 
   return (

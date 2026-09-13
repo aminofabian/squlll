@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -64,6 +64,8 @@ interface TimetableJourneyProps {
   onReviewIssues: () => void;
   onPublish: () => void;
   onHide?: () => void;
+  /** localStorage key (tenant + term) under which skipped steps are remembered. */
+  storageKey?: string;
 }
 
 interface Stop {
@@ -108,8 +110,27 @@ export function TimetableJourney({
   onReviewIssues,
   onPublish,
   onHide,
+  storageKey,
 }: TimetableJourneyProps) {
   const [skipped, setSkipped] = useState<Set<StopId>>(new Set());
+  const [showAllSteps, setShowAllSteps] = useState(false);
+
+  // Restore skipped steps for this term so they don't reappear on every visit.
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        setSkipped(
+          new Set(parsed.filter((v): v is StopId => typeof v === "string")),
+        );
+      }
+    } catch {
+      // Ignore malformed or unavailable storage.
+    }
+  }, [storageKey]);
 
   const stops: Stop[] = [
     {
@@ -255,7 +276,18 @@ export function TimetableJourney({
 
   const skipCurrent = () => {
     if (!current) return;
-    setSkipped((prev) => new Set(prev).add(current.id));
+    setSkipped((prev) => {
+      const next = new Set(prev);
+      next.add(current.id);
+      if (storageKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(storageKey, JSON.stringify([...next]));
+        } catch {
+          // Ignore storage failures (private mode / quota).
+        }
+      }
+      return next;
+    });
   };
 
   const spine = (
@@ -263,46 +295,63 @@ export function TimetableJourney({
       {stops.map((stop, i) => {
         const isCurrent = i === currentIndex;
         const isSkipped = skipped.has(stop.id) && !stop.done;
+        const chipClass = cn(
+          "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[11px] font-medium",
+          stop.attention
+            ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+            : stop.done
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+              : isCurrent
+                ? "border-[#246a59] bg-[#246a59] text-white"
+                : isSkipped
+                  ? "border-dashed border-slate-300 bg-transparent text-slate-400 dark:border-slate-600 dark:text-slate-500"
+                  : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400",
+        );
+        const badgeClass = cn(
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded-none text-[9px] font-bold tabular-nums",
+          stop.attention
+            ? "bg-amber-500 text-white"
+            : stop.done
+              ? "bg-emerald-600 text-white"
+              : isCurrent
+                ? "bg-white/25 text-white"
+                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+        );
+        const chipInner = (
+          <>
+            <span className={badgeClass} aria-hidden>
+              {stop.attention ? (
+                <AlertTriangle className="h-2.5 w-2.5" />
+              ) : stop.done ? (
+                <Check className="h-2.5 w-2.5" />
+              ) : (
+                i + 1
+              )}
+            </span>
+            {stop.label}
+          </>
+        );
+        const interactive = Boolean(stop.onAction) && !stop.done;
         return (
           <li key={stop.id} className="flex items-center gap-1.5">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[11px] font-medium",
-                stop.attention
-                  ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-                  : stop.done
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                    : isCurrent
-                      ? "border-[#246a59] bg-[#246a59] text-white"
-                      : isSkipped
-                        ? "border-dashed border-slate-300 bg-transparent text-slate-400 dark:border-slate-600 dark:text-slate-500"
-                        : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400",
-              )}
-              aria-current={isCurrent ? "step" : undefined}
-            >
-              <span
-                className={cn(
-                  "flex h-4 w-4 shrink-0 items-center justify-center rounded-none text-[9px] font-bold tabular-nums",
-                  stop.attention
-                    ? "bg-amber-500 text-white"
-                    : stop.done
-                      ? "bg-emerald-600 text-white"
-                      : isCurrent
-                        ? "bg-white/25 text-white"
-                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
-                )}
-                aria-hidden
+            {interactive ? (
+              <button
+                type="button"
+                onClick={stop.onAction}
+                className={cn(chipClass, "text-left")}
+                aria-current={isCurrent ? "step" : undefined}
+                title={stop.title}
               >
-                {stop.attention ? (
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                ) : stop.done ? (
-                  <Check className="h-2.5 w-2.5" />
-                ) : (
-                  i + 1
-                )}
+                {chipInner}
+              </button>
+            ) : (
+              <span
+                className={chipClass}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                {chipInner}
               </span>
-              {stop.label}
-            </span>
+            )}
             {i < stops.length - 1 ? (
               <ChevronRight
                 className="h-3 w-3 shrink-0 text-slate-300 dark:text-slate-600"
@@ -344,12 +393,18 @@ export function TimetableJourney({
             <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[#0a1f1a] dark:text-white">
               {current ? current.title : "Your timetable is shared"}
               <span className="ml-2 font-normal text-[#1a4d42]/45 dark:text-white/40">
-                {doneCount}/{stops.length}
+                <span className="sm:hidden">
+                  Step {Math.min(currentIndex + 1, stops.length)} of{" "}
+                  {stops.length}
+                </span>
+                <span className="hidden sm:inline">
+                  {doneCount}/{stops.length}
+                </span>
                 {current?.optional ? " · optional" : ""}
               </span>
             </p>
             {current ? (
-              <p className="hidden truncate text-[11px] text-[#1a4d42]/55 sm:block dark:text-white/45">
+              <p className="line-clamp-2 text-[11px] text-[#1a4d42]/55 sm:line-clamp-none sm:truncate dark:text-white/45">
                 {current.description}
               </p>
             ) : null}
@@ -359,7 +414,7 @@ export function TimetableJourney({
           {current?.actionLabel && current.onAction ? (
             <Button
               size="sm"
-              className={cn("h-7 gap-1.5 text-xs", tt.accentBtn)}
+              className={cn("h-10 gap-1.5 text-xs sm:h-7", tt.accentBtn)}
               onClick={current.onAction}
             >
               {current.actionLabel}
@@ -369,7 +424,7 @@ export function TimetableJourney({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 border-slate-200 text-xs dark:border-slate-700"
+              className="h-10 border-slate-200 text-xs sm:h-7 dark:border-slate-700"
               onClick={current.onSecondary}
             >
               {current.secondaryLabel}
@@ -379,7 +434,7 @@ export function TimetableJourney({
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+              className="h-9 text-xs text-slate-500 hover:text-slate-800 sm:h-7 dark:text-slate-400"
               onClick={skipCurrent}
             >
               Skip
@@ -389,7 +444,7 @@ export function TimetableJourney({
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+              className="h-9 text-xs text-slate-500 hover:text-slate-800 sm:h-7 dark:text-slate-400"
               onClick={onHide}
             >
               Hide
@@ -398,7 +453,17 @@ export function TimetableJourney({
         </div>
       </div>
       <div className="border-t border-[#1a4d42]/8 px-3 py-2 dark:border-white/8 sm:px-4">
-        {spine}
+        <div className="mb-1.5 sm:hidden">
+          <button
+            type="button"
+            onClick={() => setShowAllSteps((v) => !v)}
+            className="text-[11px] font-medium text-[#1a4d42]/60 underline-offset-2 hover:underline dark:text-white/50"
+            aria-expanded={showAllSteps}
+          >
+            {showAllSteps ? "Hide steps" : "Show all steps"}
+          </button>
+        </div>
+        <div className={cn(!showAllSteps && "hidden sm:block")}>{spine}</div>
       </div>
     </section>
   );

@@ -28,20 +28,27 @@ export function TimetableGridError({
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-none border border-red-200/70 bg-red-50/60 px-3 py-2 text-sm text-red-700",
+          "flex items-start gap-2 rounded-none border border-red-200/70 bg-red-50/60 px-3 py-2 text-sm text-red-700",
           "dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400",
           className,
         )}
         role="alert"
       >
-        <AlertCircle className="h-4 w-4 shrink-0" />
-        <span className="flex-1 truncate">{title}</span>
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-medium leading-snug">{title}</p>
+          {description ? (
+            <p className="mt-0.5 text-[11px] leading-snug text-red-600/80 dark:text-red-400/70">
+              {description}
+            </p>
+          ) : null}
+        </div>
         {onRetry && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onRetry}
-            className="h-7 shrink-0 gap-1 px-2 text-xs text-red-600 hover:bg-red-100/80 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/40"
+            className="h-9 shrink-0 gap-1 px-2 text-xs text-red-600 hover:bg-red-100/80 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/40"
           >
             <RefreshCw className="h-3 w-3" />
             Retry

@@ -50,36 +50,77 @@ function CheckRow({
   ok,
   label,
   detail,
+  optional,
 }: {
   ok: boolean;
   label: string;
   detail?: string;
+  optional?: boolean;
 }) {
   return (
     <li className="flex items-start gap-2">
       {ok ? (
         <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+      ) : optional ? (
+        <span
+          aria-hidden
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 border border-dashed border-slate-300 dark:border-slate-600"
+        />
       ) : (
         <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-300" />
       )}
       <div className="min-w-0">
         <p
           className={cn(
-            "text-[12px] font-medium leading-snug",
+            "flex flex-wrap items-center gap-1.5 text-[12px] font-medium leading-snug",
             ok
               ? "text-slate-900 dark:text-slate-100"
               : "text-slate-600 dark:text-slate-300",
           )}
         >
-          {label}
+          <span>{label}</span>
+          {optional ? (
+            <span className="inline-flex items-center border border-dashed border-slate-300 px-1 py-px text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:border-slate-600 dark:text-slate-500 lg:text-[9px]">
+              Optional
+            </span>
+          ) : null}
         </p>
         {detail ? (
-          <p className="mt-0.5 text-[10px] leading-snug text-slate-400">
+          <p className="mt-0.5 text-[11px] leading-snug text-slate-400 lg:text-[10px]">
             {detail}
           </p>
         ) : null}
       </div>
     </li>
+  );
+}
+
+type ExtraAction = {
+  key: string;
+  label: string;
+  icon: typeof Copy;
+  run: () => void;
+};
+
+function ExtraChips({ items }: { items: ExtraAction[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.run}
+            title={item.label}
+            className="inline-flex h-9 items-center gap-1.5 border border-slate-200 px-2.5 text-[12px] font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:h-7 lg:gap-1 lg:px-2 lg:text-[10px]"
+          >
+            <Icon className="h-4 w-4 lg:h-3 lg:w-3" />
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -171,31 +212,47 @@ export function TimetableShareDrawer({
 
   const close = () => onOpenChange(false);
 
-  const extras = [
-    onCopyTermSummary
-      ? { key: "copy-term", label: "Term summary", icon: Copy, run: onCopyTermSummary }
-      : null,
-    onEmailStaff
-      ? { key: "email", label: "Email staff", icon: Mail, run: onEmailStaff }
-      : null,
-    onExportTermCsv
-      ? { key: "term-csv", label: "Term CSV", icon: Download, run: onExportTermCsv }
-      : null,
-    onExportClassCsv
-      ? { key: "class-csv", label: "Class CSV", icon: Download, run: onExportClassCsv }
-      : null,
-    onPrint
-      ? { key: "print", label: "Print class", icon: Printer, run: onPrint }
-      : null,
-    onCopySummary
-      ? { key: "copy-class", label: "Class summary", icon: Copy, run: onCopySummary }
-      : null,
-  ].filter(Boolean) as Array<{
-    key: string;
-    label: string;
-    icon: typeof Copy;
-    run: () => void;
-  }>;
+  const classExtras: ExtraAction[] = [];
+  if (onPrint) {
+    classExtras.push({ key: "print", label: "Print class", icon: Printer, run: onPrint });
+  }
+  if (onExportClassCsv) {
+    classExtras.push({
+      key: "class-csv",
+      label: "Class CSV",
+      icon: Download,
+      run: onExportClassCsv,
+    });
+  }
+  if (onCopySummary) {
+    classExtras.push({
+      key: "copy-class",
+      label: "Class summary",
+      icon: Copy,
+      run: onCopySummary,
+    });
+  }
+
+  const termExtras: ExtraAction[] = [];
+  if (onExportTermCsv) {
+    termExtras.push({
+      key: "term-csv",
+      label: "Term CSV",
+      icon: Download,
+      run: onExportTermCsv,
+    });
+  }
+  if (onCopyTermSummary) {
+    termExtras.push({
+      key: "copy-term",
+      label: "Term summary",
+      icon: Copy,
+      run: onCopyTermSummary,
+    });
+  }
+  if (onEmailStaff) {
+    termExtras.push({ key: "email", label: "Email staff", icon: Mail, run: onEmailStaff });
+  }
 
   const panel = (
     <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-[#0c1a17]">
@@ -218,10 +275,10 @@ export function TimetableShareDrawer({
           <button
             type="button"
             onClick={close}
-            className="flex h-7 w-7 shrink-0 items-center justify-center text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white lg:h-7 lg:w-7"
             aria-label="Close"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
           </button>
         </div>
       </div>
@@ -288,13 +345,14 @@ export function TimetableShareDrawer({
           </ul>
         </section>
 
-        <section className="space-y-1.5">
+        <section className="space-y-1.5 border border-dashed border-slate-200 px-2.5 py-2 dark:border-slate-700">
           <p className={tt.eyebrow}>Recommended</p>
           <ul className="space-y-1.5">
             <CheckRow
               ok={mostlyFilled}
+              optional
               label="Mostly filled (50%+)"
-              detail={`${overview.overallPercentage}% of slots filled across classes · optional`}
+              detail={`${overview.overallPercentage}% of slots filled across classes`}
             />
           </ul>
         </section>
@@ -305,7 +363,7 @@ export function TimetableShareDrawer({
               <AlertTriangle className="h-3.5 w-3.5" />
               Sparse classes
             </p>
-            <ul className="mt-1 space-y-0.5 text-[10px] text-amber-800/90 dark:text-amber-200/90">
+            <ul className="mt-1 space-y-0.5 text-[11px] text-amber-800/90 dark:text-amber-200/90 lg:text-[10px]">
               {incompleteGrades.slice(0, 5).map((g) => (
                 <li key={g.gradeId}>
                   {g.label}: {g.completionPercentage}%
@@ -319,63 +377,66 @@ export function TimetableShareDrawer({
         ) : null}
 
         {classLabel ? (
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[11px] text-slate-400 lg:text-[10px]">
             Viewing {classLabel} — print and class CSV apply to this class.
           </p>
         ) : null}
 
-        {extras.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {extras.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={item.run}
-                  title={item.label}
-                  className="inline-flex h-7 items-center gap-1 border border-slate-200 px-2 text-[10px] font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                >
-                  <Icon className="h-3 w-3" />
-                  {item.label}
-                </button>
-              );
-            })}
+        {classExtras.length > 0 || termExtras.length > 0 ? (
+          <div className="space-y-2.5">
+            {classExtras.length > 0 ? (
+              <div className="space-y-1.5">
+                <p className={tt.eyebrow}>This class</p>
+                <ExtraChips items={classExtras} />
+              </div>
+            ) : null}
+            {termExtras.length > 0 ? (
+              <div className="space-y-1.5">
+                <p className={tt.eyebrow}>Whole term</p>
+                <ExtraChips items={termExtras} />
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#0c1a17]">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={close}
-          className="h-8 px-2 text-[11px] text-slate-500"
-        >
-          Cancel
-        </Button>
+      <div className="shrink-0 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#0c1a17]">
         {blockedReason ? (
-          <p className="min-w-0 truncate text-[11px] text-slate-400">
-            {blockedReason}
+          <p className="mb-2 flex items-start gap-1.5 border border-amber-200 bg-amber-50 px-2 py-1.5 text-[12px] leading-snug text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 lg:text-[11px]">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="min-w-0">{blockedReason}</span>
           </p>
         ) : null}
-        <Button
-          size="sm"
-          disabled={!canMarkReady || busy}
-          title={blockedReason ?? undefined}
-          className={cn("h-8 shrink-0 px-3 text-[12px] font-medium", tt.accentBtn)}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              await onMarkShared();
-              close();
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          {busy ? "Sharing…" : "Share with teachers"}
-        </Button>
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={close}
+            className="h-9 px-3 text-[12px] text-slate-500 lg:h-8 lg:px-2 lg:text-[11px]"
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            disabled={!canMarkReady || busy}
+            title={blockedReason ?? undefined}
+            className={cn(
+              "h-9 shrink-0 px-3 text-[12px] font-medium lg:h-8",
+              tt.accentBtn,
+            )}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onMarkShared();
+                close();
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? "Sharing…" : "Share with teachers"}
+          </Button>
+        </div>
       </div>
     </div>
   );

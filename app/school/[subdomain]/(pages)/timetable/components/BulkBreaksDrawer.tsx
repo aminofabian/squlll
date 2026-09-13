@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -23,6 +23,9 @@ import {
 } from '@/components/ui/select';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { ALL_BREAK_TYPE_OPTIONS } from '@/lib/utils/timetable-break-types';
+import { SCHOOL_DAYS } from '@/lib/constants/breakTypes';
+import { sanitizeTimetableUserMessage } from '@/lib/utils/timetable-user-messages';
+import { useTimetableWeekDays } from '../hooks/useTimetableWeekDays';
 
 interface BulkBreaksDrawerProps {
   open: boolean;
@@ -43,12 +46,31 @@ const BREAK_TYPES = ALL_BREAK_TYPE_OPTIONS.map((o) => ({
   color: o.color,
 }));
 
+const WEEK_DAYS = [
+  ...SCHOOL_DAYS.map((name, i) => ({ value: i + 1, name })),
+  { value: 6, name: 'Saturday' },
+  { value: 7, name: 'Sunday' },
+];
+
 export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
-  const { timeSlots, loadBreaks, loadDayTemplatePeriods } = useTimetableStore();
+  const {
+    timeSlots,
+    loadBreaks,
+    loadDayTemplatePeriods,
+    loadDayTemplates,
+    selectedTermId,
+  } = useTimetableStore();
   const { toast } = useToast();
+  const { daysPerWeek } = useTimetableWeekDays();
+
+  const weekDays = useMemo(
+    () => WEEK_DAYS.filter((d) => d.value <= daysPerWeek),
+    [daysPerWeek],
+  );
 
   const [breakEntries, setBreakEntries] = useState<BreakEntry[]>([]);
   const [applyToAllDays, setApplyToAllDays] = useState(true);
+  const [selectedDays, setSelectedDays] = useState<number[]>([1]);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoadingPeriods, setIsLoadingPeriods] = useState(false);
 
@@ -71,6 +93,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
         }
       ]);
       setApplyToAllDays(true);
+      setSelectedDays([1]);
       
       // Load day template periods if timeSlots are empty
       if (timeSlots.length === 0) {
@@ -109,6 +132,16 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
     ));
   };
 
+  const toggleDay = (dayValue: number) => {
+    setSelectedDays((prev) => {
+      if (prev.includes(dayValue)) {
+        const next = prev.filter((d) => d !== dayValue);
+        return next.length > 0 ? next : prev;
+      }
+      return [...prev, dayValue].sort((a, b) => a - b);
+    });
+  };
+
   const parsePositiveInt = (value: string): number | null => {
     const trimmed = value.trim();
     if (!trimmed) return null;
@@ -144,16 +177,19 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
       return;
     }
 
-    // Get dayTemplateId from timeSlots (same as BreakEditDialog)
+    // Resolve which day template(s) each break should be written to.
     setIsCreating(true);
 
     try {
-      // Get dayTemplateId from timeSlots
-      let slotWithTemplate = timeSlots.find((s) => s.dayTemplateId);
-      if (!slotWithTemplate?.dayTemplateId) {
-        await loadDayTemplatePeriods();
-        const refreshed = useTimetableStore.getState().timeSlots;
-        slotWithTemplate = refreshed.find((s) => s.dayTemplateId);
+      let targets: Array<{ dayTemplateId: string }>;
+
+      if (applyToAllDays) {
+        let slotWithTemplate = timeSlots.find((s) => s.dayTemplateId);
+        if (!slotWithTemplate?.dayTemplateId) {
+          await loadDayTemplatePeriods();
+          const refreshed = useTimetableStore.getState().timeSlots;
+          slotWithTemplate = refreshed.find((s) => s.dayTemplateId);
+        }
         if (!slotWithTemplate?.dayTemplateId) {
           toast({
             title: 'No day template found',
@@ -163,24 +199,83 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
           setIsCreating(false);
           return;
         }
+        targets = [{ dayTemplateId: slotWithTemplate.dayTemplateId }];
+      } else {
+        if (selectedDays.length === 0) {
+          toast({
+            title: 'Pick at least one day',
+            description: 'Choose which day(s) these breaks should be added to.',
+            variant: 'destructive',
+          });
+          setIsCreating(false);
+          return;
+        }
+
+        const allTemplates = (await loadDayTemplates()) as Array<{
+          id?: string;
+          dayOfWeek?: number | null;
+          termId?: string | null;
+          weekTemplate?: { termId?: string | null } | null;
+        }>;
+        const termTemplates = selectedTermId
+          ? allTemplates.filter(
+              (t) =>
+                t.termId === selectedTermId ||
+                t.weekTemplate?.termId === selectedTermId,
+            )
+          : allTemplates;
+
+        const templatesByDay = new Map<number, string[]>();
+        termTemplates.forEach((t) => {
+          if (t.id && typeof t.dayOfWeek === 'number') {
+            const ids = templatesByDay.get(t.dayOfWeek) ?? [];
+            ids.push(t.id);
+            templatesByDay.set(t.dayOfWeek, ids);
+          }
+        });
+
+        const missingDays = selectedDays.filter(
+          (day) => !templatesByDay.get(day)?.length,
+        );
+        if (missingDays.length > 0) {
+          const names = missingDays
+            .map(
+              (day) =>
+                weekDays.find((w) => w.value === day)?.name ?? `Day ${day}`,
+            )
+            .join(', ');
+          toast({
+            title: 'No timetable day found',
+            description: `No day template is set up for ${names}.`,
+            variant: 'destructive',
+          });
+          setIsCreating(false);
+          return;
+        }
+
+        targets = selectedDays.flatMap((day) =>
+          (templatesByDay.get(day) ?? []).map((dayTemplateId) => ({
+            dayTemplateId,
+          })),
+        );
       }
 
-      const dayTemplateId = slotWithTemplate.dayTemplateId;
+      type AliasMeta = { alias: string; label: string; entryId: string };
+      const aliasMetas: AliasMeta[] = [];
+      const mutationParts: string[] = [];
 
-      console.log('🔍 Creating breaks:', breakEntries);
-      console.log('🔍 Apply to all days:', applyToAllDays);
-      console.log('🔍 Using dayTemplateId:', dayTemplateId);
-      
-      // Build GraphQL mutation with multiple break creations
-      const mutations = breakEntries.map((entry, index) => {
-        const alias = `break${index + 1}`;
-        const breakType = BREAK_TYPES.find(t => t.value === entry.type);
-        const breakName = breakType?.label || entry.type;
-        const duration = parsePositiveInt(entry.durationMinutes);
-        
-        return `
+      // Build an aliased GraphQL mutation so we can tell which breaks saved.
+      targets.forEach((target, targetIndex) => {
+        breakEntries.forEach((entry, entryIndex) => {
+          const alias = `break${targetIndex + 1}_${entryIndex + 1}`;
+          const breakType = BREAK_TYPES.find((t) => t.value === entry.type);
+          const breakName = breakType?.label || entry.type;
+          const duration = parsePositiveInt(entry.durationMinutes);
+
+          aliasMetas.push({ alias, label: breakName, entryId: entry.id });
+          mutationParts.push(`
           ${alias}: createTimetableBreak(input: {
-            dayTemplateId: "${dayTemplateId}"
+            dayTemplateId: "${target.dayTemplateId}"
             name: "${breakName}"
             type: ${entry.type}
             afterPeriod: ${entry.afterPeriod}
@@ -197,16 +292,15 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
             icon
             color
           }
-        `;
-      }).join('\n');
+        `);
+        });
+      });
 
       const fullMutation = `
         mutation CreateAllBreaks {
-          ${mutations}
+          ${mutationParts.join('\n')}
         }
       `;
-
-      console.log('🔍 Full mutation:', fullMutation);
 
       const response = await fetch('/api/graphql', {
         method: 'POST',
@@ -226,39 +320,73 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
         throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
       }
 
-      const result = await response.json();
-      
-      console.log('🔍 GraphQL response:', result);
+      const result = (await response.json()) as {
+        data?: Record<string, unknown> | null;
+        errors?: Array<{ message?: string; path?: Array<string | number> }>;
+      };
 
-      if (result.errors) {
-        console.error('❌ GraphQL errors:', result.errors);
-        const errorMessages = result.errors.map((e: any) => e.message).join(', ');
-        throw new Error(`GraphQL errors: ${errorMessages}`);
-      }
-
-      if (!result.data) {
-        throw new Error('Invalid response format: missing data');
-      }
-
-      // Count how many breaks were actually created
-      const createdBreaksCount = Object.keys(result.data).length;
-      console.log('✅ Created breaks:', createdBreaksCount, result.data);
-
-      // Reload breaks to show the new ones
-      await loadBreaks();
-
-      toast({
-        title: 'Breaks created successfully!',
-        description: `Created ${createdBreaksCount} break(s).`,
-        variant: 'default',
+      // GraphQL executes aliased fields independently, so read the outcome of
+      // each break instead of treating the whole batch as pass/fail.
+      const errorsByAlias = new Map<string, string>();
+      (result.errors ?? []).forEach((e) => {
+        const alias = (e.path ?? []).find(
+          (p): p is string => typeof p === 'string',
+        );
+        if (alias) errorsByAlias.set(alias, e.message || 'Unknown error');
       });
 
-      onClose();
+      const data = result.data ?? {};
+      if (Object.keys(data).length === 0) {
+        const firstError =
+          Array.from(errorsByAlias.values())[0] ??
+          'Invalid response format: missing data';
+        throw new Error(firstError);
+      }
+
+      const succeeded = aliasMetas.filter((m) => data[m.alias]);
+      const failed = aliasMetas.filter((m) => !data[m.alias]);
+
+      // Refresh so the grid reflects what actually saved.
+      await loadBreaks();
+
+      if (failed.length === 0) {
+        toast({
+          title: 'Breaks created successfully!',
+          description: `Created ${succeeded.length} break(s).`,
+          variant: 'default',
+        });
+        onClose();
+        return;
+      }
+
+      const failedLabels = Array.from(new Set(failed.map((f) => f.label)));
+      const reason = sanitizeTimetableUserMessage(
+        errorsByAlias.get(failed[0].alias) ?? '',
+      );
+
+      toast({
+        title:
+          succeeded.length > 0
+            ? 'Some breaks were created'
+            : 'Failed to create breaks',
+        description:
+          succeeded.length > 0
+            ? `Created ${succeeded.length} of ${aliasMetas.length} breaks — '${failedLabels.join("', '")}' failed: ${reason}`
+            : `Could not create ${failed.length} break(s): ${reason}`,
+        variant: 'destructive',
+      });
+
+      // Keep only entries that did not save so a retry cannot duplicate the
+      // breaks that already succeeded.
+      const failedEntryIds = new Set(failed.map((f) => f.entryId));
+      setBreakEntries((prev) =>
+        prev.filter((entry) => failedEntryIds.has(entry.id)),
+      );
     } catch (error) {
       console.error('Error creating breaks:', error);
       toast({
         title: 'Failed to create breaks',
-        description: error instanceof Error ? error.message : 'An error occurred while creating breaks.',
+        description: sanitizeTimetableUserMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -424,8 +552,36 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
             <p className="text-xs text-muted-foreground pl-6">
               {applyToAllDays
                 ? 'All breaks will be added to all days in your week template.'
-                : 'All breaks will only be added to the selected day.'}
+                : 'All breaks will only be added to the days you pick below.'}
             </p>
+            {!applyToAllDays && (
+              <div className="flex flex-wrap gap-1.5 pl-6">
+                {weekDays.map((d) => {
+                  const active = selectedDays.includes(d.value);
+                  return (
+                    <label
+                      key={d.value}
+                      className={`flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                        active
+                          ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={active}
+                        onCheckedChange={() => toggleDay(d.value)}
+                        className={`h-3.5 w-3.5 ${
+                          active
+                            ? 'border-white data-[state=checked]:bg-white data-[state=checked]:text-slate-900'
+                            : ''
+                        }`}
+                      />
+                      {d.name}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Actions */}

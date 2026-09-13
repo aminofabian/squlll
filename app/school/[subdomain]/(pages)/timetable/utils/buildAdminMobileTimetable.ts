@@ -18,6 +18,28 @@ type TimeSlotInfo = {
   time?: string;
 };
 
+/**
+ * Lesson produced by the admin mobile builder. Extends the shared
+ * `TimetableLesson` with flags that let the renderer tell a real value apart
+ * from a readable fallback placeholder.
+ */
+export type AdminMobileLesson = TimetableLesson & {
+  /** True when the lesson has no teacher assigned (fallback label shown). */
+  teacherMissing?: boolean;
+  /** True when no grade/class could be resolved (fallback label shown). */
+  classMissing?: boolean;
+};
+
+/** A day cell whose lesson carries the admin-mobile absence flags. */
+export type AdminMobileCell = Omit<TimetableCell, "lesson"> & {
+  lesson?: AdminMobileLesson;
+};
+
+/** A timetable day whose cells carry the admin-mobile absence flags. */
+export type AdminMobileDay = Omit<TimetableDay, "cells"> & {
+  cells: (AdminMobileCell | null)[];
+};
+
 type LessonEntry = {
   id: string;
   subject: { id?: string; name: string; code?: string };
@@ -103,11 +125,11 @@ function entryToLesson(
   dayOfWeek: number,
   periodNumber: number,
   grade: TimetableGrade | null,
-): TimetableLesson {
-  const teacherName =
-    entry.teacher.fullName?.trim() ||
-    entry.teacher.name?.trim() ||
-    "Teacher";
+): AdminMobileLesson {
+  const resolvedTeacherName =
+    entry.teacher.fullName?.trim() || entry.teacher.name?.trim();
+  const teacherMissing = !resolvedTeacherName;
+  const classMissing = !grade;
 
   return {
     id: entry.id,
@@ -120,15 +142,17 @@ function entryToLesson(
     },
     teacher: {
       id: entry.teacher.id ?? "",
-      name: teacherName,
+      name: resolvedTeacherName || "No teacher set",
     },
     room: entry.roomNumber?.trim() || "—",
     grade: grade ?? {
       id: entry.gradeId ?? "",
-      name: "Class",
-      displayName: "Class",
+      name: "Unassigned class",
+      displayName: "Unassigned class",
       level: 0,
     },
+    teacherMissing,
+    classMissing,
     isDoublePeriod: entry.isDoublePeriod,
     isDoubleContinuation: entry.isDoubleContinuation,
   };
@@ -152,7 +176,7 @@ export type BuildAdminMobileTimetableInput = {
 };
 
 export type AdminMobileTimetableData = {
-  days: TimetableDay[];
+  days: AdminMobileDay[];
   timeSlots: TimetableSlot[];
   breaks: TimetableBreak[];
   weekDays: number[];
@@ -235,8 +259,8 @@ export function buildAdminMobileTimetable(
     }),
   );
 
-  const days: TimetableDay[] = weekDays.map((dayOfWeek, dayIndex) => {
-    const cells: (TimetableCell | null)[] = timeSlots.map((slot, slotIndex) => {
+  const days: AdminMobileDay[] = weekDays.map((dayOfWeek, dayIndex) => {
+    const cells: (AdminMobileCell | null)[] = timeSlots.map((slot, slotIndex) => {
       const prevPeriod =
         slotIndex > 0 ? periodNumbers[slotIndex - 1] ?? null : null;
       const entry = resolveDisplayEntry(

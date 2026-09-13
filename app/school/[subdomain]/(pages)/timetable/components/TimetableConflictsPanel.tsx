@@ -28,6 +28,10 @@ interface TimetableConflictsPanelProps {
   onJumpToLesson: (entryId: string) => void;
   quotaIssues?: AllocationQuotaIssue[];
   workloadBreaches?: WorkloadRuleBreach[];
+  /** Opens the allocations step so the user can fix coverage gaps. */
+  onReviewAllocations?: () => void;
+  /** Opens the workload-rules step so the user can fix breaches. */
+  onCheckWorkload?: () => void;
   embedded?: boolean;
 }
 
@@ -117,7 +121,7 @@ function ClashCard({
               className="h-6 shrink-0 gap-0.5 px-2 text-[11px] font-medium text-[#246a59] hover:bg-[#246a59]/10 hover:text-[#1a4d42]"
               onClick={() => onJumpToLesson(e.id)}
             >
-              Open
+              Fix
               <ArrowRight className="h-3 w-3" />
             </Button>
           </li>
@@ -133,6 +137,8 @@ export function TimetableConflictsPanel({
   onJumpToLesson,
   quotaIssues = [],
   workloadBreaches = [],
+  onReviewAllocations,
+  onCheckWorkload,
   embedded = false,
 }: TimetableConflictsPanelProps) {
   const clashTotal = teacherConflicts.length + roomConflicts.length;
@@ -235,6 +241,11 @@ export function TimetableConflictsPanel({
                   />
                 ))}
               </ul>
+              <p className={cn(tt.caption, "px-3 pb-3")}>
+                Choose Fix on one of these lessons, then move it to another
+                period or change the teacher — the clash clears once they no
+                longer overlap.
+              </p>
             </div>
           ) : null}
 
@@ -262,6 +273,16 @@ export function TimetableConflictsPanel({
                     <p className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
                       {issue.message}
                     </p>
+                    {onReviewAllocations ? (
+                      <button
+                        type="button"
+                        onClick={onReviewAllocations}
+                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#246a59] hover:underline"
+                      >
+                        Review allocations
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    ) : null}
                   </li>
                 ))}
                 {workloadBreaches.map((breach, i) => (
@@ -276,6 +297,16 @@ export function TimetableConflictsPanel({
                     <p className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
                       {breach.message}
                     </p>
+                    {onCheckWorkload ? (
+                      <button
+                        type="button"
+                        onClick={onCheckWorkload}
+                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#246a59] hover:underline"
+                      >
+                        Check workload rules
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ul>

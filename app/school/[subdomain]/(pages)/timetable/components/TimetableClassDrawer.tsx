@@ -59,7 +59,7 @@ export function TimetableClassDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-none px-2 py-1 text-[15px] font-semibold text-[#246a59] active:opacity-60"
+              className="rounded-none px-3 py-2 text-[14px] font-semibold text-[#246a59] active:opacity-60"
             >
               Done
             </button>
