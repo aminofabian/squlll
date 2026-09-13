@@ -14,7 +14,7 @@ import {
   DrawerFooter,
   DrawerClose,
 } from '@/components/ui/drawer';
-import { X } from 'lucide-react';
+import { X, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -170,11 +170,13 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           <div className="flex items-center justify-between">
             <div className="flex-1">
             <DrawerTitle className={cn("flex items-center gap-3", tt.text.metric, tt.ink.strong, tt.numeral)}>
-              <span className="text-3xl">⏰</span>
+              <span className="flex h-11 w-11 items-center justify-center border border-[#1a4d42]/12 bg-[#f3f7f5] text-[#246a59] dark:border-white/10 dark:bg-[#071411] dark:text-[#7eb8a8]">
+                <Clock className="h-5 w-5" />
+              </span>
               <span>Edit Period {timeslot.periodNumber}</span>
             </DrawerTitle>
               <DrawerDescription className={cn("mt-2", tt.text.small, tt.ink.muted)}>
-                Update this period's start time, end time, and duration.
+                Change when this period starts and ends — every lesson placed here moves with it.
               </DrawerDescription>
             </div>
             <DrawerClose asChild>
@@ -263,7 +265,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
 
           {/* Warning - Subtle */}
           <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-            <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className={cn(tt.text.small, "text-amber-800 dark:text-amber-200")}>
               This change will affect all lessons scheduled in this period across all grades.
             </p>
@@ -272,8 +274,8 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           {/* Preview */}
           <div className="border-l-4 border-[#246a59] bg-[#f8fbfa] p-5 shadow-sm dark:bg-white/[0.02]">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center bg-[#246a59]/10 text-4xl text-[#246a59] dark:text-[#7eb8a8]">
-                ⏰
+              <div className="flex h-16 w-16 items-center justify-center bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#7eb8a8]">
+                <Clock className="h-7 w-7" />
               </div>
               <div className="flex-1">
                 <div className={cn("mb-1", tt.text.display, tt.ink.strong, tt.numeral)}>

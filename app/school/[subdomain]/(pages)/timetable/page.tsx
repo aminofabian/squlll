@@ -1030,6 +1030,11 @@ export default function SmartTimetableNew() {
 
   const { getCombinedEntriesFor } = useSchoolCombinedEntries();
   const termOverview = useTimetableTermOverview();
+  // Auto-fill is the fast path while the week is still mostly empty — nudge
+  // toward it with a small attention dot on the toolbar button.
+  const autoFillNudge =
+    termOverview.totalSlots > 0 &&
+    termOverview.totalFilled / termOverview.totalSlots < 0.25;
   const schoolLessonCount = useMemo(
     () => termOverview.byGrade.reduce((sum, g) => sum + g.lessonCount, 0),
     [termOverview.byGrade],
@@ -2305,16 +2310,15 @@ export default function SmartTimetableNew() {
               )}
 
               {hasScheduleStructure && (
-                <ToolbarHint text="Set how many lessons each class needs each week, then place them on the grid for you.">
+                <ToolbarHint text="Click here to automatically generate a timetable — it places every lesson for you, then you can fine-tune by hand.">
                   <Button
-                    variant="outline"
                     size="sm"
                     className={cn(
                       "hidden h-8 gap-1.5 rounded-none font-medium lg:inline-flex",
                       tt.text.small,
                       autoGenerateOpen
-                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
-                        : "border-[#246a59]/30 text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                        ? "bg-[#0a1f1a] text-white ring-2 ring-[#246a59]/40 ring-offset-1 ring-offset-[#f8fbfa] hover:bg-[#246a59]"
+                        : "bg-[#0a1f1a] text-white hover:bg-[#246a59]",
                     )}
                     onClick={() =>
                       autoGenerateOpen
@@ -2323,6 +2327,12 @@ export default function SmartTimetableNew() {
                     }
                     aria-pressed={autoGenerateOpen}
                   >
+                    {autoFillNudge && !autoGenerateOpen ? (
+                      <span className="relative flex h-1.5 w-1.5" aria-hidden>
+                        <span className="absolute inline-flex h-full w-full animate-ping bg-amber-300" />
+                        <span className="relative inline-flex h-1.5 w-1.5 bg-amber-300" />
+                      </span>
+                    ) : null}
                     <Sparkles className="h-3.5 w-3.5" />
                     Auto-fill timetable
                   </Button>
@@ -2331,9 +2341,10 @@ export default function SmartTimetableNew() {
               {selectedGradeId && hasScheduleStructure && (
                 <ToolbarHint text="Add several lessons to this class by hand — teacher, subject, and times.">
                   <Button
+                    variant="outline"
                     size="sm"
                     className={cn(
-                      "hidden h-8 gap-1.5 rounded-none bg-[#0a1f1a] font-medium text-white hover:bg-[#246a59] lg:inline-flex",
+                      "hidden h-8 gap-1.5 rounded-none border-[#246a59]/30 font-medium text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42] lg:inline-flex",
                       tt.text.small,
                     )}
                     onClick={() => setBulkLessonEntryOpen(true)}
