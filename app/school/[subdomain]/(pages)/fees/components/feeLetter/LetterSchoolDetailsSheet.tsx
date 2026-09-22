@@ -35,6 +35,7 @@ import {
 } from '../../lib/feeLetter/schoolPortalUrl'
 import type { BankAccount } from '../../types'
 import { useMpesaCustody } from '../../hooks/useMpesaCustody'
+import { BankAccountEditor } from '../BankAccountEditor'
 
 function LetterMpesaTillCard() {
   const { availability, destination, loading } = useMpesaCustody()
@@ -140,9 +141,9 @@ export function LetterSchoolDetailsSheet({
     })
   }
 
-  const updateBank = (index: number, patch: Partial<BankAccount>) => {
+  const updateBank = (index: number, next: BankAccount) => {
     const accounts = [...value.paymentModes.bankAccounts]
-    accounts[index] = { ...accounts[index], ...patch }
+    accounts[index] = next
     updatePayment('bankAccounts', accounts)
   }
 
@@ -357,7 +358,7 @@ export function LetterSchoolDetailsSheet({
               {value.paymentModes.bankAccounts.map((bank, index) => (
                 <div
                   key={index}
-                  className="rounded-lg border border-slate-100 bg-slate-50/60 p-3 space-y-2"
+                  className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/60 p-3"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-slate-600">
@@ -368,7 +369,7 @@ export function LetterSchoolDetailsSheet({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-6 text-xs text-rose-600 px-1"
+                        className="h-6 px-1 text-xs text-rose-600"
                         onClick={() => {
                           updatePayment(
                             'bankAccounts',
@@ -382,32 +383,11 @@ export function LetterSchoolDetailsSheet({
                       </Button>
                     ) : null}
                   </div>
-                  <Input
-                    value={bank.bankName}
-                    onChange={(e) =>
-                      updateBank(index, { bankName: e.target.value })
-                    }
-                    placeholder="Bank name"
-                    className="h-9 bg-white"
+                  <BankAccountEditor
+                    dense
+                    value={bank}
+                    onChange={(next) => updateBank(index, next)}
                   />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      value={bank.branch}
-                      onChange={(e) =>
-                        updateBank(index, { branch: e.target.value })
-                      }
-                      placeholder="Branch"
-                      className="h-9 bg-white"
-                    />
-                    <Input
-                      value={bank.accountNumber}
-                      onChange={(e) =>
-                        updateBank(index, { accountNumber: e.target.value })
-                      }
-                      placeholder="Account no."
-                      className="h-9 bg-white"
-                    />
-                  </div>
                 </div>
               ))}
               <Button

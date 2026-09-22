@@ -2,11 +2,11 @@
 
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { useTenantFeeLetterSettings } from '../hooks/useTenantFeeLetterSettings'
+import { BankAccountEditor } from './BankAccountEditor'
+import type { BankAccount } from '../types'
 
 /**
  * Bank accounts shown on fee letters / parent payment instructions.
@@ -26,16 +26,12 @@ export function SchoolBankAccountsPanel({
 
   const accounts = details.paymentModes.bankAccounts
 
-  const updateAccount = (
-    index: number,
-    field: 'bankName' | 'branch' | 'accountNumber',
-    value: string,
-  ) => {
-    const next = [...accounts]
-    next[index] = { ...next[index], [field]: value }
+  const patchAccount = (index: number, next: BankAccount) => {
+    const list = [...accounts]
+    list[index] = next
     setDetails({
       ...details,
-      paymentModes: { ...details.paymentModes, bankAccounts: next },
+      paymentModes: { ...details.paymentModes, bankAccounts: list },
     })
   }
 
@@ -63,11 +59,26 @@ export function SchoolBankAccountsPanel({
   }
 
   const handleSave = async () => {
+    const cleaned = accounts
+      .map((a) => ({
+        bankName: a.bankName.trim(),
+        branch: (a.branch ?? '').trim(),
+        accountNumber: (a.accountNumber ?? '').trim(),
+      }))
+      .filter((a) => a.bankName || a.branch || a.accountNumber)
+
+    const next = {
+      ...details,
+      paymentModes: { ...details.paymentModes, bankAccounts: cleaned },
+    }
+    setDetails(next)
+
     try {
-      await saveNow(details)
+      await saveNow(next)
       toast({
         title: 'Bank details saved',
-        description: 'Shown on fee letters and parent payment instructions.',
+        description:
+          'Paybill + account appear on fee letters for Lipa Na M-Pesa to bank.',
       })
     } catch (e) {
       toast({
@@ -93,13 +104,14 @@ export function SchoolBankAccountsPanel({
         <div>
           <h2 className="text-base font-semibold text-slate-900">Bank accounts</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Printed on fee letters for bank deposit / transfer. This is not M-Pesa
-            Express — keep till/paybill in the section above.
+            Pick your bank — we fill the Lipa Na M-Pesa business number. You only
+            add the school account number.
           </p>
         </div>
       ) : (
         <p className="text-[12px] leading-relaxed text-[#1a4d42]/65 dark:text-white/55">
-          Shown on fee letters for bank deposit. Separate from M-Pesa Express.
+          Select a bank to autofill the paybill. Enter your account number — or
+          choose Other if your bank isn’t listed.
         </p>
       )}
 
@@ -112,10 +124,10 @@ export function SchoolBankAccountsPanel({
         {accounts.map((bank, index) => (
           <div
             key={index}
-            className="space-y-3 rounded-lg border border-slate-200 bg-white p-3"
+            className="space-y-3 border border-[#1a4d42]/12 bg-[#fbfcfb] p-3 dark:border-white/10 dark:bg-[#0c1a17]"
           >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
                 Account {index + 1}
               </p>
               <Button
@@ -128,34 +140,11 @@ export function SchoolBankAccountsPanel({
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
-            <div className="space-y-2">
-              <Label>Bank name</Label>
-              <Input
-                value={bank.bankName}
-                onChange={(e) => updateAccount(index, 'bankName', e.target.value)}
-                placeholder="e.g. Equity Bank"
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Branch</Label>
-                <Input
-                  value={bank.branch}
-                  onChange={(e) => updateAccount(index, 'branch', e.target.value)}
-                  placeholder="e.g. Mirema"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Account number</Label>
-                <Input
-                  value={bank.accountNumber}
-                  onChange={(e) =>
-                    updateAccount(index, 'accountNumber', e.target.value)
-                  }
-                  placeholder="Account no."
-                />
-              </div>
-            </div>
+            <BankAccountEditor
+              value={bank}
+              onChange={(next) => patchAccount(index, next)}
+              dense={compact}
+            />
           </div>
         ))}
       </div>

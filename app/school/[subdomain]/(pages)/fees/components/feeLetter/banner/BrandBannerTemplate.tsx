@@ -8,6 +8,7 @@ import { formatKes } from '../../../lib/feeLetter/buildFeeLetterModel'
 import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import { formatPortalUrlForDisplay } from '../../../lib/feeLetter/schoolPortalUrl'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
+import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
 import { LogoBox } from '../FeeLetterParts'
 
 function Amount({
@@ -477,7 +478,7 @@ function BrandPaymentRail({
                 </span>
                 <span>
                   <span style={{ fontWeight: 600 }}>{acc.bankName}</span>
-                  {acc.branch ? ` · ${acc.branch}` : ''}
+                  {acc.branch ? ` · ${formatBankPaybillLine(acc.branch)}` : ''}
                   <br />
                   <span style={{ color: 'rgba(255,255,255,0.88)' }}>
                     A/C {acc.accountNumber || '…………'}

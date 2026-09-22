@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { formatKes } from '../../../lib/feeLetter/buildFeeLetterModel'
 import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
+import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
 import { LogoBox, SchoolWebsiteLine } from '../FeeLetterParts'
 
 const GREEN = '#006600'
@@ -345,7 +346,7 @@ function KenyaAnnexPayment({ model }: { model: FeeLetterModel }) {
           {model.bankAccounts.map((acc, i) => (
             <li key={i}>
               <span className="font-semibold">{acc.bankName}</span>
-              {acc.branch ? `, ${acc.branch}` : ''} — A/C{' '}
+              {acc.branch ? `, ${formatBankPaybillLine(acc.branch)}` : ''} — A/C{' '}
               <span className="underline decoration-stone-400">
                 {acc.accountNumber || '…………'}
               </span>

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { formatKes } from '../../../lib/feeLetter/buildFeeLetterModel'
 import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
+import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
 import { LogoBox, SchoolWebsiteLine } from '../FeeLetterParts'
 
 const MAROON = '#5c1a2e'
@@ -339,7 +340,7 @@ function FormalRemittance({ model }: { model: FeeLetterModel }) {
         {model.bankAccounts.map((acc, i) => (
           <li key={i} className="pl-1">
             <span className="font-semibold">{acc.bankName}</span>
-            {acc.branch ? <> — {acc.branch} Branch</> : null}
+            {acc.branch ? <> — {formatBankPaybillLine(acc.branch)}</> : null}
             <span className="text-stone-600">
               {' '}
               · A/C{' '}

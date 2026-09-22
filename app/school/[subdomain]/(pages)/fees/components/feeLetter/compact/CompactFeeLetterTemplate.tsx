@@ -7,6 +7,7 @@ import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import { formatPortalUrlForDisplay } from '../../../lib/feeLetter/schoolPortalUrl'
 import { FIGTREE_FONT_FAMILY } from '@/lib/fonts/figtree'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
+import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
 import { LogoBox } from '../FeeLetterParts'
 
 const INK = '#1e293b'
@@ -182,7 +183,7 @@ function CompactFooterGrid({ model }: { model: FeeLetterModel }) {
           {model.bankAccounts.map((acc, i) => (
             <li key={i}>
               <span className="font-semibold">{i + 1}.</span> {acc.bankName}
-              {acc.branch ? ` (${acc.branch})` : ''} —{' '}
+              {acc.branch ? ` (${formatBankPaybillLine(acc.branch)})` : ''} —{' '}
               <span className="font-mono">{acc.accountNumber || '…………'}</span>
             </li>
           ))}

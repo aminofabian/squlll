@@ -6,6 +6,7 @@ import { FIGTREE_FONT_FAMILY } from '@/lib/fonts/figtree'
 import { cn } from '@/lib/utils'
 import { formatPortalUrlForDisplay } from '../../lib/feeLetter/schoolPortalUrl'
 import { formatKes } from '../../lib/feeLetter/buildFeeLetterModel'
+import { formatBankPaybillLine } from '../../lib/kenyaBanks'
 import type { FeeLetterModel } from '../../lib/feeLetter/types'
 
 export function KesAmount({ amount }: { amount: number }) {
@@ -239,9 +240,9 @@ export function PaymentSection({
           <p key={i} className="mb-2">
             {i + 1}. {acc.bankName}
             {acc.branch ? (
-              <>&nbsp;&nbsp;&nbsp;&nbsp;{acc.branch}</>
+              <>&nbsp;&nbsp;&nbsp;&nbsp;{formatBankPaybillLine(acc.branch)}</>
             ) : (
-              <>&nbsp;&nbsp;&nbsp;&nbsp;………… Branch</>
+              <>&nbsp;&nbsp;&nbsp;&nbsp;Paybill …………</>
             )}
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A/C No:{' '}
             <span className="underline font-medium">
