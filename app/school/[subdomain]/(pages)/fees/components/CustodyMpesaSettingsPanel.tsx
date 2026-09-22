@@ -32,6 +32,7 @@ export function CustodyMpesaSettingsPanel() {
     error,
     saveDestination,
     receiveTest,
+    pollIntent,
   } = useMpesaCustody()
 
   const [type, setType] = useState<CustodyDestinationType>('till')
@@ -41,6 +42,15 @@ export function CustodyMpesaSettingsPanel() {
   const [label, setLabel] = useState('')
   const [testPhone, setTestPhone] = useState('')
   const [testing, setTesting] = useState(false)
+  const [testIntent, setTestIntent] = useState<{
+    id: string
+    status: string
+    partyB: string
+    phone: string
+    resultDesc: string | null
+    mpesaReceipt: string | null
+    resultCode: string | null
+  } | null>(null)
 
   useEffect(() => {
     if (!destination) return
@@ -112,15 +122,54 @@ export function CustodyMpesaSettingsPanel() {
       return
     }
     setTesting(true)
+    setTestIntent(null)
     try {
       const intent = await receiveTest({
         destination: buildInput(),
         phone: testPhone.trim(),
       })
-      toast({
-        title: 'STK sent',
-        description: `KES 1 prompt to ${intent.phone}. Enter PIN to confirm PartyB=${intent.partyB}.`,
+      setTestIntent({
+        id: intent.id,
+        status: intent.status,
+        partyB: intent.partyB,
+        phone: intent.phone,
+        resultDesc: intent.resultDesc,
+        mpesaReceipt: intent.mpesaReceipt,
+        resultCode: intent.resultCode,
       })
+      toast({
+        title: 'STK sent — enter PIN on phone',
+        description: `KES 1 → till ${intent.partyB}. This test does not create a fee payment in SQUL; check M-Pesa till statement for the credit.`,
+      })
+
+      // Poll Daraja query via API until SUCCESS/FAILED or ~90s
+      for (let i = 0; i < 18; i++) {
+        await new Promise((r) => setTimeout(r, 5000))
+        const next = await pollIntent(intent.id)
+        setTestIntent({
+          id: next.id,
+          status: next.status,
+          partyB: next.partyB,
+          phone: next.phone,
+          resultDesc: next.resultDesc,
+          mpesaReceipt: next.mpesaReceipt,
+          resultCode: next.resultCode,
+        })
+        if (next.status === 'SUCCESS' || next.status === 'FAILED') {
+          toast({
+            title:
+              next.status === 'SUCCESS'
+                ? 'Confirmed — KES 1 paid'
+                : 'STK ended without success',
+            description:
+              next.status === 'SUCCESS'
+                ? `Receipt ${next.mpesaReceipt ?? '—'}. Money is on till ${next.partyB} (not a SQUL fee payment).`
+                : next.resultDesc ?? `Result ${next.resultCode ?? next.status}`,
+            variant: next.status === 'SUCCESS' ? 'default' : 'destructive',
+          })
+          break
+        }
+      }
     } catch (e) {
       toast({
         title: 'Test failed',
@@ -239,8 +288,9 @@ export function CustodyMpesaSettingsPanel() {
         <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
           <p className="text-sm font-medium text-slate-900">Test connection (KES 1)</p>
           <p className="text-xs text-slate-500">
-            Validates more than OAuth — sends a real Express prompt to confirm the
-            passkey and that your till is under the Head Office.
+            Sends a real Express prompt. After you enter PIN, KES 1 lands on your
+            till (PartyB) — it will not appear as a fee payment in SQUL. Confirm
+            on the M-Pesa till / Till Number statement.
           </p>
           <div className="space-y-2">
             <Label htmlFor="testPhone">Your Safaricom number</Label>
@@ -261,12 +311,45 @@ export function CustodyMpesaSettingsPanel() {
             {testing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending STK…
+                Waiting for PIN / result…
               </>
             ) : (
               'Send KES 1 test prompt'
             )}
           </Button>
+
+          {testIntent ? (
+            <div
+              className={`rounded-md border px-3 py-2 text-xs ${
+                testIntent.status === 'SUCCESS'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
+                  : testIntent.status === 'FAILED'
+                    ? 'border-red-200 bg-red-50 text-red-900'
+                    : 'border-slate-200 bg-white text-slate-800'
+              }`}
+            >
+              <p className="font-medium">
+                Status: {testIntent.status}
+                {testIntent.resultCode ? ` · code ${testIntent.resultCode}` : ''}
+              </p>
+              <p className="mt-0.5">
+                PartyB till {testIntent.partyB} · {testIntent.phone}
+              </p>
+              {testIntent.mpesaReceipt ? (
+                <p className="mt-0.5 font-mono">Receipt {testIntent.mpesaReceipt}</p>
+              ) : null}
+              {testIntent.resultDesc ? (
+                <p className="mt-0.5 opacity-80">{testIntent.resultDesc}</p>
+              ) : null}
+              {testIntent.status === 'PENDING' ? (
+                <p className="mt-1 opacity-70">
+                  Enter PIN on the phone. If this stays PENDING, Safaricom may not
+                  reach API_PUBLIC_BASE_URL/api/webhooks/daraja/stk — we still poll
+                  Daraja query in the background.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
