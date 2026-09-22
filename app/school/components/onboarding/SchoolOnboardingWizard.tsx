@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Loader2,
   Rocket,
+  Smartphone,
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -35,17 +36,20 @@ import { OnboardingShell, OnboardingStep } from "./onboarding-ui";
 import {
   AcademicYearStepContent,
   formatDisplayDate,
+  PaymentsStepContent,
   StreamsStepContent,
   TermsStepContent,
   countPlannedStreamCreates,
 } from "./onboarding-steps";
+import { OwnerPaymentsDrawer } from "@/app/school/[subdomain]/(pages)/dashboard/components/OwnerPaymentsDrawer";
 
 const ONBOARDING_STEPS = [
   { id: 1, name: "Academic Year", description: "When does your year run?" },
   { id: 2, name: "Terms", description: "Teaching periods" },
   { id: 3, name: "Classes", description: "Create streams" },
-  { id: 4, name: "Next Steps", description: "Optional setup" },
-  { id: 5, name: "Done", description: "Open your dashboard" },
+  { id: 4, name: "Payments", description: "Till, paybill & bank" },
+  { id: 5, name: "Next Steps", description: "Optional setup" },
+  { id: 6, name: "Done", description: "Open your dashboard" },
 ];
 
 function buildInitialYearForm() {
@@ -91,6 +95,8 @@ export function SchoolOnboardingWizard() {
     Record<string, { id: string; name: string; capacity: string }[]>
   >({});
   const [isCreatingStreams, setIsCreatingStreams] = useState(false);
+  const [paymentsDrawerOpen, setPaymentsDrawerOpen] = useState(false);
+  const [paymentsRail, setPaymentsRail] = useState<"mpesa" | "bank">("mpesa");
 
   useEffect(() => {
     const id = getTenantIdFromCookies();
@@ -460,7 +466,7 @@ export function SchoolOnboardingWizard() {
   }, [router, tenantId]);
 
   const goNext = () => {
-    if (currentStep < 5) setCurrentStep((s) => s + 1);
+    if (currentStep < 6) setCurrentStep((s) => s + 1);
     else finishOnboarding();
   };
 
@@ -556,6 +562,27 @@ export function SchoolOnboardingWizard() {
       case 4:
         return (
           <OnboardingStep
+            icon={Smartphone}
+            title="How parents pay"
+            description="Set your M-Pesa till and bank details so fee letters and Express STK are ready."
+          >
+            <PaymentsStepContent
+              subdomain={subdomain}
+              onConfigureMpesa={() => {
+                setPaymentsRail("mpesa");
+                setPaymentsDrawerOpen(true);
+              }}
+              onConfigureBank={() => {
+                setPaymentsRail("bank");
+                setPaymentsDrawerOpen(true);
+              }}
+            />
+          </OnboardingStep>
+        );
+
+      case 5:
+        return (
+          <OnboardingStep
             icon={UserPlus}
             title="What to set up next"
             description="Nothing here is required — open these when you are ready."
@@ -585,7 +612,7 @@ export function SchoolOnboardingWizard() {
           </OnboardingStep>
         );
 
-      case 5:
+      case 6:
         return (
           <OnboardingStep
             icon={Rocket}
@@ -603,11 +630,16 @@ export function SchoolOnboardingWizard() {
                 }
               />
               <SummaryRow done label="Curriculum levels" />
+              <SummaryRow
+                done
+                label="Payment methods"
+                hint="Edit anytime from Dashboard → Till · paybill · bank"
+              />
             </div>
             <div className="border border-[#246a59]/20 bg-[#246a59]/[0.06] p-4">
               <p className="text-sm text-[#1a4d42]/75 dark:text-white/60 leading-relaxed">
                 Your dashboard is where you manage daily operations. You can
-                return to any skipped step from the sidebar.
+                return to payment settings from the school snapshot anytime.
               </p>
             </div>
           </OnboardingStep>
@@ -638,20 +670,26 @@ export function SchoolOnboardingWizard() {
   );
 
   const skipLabel =
-    currentStep === 3 && plannedStreamCreates > 0 ? "Skip streams" : "Skip";
+    currentStep === 3 && plannedStreamCreates > 0
+      ? "Skip streams"
+      : currentStep === 4
+        ? "Skip for now"
+        : "Skip";
 
   const continueDisabled =
     (currentStep === 1 && !hasAcademicYear) || (currentStep === 2 && !hasTerms);
 
   const continueLabel =
-    currentStep === 5
+    currentStep === 6
       ? "Open dashboard"
       : currentStep === 3 && plannedStreamCreates > 0
         ? `Save ${plannedStreamCreates} & continue`
-        : "Continue";
+        : currentStep === 4
+          ? "Continue"
+          : "Continue";
 
   const handleContinue = () => {
-    if (currentStep === 5) {
+    if (currentStep === 6) {
       finishOnboarding();
       return;
     }
@@ -663,25 +701,34 @@ export function SchoolOnboardingWizard() {
   };
 
   return (
-    <OnboardingShell
-      subdomain={subdomain}
-      currentStep={currentStep}
-      totalSteps={5}
-      steps={ONBOARDING_STEPS}
-      onBack={goBack}
-      onSkip={currentStep < 5 ? goNext : undefined}
-      skipLabel={skipLabel}
-      showSkip={
-        currentStep < 5 &&
-        !(currentStep === 3 && plannedStreamCreates === 0)
-      }
-      onContinue={handleContinue}
-      continueLabel={continueLabel}
-      isContinueDisabled={continueDisabled}
-      isLoading={currentStep === 3 && isCreatingStreams}
-    >
-      {renderStepContent()}
-    </OnboardingShell>
+    <>
+      <OnboardingShell
+        subdomain={subdomain}
+        currentStep={currentStep}
+        totalSteps={6}
+        steps={ONBOARDING_STEPS}
+        onBack={goBack}
+        onSkip={currentStep < 6 ? goNext : undefined}
+        skipLabel={skipLabel}
+        showSkip={
+          currentStep < 6 &&
+          !(currentStep === 3 && plannedStreamCreates === 0)
+        }
+        onContinue={handleContinue}
+        continueLabel={continueLabel}
+        isContinueDisabled={continueDisabled}
+        isLoading={currentStep === 3 && isCreatingStreams}
+      >
+        {renderStepContent()}
+      </OnboardingShell>
+
+      <OwnerPaymentsDrawer
+        open={paymentsDrawerOpen}
+        onOpenChange={setPaymentsDrawerOpen}
+        defaultRail={paymentsRail}
+        allowDuringOnboarding
+      />
+    </>
   );
 }
 

@@ -31,6 +31,8 @@ type OwnerPaymentsDrawerProps = {
   /** Custom trigger — omitted when controlled-only */
   trigger?: ReactNode;
   defaultRail?: Rail;
+  /** Show even if role cookie is missing during first-run onboarding */
+  allowDuringOnboarding?: boolean;
 };
 
 export function OwnerPaymentsDrawer({
@@ -38,6 +40,7 @@ export function OwnerPaymentsDrawer({
   onOpenChange,
   trigger,
   defaultRail = "mpesa",
+  allowDuringOnboarding = false,
 }: OwnerPaymentsDrawerProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [rail, setRail] = useState<Rail>(defaultRail);
@@ -51,7 +54,7 @@ export function OwnerPaymentsDrawer({
     if (open) setRail(defaultRail);
   }, [open, defaultRail]);
 
-  if (!isOwner) return null;
+  if (!isOwner && !allowDuringOnboarding) return null;
 
   const tillReady = Boolean(destination && availability?.custodyProvider === "DARAJA");
 

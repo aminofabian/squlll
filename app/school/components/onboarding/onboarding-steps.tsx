@@ -4,10 +4,12 @@ import { useMemo, useState, useEffect } from "react";
 import {
   CalendarRange,
   CheckCircle2,
+  Landmark,
   Loader2,
   Pencil,
   Plus,
   School,
+  Smartphone,
   Sparkles,
   Trash2,
   X,
@@ -17,7 +19,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { TermDraft } from "@/lib/utils/school-calendar-presets";
+import { useMpesaCustody } from "@/app/school/[subdomain]/(pages)/fees/hooks/useMpesaCustody";
+import { useTenantFeeLetterSettings } from "@/app/school/[subdomain]/(pages)/fees/hooks/useTenantFeeLetterSettings";
 import {
   DateField,
   FieldGroup,
@@ -971,4 +976,133 @@ export function StreamsStepContent({
       </div>
     </div>
   );
+}
+
+type PaymentsStepContentProps = {
+  subdomain: string
+  onConfigureMpesa: () => void
+  onConfigureBank: () => void
+}
+
+export function PaymentsStepContent({
+  subdomain,
+  onConfigureMpesa,
+  onConfigureBank,
+}: PaymentsStepContentProps) {
+  const { destination, custodyLine, loading: mpesaLoading } = useMpesaCustody()
+  const { details, loading: bankLoading } =
+    useTenantFeeLetterSettings(subdomain)
+
+  const banksReady = details.paymentModes.bankAccounts.some(
+    (b) => b.bankName.trim() && b.accountNumber.trim(),
+  )
+  const tillReady = Boolean(
+    destination?.tillNumber || destination?.businessNumber,
+  )
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-[#1a4d42]/70 dark:text-white/55">
+        Configure M-Pesa Express (till) and at least one bank paybill. Skip if
+        you want to finish this from the dashboard later.
+      </p>
+
+      <div className="space-y-3">
+        <PaymentSetupCard
+          icon={Smartphone}
+          title="M-Pesa Express"
+          description="Buy Goods till or HO paybill — parents get a PIN prompt; money lands on your till."
+          ready={tillReady}
+          loading={mpesaLoading}
+          readyLabel={custodyLine ?? 'Till saved'}
+          waitingLabel="Till not set yet"
+          actionLabel={tillReady ? 'Edit till' : 'Set till / paybill'}
+          onAction={onConfigureMpesa}
+        />
+        <PaymentSetupCard
+          icon={Landmark}
+          title="Bank accounts"
+          description="Pick a bank — we fill the Lipa Na M-Pesa business number. You add the account number."
+          ready={banksReady}
+          loading={bankLoading}
+          readyLabel={`${details.paymentModes.bankAccounts.filter((b) => b.bankName.trim()).length} bank(s) saved`}
+          waitingLabel="No bank details yet"
+          actionLabel={banksReady ? 'Edit banks' : 'Add bank account'}
+          onAction={onConfigureBank}
+        />
+      </div>
+
+      <p className="text-xs leading-relaxed text-[#1a4d42]/55 dark:text-white/45">
+        Tip: till setup only works after SQUL ops turn on the platform custody
+        rail. Bank details always save and print on fee letters.
+      </p>
+    </div>
+  )
+}
+
+function PaymentSetupCard({
+  icon: Icon,
+  title,
+  description,
+  ready,
+  loading,
+  readyLabel,
+  waitingLabel,
+  actionLabel,
+  onAction,
+}: {
+  icon: typeof Smartphone
+  title: string
+  description: string
+  ready: boolean
+  loading: boolean
+  readyLabel: string
+  waitingLabel: string
+  actionLabel: string
+  onAction: () => void
+}) {
+  return (
+    <div
+      className={cn(
+        'border bg-[#f8fbfa] p-4 dark:bg-white/[0.03]',
+        ready
+          ? 'border-emerald-600/30 shadow-[3px_3px_0_0_rgba(5,150,105,0.12)]'
+          : 'border-[#1a4d42]/12 dark:border-white/10',
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#246a59] bg-[#0a1f1a] text-emerald-300">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+              {title}
+            </p>
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#1a4d42]/40" />
+            ) : ready ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                <CheckCircle2 className="h-3 w-3" />
+                Ready
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-[#1a4d42]/60 dark:text-white/50">
+            {description}
+          </p>
+          <p className="mt-2 truncate text-[11px] font-medium text-[#1a4d42]/70 dark:text-white/55">
+            {loading ? 'Checking…' : ready ? readyLabel : waitingLabel}
+          </p>
+        </div>
+      </div>
+      <Button
+        type="button"
+        className="mt-3 h-9 w-full rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+        onClick={onAction}
+      >
+        {actionLabel}
+      </Button>
+    </div>
+  )
 }
