@@ -56,7 +56,7 @@ function LetterMpesaTillCard() {
           Not available yet — platform custody is off, or Daraja is not configured.
         </p>
         <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" asChild>
-          <Link href="/fees/payments">Open payment settings</Link>
+          <Link href="/dashboard?payments=open">Open payment settings</Link>
         </Button>
       </div>
     )
@@ -86,7 +86,7 @@ function LetterMpesaTillCard() {
         Shown to parents as PartyB. Configure under Fees → M-Pesa till / paybill.
       </p>
       <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" asChild>
-        <Link href="/fees/payments">
+        <Link href="/dashboard?payments=open">
           {line ? 'Edit till / paybill' : 'Add till / paybill'}
         </Link>
       </Button>

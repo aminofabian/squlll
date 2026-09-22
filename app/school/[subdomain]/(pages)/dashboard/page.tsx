@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useTenantStatistics } from "@/lib/hooks/useTenantStatistics";
 import { useStudents } from "@/lib/hooks/useStudents";
@@ -20,15 +20,18 @@ import { DashboardQuickActions } from "./components/DashboardQuickActions";
 import { DashboardGradeSheet } from "./components/DashboardGradeSheet";
 import { DashboardPageSkeleton } from "./components/DashboardSkeleton";
 import { DashboardSection } from "./components/DashboardSection";
+import { OwnerPaymentsDrawer } from "./components/OwnerPaymentsDrawer";
 import { ClassesContextBar } from "../classes/components/ClassesContextBar";
 import { GradeDetailsView } from "../classes/components/GradeDetailsView";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
+import { readIsSchoolOwner } from "@/lib/school/isSchoolOwner";
 import { cn } from "@/lib/utils";
 import { formatGradeDisplayName } from "@/lib/utils/grade-display";
 
 export default function SchoolDashboard() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const subdomain = params.subdomain as string;
 
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -37,6 +40,8 @@ export default function SchoolDashboard() {
   const [isGradePanelOpen, setIsGradePanelOpen] = useState(false);
   const [isGradeSheetOpen, setIsGradeSheetOpen] = useState(false);
   const [showCreateTermModal, setShowCreateTermModal] = useState(false);
+  const [paymentsOpen, setPaymentsOpen] = useState(false);
+  const isOwner = useMemo(() => readIsSchoolOwner(), []);
 
   const { getActiveAcademicYear } = useCurrentAcademicYear();
   const currentAcademicYear = getActiveAcademicYear();
@@ -75,6 +80,14 @@ export default function SchoolDashboard() {
       (stream) => stream.id === selectedStreamId,
     )?.name;
   }, [selectedStreamId, selectedGradeInfo]);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    if (searchParams.get("payments") === "open") {
+      setPaymentsOpen(true);
+      router.replace("/dashboard", { scroll: false });
+    }
+  }, [searchParams, isOwner, router]);
 
   useEffect(() => {
     if (!isLoading && !error && (!config || !config.selectedLevels?.length)) {
@@ -294,6 +307,13 @@ export default function SchoolDashboard() {
           onClose={() => setShowCreateTermModal(false)}
           onSuccess={() => setShowCreateTermModal(false)}
           academicYear={currentAcademicYear}
+        />
+      ) : null}
+
+      {isOwner ? (
+        <OwnerPaymentsDrawer
+          open={paymentsOpen}
+          onOpenChange={setPaymentsOpen}
         />
       ) : null}
     </div>

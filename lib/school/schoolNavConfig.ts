@@ -20,7 +20,6 @@ import {
   Settings,
   LayoutGrid,
   Globe,
-  Smartphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,7 +50,6 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
     items: [
       { title: "Timetable", shortLabel: "Timetable", href: "/timetable", icon: Clock },
       { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees?section=plans", icon: CreditCard },
-      { title: "Payments", shortLabel: "Pay", href: "/fees/payments", icon: Smartphone },
       { title: "Exams", shortLabel: "Exams", href: "/exams", icon: FileCheck },
     ],
   },
@@ -71,7 +69,6 @@ export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
   { title: "Timetable", href: "/timetable", icon: Clock },
   { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
-  { title: "Payments (till / bank)", href: "/fees/payments", icon: Smartphone },
   { title: "Exams", href: "/exams", icon: FileCheck },
 ];
 
@@ -125,7 +122,6 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
     label: "Administration",
     items: [
       { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
-      { title: "Payments (till / bank)", href: "/fees/payments", icon: Smartphone },
       { title: "Attendances", href: "/attendances", icon: CheckSquare },
       { title: "School Years", href: "/school-years", icon: CalendarCheck },
       { title: "Reports", href: "/reports", icon: FileText },
@@ -175,7 +171,6 @@ export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
 /** Mobile bottom nav — overflow items shown in "More" sheet */
 export const SCHOOL_MORE_ITEMS: SchoolNavItem[] = [
   ...SCHOOL_SECONDARY_NAV,
-  { title: "Payments (till / bank)", href: "/fees/payments", icon: Smartphone },
   { title: "Website", href: "/website", icon: Globe },
   { title: "Settings", href: "/settings", icon: Settings },
 ];

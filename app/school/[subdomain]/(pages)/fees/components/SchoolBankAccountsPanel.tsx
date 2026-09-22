@@ -12,7 +12,11 @@ import { useTenantFeeLetterSettings } from '../hooks/useTenantFeeLetterSettings'
  * Bank accounts shown on fee letters / parent payment instructions.
  * Separate from M-Pesa Express till (PartyB).
  */
-export function SchoolBankAccountsPanel() {
+export function SchoolBankAccountsPanel({
+  compact = false,
+}: {
+  compact?: boolean
+}) {
   const { toast } = useToast()
   const params = useParams()
   const subdomain =
@@ -84,14 +88,20 @@ export function SchoolBankAccountsPanel() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-base font-semibold text-slate-900">Bank accounts</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Printed on fee letters for bank deposit / transfer. This is not M-Pesa
-          Express — keep till/paybill in the section above.
+    <div className={compact ? 'space-y-4' : 'space-y-5'}>
+      {!compact ? (
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">Bank accounts</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Printed on fee letters for bank deposit / transfer. This is not M-Pesa
+            Express — keep till/paybill in the section above.
+          </p>
+        </div>
+      ) : (
+        <p className="text-[12px] leading-relaxed text-[#1a4d42]/65 dark:text-white/55">
+          Shown on fee letters for bank deposit. Separate from M-Pesa Express.
         </p>
-      </div>
+      )}
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 

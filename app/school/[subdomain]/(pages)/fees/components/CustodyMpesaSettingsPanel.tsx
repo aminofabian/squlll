@@ -22,7 +22,11 @@ import {
  * School Payments settings — till or HO paybill only.
  * No Daraja API keys. Platform owns Express; school owns PartyB.
  */
-export function CustodyMpesaSettingsPanel() {
+export function CustodyMpesaSettingsPanel({
+  compact = false,
+}: {
+  compact?: boolean
+}) {
   const { toast } = useToast()
   const {
     availability,
@@ -182,21 +186,28 @@ export function CustodyMpesaSettingsPanel() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-base font-semibold text-slate-900">
-          Till / paybill — M-Pesa Express
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          SQUL holds one Lipa Na M-Pesa Go Live. You only enter your Buy Goods
-          till or Head Office paybill. Customers get a PIN prompt; money credits
-          your till directly (PartyB). No API keys. No B2B forward.
+    <div className={compact ? 'space-y-4' : 'space-y-5'}>
+      {!compact ? (
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">
+            Till / paybill — M-Pesa Express
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            SQUL holds one Lipa Na M-Pesa Go Live. You only enter your Buy Goods
+            till or Head Office paybill. Customers get a PIN prompt; money credits
+            your till directly (PartyB). No API keys. No B2B forward.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Your till must sit under SQUL’s M-Pesa Head Office. Bank shared
+            paybills (e.g. NCBA 880100) cannot use this rail.
+          </p>
+        </div>
+      ) : (
+        <p className="text-[12px] leading-relaxed text-[#1a4d42]/65 dark:text-white/55">
+          Enter your Buy Goods till under SQUL’s Head Office. Parents get a PIN
+          prompt; money credits your till directly — no API keys.
         </p>
-        <p className="mt-2 text-xs text-slate-500">
-          Your till must sit under SQUL’s M-Pesa Head Office. Bank shared
-          paybills (e.g. NCBA 880100) cannot use this rail.
-        </p>
-      </div>
+      )}
 
       {!stkReady ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-950">

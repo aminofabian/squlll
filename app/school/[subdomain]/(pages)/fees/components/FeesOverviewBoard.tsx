@@ -230,7 +230,7 @@ export function FeesOverviewBoard({
       sub: "Till / paybill Express",
       onClick: () => {
         if (typeof window !== "undefined") {
-          window.location.href = "/fees/payments";
+          window.location.href = "/dashboard?payments=open";
         }
       },
       primary: false,

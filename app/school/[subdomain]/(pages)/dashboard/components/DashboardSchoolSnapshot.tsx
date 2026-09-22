@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
 import {
   ArrowUpRight,
@@ -13,6 +12,9 @@ import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { useActiveTerm } from "@/lib/hooks/useActiveTerm";
 import { useStudentsSummary } from "@/lib/hooks/useStudentsSummary";
 import { formatCurrency } from "@/lib/parent/parentFees";
+import { readIsSchoolOwner } from "@/lib/school/isSchoolOwner";
+import { OwnerPaymentsDrawer } from "./OwnerPaymentsDrawer";
+import Link from "next/link";
 
 interface StudentLike {
   grade?: {
@@ -43,6 +45,7 @@ export function DashboardSchoolSnapshot({
   const { getActiveAcademicYear } = useCurrentAcademicYear();
   const { activeTerm, loading: termLoading } = useActiveTerm();
   const { students: feeRows, isLoading: feesLoading } = useStudentsSummary();
+  const isOwner = useMemo(() => readIsSchoolOwner(), []);
 
   const activeYear = getActiveAcademicYear();
 
@@ -164,22 +167,31 @@ export function DashboardSchoolSnapshot({
           </div>
         </Link>
 
-        <Link href="/fees/payments" className="group flex items-start gap-2.5">
-          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center border border-[#1a4d42]/15 bg-[#f3f7f5] text-[#246a59] dark:border-white/15 dark:bg-[#071411]">
-            <Smartphone className="h-3.5 w-3.5" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
-              Payment methods
-            </p>
-            <p className="text-[13px] font-semibold text-[#0a1f1a] dark:text-white">
-              Till · paybill · bank
-            </p>
-            <p className="text-[11px] text-[#1a4d42]/50 dark:text-white/40 group-hover:text-[#246a59]">
-              Set how parents pay →
-            </p>
-          </div>
-        </Link>
+        {isOwner ? (
+          <OwnerPaymentsDrawer
+            trigger={
+              <button
+                type="button"
+                className="group flex w-full items-start gap-2.5 text-left"
+              >
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center border border-[#1a4d42]/15 bg-[#f3f7f5] text-[#246a59] transition-colors group-hover:border-[#246a59] group-hover:bg-[#0a1f1a] group-hover:text-white dark:border-white/15 dark:bg-[#071411]">
+                  <Smartphone className="h-3.5 w-3.5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
+                    Payment methods
+                  </p>
+                  <p className="text-[13px] font-semibold text-[#0a1f1a] dark:text-white">
+                    Till · paybill · bank
+                  </p>
+                  <p className="text-[11px] text-[#1a4d42]/50 transition-colors group-hover:text-[#246a59] dark:text-white/40">
+                    Owner settings →
+                  </p>
+                </div>
+              </button>
+            }
+          />
+        ) : null}
       </div>
 
       <div className="border-t border-[#1a4d42]/10 pt-2.5 dark:border-white/10">
