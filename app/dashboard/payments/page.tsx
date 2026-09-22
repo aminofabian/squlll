@@ -121,7 +121,30 @@ export default function PlatformPaymentsPage() {
         />
 
         {error ? (
-          <DashboardErrorBanner message={error} onRetry={refresh} />
+          <DashboardErrorBanner
+            message={error}
+            onRetry={refresh}
+            variant={
+              /ENCRYPTION_KEY|openssl rand/i.test(error) ? "warning" : "error"
+            }
+          />
+        ) : null}
+
+        {daraja && !daraja.encryptionConfigured ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-5 py-4 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+            <p className="font-semibold">Encryption key missing on the API</p>
+            <p className="mt-1 text-xs leading-relaxed opacity-90">
+              Add this env var to the Nest/Coolify API service, then redeploy.
+              Without it you can still toggle shortcode/settings, but consumer
+              key/secret/passkey cannot be stored.
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-white/70 p-3 text-[11px] text-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
+{`# generate once, store in Coolify secrets
+openssl rand -base64 32
+
+APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
+            </pre>
+          </div>
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-2">

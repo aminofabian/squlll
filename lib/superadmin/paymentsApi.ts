@@ -8,6 +8,7 @@ export type PlatformDarajaSettings = {
   hasConsumerKey: boolean;
   hasConsumerSecret: boolean;
   hasPasskey: boolean;
+  encryptionConfigured: boolean;
   updatedAt: string | null;
 };
 
@@ -31,6 +32,7 @@ const DARAJA_QUERY = `
       hasConsumerKey
       hasConsumerSecret
       hasPasskey
+      encryptionConfigured
       updatedAt
     }
   }
@@ -55,6 +57,7 @@ const UPDATE_DARAJA = `
       hasConsumerKey
       hasConsumerSecret
       hasPasskey
+      encryptionConfigured
       updatedAt
     }
   }
