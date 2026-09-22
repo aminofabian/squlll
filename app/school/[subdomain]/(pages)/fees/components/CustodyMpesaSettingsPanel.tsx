@@ -1,0 +1,261 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Loader2 } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
+import {
+  useMpesaCustody,
+  type CustodyDestinationType,
+} from '../hooks/useMpesaCustody'
+
+/**
+ * School Payments settings — till or HO paybill only.
+ * No Daraja API keys. Platform owns Express; school owns PartyB.
+ */
+export function CustodyMpesaSettingsPanel() {
+  const { toast } = useToast()
+  const {
+    availability,
+    destination,
+    loading,
+    saving,
+    error,
+    saveDestination,
+    receiveTest,
+  } = useMpesaCustody()
+
+  const [type, setType] = useState<CustodyDestinationType>('till')
+  const [tillNumber, setTillNumber] = useState('')
+  const [businessNumber, setBusinessNumber] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [label, setLabel] = useState('')
+  const [testPhone, setTestPhone] = useState('')
+  const [testing, setTesting] = useState(false)
+
+  useEffect(() => {
+    if (!destination) return
+    setType(destination.type)
+    setTillNumber(destination.tillNumber ?? '')
+    setBusinessNumber(destination.businessNumber ?? '')
+    setAccountNumber(destination.accountNumber ?? '')
+    setLabel(destination.label ?? '')
+  }, [destination])
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-slate-600">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading M-Pesa settings…
+      </div>
+    )
+  }
+
+  if (!availability?.available) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+        <p className="font-medium">Till / paybill Express is not available yet</p>
+        <p className="mt-1 text-amber-800">
+          {availability?.reason ??
+            'Platform custody rail is off. Ask SQUL ops to enable Daraja custody.'}
+        </p>
+      </div>
+    )
+  }
+
+  const buildInput = () =>
+    type === 'till'
+      ? { type: 'till' as const, tillNumber, label: label || undefined }
+      : {
+          type: 'paybill' as const,
+          businessNumber,
+          accountNumber,
+          label: label || undefined,
+        }
+
+  const handleSave = async () => {
+    try {
+      await saveDestination(buildInput())
+      toast({
+        title: 'Saved',
+        description:
+          'Till / paybill saved. Money from STK lands directly on this PartyB (no B2B).',
+      })
+    } catch (e) {
+      toast({
+        title: 'Could not save',
+        description: e instanceof Error ? e.message : 'Save failed',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleTest = async () => {
+    if (!testPhone.trim()) {
+      toast({
+        title: 'Phone required',
+        description: 'Enter the Safaricom number that should receive the KES 1 prompt',
+        variant: 'destructive',
+      })
+      return
+    }
+    setTesting(true)
+    try {
+      const intent = await receiveTest({
+        destination: buildInput(),
+        phone: testPhone.trim(),
+      })
+      toast({
+        title: 'STK sent',
+        description: `KES 1 prompt to ${intent.phone}. Enter PIN to confirm PartyB=${intent.partyB}.`,
+      })
+    } catch (e) {
+      toast({
+        title: 'Test failed',
+        description: e instanceof Error ? e.message : 'Receive test failed',
+        variant: 'destructive',
+      })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">
+          Till / paybill — M-Pesa Express
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">
+          SQUL holds one Lipa Na M-Pesa Go Live. You only enter your Buy Goods
+          till or Head Office paybill. Customers get a PIN prompt; money credits
+          your till directly (PartyB). No API keys. No B2B forward.
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          Your till must sit under SQUL’s M-Pesa Head Office. Bank shared
+          paybills (e.g. NCBA 880100) cannot use this rail.
+        </p>
+      </div>
+
+      {error ? (
+        <p className="text-sm text-red-600">{error}</p>
+      ) : null}
+
+      <div className="space-y-2">
+        <Label>Destination type</Label>
+        <Select
+          value={type}
+          onValueChange={(v) => setType(v as CustodyDestinationType)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="till">Buy Goods till</SelectItem>
+            <SelectItem value="paybill">Paybill (same Head Office)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {type === 'till' ? (
+        <div className="space-y-2">
+          <Label htmlFor="till">Till number</Label>
+          <Input
+            id="till"
+            inputMode="numeric"
+            value={tillNumber}
+            onChange={(e) => setTillNumber(e.target.value)}
+            placeholder="e.g. 3502582"
+          />
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="paybill">Paybill / business number</Label>
+            <Input
+              id="paybill"
+              inputMode="numeric"
+              value={businessNumber}
+              onChange={(e) => setBusinessNumber(e.target.value)}
+              placeholder="5–7 digits under SQUL HO"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="account">Account number</Label>
+            <Input
+              id="account"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="Shown on the STK prompt (max 12)"
+            />
+          </div>
+        </>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="label">Label (optional)</Label>
+        <Input
+          id="label"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="School fees till"
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving…
+            </>
+          ) : (
+            'Save destination'
+          )}
+        </Button>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+        <p className="text-sm font-medium text-slate-900">Test connection (KES 1)</p>
+        <p className="text-xs text-slate-500">
+          Validates more than OAuth — sends a real Express prompt to confirm the
+          passkey and that your till is under the Head Office.
+        </p>
+        <div className="space-y-2">
+          <Label htmlFor="testPhone">Your Safaricom number</Label>
+          <Input
+            id="testPhone"
+            inputMode="tel"
+            value={testPhone}
+            onChange={(e) => setTestPhone(e.target.value)}
+            placeholder="07xxxxxxxx"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void handleTest()}
+          disabled={testing}
+        >
+          {testing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Sending STK…
+            </>
+          ) : (
+            'Send KES 1 test prompt'
+          )}
+        </Button>
+      </div>
+    </div>
+  )
+}

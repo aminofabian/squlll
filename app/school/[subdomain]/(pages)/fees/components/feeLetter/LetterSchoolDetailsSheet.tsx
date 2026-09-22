@@ -21,9 +21,11 @@ import {
   Globe,
   ImagePlus,
   Loader2,
+  Smartphone,
   Trash2,
   UserRound,
 } from 'lucide-react'
+import Link from 'next/link'
 import { GeneratedSchoolLogo } from '@/components/school/GeneratedSchoolLogo'
 import { FEES_BRAND } from '../../lib/fees-ui'
 import type { LetterSchoolDetailsPayload } from '../../lib/feeLetter/letterSchoolDetails'
@@ -32,6 +34,62 @@ import {
   formatPortalUrlForDisplay,
 } from '../../lib/feeLetter/schoolPortalUrl'
 import type { BankAccount } from '../../types'
+import { useMpesaCustody } from '../../hooks/useMpesaCustody'
+
+function LetterMpesaTillCard() {
+  const { availability, destination, loading } = useMpesaCustody()
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2 text-xs text-slate-500">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Loading M-Pesa till…
+      </div>
+    )
+  }
+
+  if (!availability?.available) {
+    return (
+      <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3 text-xs text-slate-600">
+        <p className="font-medium text-slate-800">M-Pesa Express (till / paybill)</p>
+        <p className="mt-1 text-slate-500">
+          Not available yet — platform custody is off, or Daraja is not configured.
+        </p>
+      </div>
+    )
+  }
+
+  const line =
+    destination?.type === 'till'
+      ? `Buy Goods till ${destination.tillNumber}`
+      : destination?.type === 'paybill'
+        ? `Paybill ${destination.businessNumber} · Acc ${destination.accountNumber}`
+        : null
+
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-950">
+      <p className="flex items-center gap-1.5 font-medium">
+        <Smartphone className="h-3.5 w-3.5" />
+        M-Pesa Express on letters
+      </p>
+      {line ? (
+        <p className="mt-1 font-mono text-[11px]">{line}</p>
+      ) : (
+        <p className="mt-1 text-emerald-900/80">
+          No till/paybill saved yet — parents won&apos;t see STK until you add one.
+        </p>
+      )}
+      <p className="mt-1 text-[10px] text-emerald-900/70">
+        Shown to parents as PartyB. Configure under Fees → M-Pesa till / paybill.
+      </p>
+      <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" asChild>
+        <Link href="/fees/payments">
+          {line ? 'Edit till / paybill' : 'Add till / paybill'}
+        </Link>
+      </Button>
+    </div>
+  )
+}
 
 type LetterSchoolDetailsSheetProps = {
   open: boolean
@@ -288,6 +346,7 @@ export function LetterSchoolDetailsSheet({
             </TabsContent>
 
             <TabsContent value="payment" className="mt-0 space-y-4">
+              <LetterMpesaTillCard />
               <p className="text-xs text-slate-500 flex items-center gap-1.5">
                 <CreditCard className="h-3.5 w-3.5" />
                 Bank accounts listed on the letter.

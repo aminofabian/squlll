@@ -12,6 +12,7 @@ import {
   Eye,
   FileStack,
   Send,
+  Smartphone,
   Sparkles,
   ArrowRight,
   AlertTriangle,
@@ -222,6 +223,18 @@ export function FeesOverviewBoard({
       onClick: onRecordPayment,
       primary: true,
       icon: CreditCard,
+    },
+    {
+      key: "mpesa",
+      label: "M-Pesa till",
+      sub: "Till / paybill Express",
+      onClick: () => {
+        if (typeof window !== "undefined") {
+          window.location.href = "/fees/payments";
+        }
+      },
+      primary: false,
+      icon: Smartphone,
     },
     {
       key: "balances",

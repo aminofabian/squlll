@@ -199,6 +199,15 @@ const PARENT_PAYMENT_INSTRUCTIONS = `
       schoolName
       schoolContact
       steps
+      stkAvailable
+      stkHint
+      mpesaDestination {
+        type
+        tillNumber
+        businessNumber
+        accountNumber
+        label
+      }
       paymentModes {
         bankAccounts {
           bankName
@@ -223,10 +232,52 @@ const SUBMIT_PARENT_PAYMENT = `
   }
 `
 
+const INITIATE_PARENT_STK = `
+  mutation InitiateParentCustodyMpesaStk($input: InitiateParentCustodyMpesaStkInput!) {
+    initiateParentCustodyMpesaStk(input: $input) {
+      id
+      status
+      amount
+      phone
+      partyB
+      checkoutRequestId
+      resultDesc
+      mpesaReceipt
+      paymentId
+    }
+  }
+`
+
+const PARENT_STK_INTENT = `
+  query CustodyMpesaStkIntent($id: String!) {
+    custodyMpesaStkIntent(id: $id) {
+      id
+      status
+      amount
+      phone
+      partyB
+      checkoutRequestId
+      resultCode
+      resultDesc
+      mpesaReceipt
+      paymentId
+    }
+  }
+`
+
 export interface ParentPaymentInstructions {
   schoolName?: string | null
   schoolContact?: string | null
   steps: string[]
+  stkAvailable?: boolean
+  stkHint?: string | null
+  mpesaDestination?: {
+    type: string
+    tillNumber?: string | null
+    businessNumber?: string | null
+    accountNumber?: string | null
+    label?: string | null
+  } | null
   paymentModes?: {
     bankAccounts: Array<{
       bankName: string
@@ -237,6 +288,19 @@ export interface ParentPaymentInstructions {
     includePostalMoneyOrder?: boolean
     notes: string[]
   } | null
+}
+
+export interface ParentStkIntent {
+  id: string
+  status: string
+  amount: number
+  phone: string
+  partyB: string
+  checkoutRequestId?: string | null
+  resultCode?: string | null
+  resultDesc?: string | null
+  mpesaReceipt?: string | null
+  paymentId?: string | null
 }
 
 export interface SubmitParentPaymentInput {
@@ -332,6 +396,32 @@ export async function submitParentPayment(
     submitParentPayment: SubmitParentPaymentResult
   }>(SUBMIT_PARENT_PAYMENT, { input }, subdomain)
   return data.submitParentPayment
+}
+
+export async function initiateParentCustodyStk(
+  subdomain: string,
+  input: {
+    studentId: string
+    amount: number
+    phone: string
+    accountReference?: string
+    notes?: string
+  },
+): Promise<ParentStkIntent> {
+  const data = await chatGraphqlFetch<{
+    initiateParentCustodyMpesaStk: ParentStkIntent
+  }>(INITIATE_PARENT_STK, { input }, subdomain)
+  return data.initiateParentCustodyMpesaStk
+}
+
+export async function pollParentCustodyStk(
+  subdomain: string,
+  id: string,
+): Promise<ParentStkIntent> {
+  const data = await chatGraphqlFetch<{
+    custodyMpesaStkIntent: ParentStkIntent
+  }>(PARENT_STK_INTENT, { id }, subdomain)
+  return data.custodyMpesaStkIntent
 }
 
 export function formatParentPaymentStatus(status: ParentPaymentStatus): string {

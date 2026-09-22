@@ -65,4 +65,6 @@ export type BuildFeeLetterModelInput = {
   gradeLevels?: Array<{ id: string; name?: string; gradeLevel?: { name: string } }>
   termScopeLine?: string
   totalRowLabel?: string
+  /** e.g. "Buy Goods till 3502582" — prepended to letter payment notes */
+  mpesaCustodyLine?: string | null
 }

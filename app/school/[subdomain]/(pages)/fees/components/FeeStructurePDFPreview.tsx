@@ -26,6 +26,7 @@ export const FeeStructurePDFPreview = ({
   gradeLevels,
   termScopeLine,
   totalRowLabel,
+  mpesaCustodyLine,
 }: FeeStructurePDFPreviewProps) => {
   const model = useMemo(
     () =>
@@ -43,6 +44,7 @@ export const FeeStructurePDFPreview = ({
         gradeLevels,
         termScopeLine,
         totalRowLabel,
+        mpesaCustodyLine,
       }),
     [
       formData,
@@ -58,6 +60,7 @@ export const FeeStructurePDFPreview = ({
       gradeLevels,
       termScopeLine,
       totalRowLabel,
+      mpesaCustodyLine,
     ],
   )
 

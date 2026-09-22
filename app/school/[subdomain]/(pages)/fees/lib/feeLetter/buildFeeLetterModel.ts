@@ -156,11 +156,18 @@ export function buildFeeLetterModel(
     ? formData.paymentModes.bankAccounts
     : DEFAULT_BANKS
 
-  const paymentNotes = formData.paymentModes?.notes ?? [
+  const mpesaLine = input.mpesaCustodyLine?.trim()
+  const baseNotes = formData.paymentModes?.notes ?? [
     'The school official receipts shall be issued upon presentation of original pay-in slips or money order copies.',
     'Fees may be deposited at any branch of the listed banks countrywide.',
     "Fees can be paid by banker's cheque; personal cheques will not be accepted unless otherwise stated.",
   ]
+  const paymentNotes = mpesaLine
+    ? [
+        `Lipa Na M-Pesa Express: ${mpesaLine}. Parents receive a PIN prompt in the school portal — money credits this till/paybill directly.`,
+        ...baseNotes,
+      ]
+    : baseNotes
 
   return {
     displaySchool,

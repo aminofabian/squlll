@@ -26,6 +26,8 @@ import { Label } from '@/components/ui/label'
 import {
   fetchParentPaymentInstructions,
   formatCurrency,
+  initiateParentCustodyStk,
+  pollParentCustodyStk,
   submitParentPayment,
   type ParentPaymentInstructions,
 } from '@/lib/parent/parentFees'
@@ -144,6 +146,10 @@ export function ParentMakePaymentSheet({
   const [proofFile, setProofFile] = useState<File | null>(null)
   const [proofPreview, setProofPreview] = useState<string | null>(null)
   const [submittedReceipt, setSubmittedReceipt] = useState<string | null>(null)
+  const [payMode, setPayMode] = useState<'stk' | 'manual'>('manual')
+  const [stkPhone, setStkPhone] = useState('')
+  const [stkBusy, setStkBusy] = useState(false)
+  const [stkStatus, setStkStatus] = useState<string | null>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
@@ -163,6 +169,8 @@ export function ParentMakePaymentSheet({
   useEffect(() => {
     if (!open) {
       setSubmittedReceipt(null)
+      setStkStatus(null)
+      setStkBusy(false)
       return
     }
     setError(null)
@@ -172,8 +180,18 @@ export function ParentMakePaymentSheet({
     setNotes('')
     setProofFile(null)
     setProofPreview(null)
+    setStkPhone('')
+    setStkStatus(null)
     void loadInstructions()
   }, [open, outstanding, loadInstructions])
+
+  useEffect(() => {
+    if (instructions?.stkAvailable) {
+      setPayMode('stk')
+    } else {
+      setPayMode('manual')
+    }
+  }, [instructions?.stkAvailable])
 
   useEffect(() => {
     return () => {
@@ -223,6 +241,58 @@ export function ParentMakePaymentSheet({
       setError('Enter a valid amount')
       return
     }
+
+    if (payMode === 'stk') {
+      if (!stkPhone.trim()) {
+        setError('Enter the Safaricom number that should receive the PIN prompt')
+        return
+      }
+      setStkBusy(true)
+      setStkStatus('Sending STK prompt…')
+      try {
+        const intent = await initiateParentCustodyStk(subdomain, {
+          studentId,
+          amount: parsed,
+          phone: stkPhone.trim(),
+          notes: notes.trim() || undefined,
+        })
+        setStkStatus('Waiting for PIN on your phone…')
+        toast({
+          title: 'STK sent',
+          description: `Prompt to ${intent.phone}. Money goes to school till ${intent.partyB}.`,
+        })
+
+        const started = Date.now()
+        while (Date.now() - started < 120_000) {
+          await new Promise((r) => setTimeout(r, 2500))
+          const latest = await pollParentCustodyStk(subdomain, intent.id)
+          if (latest.status === 'SUCCESS') {
+            setSubmittedReceipt(latest.mpesaReceipt ?? 'Paid')
+            onSuccess?.(latest.mpesaReceipt ?? undefined)
+            window.setTimeout(() => onOpenChange(false), 1400)
+            return
+          }
+          if (latest.status === 'FAILED') {
+            setError(latest.resultDesc || 'Payment was cancelled or failed')
+            setStkStatus(null)
+            return
+          }
+          setStkStatus(
+            latest.resultDesc
+              ? `Waiting… ${latest.resultDesc}`
+              : 'Waiting for PIN on your phone…',
+          )
+        }
+        setStkStatus('Still pending — check payment history shortly')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not send STK')
+        setStkStatus(null)
+      } finally {
+        setStkBusy(false)
+      }
+      return
+    }
+
     if (method === 'MPESA' && !reference.trim()) {
       setError('M-Pesa confirmation code is required')
       return
@@ -257,13 +327,14 @@ export function ParentMakePaymentSheet({
     }
   }
 
-  const busy = submitting || uploadingProof
+  const busy = submitting || uploadingProof || stkBusy
   const banks = instructions?.paymentModes?.bankAccounts ?? []
   const paymentNotes = instructions?.paymentModes?.notes ?? []
   const hasPayDetails =
     instructionsLoading ||
     Boolean(instructions?.schoolName) ||
     Boolean(instructions?.schoolContact) ||
+    Boolean(instructions?.stkAvailable) ||
     banks.length > 0 ||
     paymentNotes.length > 0
 
@@ -291,11 +362,12 @@ export function ParentMakePaymentSheet({
           <>
             <SheetHeader className="shrink-0 space-y-2.5 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-4 py-4 pr-12 text-left">
               <SheetTitle className="text-base font-semibold text-slate-900">
-                Record payment
+                {instructions?.stkAvailable ? 'Pay fees' : 'Record payment'}
               </SheetTitle>
               <SheetDescription className="text-xs leading-relaxed text-slate-600">
-                Log money you already sent. We match it to {childName ?? 'your child'}&apos;s
-                account.
+                {instructions?.stkAvailable
+                  ? `Send an M-Pesa PIN prompt for ${childName ?? 'your child'}. Money goes straight to the school till.`
+                  : `Log money you already sent. We match it to ${childName ?? 'your child'}'s account.`}
               </SheetDescription>
               <SheetSteps active={sheetStep} />
               <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
@@ -369,13 +441,28 @@ export function ParentMakePaymentSheet({
                             ) : null}
                           </div>
                         ))}
-                        {paymentNotes.map((note, i) => (
-                          <p
-                            key={`note-${i}`}
-                            className="flex gap-2 text-slate-600"
-                          >
-                            <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                            <span>{note}</span>
+                        {instructions?.stkHint ? (
+                          <div className="flex items-start justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50/80 px-2 py-1.5 text-emerald-900">
+                            <div className="flex gap-2">
+                              <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                              <span>
+                                <span className="font-medium">M-Pesa Express</span>
+                                <br />
+                                {instructions.stkHint}
+                                <br />
+                                <span className="text-[10px] text-emerald-800/80">
+                                  PIN only · money lands on school till · no code to type
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                        ) : null}
+                        {(instructions?.steps ?? []).map((step, i) => (
+                          <p key={`step-${i}`} className="flex gap-2 text-slate-600">
+                            <span className="font-mono text-[10px] text-slate-400">
+                              {i + 1}.
+                            </span>
+                            <span>{step}</span>
                           </p>
                         ))}
                       </div>
@@ -384,6 +471,35 @@ export function ParentMakePaymentSheet({
 
                   <DrawerSection title="2 · Payment details">
                     <div className="space-y-3">
+                      {instructions?.stkAvailable ? (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPayMode('stk')}
+                            className={cn(
+                              'rounded-md border px-2 py-2 text-[11px] font-medium',
+                              payMode === 'stk'
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-slate-200 bg-white text-slate-600',
+                            )}
+                          >
+                            Pay with STK
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPayMode('manual')}
+                            className={cn(
+                              'rounded-md border px-2 py-2 text-[11px] font-medium',
+                              payMode === 'manual'
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-slate-200 bg-white text-slate-600',
+                            )}
+                          >
+                            I already paid
+                          </button>
+                        </div>
+                      ) : null}
+
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <Label
@@ -412,51 +528,75 @@ export function ParentMakePaymentSheet({
                           onChange={(e) => setAmount(e.target.value)}
                           className="h-10 text-base font-semibold tabular-nums"
                           required
+                          disabled={stkBusy}
                         />
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-slate-700">Payment method</Label>
-                        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
-                          {METHOD_OPTIONS.map((opt) => {
-                            const Icon = opt.icon
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => setMethod(opt.value)}
-                                className={cn(
-                                  'flex flex-col items-center gap-0.5 rounded-md border px-1 py-2 text-[10px] font-medium transition-colors',
-                                  method === opt.value
-                                    ? 'border-primary bg-primary/10 text-primary'
-                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
-                                )}
-                              >
-                                <Icon className="h-3.5 w-3.5" />
-                                {opt.label}
-                              </button>
-                            )
-                          })}
+                      {payMode === 'stk' ? (
+                        <div className="space-y-1.5">
+                          <Label htmlFor="parent-stk-phone" className="text-xs text-slate-700">
+                            Your Safaricom number
+                          </Label>
+                          <Input
+                            id="parent-stk-phone"
+                            inputMode="tel"
+                            value={stkPhone}
+                            onChange={(e) => setStkPhone(e.target.value)}
+                            placeholder="07xxxxxxxx"
+                            className="h-9"
+                            required
+                            disabled={stkBusy}
+                          />
+                          {stkStatus ? (
+                            <p className="text-[11px] text-emerald-700">{stkStatus}</p>
+                          ) : null}
                         </div>
-                      </div>
+                      ) : (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-slate-700">Payment method</Label>
+                            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                              {METHOD_OPTIONS.map((opt) => {
+                                const Icon = opt.icon
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setMethod(opt.value)}
+                                    className={cn(
+                                      'flex flex-col items-center gap-0.5 rounded-md border px-1 py-2 text-[10px] font-medium transition-colors',
+                                      method === opt.value
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
+                                    )}
+                                  >
+                                    <Icon className="h-3.5 w-3.5" />
+                                    {opt.label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="parent-pay-ref" className="text-xs text-slate-700">
-                          {method === 'MPESA'
-                            ? 'M-Pesa confirmation code'
-                            : method === 'BANK_TRANSFER'
-                              ? 'Bank reference'
-                              : 'Reference (optional)'}
-                        </Label>
-                        <Input
-                          id="parent-pay-ref"
-                          value={reference}
-                          onChange={(e) => setReference(e.target.value)}
-                          placeholder={method === 'MPESA' ? 'e.g. QHK12ABC34' : ''}
-                          className="h-9 font-mono text-sm uppercase tracking-wide"
-                          required={method === 'MPESA'}
-                        />
-                      </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="parent-pay-ref" className="text-xs text-slate-700">
+                              {method === 'MPESA'
+                                ? 'M-Pesa confirmation code'
+                                : method === 'BANK_TRANSFER'
+                                  ? 'Bank reference'
+                                  : 'Reference (optional)'}
+                            </Label>
+                            <Input
+                              id="parent-pay-ref"
+                              value={reference}
+                              onChange={(e) => setReference(e.target.value)}
+                              placeholder={method === 'MPESA' ? 'e.g. QHK12ABC34' : ''}
+                              className="h-9 font-mono text-sm uppercase tracking-wide"
+                              required={method === 'MPESA'}
+                            />
+                          </div>
+                        </>
+                      )}
 
                       <div className="space-y-1.5">
                         <Label htmlFor="parent-pay-notes" className="text-xs text-slate-700">
@@ -468,11 +608,13 @@ export function ParentMakePaymentSheet({
                           onChange={(e) => setNotes(e.target.value)}
                           placeholder="e.g. Term 2 tuition"
                           className="h-9 text-sm"
+                          disabled={stkBusy}
                         />
                       </div>
                     </div>
                   </DrawerSection>
 
+                  {payMode === 'manual' ? (
                   <DrawerSection title="3 · Receipt photo">
                     <p className="text-[10px] leading-relaxed text-slate-500">
                       Snap your M-Pesa message or bank slip — finance confirms faster.
@@ -551,6 +693,7 @@ export function ParentMakePaymentSheet({
                     )}
                     <p className={feesMuted}>JPG, PNG, or PDF · max 10 MB</p>
                   </DrawerSection>
+                  ) : null}
 
                   {error ? (
                     <p className="rounded-md border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-800">
@@ -565,8 +708,14 @@ export function ParentMakePaymentSheet({
                   {busy ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {uploadingProof ? 'Uploading receipt…' : 'Recording…'}
+                      {stkBusy
+                        ? 'Waiting for PIN…'
+                        : uploadingProof
+                          ? 'Uploading receipt…'
+                          : 'Recording…'}
                     </>
+                  ) : payMode === 'stk' ? (
+                    'Send M-Pesa prompt'
                   ) : (
                     'Record payment'
                   )}

@@ -6,6 +6,7 @@ import {
   TicketCheck,
   Activity,
   Settings,
+  Smartphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -60,6 +61,11 @@ export const SUPERADMIN_NAV_SECTIONS: NavSection[] = [
         href: "/dashboard/subscriptions",
         label: "Subscriptions",
         icon: TicketCheck,
+      },
+      {
+        href: "/dashboard/payments",
+        label: "M-Pesa",
+        icon: Smartphone,
       },
     ],
   },

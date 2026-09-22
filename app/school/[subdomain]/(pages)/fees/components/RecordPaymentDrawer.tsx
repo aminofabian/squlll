@@ -29,6 +29,7 @@ import type {
 import { useStudentInvoices } from "../hooks/useStudentInvoices";
 import { useStudentSummary } from "../hooks/useStudentSummary";
 import { useGraphQLInvoices } from "../hooks/useGraphQLInvoices";
+import { useMpesaCustody } from "../hooks/useMpesaCustody";
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "../utils";
@@ -69,15 +70,27 @@ export default function RecordPaymentDrawer({
     useGraphQLInvoices();
   const { getActiveAcademicYear, loading: academicYearsLoading } =
     useAcademicYears();
+  const {
+    availability: custodyAvailability,
+    destination: custodyDestination,
+    initiateStk,
+    pollIntent,
+  } = useMpesaCustody();
   const [pickedStudentId, setPickedStudentId] = useState<string | null>(
     studentId,
   );
   const [studentSearch, setStudentSearch] = useState("");
+  const [stkPhone, setStkPhone] = useState("");
+  const [stkBusy, setStkBusy] = useState(false);
+  const [stkStatus, setStkStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setPickedStudentId(studentId);
       setStudentSearch("");
+      setStkPhone("");
+      setStkStatus(null);
+      setStkBusy(false);
     }
   }, [isOpen, studentId]);
 
@@ -236,8 +249,108 @@ export default function RecordPaymentDrawer({
     }
   };
 
+  const isCustodyStk = form.paymentMethod === "CUSTODY_MPESA";
+  const custodyReady =
+    Boolean(custodyAvailability?.available) && Boolean(custodyDestination);
+
+  const handleSendStk = async () => {
+    if (!form.invoiceId || !form.amountPaid || !stkPhone.trim()) {
+      toast({
+        title: "Missing details",
+        description: "Invoice, amount, and Safaricom phone are required",
+        variant: "destructive",
+      });
+      return;
+    }
+    const amount = Number(form.amountPaid);
+    if (!Number.isFinite(amount) || amount < 1) {
+      toast({
+        title: "Invalid amount",
+        description: "Enter at least KES 1",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setStkBusy(true);
+    setStkStatus("Sending STK prompt…");
+    try {
+      const intent = await initiateStk({
+        amount,
+        phone: stkPhone.trim(),
+        invoiceId: form.invoiceId,
+        accountReference: effectiveStudentInfo?.admissionNumber,
+        notes: form.notes || undefined,
+      });
+      setStkStatus("Waiting for PIN on phone…");
+      toast({
+        title: "STK sent",
+        description: `Prompt to ${intent.phone} · PartyB ${intent.partyB}`,
+      });
+
+      const started = Date.now();
+      while (Date.now() - started < 120_000) {
+        await new Promise((r) => setTimeout(r, 2500));
+        const latest = await pollIntent(intent.id);
+        if (latest.status === "SUCCESS") {
+          setStkStatus(
+            latest.mpesaReceipt
+              ? `Paid · receipt ${latest.mpesaReceipt}`
+              : "Paid",
+          );
+          toast({
+            title: "Payment received",
+            description: latest.mpesaReceipt
+              ? `M-Pesa ${latest.mpesaReceipt}`
+              : "Fee payment settled from STK callback",
+          });
+          onPaymentSuccess?.();
+          onClose();
+          return;
+        }
+        if (latest.status === "FAILED") {
+          setStkStatus(latest.resultDesc || "Customer cancelled or failed");
+          toast({
+            title: "STK failed",
+            description: latest.resultDesc || "Payment was not completed",
+            variant: "destructive",
+          });
+          return;
+        }
+        setStkStatus(
+          latest.resultDesc
+            ? `Waiting… ${latest.resultDesc}`
+            : "Waiting for PIN on phone…",
+        );
+      }
+      setStkStatus("Still pending — refresh payments shortly");
+      toast({
+        title: "Still waiting",
+        description:
+          "No final callback yet. If the parent entered PIN, the payment will appear when Safaricom confirms.",
+      });
+    } catch (e) {
+      setStkStatus(null);
+      toast({
+        title: "Could not send STK",
+        description: e instanceof Error ? e.message : "STK push failed",
+        variant: "destructive",
+      });
+    } finally {
+      setStkBusy(false);
+    }
+  };
+
   const paymentMethods = [
-    { value: "MPESA", label: "M-Pesa" },
+    ...(custodyReady
+      ? [
+          {
+            value: "CUSTODY_MPESA",
+            label: "Till / paybill (M-Pesa Express)",
+          },
+        ]
+      : []),
+    { value: "MPESA", label: "M-Pesa (manual code)" },
     { value: "CASH", label: "Cash" },
     { value: "BANK_TRANSFER", label: "Bank transfer" },
     { value: "CHEQUE", label: "Cheque" },
@@ -510,31 +623,62 @@ export default function RecordPaymentDrawer({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="date">Payment Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={form.paymentDate}
-                  onChange={(e) => handleChange("paymentDate", e.target.value)}
-                />
-              </div>
+              {isCustodyStk ? (
+                <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+                  <p className="text-xs text-emerald-900">
+                    M-Pesa Express · PartyB = your till · PIN only · no B2B
+                    {custodyDestination?.type === "till"
+                      ? ` · till ${custodyDestination.tillNumber}`
+                      : custodyDestination?.businessNumber
+                        ? ` · paybill ${custodyDestination.businessNumber}`
+                        : ""}
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="stkPhone">Parent Safaricom number</Label>
+                    <Input
+                      id="stkPhone"
+                      inputMode="tel"
+                      value={stkPhone}
+                      onChange={(e) => setStkPhone(e.target.value)}
+                      placeholder="07xxxxxxxx"
+                      disabled={stkBusy}
+                    />
+                  </div>
+                  {stkStatus ? (
+                    <p className="text-xs text-emerald-800">{stkStatus}</p>
+                  ) : null}
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Payment Date</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={form.paymentDate}
+                      onChange={(e) =>
+                        handleChange("paymentDate", e.target.value)
+                      }
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ref">Reference Number</Label>
-                <Input
-                  id="ref"
-                  value={form.referenceNumber}
-                  onChange={(e) =>
-                    handleChange("referenceNumber", e.target.value)
-                  }
-                  placeholder={
-                    form.paymentMethod === "mpesa"
-                      ? "M-Pesa confirmation code"
-                      : "Receipt or transaction reference"
-                  }
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ref">Reference Number</Label>
+                    <Input
+                      id="ref"
+                      value={form.referenceNumber}
+                      onChange={(e) =>
+                        handleChange("referenceNumber", e.target.value)
+                      }
+                      placeholder={
+                        form.paymentMethod === "MPESA"
+                          ? "M-Pesa confirmation code"
+                          : "Receipt or transaction reference"
+                      }
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
@@ -623,28 +767,34 @@ export default function RecordPaymentDrawer({
         <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex gap-2">
             <Button
-              onClick={() => void handleSubmit()}
+              onClick={() =>
+                void (isCustodyStk ? handleSendStk() : handleSubmit())
+              }
               disabled={
                 isSubmitting ||
+                stkBusy ||
                 !effectiveStudentId ||
                 !form.invoiceId ||
                 !form.amountPaid ||
-                !form.paymentDate ||
+                (!isCustodyStk && !form.paymentDate) ||
+                (isCustodyStk && !stkPhone.trim()) ||
                 invoicesLoading ||
                 needsBilling ||
                 isGeneratingInvoice
               }
             >
-              {isSubmitting ? (
+              {stkBusy || isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving…
+                  {isCustodyStk ? "Waiting for PIN…" : "Saving…"}
                 </>
               ) : invoicesLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Loading...
                 </>
+              ) : isCustodyStk ? (
+                "Send STK prompt"
               ) : (
                 "Save & receipt"
               )}

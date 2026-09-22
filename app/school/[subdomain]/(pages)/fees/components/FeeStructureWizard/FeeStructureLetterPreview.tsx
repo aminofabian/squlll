@@ -5,6 +5,7 @@ import { FeeStructurePDFPreview } from '../FeeStructurePDFPreview'
 import { FeeLetterScreenStyles } from '../feeLetter/FeeLetterScreenStyles'
 import type { FeeLetterTemplateId } from '../../lib/feeLetter/types'
 import type { FeeStructureForm } from '../../types'
+import { useMpesaCustody } from '../../hooks/useMpesaCustody'
 
 interface FeeStructureLetterPreviewProps {
     formData: FeeStructureForm
@@ -36,6 +37,8 @@ export function FeeStructureLetterPreview({
     templateId,
     containerRef,
 }: FeeStructureLetterPreviewProps) {
+    const { custodyLine } = useMpesaCustody()
+
     return (
         <div ref={containerRef} data-pdf-content>
             <FeeLetterScreenStyles />
@@ -52,6 +55,7 @@ export function FeeStructureLetterPreview({
                 termScopeLine={termScopeLine}
                 totalRowLabel={totalRowLabel}
                 templateId={templateId}
+                mpesaCustodyLine={custodyLine}
             />
         </div>
     )
