@@ -48,13 +48,16 @@ function LetterMpesaTillCard() {
     )
   }
 
-  if (!availability?.available) {
+  if (!availability?.available && availability?.custodyProvider !== 'DARAJA') {
     return (
       <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3 text-xs text-slate-600">
         <p className="font-medium text-slate-800">M-Pesa Express (till / paybill)</p>
         <p className="mt-1 text-slate-500">
           Not available yet — platform custody is off, or Daraja is not configured.
         </p>
+        <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" asChild>
+          <Link href="/fees/payments">Open payment settings</Link>
+        </Button>
       </div>
     )
   }

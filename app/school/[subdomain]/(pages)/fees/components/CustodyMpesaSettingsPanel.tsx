@@ -60,13 +60,16 @@ export function CustodyMpesaSettingsPanel() {
     )
   }
 
-  if (!availability?.available) {
+  const railOn = availability?.custodyProvider === 'DARAJA'
+  const stkReady = Boolean(availability?.available)
+
+  if (!railOn) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
         <p className="font-medium">Till / paybill Express is not available yet</p>
         <p className="mt-1 text-amber-800">
           {availability?.reason ??
-            'Platform custody rail is off. Ask SQUL ops to enable Daraja custody.'}
+            'Platform custody rail is off. Ask SQUL ops to enable Daraja custody on the super-admin Payments page.'}
         </p>
       </div>
     )
@@ -146,6 +149,14 @@ export function CustodyMpesaSettingsPanel() {
         </p>
       </div>
 
+      {!stkReady ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-950">
+          You can save your till now. STK prompts stay disabled until SQUL
+          finishes platform Daraja setup
+          {availability?.reason ? ` (${availability.reason})` : ''}.
+        </div>
+      ) : null}
+
       {error ? (
         <p className="text-sm text-red-600">{error}</p>
       ) : null}
@@ -224,38 +235,40 @@ export function CustodyMpesaSettingsPanel() {
         </Button>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-        <p className="text-sm font-medium text-slate-900">Test connection (KES 1)</p>
-        <p className="text-xs text-slate-500">
-          Validates more than OAuth — sends a real Express prompt to confirm the
-          passkey and that your till is under the Head Office.
-        </p>
-        <div className="space-y-2">
-          <Label htmlFor="testPhone">Your Safaricom number</Label>
-          <Input
-            id="testPhone"
-            inputMode="tel"
-            value={testPhone}
-            onChange={(e) => setTestPhone(e.target.value)}
-            placeholder="07xxxxxxxx"
-          />
+      {stkReady ? (
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+          <p className="text-sm font-medium text-slate-900">Test connection (KES 1)</p>
+          <p className="text-xs text-slate-500">
+            Validates more than OAuth — sends a real Express prompt to confirm the
+            passkey and that your till is under the Head Office.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="testPhone">Your Safaricom number</Label>
+            <Input
+              id="testPhone"
+              inputMode="tel"
+              value={testPhone}
+              onChange={(e) => setTestPhone(e.target.value)}
+              placeholder="07xxxxxxxx"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleTest()}
+            disabled={testing}
+          >
+            {testing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending STK…
+              </>
+            ) : (
+              'Send KES 1 test prompt'
+            )}
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void handleTest()}
-          disabled={testing}
-        >
-          {testing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending STK…
-            </>
-          ) : (
-            'Send KES 1 test prompt'
-          )}
-        </Button>
-      </div>
+      ) : null}
     </div>
   )
 }

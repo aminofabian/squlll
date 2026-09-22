@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CircleDollarSign,
+  Smartphone,
 } from "lucide-react";
 import type { SchoolConfiguration } from "@/lib/types/school-config";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
@@ -159,6 +160,23 @@ export function DashboardSchoolSnapshot({
                   : finance.withBalance > 0
                     ? `${finance.withBalance} with balance`
                     : "All caught up"}
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/fees/payments" className="group flex items-start gap-2.5">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center border border-[#1a4d42]/15 bg-[#f3f7f5] text-[#246a59] dark:border-white/15 dark:bg-[#071411]">
+            <Smartphone className="h-3.5 w-3.5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
+              Payment methods
+            </p>
+            <p className="text-[13px] font-semibold text-[#0a1f1a] dark:text-white">
+              Till · paybill · bank
+            </p>
+            <p className="text-[11px] text-[#1a4d42]/50 dark:text-white/40 group-hover:text-[#246a59]">
+              Set how parents pay →
             </p>
           </div>
         </Link>
