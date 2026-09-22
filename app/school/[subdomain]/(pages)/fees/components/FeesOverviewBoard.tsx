@@ -103,9 +103,9 @@ export function FeesOverviewBoard({
             </p>
             <h2 className="text-base font-bold text-slate-900">
               {setupProgress === 0
-                ? "Create your first fee structure"
+                ? "Set this year's fees"
                 : setupProgress === 1
-                  ? "Link structure to classes"
+                  ? "Link schedule to classes"
                   : "Bill students for this term"}
             </h2>
           </div>
@@ -197,7 +197,7 @@ export function FeesOverviewBoard({
                 onClick={onGuidedSetup}
               >
                 <Sparkles className="mr-1 h-3.5 w-3.5" />
-                Guided setup
+                Set this year&apos;s fees
               </Button>
             )}
             <Button

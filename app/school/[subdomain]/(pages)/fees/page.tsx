@@ -78,15 +78,6 @@ import { FeeSummaryCard } from "./components/FeeSummaryCard";
 import NewInvoiceDrawer from "./components/NewInvoiceDrawer";
 import { StudentFeeProfileDrawer } from "./components/StudentFeeProfileDrawer";
 import { useBursarDashboardMetrics, BALANCE_ALERT_KES } from "./hooks/useBursarDashboardMetrics";
-import {
-  FeesSetupWizardDialog,
-  type FeesSetupWizardResult,
-} from "./components/FeesSetupWizardDialog";
-import { saveFeesSetupDraft } from "./lib/feesSetupDraft";
-import {
-  hasValidSetupDraft,
-  type FeePlanSetupIntent,
-} from "./lib/feePlanCreationFlow";
 import { WorkflowGuidance } from "./components/WorkflowGuidance";
 import type { FeesSection } from "./components/FeesSectionTabs";
 import { FeeAssignmentsView } from "./components/FeeAssignmentsView";
@@ -185,7 +176,6 @@ export default function FeesPage() {
   const [currentView, setCurrentView] = useState<
     "dashboard" | "structures" | "invoices"
   >("dashboard");
-  const [showFeesSetupWizard, setShowFeesSetupWizard] = useState(false);
   const [showAdjustmentDrawer, setShowAdjustmentDrawer] = useState(false);
   const [adjustmentForm, setAdjustmentForm] = useState<FeeAdjustmentForm>({
     type: "discount",
@@ -222,12 +212,6 @@ export default function FeesPage() {
   // Fee Structure states
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  /** Bumps when guided setup saves so the plan drawer reloads buckets/amounts */
-  const [feeDraftSyncKey, setFeeDraftSyncKey] = useState(0);
-  /** Re-open fee structure drawer after closing setup (edit setup from plan) */
-  const [feePlanResumeAfterSetup, setFeePlanResumeAfterSetup] = useState(false);
-  const [feePlanSetupIntent, setFeePlanSetupIntent] =
-    useState<FeePlanSetupIntent>("initial");
   const [showInvoiceGenerator, setShowInvoiceGenerator] = useState(false);
   const [selectedStructure, setSelectedStructure] =
     useState<FeeStructure | null>(null);
@@ -813,7 +797,8 @@ export default function FeesPage() {
       processedFeeStructures.length === 0 && graphQLStructures.length === 0;
     if (needsSetup && !dismissed) {
       router.replace(feesPlansHref(), { scroll: false });
-      setShowFeesSetupWizard(true);
+      setShowCreateForm(true);
+      localStorage.setItem("fees-setup-wizard-dismissed", "1");
     }
   }, [
     processedFeeStructures.length,
@@ -905,6 +890,23 @@ export default function FeesPage() {
   // Access the toast function
   const { toast } = useToast();
 
+  /** Single path: open the 3-step fee schedule wizard */
+  const startCreateFeePlan = useCallback(() => {
+    if (!feesAccess.canManagePlans) {
+      toast({
+        title: "View only",
+        description: "Your role cannot create fee schedules.",
+      });
+      return;
+    }
+    setSelectedStructure(null);
+    navigateToFeesSection("plans");
+    setShowCreateForm(true);
+  }, [feesAccess.canManagePlans, toast, navigateToFeesSection]);
+
+  const openGuidedSetup = startCreateFeePlan;
+  const handleCreateNew = startCreateFeePlan;
+
   // Event handlers
   const handleViewInvoice = (invoice: FeeInvoice) => {
     setSelectedInvoice(invoice);
@@ -967,46 +969,6 @@ export default function FeesPage() {
   };
 
   // Fee Structure handlers
-  /** Single path: configure (setup) → publish (fee structure drawer) */
-  const startCreateFeePlan = useCallback(() => {
-    if (!feesAccess.canManagePlans) {
-      toast({
-        title: "View only",
-        description: "Your role cannot create fee structures.",
-      });
-      return;
-    }
-    setSelectedStructure(null);
-    navigateToFeesSection("plans");
-    setFeePlanResumeAfterSetup(false);
-    if (hasValidSetupDraft()) {
-      setShowFeesSetupWizard(false);
-      setShowCreateForm(true);
-      return;
-    }
-    setShowCreateForm(false);
-    setFeePlanSetupIntent("initial");
-    setShowFeesSetupWizard(true);
-  }, [feesAccess.canManagePlans, toast, navigateToFeesSection]);
-
-  const openGuidedSetup = useCallback(() => {
-    if (!feesAccess.canManagePlans) {
-      toast({
-        title: "View only",
-        description: "Your role cannot create fee structures.",
-      });
-      return;
-    }
-    setSelectedStructure(null);
-    navigateToFeesSection("plans");
-    setFeePlanResumeAfterSetup(false);
-    setShowCreateForm(false);
-    setFeePlanSetupIntent("initial");
-    setShowFeesSetupWizard(true);
-  }, [feesAccess.canManagePlans, toast, navigateToFeesSection]);
-
-  const handleCreateNew = startCreateFeePlan;
-
   const handleEdit = (feeStructure: FeeStructure) => {
     const processedStructure = processedFeeStructures.find(
       (s) => s.structureId === feeStructure.id,
@@ -1366,46 +1328,6 @@ export default function FeesPage() {
   const handleViewAssignments = () => {
     navigateToFeesSection("assignments");
   };
-
-  const handleFeesSetupComplete = (result: FeesSetupWizardResult) => {
-    saveFeesSetupDraft(result);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("fees-setup-wizard-dismissed", "1");
-    }
-    setShowFeesSetupWizard(false);
-    navigateToFeesSection("plans");
-    setSelectedStructure(null);
-    setFeeDraftSyncKey((k) => k + 1);
-    setFeePlanResumeAfterSetup(false);
-    setShowCreateForm(true);
-  };
-
-  const handleEditFeesSetupFromPlan = useCallback(() => {
-    if (!feesAccess.canManagePlans) return;
-    setFeePlanResumeAfterSetup(true);
-    setFeePlanSetupIntent("revise");
-    setShowCreateForm(false);
-    setShowFeesSetupWizard(true);
-  }, [feesAccess.canManagePlans]);
-
-  const handleSetupWizardOpenChange = useCallback(
-    (open: boolean) => {
-      setShowFeesSetupWizard(open);
-      if (!open) {
-        if (feePlanResumeAfterSetup) {
-          setShowCreateForm(true);
-          setFeePlanResumeAfterSetup(false);
-        } else if (
-          typeof window !== "undefined" &&
-          !showCreateForm &&
-          !showEditForm
-        ) {
-          localStorage.setItem("fees-setup-wizard-dismissed", "1");
-        }
-      }
-    },
-    [feePlanResumeAfterSetup, showCreateForm, showEditForm],
-  );
 
   const handleViewHighBalances = () => {
     navigateToFeesSection("balances");
@@ -2103,8 +2025,6 @@ export default function FeesPage() {
       {/* Fee Structure Drawer */}
       <FeeStructureDrawer
         isOpen={showCreateForm || showEditForm}
-        draftSyncKey={feeDraftSyncKey}
-        onEditSetup={handleEditFeesSetupFromPlan}
         onClose={() => {
           setShowCreateForm(false);
           setShowEditForm(false);
@@ -2259,13 +2179,6 @@ export default function FeesPage() {
         onSubmit={handleSubmitAdjustment}
         isSubmitting={isApplyingAdjustment}
         submitError={adjustmentError}
-      />
-
-      <FeesSetupWizardDialog
-        open={showFeesSetupWizard}
-        setupIntent={feePlanSetupIntent}
-        onOpenChange={handleSetupWizardOpenChange}
-        onComplete={handleFeesSetupComplete}
       />
 
       {/* Assign Fee Structure to Grades Modal */}

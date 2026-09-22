@@ -12,8 +12,8 @@ import {
 import { FEES_BRAND } from "../lib/fees-ui";
 
 const STEPS = [
-  { key: "plan", label: "Create fee structure", hint: "Amounts per term & category" },
-  { key: "link", label: "Link to classes", hint: "Which grades use this structure" },
+  { key: "plan", label: "Set this year's fees", hint: "Term totals, lines & letter" },
+  { key: "link", label: "Link to classes", hint: "Which grades use this schedule" },
   { key: "bill", label: "Send invoices", hint: "Bill students for the term" },
 ] as const;
 
@@ -91,7 +91,7 @@ export function FeesSetupBanner({
             onClick={onGuidedSetup}
           >
             <Sparkles className="mr-2 h-4 w-4" />
-            Guided setup
+            Set this year&apos;s fees
           </Button>
           {nextStep >= 0 && onStepClick && (
             <Button

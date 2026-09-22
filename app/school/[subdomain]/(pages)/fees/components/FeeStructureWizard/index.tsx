@@ -1,34 +1,35 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { WizardProgress } from './WizardProgress'
-import { Step1QuickSetup } from './steps/Step1QuickSetup'
-import { Step2Amounts } from './steps/Step2Amounts'
-import { Step3Review } from './steps/Step3Review'
+import { StepFees, type StepFeesValue, groupGradesByTermAmount, representativeTermTotal } from './steps/StepFees'
+import {
+    StepBreakdown,
+    breakdownRemainingIsZero,
+} from './steps/StepBreakdown'
 import { Step4Document } from './steps/Step4Document'
 import {
     createDefaultSchoolDetails,
     createDefaultPaymentModes,
 } from '../../lib/feesDocumentDefaults'
 import type { FeeWizardFormData } from '../../lib/feesWizardPdfForm'
-import { useGraphQLFeeStructures, UpdateFeeStructureInput, GraphQLFeeStructure } from '../../hooks/useGraphQLFeeStructures'
+import { useGraphQLFeeStructures, GraphQLFeeStructure } from '../../hooks/useGraphQLFeeStructures'
 import { FeeStructureForm } from '../../types'
 import {
-    loadFeesSetupDraft,
     clearFeesSetupDraft,
-    saveFeesSetupDraft,
     applyDraftToWizardForm,
     buildBucketPrefillFromDraft,
+    type FeesSetupWizardResult,
 } from '../../lib/feesSetupDraft'
+import { roundToNearestTen } from '../../lib/feesAmounts'
 import {
     ensureBucketsForCategories,
     fetchActiveFeeBuckets,
 } from '../../lib/feeBucketsApi'
-import { roundToNearestTen } from '../../lib/feesAmounts'
 import {
     buildFeeStructureItemUpdates,
     buildItemUpdatesForStructure,
@@ -46,11 +47,10 @@ import {
 } from '../../lib/feePlanGrouping'
 import { sortTermsForLetter } from '../../lib/sortTermsForLetter'
 import { FEES_BRAND } from '../../lib/fees-ui'
-import type { FeesSetupWizardResult } from '../FeesSetupWizardDialog'
-import { FeePlanLinkedFlowBanner } from '../FeePlanLinkedFlowBanner'
-import { getSetupDraftSummary } from '../../lib/feePlanCreationFlow'
+import { buildDefaultFeePlanName } from '../../lib/feePlanStats'
 import { useToast } from '@/components/ui/use-toast'
 import { getDisplayErrorMessage } from '@/lib/utils/graphql-errors'
+import { Input } from '@/components/ui/input'
 
 interface FeeStructureWizardProps {
     isOpen: boolean
@@ -59,23 +59,71 @@ interface FeeStructureWizardProps {
     initialData?: FeeStructureForm
     mode?: 'create' | 'edit'
     availableGrades?: any[]
-    structureId?: string // ID of the structure being edited
-    structureData?: GraphQLFeeStructure // Full GraphQL structure data (preferred over fetching)
-    processedStructureData?: any // Processed structure with all terms grouped
-    /** Re-run guided provision after setup wizard saves (increment from page) */
+    structureId?: string
+    structureData?: GraphQLFeeStructure
+    processedStructureData?: any
+    /** @deprecated Dual setup wizard removed — kept for call-site compat */
     draftSyncKey?: number
-    /** Open the 5-step setup wizard to change categories, splits, grade amounts */
+    /** @deprecated Dual setup wizard removed — kept for call-site compat */
     onEditSetup?: () => void
 }
 
 const steps = [
-    { number: 1, title: 'Setup' },
-    { number: 2, title: 'Amounts' },
-    { number: 3, title: 'Review' },
-    { number: 4, title: 'Letter' },
+    { number: 1, title: 'Fees' },
+    { number: 2, title: 'Breakdown' },
+    { number: 3, title: 'Letter' },
 ]
 
-export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode = 'create', availableGrades = [], structureId, structureData, processedStructureData, draftSyncKey = 0, onEditSetup }: FeeStructureWizardProps) => {
+const emptyFeesValue = (): StepFeesValue => ({
+    academicYearId: '',
+    academicYearName: '',
+    terms: [],
+    selectedGrades: [],
+    sameFeeForAll: true,
+    termTotalKes: 0,
+    gradeAmounts: {},
+    categories: ['Tuition'],
+})
+
+/** Scale line items so they sum to toTotal, keeping the same mix as fromTotal */
+function scaleFeeItems(
+    items: Array<{
+        feeBucketId: string
+        amount: number
+        isMandatory: boolean
+        termIds: string[]
+    }>,
+    fromTotal: number,
+    toTotal: number,
+) {
+    if (fromTotal <= 0 || fromTotal === toTotal || items.length === 0) {
+        return items.map((item) => ({
+            ...item,
+            amount: roundToNearestTen(item.amount),
+        }))
+    }
+    const ratio = toTotal / fromTotal
+    let allocated = 0
+    return items.map((item, index) => {
+        if (index === items.length - 1) {
+            return {
+                ...item,
+                amount: roundToNearestTen(Math.max(0, toTotal - allocated)),
+            }
+        }
+        const amount = roundToNearestTen(item.amount * ratio)
+        allocated += amount
+        return { ...item, amount }
+    })
+}
+
+function gradeBandLabel(grades: string[]): string {
+    if (grades.length === 1) return grades[0]
+    if (grades.length <= 3) return grades.join(', ')
+    return `${grades[0]}–${grades[grades.length - 1]}`
+}
+
+export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode = 'create', availableGrades = [], structureId, structureData, processedStructureData }: FeeStructureWizardProps) => {
     const params = useParams()
     const subdomain = params?.subdomain as string | undefined
     const [currentStep, setCurrentStep] = useState(1)
@@ -107,13 +155,15 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
     })
 
     const [formData, setFormData] = useState<FeeWizardFormData>(emptyForm)
-    const [setupDraft, setSetupDraft] = useState<FeesSetupWizardResult | null>(null)
+    const [feesValue, setFeesValue] = useState<StepFeesValue>(emptyFeesValue)
+    const [categorySplits, setCategorySplits] = useState<Record<string, number>>({
+        Tuition: 100,
+    })
     const [isProvisioningSetup, setIsProvisioningSetup] = useState(false)
     const [setupProvisionError, setSetupProvisionError] = useState<string | null>(null)
 
-    const persistSetupDraft = useCallback((draft: FeesSetupWizardResult) => {
-        setSetupDraft(draft)
-        saveFeesSetupDraft(draft)
+    const updateFeesValue = useCallback((partial: Partial<StepFeesValue>) => {
+        setFeesValue((prev) => ({ ...prev, ...partial }))
     }, [])
 
     // Initialize form data from structureData when in edit mode
@@ -191,37 +241,11 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 // Note: populateFormData will use processedStructureData for all terms if available
                 populateFormData(structure, processedStructureData)
             } else if (!isEditMode && isOpen) {
-                const draft = loadFeesSetupDraft()
-                setSetupDraft(draft)
                 setCurrentStep(1)
-                const base = emptyForm()
-                if (draft) {
-                    setFormData(applyDraftToWizardForm(draft, base))
-                    if (draft.academicYearId) {
-                        fetch('/api/graphql', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                query: `query { academicYears { id name terms { id name } } }`,
-                            }),
-                        })
-                            .then((r) => r.json())
-                            .then((json) => {
-                                const year = json.data?.academicYears?.find(
-                                    (y: { id: string }) => y.id === draft.academicYearId,
-                                )
-                                if (year?.terms?.length) {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        terms: sortTermsForLetter(year.terms),
-                                    }))
-                                }
-                            })
-                            .catch(() => {})
-                    }
-                } else {
-                    setFormData(base)
-                }
+                setFeesValue(emptyFeesValue())
+                setCategorySplits({ Tuition: 100 })
+                setFormData(emptyForm())
+                setSetupProvisionError(null)
             }
         }
 
@@ -252,7 +276,6 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     id: term.id,
                     name: term.name
                 })) || []
-                console.log('⚠️ Using terms from single structure:', terms.length, 'terms:', terms.map(t => t.name))
             }
 
             // Extract buckets and amounts - use actual term-specific data from allStructures
@@ -262,18 +285,10 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             
             // If we have processedData with allStructures, use actual term-specific amounts
             if (processedData?.allStructures && processedData.allStructures.length > 0) {
-                console.log('📊 Using allStructures to get term-specific amounts:', processedData.allStructures.length, 'structures')
-                
-                // Process each structure to get term-specific amounts
-                // Each structure in allStructures represents a fee structure for specific term(s)
                 processedData.allStructures.forEach((struct: any) => {
                     const structTerms = struct.terms || []
                     const primaryTerm = structTerms[0]
                     if (!primaryTerm?.id) return
-
-                    console.log(
-                        `  📋 Processing structure "${struct.name}" for term ${primaryTerm.name} (${struct.items?.length || 0} items)`,
-                    )
 
                     struct.items?.forEach((item: any) => {
                         const bucketId = item.feeBucket?.id
@@ -301,34 +316,15 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 if (terms.length > 0 && termBucketAmounts[terms[0].id]) {
                     Object.assign(bucketAmounts, termBucketAmounts[terms[0].id])
                 }
-                
-                // Log the actual amounts per term for debugging
-                console.log('✅ Populated term-specific amounts:', {
-                    terms: terms.length,
-                    buckets: selectedBuckets.length,
-                    termAmounts: terms.map(term => {
-                        const termAmounts = termBucketAmounts[term.id] || {}
-                        const termTotal = Object.values(termAmounts).reduce((sum: number, b: any) => sum + (b.amount || 0), 0)
-                        return {
-                            term: term.name,
-                            buckets: Object.keys(termAmounts).length,
-                            total: termTotal
-                        }
-                    })
-                })
             } else {
-                // Fallback: use single structure's items (no term-specific data available)
-                console.log('⚠️ No allStructures available, using single structure items')
                 structure.items?.forEach((item: any) => {
                     const bucketId = item.feeBucket?.id
                     if (!bucketId) return
 
-                    // Add to selected buckets if not already there
                     if (!selectedBuckets.includes(bucketId)) {
                         selectedBuckets.push(bucketId)
                     }
 
-                    // Store bucket amount in global amounts
                     bucketAmounts[bucketId] = {
                         id: bucketId,
                         name: item.feeBucket.name,
@@ -338,7 +334,6 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     }
                 })
 
-                // Populate termBucketAmounts for ALL terms with the same bucket amounts (fallback)
                 terms.forEach((term) => {
                     termBucketAmounts[term.id] = {}
                     selectedBuckets.forEach((bucketId) => {
@@ -357,6 +352,37 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 structure.planLabel ??
                 stripTermSuffixFromPlanName(structure.name)
 
+            const firstTermId = terms[0]?.id
+            const termTotalKes = firstTermId
+                ? Object.values(termBucketAmounts[firstTermId] || {}).reduce(
+                      (sum, row) => sum + (row.amount || 0),
+                      0,
+                  )
+                : Object.values(bucketAmounts).reduce(
+                      (sum, row) => sum + (row.amount || 0),
+                      0,
+                  )
+
+            const categories = selectedBuckets.map(
+                (id) => bucketAmounts[id]?.name || id,
+            )
+            if (!categories.includes('Tuition') && categories.length === 0) {
+                categories.push('Tuition')
+            }
+
+            setFeesValue({
+                academicYearId: structure.academicYear?.id || '',
+                academicYearName: structure.academicYear?.name || '',
+                terms,
+                selectedGrades: gradeNames,
+                sameFeeForAll: true,
+                termTotalKes,
+                gradeAmounts: Object.fromEntries(
+                    gradeNames.map((g) => [g, termTotalKes]),
+                ),
+                categories: categories.length ? categories : ['Tuition'],
+            })
+
             setFormData({
                 ...docDefaults,
                 name: displayPlanName || structure.name || '',
@@ -374,85 +400,104 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 previewTermIds: terms.map((t) => t.id),
             })
 
-            console.log('✅ Fee structure loaded for editing:', {
-                name: structure.name,
-                academicYearId: structure.academicYear?.id,
-                termsCount: terms.length,
-                bucketsCount: selectedBuckets.length,
-                bucketAmounts: Object.keys(bucketAmounts).length
-            })
-
             setCurrentStep(1)
         }
 
         initializeStructureData()
     }, [isEditMode, structureId, isOpen, structureData, processedStructureData])
 
-    const runGuidedSetupProvision = async () => {
-        if (!setupDraft || !formData.terms?.length) return
+    const provisionFromFees = async (): Promise<boolean> => {
         setIsProvisioningSetup(true)
         setSetupProvisionError(null)
         try {
+            const grades = feesValue.selectedGrades
+            const bands = groupGradesByTermAmount(feesValue)
+            if (bands.length === 0) {
+                throw new Error('Enter a term total greater than 0 for at least one grade')
+            }
+            const repTotal = representativeTermTotal(feesValue)
+            const gradeAmounts = feesValue.sameFeeForAll
+                ? Object.fromEntries(grades.map((g) => [g, repTotal]))
+                : { ...feesValue.gradeAmounts }
+
+            const splits: Record<string, number> = Object.fromEntries(
+                feesValue.categories.map((c) => [
+                    c,
+                    c === 'Tuition' ? 100 : 0,
+                ]),
+            )
+            setCategorySplits(splits)
+
+            const draft: FeesSetupWizardResult = {
+                academicYearId: feesValue.academicYearId,
+                academicYearName: feesValue.academicYearName,
+                termCount: feesValue.terms.length,
+                categories: feesValue.categories,
+                categorySplits: splits,
+                gradeAmounts,
+            }
+
             const existing = await fetchActiveFeeBuckets()
             const ensured = await ensureBucketsForCategories(
-                setupDraft.categories,
+                feesValue.categories,
                 existing,
             )
+            const terms = sortTermsForLetter(feesValue.terms)
             const prefill = buildBucketPrefillFromDraft(
-                setupDraft,
+                draft,
                 ensured,
-                formData.terms,
-                formData.previewGrade || formData.selectedGrades[0],
+                terms,
+                grades.find((g) => (gradeAmounts[g] ?? 0) > 0) || grades[0],
             )
             if (prefill.selectedBuckets.length === 0) {
                 throw new Error(
-                    'Could not create fee items from your setup categories. Try again.',
+                    'Could not create fee lines from your selection. Try again.',
                 )
             }
+
+            const hasBoarding = feesValue.categories.some((c) =>
+                c.toLowerCase().includes('boarding'),
+            )
+            const boardingType = hasBoarding ? 'both' : 'day'
+            const defaultName = buildDefaultFeePlanName({
+                academicYearName: feesValue.academicYearName,
+                boardingType,
+                selectedGrades: grades,
+            })
+
+            setFeesValue((prev) => ({
+                ...prev,
+                termTotalKes: repTotal,
+                gradeAmounts,
+            }))
+
             setFormData((prev) => ({
-                ...applyDraftToWizardForm(setupDraft, prev),
+                ...applyDraftToWizardForm(draft, prev),
+                name: prev.name?.trim() ? prev.name : defaultName,
+                academicYearId: feesValue.academicYearId,
+                academicYear: feesValue.academicYearName,
+                selectedGrades: grades,
+                terms,
                 selectedBuckets: prefill.selectedBuckets,
                 bucketAmounts: prefill.bucketAmounts,
                 termBucketAmounts: prefill.termBucketAmounts,
+                boardingType,
+                previewGrade:
+                    grades.find((g) => (gradeAmounts[g] ?? 0) > 0) ||
+                    grades[0] ||
+                    '',
+                previewTermIds: terms.map((t) => t.id),
             }))
+            return true
         } catch (err) {
             setSetupProvisionError(
-                err instanceof Error ? err.message : 'Setup failed',
+                err instanceof Error ? err.message : 'Could not prepare fee lines',
             )
+            return false
         } finally {
             setIsProvisioningSetup(false)
         }
     }
-
-    useEffect(() => {
-        if (!isOpen || isEditMode || !setupDraft) return
-        if (!formData.terms?.length) return
-        if (formData.selectedBuckets.length > 0) return
-        runGuidedSetupProvision()
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- run when terms arrive
-    }, [
-        isOpen,
-        isEditMode,
-        setupDraft,
-        formData.terms?.length,
-        formData.selectedBuckets.length,
-    ])
-
-    /** After setup wizard saves, reload draft and re-provision buckets/amounts */
-    useEffect(() => {
-        if (!isOpen || isEditMode || draftSyncKey === 0) return
-        const draft = loadFeesSetupDraft()
-        setSetupDraft(draft)
-        if (!draft) return
-        setSetupProvisionError(null)
-        setFormData((prev) => ({
-            ...applyDraftToWizardForm(draft, prev),
-            selectedBuckets: [],
-            bucketAmounts: {},
-            termBucketAmounts: {},
-        }))
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by draftSyncKey
-    }, [draftSyncKey, isOpen, isEditMode])
 
     const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -467,42 +512,19 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
         }
     }
 
-    const skipAmountsStep = Boolean(setupDraft) && !isEditMode
-    const setupDraftSummary = useMemo(
-        () => getSetupDraftSummary(setupDraft),
-        [setupDraft],
-    )
-
     const validateFeeAmounts = (newErrors: Record<string, string>) => {
         if ((formData.selectedBuckets || []).length === 0) {
-            newErrors.selectedBuckets = 'Select at least one fee component'
+            newErrors.selectedBuckets = 'Select at least one fee line'
             return
         }
-        const selectedBucketIds = formData.selectedBuckets || []
-        const hasTerms = formData.terms && formData.terms.length > 0
-
-        if (hasTerms && formData.termBucketAmounts) {
-            const hasValidAmounts = formData.terms.every((term) => {
-                const termAmounts = formData.termBucketAmounts?.[term.id] || {}
-                return selectedBucketIds.some((bucketId) => {
-                    const bucket =
-                        termAmounts[bucketId] || formData.bucketAmounts[bucketId]
-                    return bucket && bucket.amount > 0
-                })
-            })
-            if (!hasValidAmounts) {
-                newErrors.bucketAmounts =
-                    'Enter a term total or amount for at least one category in each term'
-            }
-        } else {
-            const hasValidAmounts = selectedBucketIds.every((bucketId) => {
-                const bucket = formData.bucketAmounts[bucketId]
-                return bucket && bucket.amount > 0
-            })
-            if (!hasValidAmounts) {
-                newErrors.bucketAmounts =
-                    'Enter amounts for all selected components'
-            }
+        if (
+            !breakdownRemainingIsZero(
+                formData,
+                representativeTermTotal(feesValue),
+            )
+        ) {
+            newErrors.remaining =
+                'Each term’s remaining must be 0. Use Auto-fill Tuition or adjust lines.'
         }
     }
 
@@ -510,20 +532,33 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
         const newErrors: Record<string, string> = {}
 
         if (step === 1) {
-            if (!formData.name.trim()) {
-                newErrors.name = 'Structure name is required'
+            if (!feesValue.academicYearId) {
+                newErrors.academicYearId = 'Select an academic year'
+            }
+            if (feesValue.terms.length === 0) {
+                newErrors.academicYearId =
+                    newErrors.academicYearId ||
+                    'This year needs at least one term'
+            }
+            if (feesValue.selectedGrades.length === 0) {
+                newErrors.selectedGrades = 'Select at least one grade'
+            }
+            if (groupGradesByTermAmount(feesValue).length === 0) {
+                newErrors.termTotalKes =
+                    'Enter a term total greater than 0 for at least one grade'
             }
             if (
-                !setupDraft &&
-                (formData.selectedGrades || []).length === 0
+                !feesValue.categories.includes('Tuition') ||
+                feesValue.categories.length === 0
             ) {
-                newErrors.selectedGrades = 'Select at least one grade'
+                newErrors.categories = 'Tuition is required'
             }
         } else if (step === 2) {
             validateFeeAmounts(newErrors)
-        } else if (step === 3 && skipAmountsStep) {
-            validateFeeAmounts(newErrors)
-        } else if (step === 4) {
+        } else if (step === 3) {
+            if (!formData.name.trim()) {
+                newErrors.name = 'Schedule name is required'
+            }
             if (!formData.schoolDetails?.name?.trim()) {
                 newErrors.schoolName = 'School name is required on the letter'
             }
@@ -545,10 +580,30 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
         return Object.keys(newErrors).length === 0
     }
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (!validateStep(currentStep)) return
 
-        if (currentStep === 3) {
+        if (currentStep === 1) {
+            if (isEditMode && formData.selectedBuckets.length > 0) {
+                setFormData((prev) => ({
+                    ...prev,
+                    academicYearId: feesValue.academicYearId || prev.academicYearId,
+                    academicYear: feesValue.academicYearName || prev.academicYear,
+                    selectedGrades: feesValue.selectedGrades,
+                    terms:
+                        feesValue.terms.length > 0
+                            ? sortTermsForLetter(feesValue.terms)
+                            : prev.terms,
+                    previewGrade:
+                        prev.previewGrade || feesValue.selectedGrades[0] || '',
+                }))
+            } else {
+                const ok = await provisionFromFees()
+                if (!ok) return
+            }
+        }
+
+        if (currentStep === 2) {
             setFormData((prev) => ({
                 ...prev,
                 ...(prev.selectedGrades?.length && !prev.previewGrade
@@ -560,21 +615,14 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             }))
         }
 
-        setCurrentStep((prev) => {
-            let next = prev + 1
-            if (skipAmountsStep && next === 2) next = 3
-            return Math.min(next, steps.length)
-        })
+        setCurrentStep((prev) => Math.min(prev + 1, steps.length))
     }
 
     const handleBack = () =>
-        setCurrentStep((prev) => {
-            let next = prev - 1
-            if (skipAmountsStep && next === 2) next = 1
-            return Math.max(next, 1)
-        })
+        setCurrentStep((prev) => Math.max(prev - 1, 1))
 
     const handleSave = async () => {
+        if (!validateStep(3)) return
         setIsSaving(true)
         setSaveError(null)
 
@@ -590,7 +638,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 throw new Error('At least one grade is required')
             }
             if (formData.selectedBuckets.length === 0) {
-                throw new Error('At least one fee component is required')
+                throw new Error('At least one fee line is required')
             }
 
             // Handle edit mode - use update mutation
@@ -849,30 +897,38 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             }
 
             const allGradeLevels = gradeLevelsResult.data?.gradeLevelsForSchoolType || []
-            
-            // Map selected grade names to grade level IDs
-            const gradeLevelIds = formData.selectedGrades
-                .map(gradeName => {
-                    // Try to match by gradeLevel.name first, then by shortName
-                    const gradeLevel = allGradeLevels.find((gl: any) => 
-                        gl.gradeLevel?.name === gradeName || gl.shortName === gradeName
-                    )
-                    return gradeLevel?.id
-                })
-                .filter((id): id is string => !!id)
 
-            if (gradeLevelIds.length === 0) {
-                throw new Error('Could not find grade level IDs for selected grades. Please try again.')
+            const resolveGradeLevelIds = (gradeNames: string[]) =>
+                gradeNames
+                    .map((gradeName) => {
+                        const gradeLevel = allGradeLevels.find(
+                            (gl: {
+                                id: string
+                                shortName?: string
+                                gradeLevel?: { name?: string }
+                            }) =>
+                                gl.gradeLevel?.name === gradeName ||
+                                gl.shortName === gradeName,
+                        )
+                        return gradeLevel?.id
+                    })
+                    .filter((id): id is string => !!id)
+
+            const amountBands = groupGradesByTermAmount(feesValue)
+            if (amountBands.length === 0) {
+                throw new Error(
+                    'Enter a term total greater than 0 for at least one grade',
+                )
             }
-            
-            // Build fee items for each term
+
             if (!formData.terms || formData.terms.length === 0) {
                 throw new Error('No terms selected. Please select at least one term.')
             }
-            const termIds = formData.terms.map(t => t.id)
-            const hasTermSpecificAmounts = formData.termBucketAmounts && Object.keys(formData.termBucketAmounts).length > 0
-            
-            // Validate that all selected bucket IDs are valid and active
+            const termIds = formData.terms.map((t) => t.id)
+            const hasTermSpecificAmounts =
+                formData.termBucketAmounts &&
+                Object.keys(formData.termBucketAmounts).length > 0
+
             const bucketValidationResponse = await fetch('/api/graphql', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -885,8 +941,8 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 isActive
                             }
                         }
-                    `
-                })
+                    `,
+                }),
             })
 
             let validBucketIds: string[] = []
@@ -894,178 +950,130 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 const validationResult = await bucketValidationResponse.json()
                 if (validationResult.data?.feeBuckets) {
                     const allBuckets = validationResult.data.feeBuckets
-                    validBucketIds = formData.selectedBuckets.filter(bucketId => {
-                        const bucket = allBuckets.find((b: any) => b.id === bucketId)
-                        return bucket && bucket.isActive
-                    })
-                    
-                    const invalidBuckets = formData.selectedBuckets.filter(bucketId => {
-                        const bucket = allBuckets.find((b: any) => b.id === bucketId)
-                        return !bucket || !bucket.isActive
-                    })
-                    
+                    validBucketIds = formData.selectedBuckets.filter(
+                        (bucketId) => {
+                            const bucket = allBuckets.find(
+                                (b: { id: string; isActive?: boolean }) =>
+                                    b.id === bucketId,
+                            )
+                            return bucket && bucket.isActive
+                        },
+                    )
+
+                    const invalidBuckets = formData.selectedBuckets.filter(
+                        (bucketId) => {
+                            const bucket = allBuckets.find(
+                                (b: { id: string; isActive?: boolean }) =>
+                                    b.id === bucketId,
+                            )
+                            return !bucket || !bucket.isActive
+                        },
+                    )
+
                     if (invalidBuckets.length > 0) {
-                        const invalidNames = invalidBuckets.map(id => {
-                            const bucket = allBuckets.find((b: any) => b.id === id)
-                            return bucket?.name || id
-                        }).join(', ')
-                        throw new Error(`One or more fee buckets are not found or inactive: ${invalidNames}. Please refresh the page and try again.`)
+                        throw new Error(
+                            'One or more fee lines are missing or inactive. Refresh and try again.',
+                        )
                     }
                 } else {
-                    // If validation query fails, use selected buckets as-is but log a warning
-                    console.warn('Could not validate buckets, proceeding with selected buckets')
                     validBucketIds = formData.selectedBuckets
                 }
             } else {
-                // If validation query fails, use selected buckets as-is but log a warning
-                console.warn('Could not validate buckets, proceeding with selected buckets')
                 validBucketIds = formData.selectedBuckets
             }
-            
-            // Check if we have term-specific amounts with different values per term
-            const shouldCreatePerTermStructures = hasDifferentAmountsPerTerm(
-                formData,
-                validBucketIds,
-            )
-            const planLabel = resolvePlanLabel(formData.planLabel, formData.name)
 
-            if (shouldCreatePerTermStructures) {
-                // Create separate fee structures for each term since amounts differ
-                const createdStructures = []
-                
-                for (const term of formData.terms) {
-                    const termAmounts = formData.termBucketAmounts?.[term.id] || {}
-                    const termItems: Array<{ feeBucketId: string; amount: number; isMandatory: boolean; termIds: string[] }> = []
-                    const usedBucketIds = new Set<string>()
-                    
-                    validBucketIds.forEach(bucketId => {
-                        if (usedBucketIds.has(bucketId)) return // Skip duplicates
-                        
-                        const bucket = termAmounts[bucketId] || formData.bucketAmounts[bucketId]
-                        if (bucket && bucket.amount > 0) {
-                            termItems.push({
-                                feeBucketId: bucketId,
-                                amount: roundToNearestTen(bucket.amount),
-                                isMandatory: bucket.isMandatory,
-                                termIds: [term.id] // Each item needs termIds
-                            })
-                            usedBucketIds.add(bucketId)
-                        }
-                    })
-                    
-                    if (termItems.length === 0) {
-                        console.warn(`No items with amounts > 0 for {term.name}, skipping`)
-                        continue
+            const buildBaseItems = () => {
+                const items: Array<{
+                    feeBucketId: string
+                    amount: number
+                    isMandatory: boolean
+                    termIds: string[]
+                }> = []
+                const used = new Set<string>()
+                const firstTerm = formData.terms![0]
+                const termAmounts =
+                    (hasTermSpecificAmounts &&
+                        formData.termBucketAmounts?.[firstTerm.id]) ||
+                    {}
+
+                for (const bucketId of validBucketIds) {
+                    if (used.has(bucketId)) continue
+                    const bucket =
+                        termAmounts[bucketId] || formData.bucketAmounts[bucketId]
+                    if (bucket && bucket.amount > 0) {
+                        items.push({
+                            feeBucketId: bucketId,
+                            amount: roundToNearestTen(bucket.amount),
+                            isMandatory: bucket.isMandatory,
+                            termIds,
+                        })
+                        used.add(bucketId)
                     }
-                    
-                    // Create fee structure for this term
-                    const termStructureName = `${formData.name} - ${term.name}`
-                    console.log(`Creating fee structure for {term.name}:`, {
-                        name: termStructureName,
-                        academicYearId: formData.academicYearId,
-                        termIds: [term.id],
-                        gradeLevelIds,
-                        itemsCount: termItems.length
-                    })
-                    
-                    const createdStructure = await createFeeStructureWithItems({
-                        name: termStructureName,
-                        planLabel,
-                        academicYearId: formData.academicYearId,
-                        gradeLevelIds: gradeLevelIds,
-                        items: termItems
-                    })
-                    createdStructures.push(createdStructure)
                 }
-                
-                // Call the onSave callback with the first created structure
-                await onSave({
-                    id: createdStructures[0].id,
-                    name: planLabel,
-                    academicYear: formData.academicYear,
-                    terms: formData.terms?.map(t => t.name).join(', ') || createdStructures[0].terms?.map((t: any) => t.name).join(', ') || '',
-                    grades: formData.selectedGrades.join(', ')
-                })
-            } else {
-                // All terms have the same amounts (or only one term) - create one structure for all terms
-                let allItems: Array<{ feeBucketId: string; amount: number; isMandatory: boolean; termIds: string[] }> = []
-                const usedBucketIds = new Set<string>()
-                
-                if (hasTermSpecificAmounts && formData.terms && formData.terms.length > 0) {
-                    // Use the first term's amounts (all terms should have same amounts in this case)
-                    const firstTerm = formData.terms[0]
-                    const termAmounts = formData.termBucketAmounts?.[firstTerm.id] || {}
-                    validBucketIds.forEach(bucketId => {
-                        if (usedBucketIds.has(bucketId)) return // Skip duplicates
-                        
-                        const bucket = termAmounts[bucketId] || formData.bucketAmounts[bucketId]
-                        if (bucket && bucket.amount > 0) {
-                            allItems.push({
-                                feeBucketId: bucketId,
-                                amount: roundToNearestTen(bucket.amount),
-                                isMandatory: bucket.isMandatory,
-                                termIds: termIds // All terms for this item
-                            })
-                            usedBucketIds.add(bucketId)
-                        }
-                    })
-                } else {
-                    // Use global amounts for all terms
-                    validBucketIds.forEach(bucketId => {
-                        if (usedBucketIds.has(bucketId)) return // Skip duplicates
-                        
-                        const bucket = formData.bucketAmounts[bucketId]
-                        if (bucket && bucket.amount > 0) {
-                            allItems.push({
-                                feeBucketId: bucketId,
-                                amount: roundToNearestTen(bucket.amount),
-                                isMandatory: bucket.isMandatory,
-                                termIds: termIds // All terms for this item
-                            })
-                            usedBucketIds.add(bucketId)
-                        }
-                    })
-                }
-
-                if (allItems.length === 0) {
-                    throw new Error('At least one fee component must have an amount greater than 0')
-                }
-                
-                // Log the items being sent for debugging
-                console.log('Creating fee structure with items:', {
-                    name: formData.name,
-                    academicYearId: formData.academicYearId,
-                    termIds,
-                    gradeLevelIds,
-                    itemsCount: allItems.length,
-                    items: allItems.map(item => ({
-                        feeBucketId: item.feeBucketId,
-                        amount: item.amount,
-                        isMandatory: item.isMandatory,
-                        termIds: item.termIds
-                    }))
-                })
-
-                // Create the fee structure using GraphQL
-                const createdStructure = await createFeeStructureWithItems({
-                    name: formData.name,
-                    planLabel,
-                    academicYearId: formData.academicYearId,
-                    gradeLevelIds: gradeLevelIds,
-                    items: allItems
-                })
-
-                // Call the onSave callback with the created structure data
-                await onSave({
-                    id: createdStructure.id,
-                    name: createdStructure.name,
-                    academicYear: formData.academicYear,
-                    terms: formData.terms?.map(t => t.name).join(', ') || createdStructure.terms?.map((t: any) => t.name).join(', ') || '',
-                    grades: formData.selectedGrades.join(', ')
-                })
-                clearFeesSetupDraft()
-                setSetupDraft(null)
+                return items
             }
+
+            const baseItems = buildBaseItems()
+            if (baseItems.length === 0) {
+                throw new Error('At least one fee line must have an amount greater than 0')
+            }
+
+            const baseTotal = representativeTermTotal(feesValue)
+            const sharedPlanLabel = resolvePlanLabel(
+                formData.planLabel,
+                formData.name,
+            )
+            const hasBoarding = feesValue.categories.some((c) =>
+                c.toLowerCase().includes('boarding'),
+            )
+            const boardingType = hasBoarding ? 'both' : 'day'
+
+            const createdStructures = []
+            for (const band of amountBands) {
+                const gradeLevelIds = resolveGradeLevelIds(band.grades)
+                if (gradeLevelIds.length === 0) {
+                    throw new Error(
+                        `Could not find grade IDs for: ${band.grades.join(', ')}`,
+                    )
+                }
+                const items = scaleFeeItems(baseItems, baseTotal, band.amount)
+                const scheduleName =
+                    amountBands.length === 1
+                        ? formData.name
+                        : buildDefaultFeePlanName({
+                              academicYearName: feesValue.academicYearName,
+                              boardingType,
+                              selectedGrades: band.grades,
+                          }) ||
+                          `${formData.name} · ${gradeBandLabel(band.grades)}`
+
+                const createdStructure = await createFeeStructureWithItems({
+                    name: scheduleName,
+                    planLabel:
+                        amountBands.length === 1
+                            ? sharedPlanLabel
+                            : scheduleName,
+                    academicYearId: formData.academicYearId!,
+                    gradeLevelIds,
+                    items,
+                })
+                createdStructures.push(createdStructure)
+            }
+
+            await onSave({
+                id: createdStructures[0].id,
+                name:
+                    amountBands.length === 1
+                        ? createdStructures[0].name
+                        : `${createdStructures.length} fee schedules`,
+                academicYear: formData.academicYear,
+                terms:
+                    formData.terms?.map((t) => t.name).join(', ') ||
+                    createdStructures[0].terms?.map((t: { name: string }) => t.name).join(', ') ||
+                    '',
+                grades: feesValue.selectedGrades.join(', '),
+            })
+            clearFeesSetupDraft()
 
             setShowSuccess(true)
             setTimeout(() => {
@@ -1073,13 +1081,14 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 onClose()
                 setCurrentStep(1)
                 setFormData(emptyForm())
+                setFeesValue(emptyFeesValue())
             }, 1500)
         } catch (error) {
             const message = getDisplayErrorMessage(error)
             console.error('Failed to save:', error)
             setSaveError(message)
             toast({
-                title: isEditMode ? 'Could not update fee structure' : 'Could not create fee structure',
+                title: isEditMode ? 'Could not update fee schedule' : 'Could not create fee schedule',
                 description: message,
                 variant: 'destructive',
             })
@@ -1090,36 +1099,17 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
 
     const stepSubtitle =
         currentStep === 1
-            ? setupDraft
-              ? 'Structure name (grades already set)'
-              : 'Name, year, and grades'
+            ? 'Year, grades, and term total'
             : currentStep === 2
-              ? setupDraft
-                ? 'Confirm amounts from setup'
-                : 'Term totals and categories'
-              : currentStep === 3
-                ? skipAmountsStep
-                    ? 'Review & edit amounts'
-                    : 'Confirm amounts'
-                : 'Letterhead, payment & preview'
-
-    const publishStepIndex = skipAmountsStep
-        ? currentStep === 1
-            ? 1
-            : currentStep === 3
-              ? 2
-              : currentStep === 4
-                ? 3
-                : 1
-        : currentStep
-    const publishStepTotal = skipAmountsStep ? 3 : steps.length
+              ? 'Split into fee lines'
+              : 'Name, letter preview, and save'
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent
                 side="right"
                 className={`w-full p-0 flex flex-col gap-0 border-l border-slate-200 ${
-                    currentStep === 4 ? 'sm:max-w-4xl' : 'sm:max-w-3xl'
+                    currentStep === 3 ? 'sm:max-w-4xl' : 'sm:max-w-3xl'
                 }`}
             >
                 <SheetHeader
@@ -1127,32 +1117,15 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     style={{ backgroundColor: FEES_BRAND.primaryLight }}
                 >
                     <SheetTitle className="text-lg font-semibold text-slate-900">
-                        {isEditMode
-                            ? 'Edit fee structure'
-                            : skipAmountsStep
-                              ? 'Create fee structure'
-                              : 'New fee structure'}
+                        {isEditMode ? 'Edit fee schedule' : "Set this year's fees"}
                     </SheetTitle>
                     <SheetDescription className="text-sm text-slate-600">
-                        {skipAmountsStep
-                            ? `Publish · Step ${publishStepIndex} of ${publishStepTotal} · ${stepSubtitle}`
-                            : `Step ${currentStep} of ${steps.length} · ${stepSubtitle}`}
+                        Step {currentStep} of {steps.length} · {stepSubtitle}
                     </SheetDescription>
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto bg-slate-50/50 px-5 py-5">
-                    {skipAmountsStep ? (
-                        <FeePlanLinkedFlowBanner
-                            phase="plan"
-                            summary={setupDraftSummary}
-                            className="mb-4"
-                        />
-                    ) : null}
-                    <WizardProgress
-                        currentStep={currentStep}
-                        steps={steps}
-                        skippedStep={skipAmountsStep ? 2 : undefined}
-                    />
+                    <WizardProgress currentStep={currentStep} steps={steps} />
 
                     {isLoadingStructure || isProvisioningSetup ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -1161,7 +1134,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 style={{ color: FEES_BRAND.primary }}
                             />
                             <span className="text-sm text-slate-600">
-                                {isProvisioningSetup ? 'Preparing items…' : 'Loading…'}
+                                {isProvisioningSetup ? 'Preparing fee lines…' : 'Loading…'}
                             </span>
                         </div>
                     ) : setupProvisionError ? (
@@ -1170,7 +1143,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => runGuidedSetupProvision()}
+                                onClick={() => void provisionFromFees()}
                             >
                                 Retry
                             </Button>
@@ -1178,42 +1151,52 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     ) : (
                         <div className="mt-6">
                             {currentStep === 1 && (
-                                <Step1QuickSetup
-                                    formData={formData}
-                                    onChange={updateFormData}
+                                <StepFees
+                                    value={feesValue}
+                                    onChange={updateFeesValue}
                                     errors={errors}
-                                    guidedFromSetup={Boolean(setupDraft)}
-                                    onEditSetup={
-                                        skipAmountsStep ? onEditSetup : undefined
-                                    }
+                                    readOnlyYear={isEditMode}
                                 />
                             )}
-                            {currentStep === 2 && !skipAmountsStep && (
-                                <Step2Amounts
+                            {currentStep === 2 && (
+                                <StepBreakdown
                                     formData={formData}
+                                    termTotalKes={representativeTermTotal(feesValue)}
+                                    categories={feesValue.categories}
+                                    categorySplits={categorySplits}
                                     onChange={updateFormData}
+                                    onCategorySplitsChange={setCategorySplits}
                                     errors={errors}
-                                    setupDraft={setupDraft}
-                                    guidedSetupMode={Boolean(setupDraft)}
                                 />
                             )}
                             {currentStep === 3 && (
-                                <Step3Review
-                                    formData={formData}
-                                    onChange={updateFormData}
-                                    editableAmounts={skipAmountsStep}
-                                    setupDraft={setupDraft}
-                                    onSetupDraftChange={persistSetupDraft}
-                                    onEditSetup={onEditSetup}
-                                    errors={errors}
-                                />
-                            )}
-                            {currentStep === 4 && (
-                                <Step4Document
-                                    formData={formData}
-                                    onChange={updateFormData}
-                                    errors={errors}
-                                />
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-400">
+                                            Schedule name
+                                        </label>
+                                        <Input
+                                            value={formData.name}
+                                            onChange={(e) =>
+                                                updateFormData('name', e.target.value)
+                                            }
+                                            placeholder="e.g. 2026-2027 · All grades"
+                                            className={
+                                                errors?.name ? 'border-red-500' : undefined
+                                            }
+                                        />
+                                        {errors?.name ? (
+                                            <p className="mt-1 text-xs text-red-600">
+                                                {errors.name}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                    <Step4Document
+                                        formData={formData}
+                                        onChange={updateFormData}
+                                        errors={errors}
+                                    />
+                                </div>
                             )}
                         </div>
                     )}
@@ -1232,7 +1215,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     <Button
                         variant="ghost"
                         onClick={handleBack}
-                        disabled={currentStep <= 1}
+                        disabled={currentStep <= 1 || isProvisioningSetup}
                         size="sm"
                         className="text-slate-600"
                     >
@@ -1247,12 +1230,16 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
 
                         {currentStep < steps.length ? (
                             <Button
-                                onClick={handleNext}
+                                onClick={() => void handleNext()}
+                                disabled={isProvisioningSetup}
                                 size="sm"
                                 className="text-white"
                                 style={{ backgroundColor: FEES_BRAND.primary }}
                             >
-                                Next
+                                {isProvisioningSetup ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : null}
+                                Continue
                                 <ArrowRight className="h-4 w-4 ml-1" />
                             </Button>
                         ) : (
@@ -1271,7 +1258,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 ) : isEditMode ? (
                                     'Save'
                                 ) : (
-                                    'Create structure'
+                                    'Save fee schedule'
                                 )}
                             </Button>
                         )}
@@ -1280,7 +1267,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
 
                 {showSuccess && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95">
-                        <p className="text-lg font-semibold text-emerald-800">Structure saved</p>
+                        <p className="text-lg font-semibold text-emerald-800">Schedule saved</p>
                     </div>
                 )}
             </SheetContent>

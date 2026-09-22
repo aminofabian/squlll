@@ -1,4 +1,3 @@
-import type { FeesSetupWizardResult } from "../components/FeesSetupWizardDialog";
 import { DEFAULT_CATEGORY_PERCENT } from "./categorySplits";
 import { roundToNearestTen } from "./feesAmounts";
 import type { FeeWizardFormData } from "./feesWizardPdfForm";
@@ -6,6 +5,17 @@ import {
   buildDefaultFeePlanName,
   isLegacyAutoFeePlanName,
 } from "./feePlanStats";
+
+/** In-memory fee schedule draft used while provisioning buckets/amounts */
+export interface FeesSetupWizardResult {
+  academicYearId?: string;
+  academicYearName?: string;
+  termCount: number;
+  categories: string[];
+  /** Percentages per category; must sum to 100 */
+  categorySplits: Record<string, number>;
+  gradeAmounts: Record<string, number>;
+}
 
 const STORAGE_KEY = "fees-setup-draft";
 
@@ -370,10 +380,12 @@ export function buildBucketPrefillFromDraft(
   const bucketAmounts: Record<string, BucketAmount> = {};
   const termBucketAmounts: Record<string, Record<string, BucketAmount>> = {};
 
-  for (const [category, amount] of Object.entries(categoryAmounts)) {
+  // Include every selected category (even 0) so breakdown can show empty lines
+  for (const category of draft.categories) {
     const match = matchCategoryToBucket(category, apiBuckets);
-    if (!match || amount <= 0) continue;
+    if (!match) continue;
 
+    const amount = categoryAmounts[category] ?? 0;
     if (!selectedBuckets.includes(match.id)) {
       selectedBuckets.push(match.id);
     }
@@ -382,7 +394,9 @@ export function buildBucketPrefillFromDraft(
       id: match.id,
       name: match.name,
       amount: roundToNearestTen(amount),
-      isMandatory: category !== "Activity Fee",
+      isMandatory:
+        category === "Tuition" ||
+        (category !== "Activity Fee" && amount > 0),
     };
     bucketAmounts[match.id] = entry;
 
