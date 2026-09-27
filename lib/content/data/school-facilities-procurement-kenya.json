@@ -1,0 +1,170 @@
+{
+  "slug": "school-facilities-procurement-kenya",
+  "path": "/blog/school-facilities-procurement-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "School Facilities and Procurement in Kenya (2026 Guide)",
+  "h1": "School Facilities and Procurement in Kenya (2026 Guide)",
+  "description": "School facilities and procurement in Kenya — planned maintenance, disciplined purchasing, asset registers, and getting value without leaks or waste.",
+  "primaryKeyword": "school procurement Kenya",
+  "secondaryKeywords": [
+    "school facilities management Kenya",
+    "school maintenance Kenya",
+    "school asset register",
+    "school purchasing policy Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Facilities",
+  "intro": [
+    "Buildings, desks, water, power and supplies are the quiet machinery of a school — invisible when they work, crippling when they fail. Managing facilities and procurement well is how a school gets value for money and stops small leaks becoming big bills. This guide covers **school facilities and procurement in Kenya**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "It pairs with [school finance and budgeting](/blog/school-finance-and-budgeting-kenya), because procurement is where budgets are won or lost."
+  ],
+  "sections": [
+    {
+      "id": "why",
+      "heading": "Why facilities and procurement matter",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Maintenance is cheaper than replacement** — planned repairs beat emergency ones.",
+            "**Leaks add up** — fuel, stationery and food wastage quietly drain the budget.",
+            "**Facilities affect learning** — desks, lighting and water are not luxuries.",
+            "**Traceability is expected** — boards and auditors want to see how money was spent."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "maintenance",
+      "heading": "Planned maintenance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Walk the school each term",
+              "text": "A short inspection of buildings, water, power, and grounds surfaces most issues early."
+            },
+            {
+              "title": "Keep a repair list",
+              "text": "Log every fault with a priority so it is fixed in order, not by who complains loudest."
+            },
+            {
+              "title": "Budget for repairs",
+              "text": "A contingency line in the term budget prevents mid-term scrambles."
+            },
+            {
+              "title": "Record what was done",
+              "text": "Repair history tells you what will fail next."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "procurement",
+      "heading": "Procurement discipline",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Value", "Suggested control"],
+          "rows": [
+            ["Small / routine", "Petty cash with receipts and a monthly total"],
+            ["Medium", "Two or three quotes and one approval"],
+            ["Large", "Formal quotes, board approval, written contract"],
+            ["Recurring (food, fuel)", "Annual supplier agreements, reviewed each year"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Three quotes, one signature",
+          "text": "A simple rule — multiple quotes for anything material, one named approver — prevents most procurement problems before they start."
+        }
+      ]
+    },
+    {
+      "id": "assets",
+      "heading": "The asset register",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "You cannot protect what you cannot list. Keep a simple register of significant assets — laptops, equipment, furniture, vehicles — with what it is, where it lives, and who is responsible. It supports insurance, audits and accountability, and it stops items quietly disappearing."
+        }
+      ]
+    },
+    {
+      "id": "value",
+      "heading": "Getting value without waste",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Buy to a spec** — know exactly what you need before you ask for quotes.",
+            "**Consolidate orders** — fewer, larger orders are cheaper and easier to track.",
+            "**Review suppliers annually** — loyalty should earn better terms, not complacency.",
+            "**Separate ordering from receiving** — where possible, different people, so deliveries are verified."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Reactive maintenance** — fixing after it breaks, at a premium.",
+            "**No quotes** — buying on the first offer.",
+            "**No asset register** — items unaccounted for.",
+            "**One person ordering and receiving** — no check on deliveries.",
+            "**No repair budget** — a broken pump becomes a crisis."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How should a Kenyan school manage procurement?",
+      "answer": "With scaled controls: petty cash with receipts for small items, multiple quotes and an approval for medium items, and formal quotes with board approval for large ones. Separate ordering from receiving where possible."
+    },
+    {
+      "question": "Why keep a school asset register?",
+      "answer": "It lists significant assets with location and responsibility, supporting insurance, audits and accountability — and stops equipment quietly disappearing."
+    },
+    {
+      "question": "How do schools avoid maintenance crises?",
+      "answer": "Walk the school each term, keep a prioritised repair list, and budget a contingency for repairs so fixes are planned rather than emergency."
+    },
+    {
+      "question": "How do we get better value from suppliers?",
+      "answer": "Buy to a spec, consolidate orders, review suppliers annually, and seek better terms for loyalty. Fewer, larger, well-tracked orders usually cost less."
+    }
+  ],
+  "cta": {
+    "heading": "Spend with a trail, maintain with a plan",
+    "body": "SQUL keeps your records — learners, fees and reports — organised so the office runs smoothly — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "Health, safety and security in schools", "href": "/blog/school-health-safety-security-kenya" },
+    { "title": "School leadership and governance in Kenya", "href": "/blog/school-leadership-and-governance-kenya" },
+    { "title": "The school calendar and term planning", "href": "/blog/school-calendar-term-planning-kenya" }
+  ]
+}

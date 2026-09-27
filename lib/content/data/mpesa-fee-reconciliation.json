@@ -1,0 +1,249 @@
+{
+  "slug": "mpesa-integration-school-management-software-kenya",
+  "path": "/blog/mpesa-integration-school-management-software-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "M-Pesa Integration in School Management Software in Kenya (2026)",
+  "h1": "M-Pesa Integration in School Management Software in Kenya (2026)",
+  "description": "How M-Pesa integration in school management software in Kenya works — automatic Daraja reconciliation, correct student matching and same-day receipts.",
+  "primaryKeyword": "mpesa integration school management software Kenya",
+  "secondaryKeywords": [
+    "M-Pesa school fees reconciliation",
+    "Safaricom Daraja school payments",
+    "Paybill school fee integration Kenya",
+    "automatic M-Pesa receipt matching schools"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Fees & M-Pesa",
+  "intro": [
+    "If you are comparing the [best school management software in Kenya](/blog/best-school-management-software-kenya), M-Pesa integration is usually the feature that decides it. Kenyan parents pay school fees by M-Pesa, and the bursar's office feels it every morning of the first two weeks of term.",
+    "This guide explains what \"M-Pesa integration\" should actually mean for a Kenyan school, why fee reconciliation breaks, how automatic reconciliation works step by step, and what to check before you buy — so you can tell a real integration from a screenshot of a Paybill statement."
+  ],
+  "sections": [
+    {
+      "id": "what-it-means",
+      "heading": "What \"M-Pesa integration\" actually means for a Kenyan school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Two very different products both get called \"M-Pesa integration\". One imports a statement; the other reconciles payments. The difference is the whole reason you are shopping."
+        },
+        {
+          "type": "table",
+          "caption": "Manual statement handling vs automatic reconciliation",
+          "headers": ["", "Manual Paybill statements", "Automatic reconciliation"],
+          "rows": [
+            ["How a payment arrives", "You export or read the Paybill portal", "Payment lands and is matched as it happens"],
+            ["Who matches it to a student", "The bursar, by hand", "The system, by admission number and phone"],
+            ["When the balance updates", "That evening, or end of week", "Same day, on payment"],
+            ["Receipt to the parent", "Printed or typed later", "WhatsApp or SMS, same day"],
+            ["Risk", "Typos, duplicates, missed payments", "Exception list only"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Automatic reconciliation** uses Safaricom's Daraja API, so the school's system receives each payment the moment it is made and matches it to the correct learner. **Statement import** is a spreadsheet in disguise: faster than typing, but the bursar is still the matching engine."
+        }
+      ]
+    },
+    {
+      "id": "paybill-vs-till",
+      "heading": "Paybill vs till (Buy Goods) — what each means for school fees",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Paybill** asks the parent for an account number. If that account number is the learner's admission number, matching is precise and automatic reconciliation becomes reliable.",
+            "**Till (Buy Goods)** does not carry an account number, so a good system matches on the paying phone number and any reference the parent types — which is why strong systems let you assign a guardian's phone number to each learner.",
+            "**Mixing channels** is normal. A school can take fees on a Paybill and activity levies on a till; the system should reconcile both into the same balance."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Rule of thumb",
+          "text": "If a vendor's answer to \"how does it match the payment?\" is \"we import the statement\", you are about to keep doing the hardest part by hand."
+        }
+      ]
+    },
+    {
+      "id": "why-it-breaks",
+      "heading": "Why fee reconciliation breaks at Kenyan schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Even schools with a Paybill still struggle, because the money arrives faster than anyone can match it:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Reporting-day queues.** Parents pay in a burst, and the bursar's office becomes a queue of people waiting for a receipt.",
+            "**One payment, three possible students.** A sibling pays for two learners; a relative pays on behalf of a nephew. Without an account number or a linked phone number, the match is guesswork.",
+            "**Wrong or missing references.** Parents type a class, a surname, or nothing at all. A lean system would flag these as exceptions instead of forcing a human to hunt.",
+            "**Balances that are always a day behind.** If the balance updates tonight, the parent who pays at 11am is still told to \"check with the office\".",
+            "**The month-end reconciliation marathon.** Arrears reports for the principal and board are built from a spreadsheet stitched together under pressure."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "how-it-works",
+      "heading": "How automatic M-Pesa reconciliation works (step by step)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "The parent pays to your Paybill or till",
+              "text": "Nothing changes for the parent — they still pay the way they always have. The school keeps its existing Paybill or till number."
+            },
+            {
+              "title": "The payment is matched to the right student",
+              "text": "The system receives the payment through Safaricom's Daraja API and matches it using the admission number in the account field, the guardian's registered phone number, or an exception rule you define."
+            },
+            {
+              "title": "The balance and receipt update the same day",
+              "text": "The learner's fee balance drops, a receipt is generated, and the parent is notified over WhatsApp or SMS — often before they have left the school gate."
+            },
+            {
+              "title": "The bursar reviews exceptions, not everything",
+              "text": "Only payments the system could not match need a human. Everything else has already reconciled itself, so the bursar's job becomes review, not data entry."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "checklist",
+      "heading": "What to look for in M-Pesa school software (buyer's checklist)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Capability", "Excel + Paybill portal", "Basic system", "SQUL (Daraja reconciliation)"],
+          "rows": [
+            ["Payment matched to student", "Manual, by hand", "Often manual", "**Automatic**"],
+            ["Receipt to parent", "Printed / typed SMS", "Manual trigger", "**Same-day WhatsApp / SMS**"],
+            ["Live fee balance", "Retyped nightly", "Partial", "**Updates on payment**"],
+            ["Reconciliation time per term", "Days", "Hours", "**Minutes**"],
+            ["Works from a phone", "Yes (painfully)", "Varies", "**Yes**"],
+            ["Multi-campus balances", "Separate files", "Sometimes", "**Consolidated**"]
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "Ask for a **live demo** with a real test payment — not a slideshow screenshot.",
+            "Confirm how the system handles **siblings** and **third parties** paying on a learner's behalf.",
+            "Ask what happens when a reference is wrong: does it silently mis-post, or flag an **exception**?",
+            "Check that receipts can go out on **both WhatsApp and SMS**, because not every guardian uses WhatsApp.",
+            "Confirm **role-based access** so the bursar, principal, and accountant each see only their scope."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "savings",
+      "heading": "How much time does it save? A worked term example",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Take a 600-learner secondary school where roughly two-thirds of fees arrive by M-Pesa. In the first two weeks of term that is hundreds of payments. Done by hand, matching, receipting, and re-typing balances can consume the bursar's afternoons for most of that fortnight — and still leave wrong balances to fix later."
+        },
+        {
+          "type": "paragraph",
+          "text": "With automatic reconciliation the bursar reviews only the exceptions, and the arrears report for the principal is already correct. That reclaimed time is the real return on the software. For the manual routine it replaces, see the [bursar's guide to reconciling fees and M-Pesa](/blog/bursar-guide-reconcile-school-fees-mpesa)."
+        }
+      ]
+    },
+    {
+      "id": "objections",
+      "heading": "Common objections, answered",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**\"Our parents and boards still pay cash and cheques.\"** Keep that option. A good system records cash, bank, and cheque payments alongside M-Pesa, and reconciles each the same way — you simply get automatic matching for the digital ones."
+        },
+        {
+          "type": "paragraph",
+          "text": "**\"What happens when our internet goes down?\"** The payment still lands with Safaricom; reconciliation is retried when connectivity returns. Your Paybill keeps working because it is Safaricom's, not the school's."
+        },
+        {
+          "type": "paragraph",
+          "text": "**\"Is learner payment data safe?\"** Because balances are live, reminders can go only to the defaulters who actually need them — fewer \"but I already paid\" arguments. Learners' payment records deserve the same protection as any personal data; see [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software) for what to insist on."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL was built around automatic M-Pesa reconciliation for Kenyan schools. A parent pays to your Paybill or till; SQUL matches it to the right learner, updates the balance, and issues the receipt — before the parent leaves the gate."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic matching** by admission number, guardian phone, or an exception rule you control.",
+            "**Same-day receipts** over WhatsApp or SMS, so reminders only reach real defaulters.",
+            "**Live arrears reports** by class and stream for the principal and board.",
+            "**Automatic fee reminders** over [SMS and WhatsApp](/blog/school-fee-reminder-sms-whatsapp-kenya), sent only once a balance is confirmed.",
+            "**Live in about two weeks** — import learners, train the bursar, and collect fees before reporting day."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Coming from spreadsheets?",
+          "text": "See [how to move from Excel to a school management system](/blog/move-from-excel-to-school-management-system) without losing a single learner record."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Does school management software in Kenya integrate with M-Pesa automatically?",
+      "answer": "Some does. \"Integration\" often means importing a Paybill statement and matching payments by hand. Automatic reconciliation uses Safaricom's Daraja API to match each payment to the right student as it happens — SQUL does this."
+    },
+    {
+      "question": "What is the difference between a Paybill and a till for school fees?",
+      "answer": "A Paybill carries an account number, so if that number is the learner's admission number, matching is precise. A till (Buy Goods) has no account number, so systems match on the paying phone number instead."
+    },
+    {
+      "question": "How long does it take to set up M-Pesa reconciliation?",
+      "answer": "With a school that already has a Paybill or till, most setups go live within about two weeks — the main work is importing learners and linking guardian phone numbers."
+    },
+    {
+      "question": "Can parents still pay cash or cheque?",
+      "answer": "Yes. A good system records cash, bank, and cheque payments alongside M-Pesa, and reconciles each the same way. You simply get automatic matching for the digital payments."
+    },
+    {
+      "question": "Will parents get a receipt?",
+      "answer": "With automatic reconciliation, the receipt is issued the same day over WhatsApp or SMS — usually before the parent leaves the school gate."
+    }
+  ],
+  "cta": {
+    "heading": "Stop typing M-Pesa codes into Excel",
+    "body": "Start your free term with SQUL and let every Paybill and till payment reconcile to the right student automatically.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "The bursar's guide to reconciling fees and M-Pesa", "href": "/blog/bursar-guide-reconcile-school-fees-mpesa" },
+    { "title": "Automating fee reminders over SMS and WhatsApp", "href": "/blog/school-fee-reminder-sms-whatsapp-kenya" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" },
+    { "title": "Learner data protection in Kenya", "href": "/blog/learner-data-protection-kenya-school-software" }
+  ]
+}

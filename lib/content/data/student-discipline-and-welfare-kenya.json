@@ -1,0 +1,169 @@
+{
+  "slug": "student-discipline-and-welfare-kenya",
+  "path": "/blog/student-discipline-and-welfare-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "Student Discipline and Welfare in Kenyan Schools (2026)",
+  "h1": "Student Discipline and Welfare in Kenyan Schools (2026 Guide)",
+  "description": "Student discipline and welfare in Kenyan schools — a fair framework, handling incidents, pastoral care, keeping records, and working with parents.",
+  "primaryKeyword": "student discipline in schools Kenya",
+  "secondaryKeywords": [
+    "school discipline policy Kenya",
+    "student welfare Kenya",
+    "pastoral care school Kenya",
+    "school behaviour management"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Welfare",
+  "intro": [
+    "Discipline is not the same as punishment. A school with good discipline has clear expectations, applies them consistently, and treats learners fairly — while welfare ensures no learner falls through the cracks. This guide covers **student discipline and welfare in Kenyan schools**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "It is general guidance, not legal advice; always follow current Ministry guidance and your school's own approved policies."
+  ],
+  "sections": [
+    {
+      "id": "system",
+      "heading": "Discipline is a system, not a mood",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Clear expectations** — a behaviour code learners and staff both understand.",
+            "**Consistency** — the same response to the same behaviour, every time.",
+            "**Proportionality** — the response fits the act.",
+            "**Due process** — learners are heard before a decision.",
+            "**Records** — incidents and outcomes documented, in confidence."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Consistency is the whole game",
+          "text": "Learners accept rules they see applied evenly. Inconsistent discipline is what erodes trust and fuels the incidents you were trying to prevent."
+        }
+      ]
+    },
+    {
+      "id": "framework",
+      "heading": "Building a fair framework",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Agree the code with staff",
+              "text": "A policy written with teachers is followed far better than one handed down."
+            },
+            {
+              "title": "Publish it to learners and parents",
+              "text": "No surprises: everyone knows the expectations and the ladder of consequences."
+            },
+            {
+              "title": "Define the response ladder",
+              "text": "From a warning to a guardian meeting, each step is defined in advance."
+            },
+            {
+              "title": "Document every case",
+              "text": "A short record of incident, action, and outcome protects learners and staff alike."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "welfare",
+      "heading": "Welfare and pastoral care",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Welfare is the quiet work of noticing: the learner who is suddenly absent, the one whose marks drop, the one who seems withdrawn. A school that notices early prevents bigger crises later."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Watch attendance patterns** — absence is often the first signal.",
+            "**Keep health notes accessible** to the right staff.",
+            "**Assign pastoral responsibility** — a teacher or counsellor who owns welfare.",
+            "**Escalate and record** — concerns documented and, where needed, referred."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "parents",
+      "heading": "Working with parents",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Parent involvement turns discipline from a confrontation into a partnership. Notify guardians early and factually, invite them to a conversation rather than an announcement, and keep a record of what was agreed. See [parent and community engagement](/blog/parent-engagement-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "heading": "Records, fairness and confidentiality",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Discipline records are sensitive personal data. Keep them in one confidential place, visible only to staff who need them. Fairness and confidentiality are not opposites — they are the same discipline system working properly. See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software)."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Punishment without process** — decisions made before anyone listens.",
+            "**Inconsistent responses** — the same act treated differently by different staff.",
+            "**No records** — patterns invisible; incidents repeat.",
+            "**Parents surprised** — told only when things go badly wrong.",
+            "**Sensitive notes unprotected** — discipline records seen by the wrong people."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How should a Kenyan school handle student discipline?",
+      "answer": "With clear, published expectations, consistent and proportional responses, due process, and documented outcomes. Consistency and fairness matter more than severity. Follow current Ministry guidance and your approved school policy."
+    },
+    {
+      "question": "What is student welfare in a school?",
+      "answer": "Welfare is the pastoral care that keeps learners safe and supported — noticing absence or distress early, keeping health notes accessible, assigning pastoral responsibility, and referring concerns appropriately."
+    },
+    {
+      "question": "Should parents be involved in discipline?",
+      "answer": "Yes, early and factually. Invite guardians to a conversation, agree a way forward, and record what was decided. Partnership works better than announcements after the fact."
+    },
+    {
+      "question": "Are discipline records confidential?",
+      "answer": "Yes — they are sensitive personal data. Keep them in one secure place with access limited to staff who need them, consistent with the Data Protection Act."
+    }
+  ],
+  "cta": {
+    "heading": "Notice learners early, not late",
+    "body": "SQUL flags absences the same day and keeps learner notes and discipline records secure — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School leadership and governance in Kenya", "href": "/blog/school-leadership-and-governance-kenya" },
+    { "title": "Student admissions and learner records", "href": "/blog/school-admissions-learner-records-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" },
+    { "title": "Health, safety and security in schools", "href": "/blog/school-health-safety-security-kenya" }
+  ]
+}

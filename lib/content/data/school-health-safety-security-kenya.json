@@ -1,0 +1,172 @@
+{
+  "slug": "school-health-safety-security-kenya",
+  "path": "/blog/school-health-safety-security-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "Health, Safety and Security in Kenyan Schools (2026 Guide)",
+  "h1": "Health, Safety and Security in Kenyan Schools (2026 Guide)",
+  "description": "Health, safety and security in Kenyan schools — clinics and health records, safe buildings and water, food safety, access control and emergency planning.",
+  "primaryKeyword": "school safety and security Kenya",
+  "secondaryKeywords": [
+    "school health and safety Kenya",
+    "school emergency plan Kenya",
+    "school security management Kenya",
+    "school food safety Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Safety",
+  "intro": [
+    "Nothing else matters if learners are not safe. Health, safety and security are the foundation a school's reputation rests on, and they are largely a matter of routine rather than heroics. This guide covers **health, safety and security in Kenyan schools**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "It is general guidance, not legal advice — confirm current requirements with the relevant authorities."
+  ],
+  "sections": [
+    {
+      "id": "health",
+      "heading": "Health: clinic and records",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**A workable clinic** with basic supplies and a clear referral route to local facilities.",
+            "**Health notes per learner** accessible to the right staff, especially for boarders.",
+            "**A clinic log** of visits and treatments, kept confidential.",
+            "**Emergency contacts** for each learner, current and reachable."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safety",
+      "heading": "Safety: buildings, water and grounds",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Area", "What good looks like"],
+          "rows": [
+            ["Buildings", "Sound structures; maintenance planned, not reactive"],
+            ["Water", "Safe, adequate supply; tanks cleaned and covered"],
+            ["Sanitation", "Clean, adequate and separated for learners"],
+            ["Fire", "Exits clear; extinguishers present and in date"],
+            ["Grounds", "Safe play areas; hazards removed or fenced"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Routine, not reaction",
+          "text": "Safety failures are usually maintenance failures. A scheduled walk-round each term catches most of them before an inspector does."
+        }
+      ]
+    },
+    {
+      "id": "food",
+      "heading": "Food safety",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "For boarding schools, the kitchen is a daily risk. Keep it clean, supervise handlers, store food properly, and keep records. Food that makes learners ill closes a school faster than almost anything else."
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "heading": "Security and access control",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**One controlled entrance** where visitors are registered.",
+            "**Visitor policy** — sign in, badge, and be accompanied.",
+            "**Adequate supervision** in corridors, dorms and grounds.",
+            "**Clear procedures** for a learner leaving school early.",
+            "**Staff screening** appropriate to their role."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "heading": "An emergency plan you have practised",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Define the likely emergencies",
+              "text": "Fire, medical, severe weather, intruder, utilities failure."
+            },
+            {
+              "title": "Assign roles",
+              "text": "Who calls, who assembles learners, who contacts parents."
+            },
+            {
+              "title": "Communicate to parents",
+              "text": "A short, factual message over WhatsApp and SMS beats rumour."
+            },
+            {
+              "title": "Practise and review",
+              "text": "A drill each term, and a review of what went wrong."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common gaps",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Expired safety equipment** nobody checks.",
+            "**Unregistered visitors** walking in unchallenged.",
+            "**Stale emergency contacts** — a parent who cannot be reached in a crisis.",
+            "**No records** of drills or incidents.",
+            "**Health notes locked away** from the staff who need them in an emergency."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What safety and security does a Kenyan school need?",
+      "answer": "Safe, maintained buildings and water, clean sanitation, working fire provisions, controlled access with visitor registration, adequate supervision, and a practised emergency plan. Confirm current requirements with the relevant authorities."
+    },
+    {
+      "question": "Why keep a clinic log in schools?",
+      "answer": "A confidential clinic log tracks visits and treatments, helps spot patterns (like a spreading illness), and supports emergency responses. Health notes per learner should be accessible to the right staff."
+    },
+    {
+      "question": "How should schools communicate during an emergency?",
+      "answer": "Send a short, factual message to parents over WhatsApp and SMS as soon as the situation is under control — silence invites rumour and panic."
+    },
+    {
+      "question": "How often should a school run emergency drills?",
+      "answer": "At least once a term, with a review afterwards. A drill nobody practises is not a plan."
+    }
+  ],
+  "cta": {
+    "heading": "Know every learner is safe and accounted for",
+    "body": "SQUL records attendance and keeps learner health notes and emergency contacts where staff need them — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School registration and compliance in Kenya", "href": "/blog/school-compliance-registration-kenya" },
+    { "title": "Boarding and hostel management", "href": "/blog/boarding-school-management-kenya" },
+    { "title": "School facilities and procurement", "href": "/blog/school-facilities-procurement-kenya" },
+    { "title": "Student discipline and welfare", "href": "/blog/student-discipline-and-welfare-kenya" }
+  ]
+}

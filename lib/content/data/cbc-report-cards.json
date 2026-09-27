@@ -1,0 +1,297 @@
+{
+  "slug": "cbc-report-card-software-kenya",
+  "path": "/blog/cbc-report-card-software-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "CBC Report Card Software in Kenya (2026 Buyer's Guide)",
+  "h1": "CBC Report Card Software in Kenya (2026 Buyer's Guide)",
+  "description": "CBC report card software in Kenya: capture strands, rubrics and continuous assessment, then print ready term report cards — and handle 8-4-4 records too.",
+  "primaryKeyword": "CBC report card software Kenya",
+  "secondaryKeywords": [
+    "CBC assessment software Kenya",
+    "competency based curriculum report card",
+    "CBC strands and rubrics software",
+    "continuous assessment school software",
+    "print-ready term report cards Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "CBC & Reporting",
+  "intro": [
+    "Term-end reporting is where CBC meets reality. Teachers spend the last week of term re-typing rubric levels into Word templates, and the report is only as good as the assessment data behind it. If you are comparing the [school management software in Kenya](/blog/best-school-management-software-kenya) available for CBC, this buyer's guide explains what **CBC report card software** must do.",
+    "The honest framing is simple: CBC reporting is a data problem, not a formatting problem. Capture strands, sub-strands and rubric levels properly during the term, and the print-ready term report card becomes almost automatic."
+  ],
+  "sections": [
+    {
+      "id": "what-cbc-requires",
+      "heading": "What a CBC report card actually requires",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A CBC report card is built from a different structure to the old 8-4-4 report, and the software has to understand that structure before it can print anything."
+        }
+      ]
+    },
+    {
+      "id": "strands-levels",
+      "heading": "Strands, sub-strands and performance levels",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC assessment is organised by **learning area**, broken into **strands** and **sub-strands**, with each learner given a **performance level** rather than a mark. The software must store those levels against the right learner, term and learning area — a task a Word template cannot manage at scale."
+        }
+      ]
+    },
+    {
+      "id": "rubrics-vs-marks",
+      "heading": "Rubrics vs the old 8-4-4 marks-and-grade model",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Under 8-4-4, a learner earned **marks that became a grade**. Under CBC, a teacher records a **rubric level** describing how well a competency was demonstrated. Schools running both need a system that speaks both languages. **Educational terminology can change, so verify current naming against the latest curriculum guidance.**"
+        }
+      ]
+    },
+    {
+      "id": "why-templates-break",
+      "heading": "Why Word templates and Excel break down at CBC reporting time",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The tools most schools start with are perfectly good — for one learner. At CBC reporting scale, they fail in predictable ways."
+        }
+      ]
+    },
+    {
+      "id": "retyping",
+      "heading": "Re-typing levels for every learner, every strand",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Every learner, every learning area, every term: a class teacher with 45 learners enters hundreds of levels by hand. Then the same data is typed *again* into a report template."
+        }
+      ]
+    },
+    {
+      "id": "inconsistent-formats",
+      "heading": "Inconsistent formats between classes and teachers",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Different teachers format differently, so report cards arrive with mismatched layouts, missing fields and spelling that varies by class. The office then spends the last days of term standardising, instead of teaching."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "The report is only as good as the data",
+          "text": "No system can rescue assessment levels that were never captured. CBC reporting works when teachers enter data through the term, not in a panic on the final Friday."
+        }
+      ]
+    },
+    {
+      "id": "cbc-vs-844",
+      "heading": "CBC vs 8-4-4 reporting — one system or two?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A school running Grade 1–9 alongside Form 1–4 has two reporting models. Running them on two systems means double entry; on one system, one set of records."
+        },
+        {
+          "type": "table",
+          "caption": "CBC vs 8-4-4 reporting",
+          "headers": ["Reporting need", "CBC (Grade 1–9)", "8-4-4 (Form 1–4)", "SQUL handles"],
+          "rows": [
+            ["Core structure", "Strands, sub-strands", "Subjects", "Both"],
+            ["Grading", "Rubric levels", "Marks + grade", "Both"],
+            ["Assessment", "Continuous", "Exams + continuous", "Both"],
+            ["Output", "Print-ready term report card", "Term report card", "Both"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workflow",
+      "heading": "The workflow: capture assessment once, print the report card",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The fix is a single workflow: enter assessment data once, then generate the document from it. Nothing is typed twice."
+        }
+      ]
+    },
+    {
+      "id": "entering-assessment",
+      "heading": "Entering continuous assessment through the term",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Teachers record rubric levels for each learning area as the term progresses, on any device. Because the data is a record rather than a document, it can be corrected, reported on and reused."
+        }
+      ]
+    },
+    {
+      "id": "generating-report",
+      "heading": "Generating and printing term report cards",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "At term end, the school generates consistent report cards for a class or the whole school, then prints them ready for parents. The report reflects the data already entered — no re-typing, no format drift."
+        }
+      ]
+    },
+    {
+      "id": "buyers-checklist",
+      "heading": "What to look for in CBC report card software Kenya (buyer's checklist)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Compare systems on reporting specifically, using their own data in a demo."
+        },
+        {
+          "type": "table",
+          "headers": ["Capability", "Word + Excel", "Basic report tool", "CBC-ready system"],
+          "rows": [
+            ["Rubrics, strands and sub-strands", "Manual", "Partial", "**Yes**"],
+            ["Continuous assessment captured once", "No", "Sometimes", "**Yes**"],
+            ["CBC (Grade 1–9) and 8-4-4 (Form 1–4)", "Separate files", "Rarely both", "**Both**"],
+            ["Consistent report cards across classes", "Manual", "Limited", "**Yes**"],
+            ["Print-ready term report cards", "Reformatted by hand", "Yes", "**Yes**"],
+            ["Results reach parents over WhatsApp/SMS", "No", "No", "**Yes**"]
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "Ask to see a **CBC report card printed** for a real learner you describe.",
+            "Confirm how the system handles a school running **both CBC and 8-4-4**.",
+            "Ask whether **continuous assessment** is entered once or re-keyed at term end.",
+            "Check how **results and term notices reach parents** — see [attendance tracking with parent SMS alerts](/blog/student-attendance-tracking-parent-sms) for the same publishing pattern."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "connects-attendance-comms",
+      "heading": "How CBC reporting connects to attendance and communication",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Assessment does not sit alone. A learner's attendance sits in the same record, and the report that goes home is often the moment parents also hear term dates or results."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Same-day attendance** feeds the same learner profile that holds rubric levels.",
+            "**Results and term notices** can go out over **WhatsApp and SMS** from the same system, so reporting and communication are one job.",
+            "**Role-based access** keeps assessment editing to authorised staff, while the office can publish results.",
+            "**Daily backups** protect a term's assessment data, which is difficult to reconstruct if lost."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc-mistakes",
+      "heading": "Common CBC reporting mistakes to avoid",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Most CBC reporting pain is self-inflicted, and it repeats every term. These are the mistakes worth designing out:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Leaving assessment to the last week.** Levels entered in a rush are the ones that get re-done, disputed and corrected after the reports are printed.",
+            "**Keeping records in a document, not a database.** A Word template cannot be summarised, compared across terms or reused; a record can.",
+            "**Running two systems.** A school with Grade 1–9 and Form 1–4 that keeps CBC and 8-4-4 data apart pays for it in double entry.",
+            "**Assuming the software assesses.** It does not — teachers do. The system's job is to turn their data into a correct, consistent report.",
+            "**Forgetting the parent.** A report card nobody explains is half a job; results that also reach parents over WhatsApp or SMS close the loop."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Fix the workflow, not the template",
+          "text": "If you only change the report template, you still re-type every level. If you change the workflow so teachers capture assessment once, the template renders itself."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL treats CBC reporting as the output of good assessment data, not a formatting marathon. One system covers **CBC and 8-4-4** records and prints ready term report cards."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**CBC rubrics, strands and continuous assessment** captured once through the term.",
+            "**8-4-4 Form 1–4 records** alongside CBC Grade 1–9, so a mixed school avoids double entry.",
+            "**Print-ready term report cards** generated consistently across classes.",
+            "**Results and term notices over WhatsApp and SMS**, from the same data.",
+            "**Role-based access and daily backups** for assessment records.",
+            "**Live in about two weeks**, starting with a **free term** then per-term pricing."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Running a CBC primary school?",
+          "text": "See [school management software for primary schools in Kenya](/blog/school-management-software-primary-schools-kenya) for how assessment, attendance and fees fit together at Grade 1–9."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is CBC report card software?",
+      "answer": "Software that stores CBC assessment data — learning areas, strands, sub-strands and rubric levels — and generates print-ready term report cards from it, instead of re-typing levels into a Word template."
+    },
+    {
+      "question": "Can one system handle both CBC and 8-4-4 report cards?",
+      "answer": "Yes, if it supports both structures. SQUL records CBC rubric levels for Grade 1–9 and 8-4-4 marks and grades for Form 1–4, and prints report cards for each."
+    },
+    {
+      "question": "Does the software write the assessment for teachers?",
+      "answer": "No. The report is only as good as the assessment data entered. The software removes the re-typing and formatting by turning data teachers already capture into a report card."
+    },
+    {
+      "question": "How does CBC terminology keep up with policy changes?",
+      "answer": "Terminology such as strands, sub-strands and performance levels has changed over time. Confirm current naming with your curriculum guidance and with the vendor before relying on a specific format."
+    },
+    {
+      "question": "Can results reach parents directly?",
+      "answer": "Yes. Results and term notices can be published to parents over WhatsApp or SMS from the same record, so reporting and communication are not two separate jobs."
+    }
+  ],
+  "cta": {
+    "heading": "Make term-end reporting painless",
+    "body": "Start your free term with SQUL and print your first CBC report card from assessment data you already entered.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "School management software for primary schools in Kenya", "href": "/blog/school-management-software-primary-schools-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "Attendance tracking with parent SMS alerts", "href": "/blog/student-attendance-tracking-parent-sms" },
+    { "title": "School management software with WhatsApp integration in Kenya", "href": "/blog/whatsapp-integration-school-management-system" }
+  ]
+}

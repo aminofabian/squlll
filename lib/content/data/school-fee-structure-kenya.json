@@ -1,0 +1,194 @@
+{
+  "slug": "school-fee-structure-kenya",
+  "path": "/blog/school-fee-structure-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "How to Set School Fees in Kenya: Fee Structure Guide (2026)",
+  "h1": "How to Set School Fees in Kenya: A Fee Structure Guide (2026)",
+  "description": "How to set school fees in Kenya — costing your real per-term expenses, building a clear fee structure, communicating it to parents, and avoiding disputes.",
+  "primaryKeyword": "how to set school fees in Kenya",
+  "secondaryKeywords": [
+    "school fee structure Kenya",
+    "school fees calculation Kenya",
+    "term fees Kenya school",
+    "fee structure template Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Fees",
+  "intro": [
+    "A fee structure is a promise: this is what the school needs, and this is what each learner pays for. Get it wrong and you either run short by mid-term or spend the term defending the numbers to angry parents. This guide shows **how to set school fees in Kenya** from real costs, not guesswork. It is part of our guide to [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "We will cover costing, the components of a structure, how to present it, and how to review it each year without surprises."
+  ],
+  "sections": [
+    {
+      "id": "why-hard",
+      "heading": "Why fee structures cause disputes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Lump sums hide everything.** \"KES 40,000 per term\" tells a parent nothing about what they are buying.",
+            "**Costs move.** Food, fuel and utilities rise between terms; a structure that never changes runs short.",
+            "**Two currencies of expectation.** Parents compare with neighbours; the school must cost its own reality.",
+            "**No single source.** If the fee structure lives in a spreadsheet only the bursar understands, disputes multiply."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "costing",
+      "heading": "Start by costing the school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A fee structure is the output of a budget, not a guess. Take your term costs and divide them across the learners who will actually attend."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Total your term costs",
+              "text": "Staff, boarding (food, utilities, matron), learning materials, facilities and maintenance, transport, activities, administration, and a contingency."
+            },
+            {
+              "title": "Divide by planned enrolment",
+              "text": "Cost per learner = total costs ÷ expected learners. Use conservative enrolment."
+            },
+            {
+              "title": "Separate boarding from day",
+              "text": "Boarders carry food and utilities the day section does not. Cost each separately."
+            },
+            {
+              "title": "Set the structure",
+              "text": "Turn the per-learner cost into clear line items parents can see."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Budget on conservative enrolment",
+          "text": "If you set fees on an optimistic headcount and enrolment misses, every learner is undercharged. Cost for the number you can defend."
+        }
+      ]
+    },
+    {
+      "id": "components",
+      "heading": "What a good fee structure contains",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "A transparent structure beats a single number.",
+          "headers": ["Component", "Covers", "Who pays"],
+          "rows": [
+            ["Tuition", "Teaching and academic running costs", "All learners"],
+            ["Boarding", "Accommodation, food, utilities", "Boarders only"],
+            ["Activity / exam", "Trips, clubs, exam fees", "All (or by activity)"],
+            ["Development", "Buildings, equipment, maintenance", "Often annual"],
+            ["Optional", "Transport, extra lessons", "Only those who use them"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Breaking it out makes the total defensible: a parent can see why a boarder pays more, and the school can adjust one line without disturbing the rest."
+        }
+      ]
+    },
+    {
+      "id": "communicate",
+      "heading": "Presenting fees to parents",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Send it early** — before the term ends, so families can plan. Late structures invite resistance.",
+            "**Explain, don't just announce** — one line per component does the work.",
+            "**Give the payment channel clearly** — Paybill or till, and the account reference (ideally the learner's admission number).",
+            "**Confirm every payment** — a receipt on WhatsApp or SMS ends the \"did you receive it?\" questions."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Communicating fees and confirming payments are the same job. See [fee reminders over SMS and WhatsApp](/blog/school-fee-reminder-sms-whatsapp-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "heading": "Reviewing fees each year",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Review once a year, calmly, against last year's actuals — not in a panic mid-term. Ask: did any cost line rise faster than planned? Did enrolment hold? Did arrears grow? A small, explained annual adjustment is far easier for parents than a large emergency one."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Tie fees to collection",
+          "text": "A perfect structure that you cannot collect still fails. Pair it with automated reconciliation and reminders — see [how to reduce fee arrears](/blog/how-to-reduce-school-fee-arrears-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Copying neighbouring schools** instead of costing your own.",
+            "**One lump sum** with no explanation of what it covers.",
+            "**No contingency** for repairs and price rises.",
+            "**Announcing late**, leaving families no time to plan.",
+            "**Ignoring arrears** when setting next year's fees."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How are school fees calculated in Kenya?",
+      "answer": "Total your term costs (staff, boarding, learning, facilities, transport, activities, admin, contingency), divide by conservative planned enrolment, and separate boarding from day learners. That per-learner figure becomes your fee structure."
+    },
+    {
+      "question": "Should a school charge one fee or break it down?",
+      "answer": "Break it down. A transparent structure — tuition, boarding, activities, development — is more defensible and lets the school adjust one component without renegotiating the whole fee."
+    },
+    {
+      "question": "When should parents be told about fees?",
+      "answer": "Before the term ends, with the structure and payment details, so families can plan. Late announcements cause avoidable disputes."
+    },
+    {
+      "question": "How do we handle fee arrears?",
+      "answer": "Keep a live arrears view by class, confirm every payment immediately, and send staged reminders over WhatsApp and SMS. Automated reconciliation means reminders reach only real defaulters."
+    },
+    {
+      "question": "Can fees change mid-year?",
+      "answer": "Review annually against actuals. Mid-term changes are hard to justify and damage trust; plan for cost rises in the annual review instead."
+    }
+  ],
+  "cta": {
+    "heading": "Set a fee structure you can actually collect",
+    "body": "SQUL stores your term fee structure per learner, reconciles M-Pesa automatically, and confirms every payment — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "How to reduce school fee arrears", "href": "/blog/how-to-reduce-school-fee-arrears-kenya" },
+    { "title": "Fee reminders over SMS and WhatsApp", "href": "/blog/school-fee-reminder-sms-whatsapp-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" }
+  ]
+}

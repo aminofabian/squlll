@@ -1,0 +1,280 @@
+{
+  "slug": "bursar-guide-reconcile-school-fees-mpesa",
+  "path": "/blog/bursar-guide-reconcile-school-fees-mpesa",
+  "kind": "cluster",
+  "status": "published",
+  "title": "How to Reconcile School Fees M-Pesa Payments: Bursar Guide",
+  "h1": "How to Reconcile School Fees M-Pesa Payments: Bursar Guide",
+  "description": "A bursar's guide to reconciling school fees M-Pesa payments in Kenya, with a KES 15,000 Paybill example and how SQUL matches payments automatically.",
+  "primaryKeyword": "how to reconcile school fees M-Pesa",
+  "secondaryKeywords": [
+    "school fees reconciliation Kenya",
+    "M-Pesa Paybill school fees",
+    "bursar fee statement Kenya",
+    "school fee arrears tracking",
+    "Daraja API school payments"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Fees & Reconciliation",
+  "intro": [
+    "If the bursar's desk is where term starts to hurt, this guide is for you. It sits alongside our wider comparison of the [best school management software in Kenya](/blog/best-school-management-software-kenya), but the focus here is narrow: how to reconcile school fees M-Pesa payments to the right learners, every day, without guesswork.",
+    "We start with why reconciliation really breaks — and it is rarely the Paybill itself — then walk through a worked example of a KES 15,000 payment and give you a repeatable daily, weekly, and end-of-term routine you can hold on to."
+  ],
+  "sections": [
+    {
+      "id": "reporting-day",
+      "heading": "The bursar's real problem on reporting day",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Reporting day is a burst: hundreds of parents pay within a few days, and most of them pay by M-Pesa. The money arrives instantly; the matching does not. The bursar becomes a queue manager, a typist, and an investigator, all at once."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**A payment with no learner attached.** A parent types a surname, a class, or nothing at all in the account field, so the money lands in the Paybill without a clear home.",
+            "**One payment, several learners.** A relative or a sibling off their own phone pays for two or three children in one go.",
+            "**Balances a day behind.** If the register is updated that night, the parent who paid at 11am is still told to \"check with the office\".",
+            "**The end-of-term scramble.** Arrears figures for the principal and board are rebuilt from a spreadsheet under deadline pressure."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**The hidden cost is unallocated funds.** Money that is not matched to a learner looks like arrears, so reminders go to parents who already paid, and board reports understate collection. The Paybill is not failing — the reference number is where reconciliation breaks."
+        }
+      ]
+    },
+    {
+      "id": "what-reconciled-means",
+      "heading": "What \"reconciled\" actually means",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Reconciliation is not a single act; it is a chain of states. Keep these four words straight and the rest of the routine makes sense."
+        },
+        {
+          "type": "table",
+          "caption": "The vocabulary of fee reconciliation",
+          "headers": ["Term", "What it means in a school", "What a clean record looks like"],
+          "rows": [
+            ["Unallocated", "A payment received but not yet tied to a learner", "A short, shrinking exception list"],
+            ["Allocated", "A payment matched to the right learner", "Every receipt shows a name and admission number"],
+            ["Reconciled", "Allocated payments agree with the M-Pesa and bank records", "System total equals the Paybill and bank total"],
+            ["Arrears", "Balance still owed, following the learner", "An accurate list by class and stream"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "The test of a clean record",
+          "text": "At any point in the term, you should be able to add up the fees collected in the system and land exactly on the M-Pesa and bank totals — with no payment sitting in a \"to be sorted\" pile."
+        }
+      ]
+    },
+    {
+      "id": "manual-workflow",
+      "heading": "The manual reconciliation workflow — and where it fails",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Most Kenyan schools already have a routine. It usually looks like this:"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Download or open the Paybill statement for the day.",
+            "Read each payment line: amount, phone number, account or reference.",
+            "Search the fee register (often an Excel file) for a matching learner.",
+            "Decide who the payment belongs to — name, class, or phone number.",
+            "Hand-write or type a receipt and update the learner's balance.",
+            "Re-check totals against the bank and note anything unresolved."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Every step is honest work, and every step is a chance to fail:"
+        },
+        {
+          "type": "table",
+          "caption": "Where the manual process breaks",
+          "headers": ["Step", "What goes wrong", "Knock-on effect"],
+          "rows": [
+            ["Reading the statement", "Dozens of similar names and phone numbers", "Wrong learner credited"],
+            ["Matching", "No admission number on the payment", "Payment parked as unallocated"],
+            ["Receipting", "Receipts typed later, or not at all", "Parent chases the office"],
+            ["Updating balances", "Done hours later, by hand", "Reminders reach parents who paid"],
+            ["Totals check", "Skipped when busy", "Board figures are wrong"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "worked-example",
+      "heading": "Worked example — a parent pays KES 15,000 via Paybill",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**The setting.** A Form 3 learner begins the term with a fee balance of **KES 45,000**. On day three, the parent pays **KES 15,000** through the school's M-Pesa Paybill, entering the learner's admission number as the account number."
+        },
+        {
+          "type": "paragraph",
+          "text": "**The manual route.** The bursar downloads the Paybill statement at the end of the day, searches for the parent's name, finds two similar names, guesses, writes a receipt by hand, and updates the Excel fee register that evening. The balance is corrected a day late, and the parent waits or calls to confirm."
+        },
+        {
+          "type": "paragraph",
+          "text": "**The automatic route, with SQUL Daraja reconciliation.** The payment is received through Safaricom's Daraja API and matched to the learner by the admission number in the account field. The balance falls immediately and a receipt is issued the same day."
+        },
+        {
+          "type": "table",
+          "caption": "The same KES 15,000 payment, reconciled automatically",
+          "headers": ["Item", "Value"],
+          "rows": [
+            ["Opening fee balance", "KES 45,000"],
+            ["Payment received via Paybill", "KES 15,000"],
+            ["Closing fee balance", "**KES 30,000**"],
+            ["When the balance updates", "On payment, same day"],
+            ["When the receipt goes out", "Same day, via WhatsApp or SMS"],
+            ["Bursar effort", "Review only — the match already happened"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "What the parent sees",
+          "text": "A same-day message confirming the KES 15,000, the new balance of KES 30,000, and a receipt reference — usually before they have left the school gate. That one message removes most of the next day's phone calls."
+        }
+      ]
+    },
+    {
+      "id": "routine",
+      "heading": "A repeatable reconciliation routine for every term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Whether the matching is manual or automatic, the rhythm is the same. The difference is how long each step takes."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Daily (target: ten minutes).** Clear the exception list — the payments the system could not match. Confirm receipts went out, and spot-check one or two balances. With automatic matching, this is review, not data entry.",
+            "**Weekly — arrears and follow-ups.** Pull arrears by class and stream, build the fee-reminder list from *confirmed* balances, and send reminders over [SMS and WhatsApp](/blog/school-fee-reminder-sms-whatsapp-kenya). Reconcile the system total against the M-Pesa and bank totals.",
+            "**End of term — statements and the board pack.** Issue fee statements, carry forward correct balances to the next term, and prepare collection and arrears summaries for the principal and board."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Done this way, reconciliation stops being an event at the end of term and becomes a short daily habit — which is exactly when errors are cheapest to fix."
+        }
+      ]
+    },
+    {
+      "id": "exceptions",
+      "heading": "Handling partial payments, overpayments, and wrong reference numbers",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**Partial payments** are normal and should be expected: a KES 10,000 payment against a KES 30,000 balance simply reduces the balance. The system should record the part-payment and leave the learner correctly in arrears for the remainder."
+        },
+        {
+          "type": "paragraph",
+          "text": "**Overpayments** should be flagged, not silently absorbed. The school needs a clear policy — carry the credit to the next term, or refund — and the system must hold that credit against the learner rather than lose it in the ledger."
+        },
+        {
+          "type": "paragraph",
+          "text": "**Wrong or missing references** are the hard case. A good system matches on the guardian's registered phone number when the account number is unusable, and surfaces anything it cannot resolve as an exception for a human — rather than guessing silently."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Never guess a match",
+          "text": "A mis-posted payment is worse than an unallocated one, because it hides the real arrears. If the system cannot match a payment with confidence, it should park it as an exception and let the bursar decide."
+        }
+      ]
+    },
+    {
+      "id": "controls",
+      "heading": "The controls your board will ask about",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Finance committees care less about how fast a receipt prints and more about who can touch the money and the ledger. Be ready with answers."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Segregation of duties.** The person who records a payment should not be the only person who can adjust a balance or approve a waiver.",
+            "**Role-based access.** The bursar, principal, and accountant should each see only their scope — a change from the days when one Excel file sat on one laptop.",
+            "**An audit trail.** Every fee adjustment, waiver, and refund should be traceable to a person and a time.",
+            "**Bank and M-Pesa reconciliation.** The system total should tie back to the Paybill and the bank statement, on a fixed rhythm, not once a year.",
+            "**Approval for bursaries and waivers.** The system should record who authorised a reduction, not just the reduced figure."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "choosing",
+      "heading": "Choosing reconciliation software for your school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "If you are moving from a manual routine, the [M-Pesa integration for school management software in Kenya](/blog/mpesa-integration-school-management-software-kenya) is where to look at how automatic matching works. Before you commit, confirm three things: that payments match to the right learner automatically, that balances and receipts update the same day, and that unmatched payments appear as an exception list rather than a silent guess."
+        },
+        {
+          "type": "paragraph",
+          "text": "**Where SQUL fits.** SQUL matches Paybill and till payments to the right learner through Safaricom's Daraja API, updates the balance and issues the receipt the same day, and turns the bursar's job from data entry into review. It goes live in about two weeks: import the opening balances from your [Excel register](/blog/move-from-excel-to-school-management-system), and start with the next term."
+        },
+        {
+          "type": "paragraph",
+          "text": "The bottom line is simple: reconciliation should end each day at zero unallocated payments, not accumulate into a term-end marathon. Get that right and the arrears report, the reminders, and the board pack all look after themselves."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can the system match a payment that has the wrong reference number?",
+      "answer": "Often, yes — a good system will match on the guardian's registered phone number when the account number is wrong. Anything it cannot match with confidence should appear as an exception for the bursar to resolve, rather than being posted to the wrong learner."
+    },
+    {
+      "question": "What about cash and bank deposits?",
+      "answer": "Record them the same way as M-Pesa. A good system captures cash, bank, and cheque payments alongside mobile money, and reconciles each against the learner's balance so no channel is left out."
+    },
+    {
+      "question": "How quickly do receipts go out?",
+      "answer": "With automatic reconciliation, the receipt is issued the same day over WhatsApp or SMS — usually before the parent leaves the school gate."
+    },
+    {
+      "question": "How long does it take to move to automatic matching?",
+      "answer": "For a school that already has a Paybill or till, most setups go live within about two weeks. The main work is importing learners and opening fee balances, and linking guardian phone numbers."
+    },
+    {
+      "question": "Do we still get arrears reports for the board?",
+      "answer": "Yes — and they are more reliable, because arrears follow the learner's live balance rather than a spreadsheet that is updated under pressure. Reports can be pulled by class and stream in minutes."
+    }
+  ],
+  "cta": {
+    "heading": "Stop reconciling M-Pesa by hand",
+    "body": "Start your free term with SQUL — connect your Paybill, import your opening balances, and watch the next parent payment reconcile itself.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "Automating school fee reminders over SMS and WhatsApp", "href": "/blog/school-fee-reminder-sms-whatsapp-kenya" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" },
+    { "title": "Attendance tracking with parent SMS alerts", "href": "/blog/student-attendance-tracking-parent-sms" }
+  ]
+}

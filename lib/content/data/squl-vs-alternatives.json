@@ -1,0 +1,287 @@
+{
+  "slug": "squl-vs-zeraki-vs-edadmin",
+  "path": "/blog/squl-vs-zeraki-vs-edadmin",
+  "kind": "cluster",
+  "status": "published",
+  "title": "SQUL vs Zeraki vs EdAdmin: Which Is Best? (2026)",
+  "h1": "SQUL vs Zeraki vs EdAdmin: Which School System Is Best in 2026?",
+  "description": "SQUL vs Zeraki vs EdAdmin for Kenyan schools: how they compare on M-Pesa reconciliation, WhatsApp and SMS, CBC report cards, pricing and go-live speed.",
+  "primaryKeyword": "SQUL vs Zeraki vs EdAdmin",
+  "secondaryKeywords": [
+    "SQUL vs EdAdmin",
+    "Zeraki vs EdAdmin",
+    "best school management software comparison Kenya",
+    "school management system M-Pesa reconciliation comparison",
+    "school software CBC WhatsApp Kenya comparison"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Comparison",
+  "quickAnswer": "Editor's note: vendor pricing and features change. Figures for products other than SQUL are illustrative and were compiled from public sources — confirm them on each vendor's site before you buy. Last reviewed September 2026.",
+  "intro": [
+    "Choosing a school management system in Kenya usually comes down to a shortlist, and SQUL, Zeraki and EdAdmin appear on most of them. Each is genuinely strong in a different place. This comparison is written to help you pick the right tool for *your* school — not to pretend one system wins everywhere. If you want the wider field first, start with the [best school management software in Kenya](/blog/best-school-management-software-kenya).",
+    "We will be specific about where each platform shines, where it is weaker, and when another tool is the better buy. Competitor pricing and features change often, so treat the figures here as illustrative and verify them before you decide."
+  ],
+  "sections": [
+    {
+      "id": "at-a-glance",
+      "heading": "The three at a glance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A quick orientation before the detail. Read the \"best for\" column as an honest short summary, not a ranking."
+        },
+        {
+          "type": "table",
+          "caption": "Illustrative summary — verify current pricing and features",
+          "headers": ["System", "Best for", "M-Pesa", "WhatsApp", "SMS", "CBC report cards", "Go-live"],
+          "rows": [
+            ["**SQUL**", "Fee reconciliation + parent engagement for Kenyan schools", "**Automatic (Daraja)**", "**Yes**", "**Yes**", "**Yes**", "**~2 weeks**"],
+            ["Zeraki", "Academic and exam analytics", "Partial", "No", "Yes", "Yes", "Weeks"],
+            ["EdAdmin", "Large, established institutions", "Partial", "No", "Yes", "Yes", "Months"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "how-we-compared",
+      "heading": "How we compared them (and how to read this)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is a buyer's guide, not a scoreboard. We compared the three on the criteria that decide a Kenyan school's term — automatic M-Pesa reconciliation, WhatsApp and SMS parent engagement, CBC and 8-4-4 report cards, timetables and attendance, multi-campus support, go-live time and data protection — rather than on raw feature counts."
+        },
+        {
+          "type": "paragraph",
+          "text": "Two caveats matter. First, SQUL is our product and we have an interest, so we have tried to be fair by naming where the others are stronger and where SQUL is weaker. Second, competitor details move quickly, so this page is a starting point for your own due diligence, not a substitute for it. Where a vendor's current listing disagrees with this page, trust the vendor and ask them to demo it."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Verify pricing directly.** Ask each vendor for a written quote for your number of learners and campuses.",
+            "**Demo your own workflow.** Bring a real fee structure and a real report card, and watch them being produced.",
+            "**Talk to a reference school** of a similar size and type to yours.",
+            "**Test go-live, not features.** Ask what week one looks like, and who supports you on reporting day."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "SQUL: fee reconciliation and parent engagement",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**SQUL is built for the two jobs that decide a Kenyan school's term: reconciling fees and keeping parents informed — automatically.** Where many systems treat M-Pesa as a manual import and WhatsApp as something you handle yourself in a group chat, SQUL treats both as first-class."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa (Daraja) reconciliation.** Paybill and till payments match to the right learner by admission number and phone, with same-day receipts.",
+            "**WhatsApp and SMS parent engagement** from one inbox, including WhatsApp buttons, media and list menus.",
+            "**CBC and 8-4-4 rubrics and report cards** from a single mark entry.",
+            "**Timetables and duty rosters** with conflict detection.",
+            "**Same-day attendance** with parent alerts.",
+            "**Multi-campus consolidated reports**, role-based access and daily backups.",
+            "**Live in about two weeks**, with a free term before you pay."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Where SQUL is weaker:** it is a Kenyan-school system, so it does not aim for the depth of an international SIS (IB/IGCSE) or a university-scale ERP, and its academic-analytics reporting is less elaborate than a specialist analytics tool."
+        }
+      ]
+    },
+    {
+      "id": "zeraki",
+      "heading": "Zeraki: academic and exam analytics",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**Zeraki earns its reputation on academic analytics.** Schools that live and die by exam analysis — ranking, subject performance and trend reporting across a whole cohort — will find real strength here, and it has a large footprint in Kenyan secondary schools."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Deep exam analytics** and performance reporting that stretches across terms.",
+            "**Well established** with wide recognition among Kenyan secondary schools.",
+            "**SMS communication** for parents and school-wide notices.",
+            "**CBC and 8-4-4 exam handling** for report cards."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Where Zeraki is weaker for some buyers:** if your priority is automatic mobile-money reconciliation and WhatsApp-first parent engagement, you may find yourself stitching those on separately, and onboarding can take longer than a two-week go-live."
+        }
+      ]
+    },
+    {
+      "id": "edadmin",
+      "heading": "EdAdmin: large, established institutions",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**EdAdmin is a strong choice for large, established institutions.** It has a long track record and features shaped by big schools and organisations with complex administrative structures."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Established deployments** across large and long-running institutions.",
+            "**Multi-department structures** and heavier administrative workflows.",
+            "**SMS and reporting** for leadership.",
+            "**Depth for institutions** that need more than a school-sized tool."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Where EdAdmin is weaker for some buyers:** for a mid-sized Kenyan school that wants a fast go-live plus automatic M-Pesa and WhatsApp engagement, an enterprise-scale deployment can feel heavier and slower than the job requires."
+        }
+      ]
+    },
+    {
+      "id": "head-to-head",
+      "heading": "Head to head: the features that decide it",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The features that usually decide a Kenyan school's choice, side by side. Ticks reflect typical positioning, not an audit — verify with each vendor."
+        },
+        {
+          "type": "table",
+          "caption": "Feature comparison (illustrative; verify before buying)",
+          "headers": ["Feature", "SQUL", "Zeraki", "EdAdmin"],
+          "rows": [
+            ["Automatic M-Pesa reconciliation", "**Yes (Daraja)**", "Partial", "Partial"],
+            ["WhatsApp messaging", "**Yes**", "No", "No"],
+            ["Bulk SMS", "**Yes**", "Yes", "Yes"],
+            ["CBC rubrics & report cards", "**Yes**", "Yes", "Yes"],
+            ["Academic/exam deep analytics", "Good", "**Strongest**", "Strong"],
+            ["Timetables & duty rosters", "**Yes**", "Yes", "Yes"],
+            ["Same-day attendance alerts", "**Yes**", "Partial", "Partial"],
+            ["Multi-campus consolidation", "**Yes**", "Limited", "Yes"],
+            ["Enterprise-scale depth", "Limited", "Limited", "**Strongest**"],
+            ["Go-live time", "**~2 weeks**", "Weeks", "Months"],
+            ["Free term to start", "**Yes**", "No", "No"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Read the table by priority, not by count. If your term is decided by fee reconciliation and parent communication, the M-Pesa and WhatsApp rows carry the most weight; if it is decided by exam analysis, the analytics row does."
+        }
+      ]
+    },
+    {
+      "id": "when-another-wins",
+      "heading": "When another tool wins",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Honesty matters more than a clean sales story. There are real situations where another system is the better buy, and you should know them before you choose."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Your school is exam-analytics-obsessed** and parent engagement is already handled well. Zeraki's analytics depth may serve you better.",
+            "**You are a very large or multi-department institution** with complex administrative structures. EdAdmin's enterprise depth may fit.",
+            "**You need deep international-curriculum support** (IB or IGCSE at full depth). Look at a specialist international SIS.",
+            "**You want an accounting-first system** for a bursar who lives in ledgers. A finance-led platform may suit you."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Editor's note",
+          "text": "Pricing and feature lists for all three systems change frequently. The figures and ticks above are illustrative and were compiled from public sources — confirm them directly with each vendor, and ask for a live demo of your own workflow, before you buy. Last reviewed September 2026."
+        }
+      ]
+    },
+    {
+      "id": "how-to-decide",
+      "heading": "How to decide between them",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Ask each vendor the same questions and score the answers. The system that fits your two hardest jobs is the one to shortlist."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**\"Does M-Pesa reconcile automatically, or does my bursar import a statement?\"** If the answer mentions a statement, it is not automatic.",
+            "**\"Can you message parents on WhatsApp and SMS from one screen?\"** Channel choice should be per parent, not school-wide.",
+            "**\"How fast can we go live?\"** A two-week import and go-live is very different from a term-long project.",
+            "**\"What does my exact workflow look like in your system?\"** Ask for a live demo, not a slide deck.",
+            "**\"Where does learner data live, and who can export it?\"** See our [guide to learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software).",
+            "**\"What does support look like on opening day?\"** That is the day a vendor's promise is tested."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Cost is not only the licence fee. A system that takes a term to deploy costs you a term of manual reconciliation; a system that needs a dedicated IT project costs staff time you may not have. When you compare quotes, add the cost of the transition — the hours, the training and the disruption — not just the invoice."
+        },
+        {
+          "type": "paragraph",
+          "text": "SQUL offers a free term, then per-term pricing, which lets you measure the transition against real results before you commit. For how Kenyan pricing is generally structured, see [school management system pricing in Kenya](/blog/school-management-system-price-in-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "bottom-line",
+      "heading": "The bottom line",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "There is no single winner for every school, and any comparison that claims otherwise is selling, not helping. **Choose SQUL if automatic M-Pesa reconciliation, WhatsApp and SMS parent engagement, and CBC report cards are what decide your term; choose Zeraki for academic analytics, and EdAdmin for large established institutions.** Whatever you shortlist, verify current pricing and features yourself and demo your own workflow. If SQUL fits, you can [start a free term](/register) and see it live."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Which is better, SQUL or Zeraki?",
+      "answer": "It depends on your priority. SQUL leads on automatic M-Pesa reconciliation and WhatsApp-plus-SMS parent engagement; Zeraki leads on academic and exam analytics. Many schools pick SQUL when fee reconciliation and parent communication matter most."
+    },
+    {
+      "question": "How does SQUL compare with EdAdmin?",
+      "answer": "EdAdmin is strong for large, established institutions with complex structures. SQUL is lighter and faster to deploy — about two weeks — and focuses on automatic M-Pesa reconciliation plus WhatsApp and SMS parent engagement."
+    },
+    {
+      "question": "Does SQUL support CBC report cards?",
+      "answer": "Yes. SQUL handles CBC rubrics and 8-4-4 exam records and produces print-ready report cards from one mark entry."
+    },
+    {
+      "question": "Can I try SQUL before deciding?",
+      "answer": "Yes. SQUL offers a free term, so you can run fees, communication and report cards live before committing to per-term pricing."
+    },
+    {
+      "question": "Are the prices and features in this comparison accurate?",
+      "answer": "Treat them as illustrative. Competitor pricing and features change often, so verify current figures directly with each vendor before you buy."
+    }
+  ],
+  "cta": {
+    "heading": "See SQUL live for a free term",
+    "body": "Reconcile M-Pesa automatically, message parents on WhatsApp and SMS, and produce CBC report cards — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "SQUL vs Zeraki: why SQUL wins", "href": "/blog/squl-vs-zeraki" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "School management system pricing in Kenya", "href": "/blog/school-management-system-price-in-kenya" },
+    { "title": "How M-Pesa integration works in school software", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "School management software with WhatsApp integration", "href": "/blog/whatsapp-integration-school-management-system" },
+    { "title": "CBC report card software in Kenya", "href": "/blog/cbc-report-card-software-kenya" }
+  ]
+}

@@ -1,0 +1,455 @@
+{
+  "slug": "best-school-management-software-kenya",
+  "path": "/blog/best-school-management-software-kenya",
+  "kind": "pillar",
+  "status": "published",
+  "title": "Top 10 Best School Management Software in Kenya (2026)",
+  "h1": "Top 10 Best School Management Software in Kenya (2026)",
+  "description": "The best school management software in Kenya for 2026, ranked — M-Pesa, WhatsApp, SMS, CBC report cards, timetables and attendance compared side by side.",
+  "primaryKeyword": "best school management software in Kenya",
+  "secondaryKeywords": [
+    "school management system Kenya",
+    "school management software Kenya 2026",
+    "school management system price in Kenya"
+  ],
+  "intent": "Commercial investigation",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Buyer's guide",
+  "image": "/screenshots/ai-generated-9041893_1920.jpg",
+  "intro": [
+    "**Quick answer:** For most Kenyan schools the best school management software in 2026 is **SQUL** — the only widely available platform that combines automatic M-Pesa reconciliation, WhatsApp **and** SMS parent messaging, and CBC-ready report cards in one place, and that goes live in about two weeks. Zeraki leads on academic analytics, EdAdmin on established enterprise deployments, and SchoolMaster on accounting depth — but none of the three matches SQUL on automatic mobile-money reconciliation plus WhatsApp engagement together.",
+    "Kenyan schools run on two things: **fees that must reconcile** and **parents who must be kept informed**. The software that wins in 2026 is the software that does both automatically, on a phone, without a six-month IT project.",
+    "This guide ranks the ten best school management systems for Kenyan schools — primary and secondary, day and boarding, single-campus and multi-branch. We explain how we ranked them, compare them feature by feature, and show you exactly what to ask a vendor before you pay."
+  ],
+  "quickAnswer": "Editor's note: vendor pricing and features change. Figures for products other than SQUL are illustrative and were compiled from public sources — confirm them on each vendor's site before you buy. Last reviewed September 2026.",
+  "sections": [
+    {
+      "id": "how-we-ranked",
+      "heading": "How we ranked these systems",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "We scored every platform against the realities of a Kenyan school office, not a Silicon Valley demo. The eight criteria, in priority order:"
+        },
+        {
+          "type": "table",
+          "headers": ["#", "Criterion", "Why it matters here"],
+          "rows": [
+            ["1", "**M-Pesa integration**", "Paybill/till payments must match to the right student automatically — not be typed by hand"],
+            ["2", "**Parent communication**", "WhatsApp and SMS to guardians, because that is the channel parents actually read"],
+            ["3", "**CBC & 8-4-4 assessment**", "Rubrics, strands, and print-ready report cards for both curricula"],
+            ["4", "**Fees & bursar tooling**", "Fee structures, arrears by class, receipts, exportable summaries for the board"],
+            ["5", "**Timetables & attendance**", "Teacher duty rosters, class timetables, same-day parent alerts"],
+            ["6", "**Ease of adoption**", "Can a bursar use it after one week of training? How long is import?"],
+            ["7", "**Multi-campus support**", "Sister campuses, separate fee structures, consolidated reports"],
+            ["8", "**Support & data security**", "Local support, role-based access, backups, Kenya Data Protection Act awareness"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Weighting:** M-Pesa and parent communication carried the most weight, because those two problems cost Kenyan schools the most time and money every term."
+        }
+      ]
+    },
+    {
+      "id": "at-a-glance",
+      "heading": "The top 10 at a glance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Prices are indicative. See the [pricing guide](/blog/school-management-system-price-in-kenya) for a full breakdown.",
+          "headers": ["Rank", "Software", "Best for", "M-Pesa", "WhatsApp", "SMS", "CBC", "Multi-campus", "From (KES)"],
+          "rows": [
+            ["1", "**SQUL**", "**Most Kenyan schools**", "**Automatic (Daraja)**", "**Yes**", "**Yes**", "**Yes**", "**Yes**", "**Free term, then per-term**"],
+            ["2", "Zeraki", "Academic analytics", "Partial", "No", "Yes", "Yes", "Limited", "Per-student / term"],
+            ["3", "EdAdmin", "Large established schools", "Partial", "No", "Yes", "Yes", "Yes", "Quoted"],
+            ["4", "SchoolMaster", "Accounting-heavy schools", "Partial", "No", "No", "Partial", "Limited", "Licensed"],
+            ["5", "Fedena", "Groups & colleges", "No", "No", "No", "No", "Yes", "Per-student"],
+            ["6", "OpenSIS", "Tech-savvy / DIY", "No", "No", "No", "No", "Yes", "Free / self-hosted"],
+            ["7", "M-Shule", "Low-connectivity learners", "No", "No", "Partial", "No", "No", "Per-learner"],
+            ["8", "Edsys", "Transport & tracking", "No", "No", "Yes", "No", "No", "Quoted"],
+            ["9", "Custom builds", "Schools with IT staff", "Self-built", "Self-built", "Self-built", "Self-built", "Possible", "Project-priced"],
+            ["10", "Excel + WhatsApp", "Very small schools", "No", "Manual", "Manual", "No", "No", "Free"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "1. SQUL — best school management software in Kenya overall",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**SQUL wins because it solves the two things that actually decide a school's term: getting fees reconciled, and getting parents informed — automatically.** Most systems treat M-Pesa as a manual import and treat WhatsApp as something you handle yourself in an endless group chat. SQUL treats both as first-class citizens."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa reconciliation (Daraja).** Parents pay to your Paybill or till as usual. SQUL matches each payment to the right student by admission number and phone, updates the balance, and issues the receipt — before the parent leaves the school gate. No bursar spreadsheet, no end-of-week catch-up.",
+            "**WhatsApp and SMS parent engagement.** Send fee reminders, absence alerts, and exam notices over WhatsApp (with buttons, media, and list menus) or bulk SMS to the parents who are not on WhatsApp. One inbox, two channels.",
+            "**CBC and 8-4-4 in the same platform.** Teachers capture rubrics, strands, and continuous assessment once. Term report cards come out print-ready — parents and auditors get the same numbers you do.",
+            "**Timetables and duty rosters that publish instantly.** Form 2 East's Friday schedule and the week's duty list are visible to every teacher the moment you publish.",
+            "**Same-day attendance with parent alerts.** A learner is marked absent in the morning; the guardian gets a notification the same morning.",
+            "**Multi-campus by design.** Run your main school and a satellite campus separately — each with its own classes and fee structures — while the principal sees consolidated reports.",
+            "**Live in about two weeks.** Import your existing learner list, train the bursar, and start collecting fees before parents' reporting day."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Who it's for:** primary and secondary schools — day and boarding — that are tired of typing M-Pesa codes into Excel and tired of WhatsApp groups that no one reads. If you already use Paybill or till and already run parent groups on WhatsApp, SQUL is the shortest path to automating both."
+        },
+        {
+          "type": "paragraph",
+          "text": "**Where it's weaker:** SQUL is built for Kenyan schools, so it does not try to be a global SIS for international curricula (IB/IGCSE depth is limited) or a full ERP for university-scale institutions. If you need those, look further down this list."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Verdict: best overall for Kenyan primary and secondary schools. 9.5/10.",
+          "text": "Try SQUL free for a term — [start here](/register)."
+        }
+      ]
+    },
+    {
+      "id": "zeraki",
+      "heading": "2. Zeraki — best for academic analytics",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Zeraki is one of the most recognisable names in Kenyan edtech, strongest in exam analytics and school-fees add-ons. Its reports and performance analytics are genuinely useful for heads who live in performance data."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** strong academic reporting, wide brand trust, good presence across secondary schools.",
+            "**Watch-outs:** M-Pesa handling is not fully automatic end-to-end, and WhatsApp engagement is not a core channel — most schools still push messages via SMS or manual groups."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 8.7/10.",
+          "text": "Excellent for analytics-led schools; less complete as a single fee + comms + records platform."
+        }
+      ]
+    },
+    {
+      "id": "edadmin",
+      "heading": "3. EdAdmin — best for large established schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "EdAdmin is a long-standing, feature-deep option often chosen by larger or more established institutions."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** mature feature set, multi-campus capability, established deployments.",
+            "**Watch-outs:** onboarding and cost can be heavy for smaller schools, and M-Pesa is typically integrated rather than automatic."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 8.4/10.",
+          "text": "A solid enterprise choice; overkill for a 300-learner day school."
+        }
+      ]
+    },
+    {
+      "id": "schoolmaster",
+      "heading": "4. SchoolMaster — best for accounting-heavy schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "If your bursar thinks in ledgers and your board wants detailed financial statements, SchoolMaster leans accounting-first."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** deep financial controls, familiar to bursars with accounting training.",
+            "**Watch-outs:** weaker on parent communication and mobile-first workflows; WhatsApp and automatic M-Pesa are not headline features."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 8.0/10.",
+          "text": "A finance tool more than a whole-school platform."
+        }
+      ]
+    },
+    {
+      "id": "fedena",
+      "heading": "5. Fedena — best for groups and colleges",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Fedena is a well-known global school ERP with broad modules."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** comprehensive, supports multiple institutions in a group.",
+            "**Watch-outs:** not Kenyan-first — no native M-Pesa, no WhatsApp/SMS parent pipeline, and CBC is not part of its core."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 7.6/10.",
+          "text": "Powerful but requires local adaptation to fit a Kenyan school's term."
+        }
+      ]
+    },
+    {
+      "id": "opensis",
+      "heading": "6. OpenSIS — best free / self-hosted option",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "OpenSIS is open-source, which appeals to schools with in-house IT."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** free licence, customisable, self-hosted data control.",
+            "**Watch-outs:** you own the servers, the security, the upgrades, and the training. There is no Kenyan M-Pesa, WhatsApp, or CBC support out of the box."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 7.2/10.",
+          "text": "Great for the rare school with an IT department; expensive in staff time for everyone else."
+        }
+      ]
+    },
+    {
+      "id": "m-shule",
+      "heading": "7. M-Shule — best for low-connectivity learning",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "M-Shule focuses on reaching learners through SMS and simple channels where connectivity is thin."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** accessibility in low-bandwidth contexts.",
+            "**Watch-outs:** it is a learning and engagement tool, not a full fee-and-records management system."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 6.8/10.",
+          "text": "Complementary, not a replacement for a core management platform."
+        }
+      ]
+    },
+    {
+      "id": "edsys",
+      "heading": "8. Edsys — best for transport and tracking",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Edsys offers school transport tracking and related modules."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** the transport and vehicle-tracking niche, done well.",
+            "**Watch-outs:** narrow scope — not a full management system, and no native M-Pesa or WhatsApp parent comms."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 6.5/10.",
+          "text": "A specialist add-on rather than a school-wide platform."
+        }
+      ]
+    },
+    {
+      "id": "custom-builds",
+      "heading": "9. Custom builds and freelancer systems",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Some schools commission a bespoke system from a developer or agency."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** tailored exactly to one school's process.",
+            "**Watch-outs:** high up-front cost, a single point of failure, painful maintenance, and long delays when the original developer is unavailable. No CBC, M-Pesa, or WhatsApp support unless you budget for it separately."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 6.0/10.",
+          "text": "Rarely worth it when proven platforms already fit."
+        }
+      ]
+    },
+    {
+      "id": "excel-whatsapp",
+      "heading": "10. Excel + WhatsApp groups (the status quo)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The honest baseline most schools start from."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strengths:** familiar, feels free.",
+            "**Watch-outs:** manual M-Pesa matching, error-prone balances, parents lost in group chats, no report-card automation. The \"free\" option quietly costs the bursar hours every single day."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verdict: 5.0/10.",
+          "text": "Fine for a 30-learner school; a bottleneck the moment you grow."
+        }
+      ]
+    },
+    {
+      "id": "comparison",
+      "heading": "Comparison: the features that decide it",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Feature", "SQUL", "Zeraki", "EdAdmin", "SchoolMaster", "Fedena", "OpenSIS"],
+          "rows": [
+            ["Automatic M-Pesa reconciliation", "**Yes**", "Partial", "Partial", "Partial", "No", "No"],
+            ["WhatsApp messaging", "**Yes**", "No", "No", "No", "No", "No"],
+            ["Bulk SMS", "**Yes**", "Yes", "Yes", "No", "No", "No"],
+            ["CBC rubrics & strands", "**Yes**", "Yes", "Yes", "Partial", "No", "No"],
+            ["Print-ready term report cards", "**Yes**", "Yes", "Yes", "Partial", "Yes", "Yes"],
+            ["Timetables & duty rosters", "**Yes**", "Yes", "Yes", "Partial", "Yes", "Yes"],
+            ["Same-day attendance alerts", "**Yes**", "Partial", "Partial", "No", "No", "No"],
+            ["Multi-campus consolidation", "**Yes**", "Limited", "Yes", "Limited", "Yes", "Yes"],
+            ["Mobile-first (any phone)", "**Yes**", "Yes", "Partial", "No", "Partial", "Yes"],
+            ["Go-live time", "**~2 weeks**", "Weeks", "Months", "Months", "Months", "Months"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "how-to-choose",
+      "heading": "How to choose the right system for your school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Ask every vendor these seven questions before you sign:"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**\"Does M-Pesa reconcile automatically, or does my bursar import a statement?\"** If the answer involves the word \"statement\", it is not automatic.",
+            "**\"Can you message parents on WhatsApp, SMS, or both — from one screen?\"** You should not be choosing channels school-wide; you should be choosing per parent.",
+            "**\"Show me a CBC report card produced by your system, not a screenshot.\"** Ask for the real artefact you will hand to parents.",
+            "**\"How long until we are collecting fees in the system?\"** Anything past a few weeks is a project, not a product.",
+            "**\"What does a satellite campus look like?\"** If multi-campus means \"buy another licence and log in twice\", you will not get consolidated reports.",
+            "**\"Who trains my bursar, and who answers at 8am on reporting day?\"** Support quality shows up on your worst day, not the demo day.",
+            "**\"Where does learner data live, and who can export it?\"** Role-based access and backups are non-negotiable. See our [guide to learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bottom-line",
+      "heading": "The bottom line",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The best school management software in Kenya is the one that reconciles your M-Pesa automatically, reaches parents on the channel they actually read, and produces CBC report cards without retyping a single mark. In 2026, **SQUL** does all three in one place — and you can start free for a term."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is the best school management software in Kenya in 2026?",
+      "answer": "For most Kenyan primary and secondary schools, SQUL is the best overall because it uniquely combines automatic M-Pesa reconciliation, WhatsApp and SMS parent messaging, and CBC-ready report cards, and it goes live in about two weeks."
+    },
+    {
+      "question": "How much does school management software cost in Kenya?",
+      "answer": "Pricing ranges from free (open-source or donor-funded tools) to per-student, per-term charges and enterprise quotes. SQUL offers a free term to start, then per-term pricing. See the full pricing breakdown."
+    },
+    {
+      "question": "Does school management software integrate with M-Pesa in Kenya?",
+      "answer": "Some do — but \"integration\" often means importing a statement. Only a few platforms, SQUL among them, reconcile Paybill and till payments to the right student automatically via Safaricom's Daraja API."
+    },
+    {
+      "question": "Can the system message parents on WhatsApp?",
+      "answer": "SQUL can, using WhatsApp buttons, media, and list menus, alongside bulk SMS. Most Kenyan systems only support SMS."
+    },
+    {
+      "question": "Is it good for CBC schools?",
+      "answer": "Yes. The strongest Kenyan platforms — SQUL among them — handle CBC rubrics and strands as well as 8-4-4 exam records, and produce print-ready term report cards."
+    },
+    {
+      "question": "Can we run multiple campuses on one platform?",
+      "answer": "Yes, with the right system. SQUL runs sister campuses separately with consolidated reports for the principal."
+    },
+    {
+      "question": "Do teachers need training?",
+      "answer": "Minimal. The best systems are browser-based and work on any phone, so teachers can mark attendance and view class lists after a short walkthrough."
+    }
+  ],
+  "cta": {
+    "heading": "Ready to stop typing M-Pesa codes into Excel?",
+    "body": "Start your free term with SQUL and have every Paybill and till payment reconcile to the right student automatically.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "School management software with WhatsApp integration in Kenya", "href": "/blog/whatsapp-integration-school-management-system" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "School management system pricing in Kenya", "href": "/blog/school-management-system-price-in-kenya" },
+    { "title": "CBC report card software in Kenya", "href": "/blog/cbc-report-card-software-kenya" },
+    { "title": "Free vs paid school management software in Kenya", "href": "/blog/free-vs-paid-school-management-software-kenya" },
+    { "title": "Automating school fee reminders over SMS and WhatsApp", "href": "/blog/school-fee-reminder-sms-whatsapp-kenya" },
+    { "title": "School management software for primary schools in Kenya", "href": "/blog/school-management-software-primary-schools-kenya" },
+    { "title": "School management software for boarding schools in Kenya", "href": "/blog/school-management-software-boarding-schools-kenya" },
+    { "title": "School management software for secondary schools in Kenya", "href": "/blog/school-management-software-secondary-schools-kenya" },
+    { "title": "School management software in Nairobi", "href": "/blog/school-management-software-nairobi" },
+    { "title": "How to reduce school fee arrears in Kenya", "href": "/blog/how-to-reduce-school-fee-arrears-kenya" },
+    { "title": "SQUL vs Zeraki vs EdAdmin: which is best?", "href": "/blog/squl-vs-zeraki-vs-edadmin" },
+    { "title": "SQUL vs Zeraki: why SQUL wins", "href": "/blog/squl-vs-zeraki" },
+    { "title": "Zeraki alternatives in Kenya", "href": "/blog/zeraki-alternatives-kenya" },
+    { "title": "Zeraki pricing in Kenya", "href": "/blog/zeraki-pricing-kenya" },
+    { "title": "Zeraki review: is it right for your school?", "href": "/blog/zeraki-review" },
+    { "title": "Managing multi-campus schools with one system", "href": "/blog/multi-campus-school-management-system" },
+    { "title": "Paper registers vs digital school records", "href": "/blog/paper-registers-vs-digital-school-records" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" },
+    { "title": "Attendance tracking with parent SMS alerts", "href": "/blog/student-attendance-tracking-parent-sms" },
+    { "title": "The bursar's guide to reconciling school fees and M-Pesa", "href": "/blog/bursar-guide-reconcile-school-fees-mpesa" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" },
+    { "title": "Learner data protection in Kenya: what school software must do", "href": "/blog/learner-data-protection-kenya-school-software" }
+  ]
+}

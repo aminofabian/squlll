@@ -1,0 +1,199 @@
+{
+  "slug": "zeraki-pricing-kenya",
+  "path": "/blog/zeraki-pricing-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Zeraki Pricing in Kenya: What Schools Actually Pay (2026)",
+  "h1": "Zeraki Pricing in Kenya: What Schools Actually Pay (2026)",
+  "description": "Zeraki pricing in Kenya explained — how school software is priced per student, per term or by quote, the hidden costs to watch, and how to compare fairly.",
+  "primaryKeyword": "Zeraki pricing",
+  "secondaryKeywords": [
+    "Zeraki price in Kenya",
+    "Zeraki cost per student",
+    "school management system pricing Kenya",
+    "Zeraki subscription fee"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Pricing",
+  "intro": [
+    "School software pricing in Kenya is deliberately hard to compare: some vendors charge per student, some per school, and others only quote after a demo. This guide explains how **Zeraki pricing** fits the market, what the numbers usually look like as *models* (not vendor figures), and the hidden costs that make a cheap quote expensive. For the shape of the whole market, see [school management system pricing in Kenya](/blog/school-management-system-price-in-kenya).",
+    "We will be upfront: we do not publish specific Zeraki figures, because vendors change them and we will not guess. Instead you get the models, the questions, and a fair way to compare any two quotes — including ours."
+  ],
+  "quickAnswer": "Editor's note: competitor pricing changes and is not published consistently. The models described here are generic and illustrative; confirm current Zeraki pricing directly with the vendor. SQUL's own pricing is a free term, then per-term. Last reviewed September 2026.",
+  "sections": [
+    {
+      "id": "models",
+      "heading": "How school software is priced in Kenya",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Almost every Kenyan school-software quote is one of five shapes. Knowing which one you are being offered matters more than the headline number."
+        },
+        {
+          "type": "table",
+          "headers": ["Model", "How it works", "Typical fit", "Watch out for"],
+          "rows": [
+            ["Per-student, per-term", "A fee for each learner each term", "Schools that want cost tied to size", "Counts drift; you pay more as you grow"],
+            ["Flat per-school, per-term", "One fee per school per term", "Small to mid schools", "Feature tiers hide limits"],
+            ["Enterprise quote", "Custom pricing after a demo", "Large or multi-campus groups", "Opaque and hard to compare"],
+            ["Free / open source", "No licence; you self-host", "Schools with in-house IT", "Staff time, security and upgrades are on you"],
+            ["Free term, then paid", "Start free, pay per term later", "Schools testing value", "Check the price after the free period"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-zeraki-sits",
+      "heading": "Where Zeraki sits in that market",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Zeraki is an established, well-known platform, and like most established vendors it prices through one of the models above — commonly some form of per-student or per-term arrangement, or a tailored quote after a demo. Because it is not published consistently, the honest answer is: **ask them directly, and ask in writing.** Use the questions below so you compare like with like."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not trust forum numbers",
+          "text": "Prices posted on social media or old blog posts are almost always out of date or for a different scope. Get a written quote with the learner count and modules listed."
+        }
+      ]
+    },
+    {
+      "id": "hidden-costs",
+      "heading": "The hidden costs nobody puts in the quote",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The licence is rarely the whole cost of a school system. Ask about each of these before you sign:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**SMS and WhatsApp message costs** — who pays per message, and at what rate?",
+            "**M-Pesa / Paybill integration** — is automatic reconciliation included, or a paid add-on?",
+            "**Onboarding and training** — is setup free, and how much staff time will it take?",
+            "**Data migration** — is importing your existing learner register included?",
+            "**Support** — is there a fee for phone support, or a response-time guarantee?",
+            "**Per-module upsells** — are timetables, report cards, or analytics in the base plan?"
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "The true cost is licence plus messages plus setup — the licence alone is misleading.",
+          "headers": ["Cost line", "Cheap-looking quote", "All-in quote"],
+          "rows": [
+            ["Licence", "Low", "Clear"],
+            ["SMS / WhatsApp", "\"Extra\"", "**Included or transparent**"],
+            ["Automatic M-Pesa", "Add-on", "**Included**"],
+            ["Onboarding", "\"Consulting\"", "**Included**"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compare",
+      "heading": "How to compare two quotes fairly",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Normalise to per-learner, per-term",
+              "text": "Turn every quote into the same unit: total annual cost divided by learners, so a per-school and a per-student quote can be compared."
+            },
+            {
+              "title": "Add the message costs",
+              "text": "Estimate your SMS and WhatsApp volume for a term and add it. This is where \"cheap\" quotes turn expensive."
+            },
+            {
+              "title": "Price the features you actually need",
+              "text": "If automatic M-Pesa or report cards are add-ons elsewhere, include them before comparing."
+            },
+            {
+              "title": "Ask about the exit",
+              "text": "What happens at year-end? Can you export your data? Is there a lock-in?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits on price",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is deliberately simple: **a free term to start, then per-term pricing.** Automatic M-Pesa reconciliation, WhatsApp and SMS messaging, and CBC report cards are core — not paid add-ons — so the quote you see is closer to the cost you pay."
+        },
+        {
+          "type": "mock",
+          "variant": "whatsapp",
+          "caption": "Messages you would otherwise pay a separate SMS service for are part of the platform."
+        },
+        {
+          "type": "paragraph",
+          "text": "For a like-for-like feature view, see [SQUL vs Zeraki](/blog/squl-vs-zeraki) and compare the models in [free vs paid school software](/blog/free-vs-paid-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "verdict",
+      "heading": "The verdict",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "There is no single \u201cZeraki price\u201d you can trust from an article — and that is the point. Get written quotes, normalise them to per-learner per-term, add message and integration costs, and price the features you actually need. Do that, and the cheapest option is rarely the one with the lowest headline number."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How much does Zeraki cost in Kenya?",
+      "answer": "Zeraki's pricing is not published consistently and changes over time. It is typically some form of per-student or per-term arrangement, or a quote after a demo. Ask the vendor for a written quote covering your learner count and modules."
+    },
+    {
+      "question": "Is Zeraki priced per student or per school?",
+      "answer": "That varies by package and can change, so confirm directly. Many Kenyan school systems use per-student-per-term pricing; some offer a flat or quoted arrangement."
+    },
+    {
+      "question": "What is the cheapest school management software in Kenya?",
+      "answer": "Open-source options are free to license but cost in IT staff and training. SQUL offers a free term then per-term pricing. Compare the total cost, not just the licence."
+    },
+    {
+      "question": "Are SMS messages included?",
+      "answer": "Often not — SMS is frequently a separate cost. Ask who pays per message and at what rate, and add it to your comparison. SQUL includes WhatsApp and SMS messaging in the platform."
+    },
+    {
+      "question": "Does automatic M-Pesa cost extra?",
+      "answer": "At some vendors it is an add-on. At SQUL, automatic M-Pesa reconciliation is core. Always confirm before comparing quotes."
+    },
+    {
+      "question": "How do I compare two quotes properly?",
+      "answer": "Convert both to total annual cost per learner, add SMS/WhatsApp volume, include any add-ons you need, and check exit terms and data export."
+    }
+  ],
+  "cta": {
+    "heading": "See our pricing by starting free",
+    "body": "SQUL is free for your first term, then per-term — with automatic M-Pesa, WhatsApp and SMS, and CBC report cards included.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system pricing in Kenya", "href": "/blog/school-management-system-price-in-kenya" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "SQUL vs Zeraki: why SQUL wins", "href": "/blog/squl-vs-zeraki" },
+    { "title": "Zeraki alternatives in Kenya", "href": "/blog/zeraki-alternatives-kenya" },
+    { "title": "Free vs paid school management software in Kenya", "href": "/blog/free-vs-paid-school-management-software-kenya" },
+    { "title": "How M-Pesa integration works in school software", "href": "/blog/mpesa-integration-school-management-software-kenya" }
+  ]
+}

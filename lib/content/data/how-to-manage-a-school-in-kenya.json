@@ -1,0 +1,392 @@
+{
+  "slug": "how-to-manage-a-school-in-kenya",
+  "path": "/blog/how-to-manage-a-school-in-kenya",
+  "kind": "pillar",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "How to Manage a School in Kenya: The Complete Guide (2026)",
+  "h1": "How to Manage a School in Kenya: The Complete Guide (2026)",
+  "description": "How to manage a school in Kenya — leadership, fees and budgets, staff, CBC academics, learner welfare, compliance and operations, in one guide.",
+  "primaryKeyword": "how to manage a school in Kenya",
+  "secondaryKeywords": [
+    "school management in Kenya",
+    "school administration Kenya",
+    "running a school in Kenya",
+    "school leadership Kenya 2026"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Running a school",
+  "image": "/screenshots/ai-generated-9041893_1920.jpg",
+  "intro": [
+    "Managing a school in Kenya is really eight jobs wearing one title. A head teacher is part chief executive, part bursar, part HR manager, part curriculum lead, part compliance officer — often with a Board of Management and a county or Ministry of Education office to answer to.",
+    "This guide maps the whole terrain: leadership and governance, money, people, curriculum, learners, parents, compliance, and daily operations. It is written for heads, deputies, directors and bursars at Kenyan primary and secondary schools, whether day or boarding, public or private.",
+    "Read it straight through for the big picture, or jump to the section that is keeping you up at night. Each section links to a deeper guide in this cluster."
+  ],
+  "sections": [
+    {
+      "id": "what-it-involves",
+      "heading": "What managing a school in Kenya actually involves",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Strip away the day-to-day noise and school management comes down to eight recurring responsibilities. Get these broadly right and the school runs; neglect any one and it will find you."
+        },
+        {
+          "type": "table",
+          "headers": ["#", "Responsibility", "The question it answers"],
+          "rows": [
+            ["1", "**Leadership & governance**", "Who decides what, and how are decisions accounted for?"],
+            ["2", "**Finance**", "Do the fees we charge cover what the school must spend?"],
+            ["3", "**People**", "Are teachers and staff hired, supported and managed well?"],
+            ["4", "**Academics**", "Is the curriculum taught and assessed properly (CBC and 8-4-4)?"],
+            ["5", "**Learners**", "Are admissions, records and welfare safe and complete?"],
+            ["6", "**Parents & community**", "Do parents trust the school and pay on time?"],
+            ["7", "**Compliance**", "Are we registered, safe, and meeting Ministry requirements?"],
+            ["8", "**Operations**", "Does the daily and termly routine actually work?"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "One system, eight jobs",
+          "text": "Most of these responsibilities produce the same thing: a record someone will ask for later — a fee balance, a mark, a roster, a payment. The schools that run smoothly are the ones where those records live in one place."
+        }
+      ]
+    },
+    {
+      "id": "leadership",
+      "heading": "1. Leadership and governance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A Kenyan school is governed by a Board of Management (public) or a board of directors (private), with the head teacher or principal as the chief executive. Clear roles are what prevent the two failure modes: a board that interferes in daily operations, or a head who never reports anything."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**The board sets direction and holds the head accountable** — budgets, policy, major spending, and results — but does not run the timetable.",
+            "**The head runs the school** — staff, learners, curriculum delivery, and the day-to-day use of funds within the approved budget.",
+            "**Departments own their subjects** — heads of department lead teaching quality and assessment in their area.",
+            "**The bursar owns the money trail** — fee structures, collection, reconciliation, and reports the board can audit."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For the people-and-governance side in detail, see [school leadership and governance in Kenya](/blog/school-leadership-and-governance-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "heading": "2. Money: fees, budgets and arrears",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Finance is where most stress lives, because everything else depends on it. The core discipline is simple: charge a fee that covers your real costs, collect it efficiently, and know at any moment who owes what."
+        },
+        {
+          "type": "table",
+          "caption": "The finance cycle of a Kenyan school term.",
+          "headers": ["Stage", "What good looks like"],
+          "rows": [
+            ["Budgeting", "A term budget built from last year's actuals, not guesswork"],
+            ["Fee structure", "Tuition, boarding and activities broken down and communicated early"],
+            ["Collection", "Payments matched to the right learner without manual chasing"],
+            ["Arrears", "A live list of who owes what, by class and stream"],
+            ["Reporting", "Bursar summaries the board can read and audit"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Go deeper in [school finance and budgeting in Kenya](/blog/school-finance-and-budgeting-kenya) and [how to set school fees](/blog/school-fee-structure-kenya). Where fees are paid by M-Pesa — as most are — automatic reconciliation is the difference between a same-day balance and a fortnight of manual matching; see [M-Pesa integration](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "people",
+      "heading": "3. People: teachers and staff",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Your staff are the school's engine, and managing them is more than payroll. Recruitment, contracts, deployment, duty rosters, professional development and fair performance conversations all sit with leadership."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Recruit and deploy deliberately** — match teachers to subjects and streams before the term starts, not after.",
+            "**Make duties visible** — a published duty roster (including boarding and overnight duties) prevents gaps and arguments.",
+            "**Support performance** — lesson observation and feedback beat end-of-year surprises.",
+            "**Keep records** — contracts, TSC details where applicable, and service history in one place."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "See [managing teachers and staff in a Kenyan school](/blog/school-staff-management-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "academics",
+      "heading": "4. Curriculum and academics",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Kenyan schools now run on two curricula in parallel: the Competency-Based Curriculum (CBC) in lower grades and 8-4-4 in the upper secondary years (mid-transition). Managing academics means making sure teaching happens, assessment is captured, and reports reach parents."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Plan the coverage** — subjects, strands and schemes of work for the term.",
+            "**Teach and assess** — CBC rubrics and continuous assessment, or exam marks, recorded once.",
+            "**Analyse** — identify learners who need intervention before exams, not after.",
+            "**Report** — print-ready term report cards parents recognise."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "See [implementing CBC in your school](/blog/cbc-implementation-school-kenya) and [CBC report card software](/blog/cbc-report-card-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "learners",
+      "heading": "5. Learners: admissions, records and welfare",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Every learner should have one profile — admission number, class, guardian contacts, health notes, and discipline history — instead of a file in the office and a separate book elsewhere. At admission, capture guardian phone numbers properly; they power everything from fee reminders to absence alerts."
+        },
+        {
+          "type": "paragraph",
+          "text": "Welfare matters as much as records: a school that notices an absence the same morning, and tells the parent, is a school parents trust. See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software) for how to keep those records safe."
+        }
+      ]
+    },
+    {
+      "id": "parents",
+      "heading": "6. Parents and the community",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Parents are not an audience to be managed; they are partners and, in many schools, the source of the fees. Communicating clearly and early — on the channel they actually read — reduces arrears, disputes and anxiety."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Tell them the fee structure early** and explain what it covers.",
+            "**Confirm payments immediately** so nobody has to ask \"did you receive my money?\"",
+            "**Share results and notices** on time, over WhatsApp and SMS.",
+            "**Give them a channel that is not a chaotic group chat.**"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "See [parent and community engagement for Kenyan schools](/blog/parent-engagement-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "compliance",
+      "heading": "7. Compliance, registration and safety",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Compliance is unglamorous until it is urgent. A school must be registered and licensed, meet Ministry of Education requirements, maintain health and safety standards, and — increasingly — handle learner data lawfully under the Data Protection Act."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Keep the paperwork findable",
+          "text": "Registration certificates, inspection reports, and safety records should be filed where you can produce them on demand. Missing paperwork turns a routine inspection into a crisis."
+        },
+        {
+          "type": "paragraph",
+          "text": "See [school registration and compliance in Kenya](/blog/school-compliance-registration-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "heading": "8. Daily operations: calendar, timetables and attendance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The term has a rhythm: opening, teaching weeks, exams, closing. Operations is the discipline of making that rhythm predictable — a published timetable, rosters for staff, and attendance recorded every day."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Publish the term calendar",
+              "text": "Opening and closing dates, exams, and events, shared with parents and staff in advance."
+            },
+            {
+              "title": "Publish timetables and rosters",
+              "text": "Class timetables and staff duty lists, visible to everyone the moment they change."
+            },
+            {
+              "title": "Record attendance daily",
+              "text": "Class and dorm roll call, with same-day parent alerts for absences."
+            },
+            {
+              "title": "Review weekly",
+              "text": "What slipped this week, and what the next week must fix."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "See [school timetable software in Kenya](/blog/school-timetable-software-kenya) and [attendance tracking with parent SMS](/blog/student-attendance-tracking-parent-sms)."
+        }
+      ]
+    },
+    {
+      "id": "digital",
+      "heading": "Going digital: what to systemise first",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "You do not digitise everything at once. Sequence it by pain: fees first (the most time and money), then parent communication, then records and academics. A good school management system ties them together so records agree."
+        },
+        {
+          "type": "table",
+          "headers": ["Priority", "Systemise this", "Why first"],
+          "rows": [
+            ["1", "**Fee collection & M-Pesa**", "Biggest time sink and the school's revenue"],
+            ["2", "**Parent messaging (WhatsApp + SMS)**", "Reduces arrears and disputes"],
+            ["3", "**Learner records & attendance**", "One source of truth per learner"],
+            ["4", "**CBC marks & report cards**", "Kills retyping and late reports"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For the software side, start with the [best school management software in Kenya](/blog/best-school-management-software-kenya) and the [buyer's guide](/blog/how-to-choose-school-management-system-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "plan-90",
+      "heading": "A 90-day plan for a new head teacher",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Days 1–30: See and listen",
+              "text": "Meet staff, review the last audit and fee arrears, walk the school, and map where records live."
+            },
+            {
+              "title": "Days 31–60: Stabilise the money",
+              "text": "Rebuild the fee structure and budget, and put fee collection and reconciliation on a reliable footing."
+            },
+            {
+              "title": "Days 61–90: Fix communication and routine",
+              "text": "Set weekly rhythms, publish timetables and rosters, and get fees and parent updates working before the next term."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes to avoid",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Fees set by habit, not by cost.** A fee structure that ignores real term costs guarantees a shortfall.",
+            "**Records in three places.** A file, a spreadsheet and a WhatsApp group will always disagree.",
+            "**Manual M-Pesa matching.** The bursar becomes a data-entry clerk.",
+            "**SMS-only parent contact.** You miss the parents who live in WhatsApp.",
+            "**No live arrears view.** You only learn who owes when closing day arrives.",
+            "**Compliance at the last minute.** Paperwork should be current, not scrambled for."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bottom-line",
+      "heading": "The bottom line",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Managing a Kenyan school well is less about brilliance than about **systems and rhythm**: a fee structure that reflects reality, records that live in one place, parents who hear from you first, and a daily routine that runs without heroics. Get the money and the communication right, and the rest of the job gets dramatically easier."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What are the main responsibilities of a school head in Kenya?",
+      "answer": "A head teacher manages leadership and governance, finance and fees, staff, curriculum delivery, learner records and welfare, parent communication, compliance, and daily operations — usually with a Board of Management to answer to."
+    },
+    {
+      "question": "How do I set school fees in Kenya?",
+      "answer": "Build the fee structure from your real term costs — staffing, boarding, utilities, facilities and activities — not from what neighbouring schools charge. See our fee-structure guide for a step-by-step method."
+    },
+    {
+      "question": "How can a school reduce fee arrears?",
+      "answer": "Clear fee structures, automatic M-Pesa reconciliation, and staged reminders over WhatsApp and SMS reduce arrears more than chasing parents manually. A live arrears view by class lets you act early."
+    },
+    {
+      "question": "Is CBC or 8-4-4 currently in use in Kenya?",
+      "answer": "Kenyan schools are mid-transition: CBC covers the lower grades and 8-4-4 the upper secondary years. Good management handles both, capturing CBC rubrics and exam marks and producing printable report cards."
+    },
+    {
+      "question": "What software does a Kenyan school actually need?",
+      "answer": "At minimum: fee collection with automatic M-Pesa reconciliation, parent messaging on WhatsApp and SMS, learner records and attendance, and CBC/8-4-4 report cards. Sequence by pain — fees first."
+    },
+    {
+      "question": "How do I engage parents effectively?",
+      "answer": "Tell them the fee structure early, confirm payments immediately, share results on time over WhatsApp and SMS, and give them a channel that is not a chaotic group chat."
+    },
+    {
+      "question": "What compliance does a Kenyan school need?",
+      "answer": "Registration and licensing, Ministry of Education requirements, health and safety standards, and lawful handling of learner data under the Data Protection Act. Keep the paperwork readily available."
+    },
+    {
+      "question": "How long does it take to turn around a struggling school?",
+      "answer": "The money and communication basics can be stabilised within a term; deeper change takes longer. A focused 90-day plan — see, stabilise the money, fix communication — is a good start."
+    }
+  ],
+  "cta": {
+    "heading": "Run the school, not the spreadsheets",
+    "body": "SQUL gives Kenyan schools automatic M-Pesa reconciliation, WhatsApp and SMS parent messaging, learner records, and CBC report cards in one place — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "How to set school fees in Kenya", "href": "/blog/school-fee-structure-kenya" },
+    { "title": "Managing teachers and staff in a Kenyan school", "href": "/blog/school-staff-management-kenya" },
+    { "title": "Implementing CBC in your school", "href": "/blog/cbc-implementation-school-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" },
+    { "title": "School registration and compliance in Kenya", "href": "/blog/school-compliance-registration-kenya" },
+    { "title": "School leadership and governance in Kenya", "href": "/blog/school-leadership-and-governance-kenya" },
+    { "title": "School admissions and learner records", "href": "/blog/school-admissions-learner-records-kenya" },
+    { "title": "Student discipline and welfare", "href": "/blog/student-discipline-and-welfare-kenya" },
+    { "title": "Boarding and hostel management", "href": "/blog/boarding-school-management-kenya" },
+    { "title": "Health, safety and security in schools", "href": "/blog/school-health-safety-security-kenya" },
+    { "title": "School facilities and procurement", "href": "/blog/school-facilities-procurement-kenya" },
+    { "title": "The school calendar and term planning", "href": "/blog/school-calendar-term-planning-kenya" },
+    { "title": "Digital transformation for schools", "href": "/blog/digital-transformation-schools-kenya" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "slug": "school-leadership-and-governance-kenya",
+  "path": "/blog/school-leadership-and-governance-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "School Leadership and Governance in Kenya: A 2026 Guide",
+  "h1": "School Leadership and Governance in Kenya: A 2026 Guide",
+  "description": "School leadership and governance in Kenya — roles of the board, head, deputies and bursar, decision-making, reporting, accountability and managing change.",
+  "primaryKeyword": "school leadership in Kenya",
+  "secondaryKeywords": [
+    "school governance Kenya",
+    "board of management Kenya school",
+    "head teacher responsibilities Kenya",
+    "school decision making"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Leadership",
+  "intro": [
+    "Most school problems are, at root, governance problems: unclear roles, decisions nobody owns, and reporting that arrives too late. Fix the governance and the operational fires put themselves out. This guide covers **school leadership and governance in Kenya** — who decides what, how to report, and how to keep accountability alive. It is part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "It applies to public schools with a Board of Management and to private schools with a board of directors."
+  ],
+  "sections": [
+    {
+      "id": "roles",
+      "heading": "Who does what",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Governance fails in two directions: a board that micromanages daily operations, or a head who reports nothing and owns everything. Clear roles prevent both."
+        },
+        {
+          "type": "table",
+          "headers": ["Role", "Owns", "Does not"],
+          "rows": [
+            ["Board / directors", "Direction, policy, budget approval, holding the head accountable", "Run the timetable or hire day-to-day staff"],
+            ["Head teacher / principal", "Daily running, staff, learners, curriculum delivery, spending within budget", "Act outside board policy"],
+            ["Deputy / DOS", "Academic and discipline operations", "Set fees or policy"],
+            ["HODs", "Subject quality, schemes, assessment", "School-wide decisions"],
+            ["Bursar", "Fee structures, collection, reconciliation, reports", "Set policy"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "decisions",
+      "heading": "Making decisions stick",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Name the decision owner** — every recurring decision needs exactly one.",
+            "**Match authority to responsibility** — if the head is accountable, give them enough authority.",
+            "**Decide at the right level** — classroom vs department vs whole school.",
+            "**Write decisions down** — a short minute prevents later disagreement."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "heading": "Meetings and reporting rhythm",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Accountability is a rhythm, not an annual event. A predictable cycle of meetings and reports builds board confidence and catches problems early."
+        },
+        {
+          "type": "table",
+          "headers": ["Cadence", "Meeting", "Focus"],
+          "rows": [
+            ["Weekly", "Leadership team", "Operations, attendance, discipline, cover"],
+            ["Monthly", "Finance & procurement", "Spend vs budget, arrears, purchases"],
+            ["Termly", "Board / directors", "Results, finances, staffing, risks"],
+            ["Annually", "Full review", "Budget, fee structure, results, strategic plan"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The termly board pack should be short and consistent: enrolment, results, finances (income vs expectation, spend vs budget), arrears, staffing, and risks. See [school finance and budgeting](/blog/school-finance-and-budgeting-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "accountability",
+      "heading": "Building accountability that people respect",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Be consistent** — the same rule for the same situation, every time.",
+            "**Be transparent about money** — parents and staff accept what they can see.",
+            "**Protect staff dignity** — correct privately, praise publicly.",
+            "**Follow through** — an unkept promise costs more than the original issue."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "change",
+      "heading": "Leading change",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Explain the why",
+              "text": "People resist change they do not understand — especially staff and parents."
+            },
+            {
+              "title": "Start where it hurts most",
+              "text": "Fees and communication usually deliver the earliest, most visible wins."
+            },
+            {
+              "title": "Show the result quickly",
+              "text": "A same-day fee receipt changes minds faster than a policy document."
+            },
+            {
+              "title": "Make it routine",
+              "text": "Change sticks when it becomes the default, not an initiative."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "team",
+      "heading": "Building the leadership team",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A head teacher cannot run everything alone. Delegate to a deputy, HODs and the bursar, and give each a clear mandate and the tools to do it. See [managing teachers and staff](/blog/school-staff-management-kenya) for the people side."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common governance mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Board in the weeds** — directors arguing about timetables.",
+            "**Head owns everything** — no delegation, nothing reported.",
+            "**No meeting rhythm** — decisions made in corridors.",
+            "**Reporting too late** — the board learns of problems after they bite.",
+            "**Inconsistent decisions** — trust erodes quietly."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is the role of a Board of Management in a Kenyan school?",
+      "answer": "The board sets direction, approves policy and the budget, and holds the head teacher accountable. It does not run daily operations such as timetabling or routine staffing."
+    },
+    {
+      "question": "What is the head teacher responsible for?",
+      "answer": "The head runs the school day to day: staff, learners, curriculum delivery, and spending within the approved budget, while reporting to the board."
+    },
+    {
+      "question": "How often should a school board meet?",
+      "answer": "A common rhythm is monthly on finance and procurement, plus a termly board meeting on results, finances, staffing and risks, with an annual review of budget and strategy."
+    },
+    {
+      "question": "How do we improve accountability in a school?",
+      "answer": "Name a decision owner for every recurring decision, match authority to responsibility, keep a meeting and reporting rhythm, and be consistent and transparent — especially about money."
+    },
+    {
+      "question": "How should leadership handle change?",
+      "answer": "Explain the why, start where it hurts most (usually fees and communication), show an early visible win, then make the new way the default."
+    }
+  ],
+  "cta": {
+    "heading": "Give leadership the record it needs",
+    "body": "SQUL gives heads and boards one source of truth for fees, learners and results — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "Managing teachers and staff in a Kenyan school", "href": "/blog/school-staff-management-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "School registration and compliance in Kenya", "href": "/blog/school-compliance-registration-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" }
+  ]
+}

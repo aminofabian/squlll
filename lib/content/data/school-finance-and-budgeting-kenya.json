@@ -1,0 +1,225 @@
+{
+  "slug": "school-finance-and-budgeting-kenya",
+  "path": "/blog/school-finance-and-budgeting-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "School Finance and Budgeting in Kenya: Practical Guide (2026)",
+  "h1": "School Finance and Budgeting in Kenya: A Practical Guide (2026)",
+  "description": "How to budget and manage school finances in Kenya — building a term budget, controlling costs, collecting fees, and reporting cleanly to the board.",
+  "primaryKeyword": "school finance and budgeting Kenya",
+  "secondaryKeywords": [
+    "school budgeting Kenya",
+    "school financial management Kenya",
+    "school term budget",
+    "school fees collection Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Finance",
+  "intro": [
+    "Every other part of running a school depends on this one: the money. This guide covers **school finance and budgeting in Kenya** — how to build a term budget that reflects reality, control the costs that quietly grow, collect fees without a fortnight of manual matching, and report to the board in a way that survives an audit. It is part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "None of it requires accounting software or a finance degree. It requires a repeatable routine and records that agree with each other."
+  ],
+  "sections": [
+    {
+      "id": "why-different",
+      "heading": "Why school finance is different",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A school is not a business with one product and one price. Income arrives in bursts at the start of term, costs run for the whole term, and much of the money is held in trust for parents' children. That combination demands discipline:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Income is lumpy.** Most fees land in the first two weeks of term; costs continue regardless.",
+            "**You spend other people's money.** Fees are entrusted for a purpose, so traceability matters.",
+            "**Boarding multiplies cost lines.** Boarding schools carry food, utilities and staff costs that day schools do not.",
+            "**Reporting is expected.** Boards and auditors want a bursar summary, not a shoebox of receipts."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "the-budget",
+      "heading": "Building a term budget that reflects reality",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The most common mistake is budgeting from last year's numbers without checking whether they were right. Build the budget from actual costs, line by line."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Start with learners, not money",
+              "text": "Estimate enrolment per class and stream, and note how many are boarders versus day scholars — that drives both income and cost."
+            },
+            {
+              "title": "List every cost line",
+              "text": "Staff, boarding (food, utilities), teaching materials, facilities and maintenance, transport, activities, and administration."
+            },
+            {
+              "title": "Cover the fixed costs first",
+              "text": "Salaries, utilities and boarding food are non-negotiable. Budget these before anything discretionary."
+            },
+            {
+              "title": "Add a contingency",
+              "text": "Repairs, price rises and emergencies happen every term. A buffer prevents a mid-term scramble."
+            },
+            {
+              "title": "Set the fee structure to match",
+              "text": "Only now decide what to charge. See [how to set school fees](/blog/school-fee-structure-kenya)."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "A simple term budget skeleton.",
+          "headers": ["Category", "Typical lines"],
+          "rows": [
+            ["Staff", "Salaries, allowances, casuals, TSC top-ups"],
+            ["Boarding", "Food, cooking, utilities, matron"],
+            ["Learning", "Textbooks, stationery, exams"],
+            ["Facilities", "Maintenance, repairs, water, security"],
+            ["Transport", "School bus, fuel, maintenance"],
+            ["Admin", "Software, communication, licences"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "income",
+      "heading": "Where the money comes from",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Fees** — the backbone for most schools, split into tuition, boarding and activities.",
+            "**Grants and subsidies** — government or county support where applicable; budget only what is confirmed.",
+            "**Fundraising and sponsors** — valuable but unpredictable; treat as windfall, not foundation.",
+            "**Activities and levies** — trips, clubs and exams, charged transparently to avoid disputes."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not budget on wishful enrolment",
+          "text": "Over-estimating enrolment is the fastest way to a mid-term shortfall. Budget on conservative numbers."
+        }
+      ]
+    },
+    {
+      "id": "collection",
+      "heading": "Collecting fees without the manual grind",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Collection is where finance meets operations. Most Kenyan parents pay by M-Pesa, so the question is whether each payment is matched to the right learner automatically or by hand. Manual matching is slow, error-prone, and turns your bursar into a data-entry clerk."
+        },
+        {
+          "type": "table",
+          "headers": ["Approach", "Bursar's workload", "Balance accuracy"],
+          "rows": [
+            ["Excel + statement import", "Hours, every week", "Often a day behind"],
+            ["Automatic reconciliation", "**Review exceptions only**", "**Same day**"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Automatic reconciliation via Safaricom Daraja is what lets a school issue receipts the same day and chase only real defaulters. See [how M-Pesa integration works](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "control",
+      "heading": "Controlling spend during the term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Compare actuals to budget monthly** — a single page beats a long report.",
+            "**Keep procurement disciplined** — quotes, approvals and delivery notes for anything material.",
+            "**Separate the petty from the planned** — small recurring leaks (fuel, stationery, food wastage) add up.",
+            "**Reconcile the bank and M-Pesa weekly** — surprises compound when left for a month."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "heading": "Reporting and audits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The board needs to see the school's financial position without reading a hundred pages. Give them a consistent summary every term: income versus expectation, spend versus budget, arrears by class, and any risks. Consistency is what makes an audit straightforward — the numbers trail is already there."
+        },
+        {
+          "type": "paragraph",
+          "text": "This is also where learner data protection quietly matters: fee records are personal data. See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software)."
+        }
+      ]
+    },
+    {
+      "id": "pitfalls",
+      "heading": "Common financial mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Fees set by comparison** — copying a neighbour's fees instead of costing your own school.",
+            "**No contingency** — one broken pump becomes a crisis.",
+            "**Manual reconciliation** — the bursar's week disappears.",
+            "**No live arrears view** — you discover shortfalls too late to act.",
+            "**Irregular reporting** — the board loses confidence, and audits get harder."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How should a Kenyan school budget per term?",
+      "answer": "Estimate enrolment first, list every cost line (staff, boarding, learning, facilities, transport, admin), cover fixed costs, add a contingency, and then set the fee structure to match. Budget on conservative enrolment."
+    },
+    {
+      "question": "What are the biggest costs in a Kenyan school?",
+      "answer": "Staff salaries dominate, followed by boarding costs (food and utilities) in boarding schools, then learning materials, facilities and maintenance."
+    },
+    {
+      "question": "How can a school improve fee collection?",
+      "answer": "Use automatic M-Pesa reconciliation so payments match to the right learner the same day, confirm receipts immediately, and remind only genuine defaulters over WhatsApp and SMS."
+    },
+    {
+      "question": "Does a school need accounting software?",
+      "answer": "Not necessarily, but a school management system that reconciles fees automatically and produces bursar summaries saves enormous time and reduces errors. Keep your formal accounts in whatever your auditor expects."
+    },
+    {
+      "question": "How often should a school report finances to the board?",
+      "answer": "At least once per term, and whenever a material risk arises. A consistent one-page summary of income vs expectation, spend vs budget, and arrears works well."
+    }
+  ],
+  "cta": {
+    "heading": "Stop reconciling fees by hand",
+    "body": "SQUL reconciles M-Pesa automatically and gives your bursar live arrears and board-ready summaries — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "How to set school fees in Kenya", "href": "/blog/school-fee-structure-kenya" },
+    { "title": "How to reduce school fee arrears", "href": "/blog/how-to-reduce-school-fee-arrears-kenya" },
+    { "title": "The bursar's guide to reconciling fees and M-Pesa", "href": "/blog/bursar-guide-reconcile-school-fees-mpesa" },
+    { "title": "Managing teachers and staff in a Kenyan school", "href": "/blog/school-staff-management-kenya" }
+  ]
+}

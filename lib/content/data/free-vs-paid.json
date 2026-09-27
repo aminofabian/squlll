@@ -1,0 +1,371 @@
+{
+  "slug": "free-vs-paid-school-management-software-kenya",
+  "path": "/blog/free-vs-paid-school-management-software-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Free School Management Software Kenya: Free vs Paid (2026)",
+  "h1": "Free School Management Software Kenya: Free vs Paid (2026)",
+  "description": "Free school management software in Kenya looks cheap until you count bursar hours and M-Pesa gaps. Compare free vs paid, then test SQUL free.",
+  "primaryKeyword": "free school management software Kenya",
+  "secondaryKeywords": [
+    "free school management system Kenya",
+    "paid vs free school software",
+    "open source school management system Kenya",
+    "cheap school management software Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Free vs Paid",
+  "intro": [
+    "**Quick answer:** \"Free\" school management software in Kenya is rarely free — it is paid for in bursar overtime, mistyped or unmatched M-Pesa payments, and report cards retyped three times a term. If you are comparing the [best school management software in Kenya](/blog/best-school-management-software-kenya), count the *total* cost, not just the licence fee.",
+    "This guide is honest about the free options that exist — spreadsheets, vendor free tiers, and open-source systems — then does the maths on what they really cost. The point is not that paid always wins; it is that **free school management software** should be judged on total cost, not on the word \"free\"."
+  ],
+  "sections": [
+    {
+      "id": "what-free-means",
+      "heading": "What \"free school management software\" actually means in Kenya",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Three very different things get called free, and they carry very different costs."
+        }
+      ]
+    },
+    {
+      "id": "spreadsheets-paper",
+      "heading": "Free spreadsheets and paper registers (the real status quo)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "For many schools, \"free\" just means the status quo: Excel for fees, paper registers for attendance, and Word for report cards. There is no licence and no subscription — but there is a person, every day, doing the work the software would do."
+        }
+      ]
+    },
+    {
+      "id": "free-tiers-trials",
+      "heading": "Free tiers and trials from paid vendors",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Some paid vendors offer a limited free tier or a trial. These are genuinely useful for testing a tool, but the features you need most — automatic M-Pesa reconciliation, messaging, CBC report cards — are often the ones behind the paywall. See how to evaluate them in [how to choose a school management system in Kenya](/blog/how-to-choose-school-management-system-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "open-source",
+      "heading": "Genuinely free / open-source systems (OpenSIS and similar)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Open-source systems such as OpenSIS are free to licence, and a school with real in-house IT capacity can self-host them. In practice they are built for different contexts and generally are **not** wired for M-Pesa, WhatsApp or CBC reporting out of the box — confirm current capability on the project's own site. **Treat these references as illustrative.**"
+        }
+      ]
+    },
+    {
+      "id": "hidden-cost",
+      "heading": "The hidden cost of free: what you pay when there is no licence fee",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A licence fee is easy to see. These three costs are not — which is exactly why they get ignored."
+        }
+      ]
+    },
+    {
+      "id": "bursar-hours",
+      "heading": "Bursar hours spent matching M-Pesa payments by hand",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Someone still has to read the Paybill statement, decide which learner each payment belongs to, update the balance, and produce a receipt. In the first weeks of term that can consume the bursar's afternoons — and errors mean fees that are never chased."
+        }
+      ]
+    },
+    {
+      "id": "report-retyping",
+      "heading": "Report card retyping and CBC rubric re-entry",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "At term end the same assessment data is keyed a second time into report templates. For a CBC school with many strands and levels, this is the most repetitive work of the term."
+        }
+      ]
+    },
+    {
+      "id": "support-gaps",
+      "heading": "Support gaps when something breaks on reporting day",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Free tools come with no one to call. When a formula breaks or a file corrupts on the day reports are due, the cost becomes visible all at once."
+        }
+      ]
+    },
+    {
+      "id": "side-by-side",
+      "heading": "Free vs paid school management software: side-by-side",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Put the two side by side on the things a Kenyan school actually does every term."
+        },
+        {
+          "type": "table",
+          "caption": "Free spreadsheet / free tier vs a paid system such as SQUL",
+          "headers": ["Capability", "Free spreadsheet / free tier", "Paid system such as SQUL"],
+          "rows": [
+            ["M-Pesa reconciliation", "Manual, in Excel", "**Automatic (Daraja)**"],
+            ["WhatsApp + SMS to parents", "Not possible", "**Both**"],
+            ["CBC & 8-4-4 report cards", "Word templates, retyped", "**Print-ready, from data**"],
+            ["Timetables & duty rosters", "Sporadic spreadsheets", "**Built in**"],
+            ["Attendance alerts", "Paper register", "**Same-day to parents**"],
+            ["Multi-campus", "Separate files", "**Consolidated**"],
+            ["Support", "None", "**Onboarding + support**"],
+            ["Backups & role-based access", "Shared file", "**Daily backups, roles**"],
+            ["Time to go live", "Already 'live'", "**~2 weeks**"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "first-term-needs",
+      "heading": "What Kenyan schools actually need in the first term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Whatever the price, a system has to earn its keep from term one. These are the four jobs that decide it."
+        }
+      ]
+    },
+    {
+      "id": "mpesa",
+      "heading": "Automatic M-Pesa reconciliation (Paybill and till)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The single biggest manual task free tools leave with the bursar. Automatic reconciliation matches each Paybill or till payment to the right learner and updates the balance the same day. See [M-Pesa integration in school management software](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "messaging",
+      "heading": "WhatsApp and SMS to parents",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A spreadsheet cannot message a parent at all. **WhatsApp and bulk SMS** turn fee reminders, receipts and absence alerts into something automatic. See [WhatsApp integration for school management systems](/blog/whatsapp-integration-school-management-system)."
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "heading": "CBC and 8-4-4 report cards",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**CBC and 8-4-4** rubrics, strands and print-ready term report cards remove the term-end retyping. See [CBC report card software in Kenya](/blog/cbc-report-card-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "heading": "Role-based access and daily backups",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A shared spreadsheet gives everyone every learner's data. **Role-based access** limits what each person sees, and **daily backups** keep a term's records safe — part of treating the Kenya Data Protection Act seriously, not an optional extra."
+        }
+      ]
+    },
+    {
+      "id": "cost-per-learner",
+      "heading": "Cost-per-learner: doing the maths honestly",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The fair comparison is a cost per learner, per term — including the labour the free option leaves behind."
+        }
+      ]
+    },
+    {
+      "id": "worked-example",
+      "heading": "Worked example — a 250-learner private academy",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Take a 250-learner academy. Suppose the bursar spends just a few hours a week matching M-Pesa payments and chasing balances by hand. Across a term that is a substantial block of paid staff time — before counting the fees left uncollected because a balance was wrong, or the term-end evenings spent retyping reports. Set that against a per-term subscription and the \"free\" option is carrying a real price. **All figures here are illustrative; use your own payroll and payment volumes.**"
+        }
+      ]
+    },
+    {
+      "id": "where-free-loses",
+      "heading": "Where the free option quietly loses",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Free wins on price and on little else the school is measured on: reconciled fees, informed parents, timely reports. The losses are quiet — an afternoon a day, a report redone, a payment unmatched — which is why schools often keep a spreadsheet a term longer than they should."
+        }
+      ]
+    },
+    {
+      "id": "when-free-right",
+      "heading": "When free is genuinely the right answer",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is not a case that paid always wins. There are two situations where a free option is the sensible start."
+        }
+      ]
+    },
+    {
+      "id": "very-small",
+      "heading": "Very small schools still testing the waters",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A newly registered academy with a few dozen learners and no fee-reconciliation backlog may genuinely not need more yet. Start free, and move when the bursar's time or the messaging need outgrows it. See [how to move from Excel to a school management system](/blog/move-from-excel-to-school-management-system)."
+        }
+      ]
+    },
+    {
+      "id": "in-house-it",
+      "heading": "Schools with real in-house IT capacity (and time)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "If you have staff who can self-host and maintain an open-source system, and the time to build M-Pesa and CBC reporting themselves, the licence saving can be real. Most Kenyan schools do not have that capacity — which is the honest trade-off."
+        }
+      ]
+    },
+    {
+      "id": "test-free",
+      "heading": "How to test a paid system for free before you commit",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The strongest answer to \"it's free\" is a paid system you can try at zero risk. A **free term to start** makes the comparison fair."
+        }
+      ]
+    },
+    {
+      "id": "run-paybill",
+      "heading": "Run your real Paybill or till alongside the trial",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Send live payments into the trial and watch them reconcile to the right learners. This is the single best test of whether the system does the job a spreadsheet cannot."
+        }
+      ]
+    },
+    {
+      "id": "import-one-class",
+      "heading": "Import one class and print one report card",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Bring in one class with guardian phone numbers, send a real message, then enter assessment data and print a report card you would hand to a parent."
+        }
+      ]
+    },
+    {
+      "id": "bottom-line",
+      "heading": "The bottom line",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Free school management software is not a scam — it is just incomplete. It leaves the bursar matching M-Pesa by hand, cannot reach parents, and rebuilds report cards by hand. A paid system is only worth it if it removes those costs, which is why the right way to judge it is a **free term** on your own data."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Count **total cost**, not the licence fee: staff hours, unmatched fees, retyped reports.",
+            "Judge every option as a **cost per learner, per term**.",
+            "Test the paid option on **real payments and real reports** before you commit."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is honest about this: it is **paid per term, not free**. What you get for that is the work free tools leave behind, done automatically — and you can prove it with a **free term to start**."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa (Daraja) reconciliation** — balances and receipts update the same day.",
+            "**WhatsApp and bulk SMS** parent engagement from one record.",
+            "**CBC and 8-4-4** rubrics, strands and print-ready term report cards.",
+            "**Role-based access, daily backups** and Kenya Data Protection Act awareness.",
+            "**Go live in about two weeks**, so the free-term trial is short and decisive."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Is there free school management software in Kenya that handles M-Pesa?",
+      "answer": "Some free tiers and open-source tools handle records, but automatic M-Pesa reconciliation is usually a paid feature. A free spreadsheet cannot reconcile payments at all — the bursar matches each one by hand."
+    },
+    {
+      "question": "Is open source actually cheaper than paid school software?",
+      "answer": "It can be, if you have in-house IT capacity to self-host and maintain it, and to build M-Pesa, WhatsApp and CBC reporting yourself. Without that capacity, the licence saving is usually outweighed by staff time."
+    },
+    {
+      "question": "Does SQUL have a free plan?",
+      "answer": "SQUL is paid per term, not free. The offer is a free term to start, so you can test it on real learners, real payments and a real report card before you commit to per-term pricing."
+    },
+    {
+      "question": "Will we pay more in total with paid software?",
+      "answer": "Not necessarily. Count the bursar hours, unreconciled fees and retyped reports a free tool leaves behind. Once those are included, a paid per-term system can cost less overall."
+    },
+    {
+      "question": "How do we test a paid system without risk?",
+      "answer": "Use the free term. Run your real Paybill or till through it, import one class, send a message, and print one report card — then decide."
+    }
+  ],
+  "cta": {
+    "heading": "Not ready to pay? Start with a free term",
+    "body": "Import one class, run your real Paybill or till through SQUL, and watch it reconcile before you commit a shilling.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "School management system pricing in Kenya", "href": "/blog/school-management-system-price-in-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" }
+  ]
+}

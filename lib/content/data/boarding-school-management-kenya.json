@@ -1,0 +1,175 @@
+{
+  "slug": "boarding-school-management-kenya",
+  "path": "/blog/boarding-school-management-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "Boarding and Hostel Management in Kenyan Schools (2026)",
+  "h1": "Boarding and Hostel Management in Kenyan Schools (2026 Guide)",
+  "description": "Boarding and hostel management in Kenya — routines and duty rosters, dorm roll call, welfare, food, parent communication, staffing and safety for boarders.",
+  "primaryKeyword": "boarding school management Kenya",
+  "secondaryKeywords": [
+    "hostel management school Kenya",
+    "dormitory management Kenya",
+    "boarding school routines",
+    "boarding school parent communication"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Boarding",
+  "intro": [
+    "A boarding school runs two lives on one campus: the academic day and the residential evening, night and morning. Managing the boarding side well — routines, welfare, food, safety, and keeping distant parents informed — is what separates a calm hostel from a crisis. This guide covers **boarding and hostel management in Kenyan schools**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "For the software angle, see [school management software for boarding schools](/blog/school-management-software-boarding-schools-kenya)."
+  ],
+  "sections": [
+    {
+      "id": "what-adds",
+      "heading": "What boarding adds to a school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Area", "Day school", "Boarding school"],
+          "rows": [
+            ["Attendance", "Morning register", "Class roll **and** dorm roll"],
+            ["Duties", "Teaching duties", "Teaching **plus** overnight cover"],
+            ["Costs", "Tuition and activities", "Plus food, utilities, matron"],
+            ["Parent contact", "Often in person", "Almost entirely remote"],
+            ["Welfare", "During school hours", "Around the clock"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "routines",
+      "heading": "Routines and duty rosters",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Boarding life is a schedule, and the schedule changes often. The routine should be written, visible, and published digitally so no shift is left guessing who is on duty."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Publish the daily routine",
+              "text": "Wake-up, meals, prep, lights-out — the same expectations for every boarder."
+            },
+            {
+              "title": "Publish the duty roster",
+              "text": "Matron, kitchen and security cover for each day and night, visible to all."
+            },
+            {
+              "title": "Record dorm roll call",
+              "text": "Evening and morning roll alongside the class register, so the two never disagree."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "welfare",
+      "heading": "Welfare, health and food",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**A clinic log and health notes** accessible to the right staff.",
+            "**Safe, adequate food** and clean water, with supervision of the kitchen.",
+            "**A named person on call** overnight for illness or emergencies.",
+            "**Contact details for guardians** available at all hours."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "See [health, safety and security in schools](/blog/school-health-safety-security-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "parents",
+      "heading": "Keeping distant parents close",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "For a boarding parent, distance turns every unanswered question into anxiety. Send term dates early, notify absences the same day, confirm fee payments immediately, and share results on time — over WhatsApp and SMS. See [parent and community engagement](/blog/parent-engagement-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "staff",
+      "heading": "Boarding staff",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Matrons, cooks and security staff are the backbone of boarding. Recruit them deliberately, define their duties, and support them — see [managing teachers and staff](/blog/school-staff-management-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "costs",
+      "heading": "Boarding costs and fees",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Boarding multiplies cost lines: food, utilities and extra staff. Cost these separately from the day section in your [fee structure](/blog/school-fee-structure-kenya), and reconcile boarding payments as carefully as any other fee."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Rosters on paper only** — nobody knows the current version.",
+            "**Dorm roll separate from class roll** — the two registers contradict each other.",
+            "**Silent on welfare** — parents learn of illness or incidents too late.",
+            "**Under-budgeted food and utilities** — a mid-term shortfall.",
+            "**Unclear overnight cover** — emergencies with no one clearly on call."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does managing a boarding school involve?",
+      "answer": "Running the residential side: published routines and duty rosters, dorm roll call, round-the-clock welfare and health support, safe food and water, and keeping distant parents informed."
+    },
+    {
+      "question": "How do we keep boarding parents informed?",
+      "answer": "Share term dates early, notify absences the same day, confirm fee payments immediately, and send results on time over WhatsApp and SMS."
+    },
+    {
+      "question": "Should dorm attendance be recorded separately?",
+      "answer": "Record it alongside class attendance, against one learner record, so the two registers never contradict each other."
+    },
+    {
+      "question": "How do we budget for boarders?",
+      "answer": "Cost the boarding section separately — food, utilities and matron staff — and reflect it clearly in the fee structure rather than folding it into tuition."
+    }
+  ],
+  "cta": {
+    "heading": "Run the hostel calmly",
+    "body": "SQUL publishes duty rosters, records dorm roll call and keeps boarding parents updated — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School management software for boarding schools", "href": "/blog/school-management-software-boarding-schools-kenya" },
+    { "title": "Health, safety and security in schools", "href": "/blog/school-health-safety-security-kenya" },
+    { "title": "Managing teachers and staff in a Kenyan school", "href": "/blog/school-staff-management-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" }
+  ]
+}

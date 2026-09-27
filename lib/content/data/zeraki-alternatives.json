@@ -1,0 +1,246 @@
+{
+  "slug": "zeraki-alternatives-kenya",
+  "path": "/blog/zeraki-alternatives-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Zeraki Alternatives in Kenya: 7 Best School Systems (2026)",
+  "h1": "Zeraki Alternatives in Kenya: 7 Best School Management Systems (2026)",
+  "description": "Looking for a Zeraki alternative in Kenya? Compare 7 school management systems on M-Pesa, WhatsApp messaging, CBC reports, pricing and support.",
+  "primaryKeyword": "Zeraki alternative Kenya",
+  "secondaryKeywords": [
+    "Zeraki alternatives",
+    "Zeraki alternative school software",
+    "best Zeraki replacement Kenya",
+    "school management system Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Alternatives",
+  "image": "/screenshots/teachers.jpg",
+  "intro": [
+    "If you are already using Zeraki — or comparing it — and wondering what else is out there, this is for you. Below are seven **Zeraki alternatives in Kenya**, compared on the things schools actually feel: automatic M-Pesa reconciliation, WhatsApp and SMS parent messaging, CBC report cards, time to go live, and support. For the wider field, see the [best school management software in Kenya](/blog/best-school-management-software-kenya).",
+    "We will not pretend all seven are equally good, and we will be clear about the case where staying on Zeraki is the right call. The goal is a shortlist you can demo in a week."
+  ],
+  "quickAnswer": "Editor's note: competitor features and pricing change and are described here at a high level from public information. Verify current details with each vendor before you buy. SQUL figures are our own. Last reviewed September 2026.",
+  "sections": [
+    {
+      "id": "why-switch",
+      "heading": "Why schools look for a Zeraki alternative",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Zeraki is well known in Kenyan secondary schools, especially for exam analytics and reporting. Schools start looking elsewhere for reasons that are usually operational rather than academic:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Fees still take too long to reconcile.** If M-Pesa payments must be matched by hand, the bursar's first two weeks of term are still manual.",
+            "**Parent messaging is SMS-only.** Parents who live in WhatsApp are harder to reach, and reminders are less effective.",
+            "**The office wants one system.** Juggling an analytics tool plus spreadsheets plus an SMS service means data that does not agree with itself.",
+            "**Onboarding or cost feels heavy.** Some schools want to start small, on a free term, and prove value before committing."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "criteria",
+      "heading": "What to compare before you switch",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Score every alternative on the same seven points, weighted to your own pain:"
+        },
+        {
+          "type": "table",
+          "headers": ["#", "Criterion", "Why it decides the choice"],
+          "rows": [
+            ["1", "**Automatic M-Pesa**", "Does it match Paybill/till payments to the right learner, or import a statement?"],
+            ["2", "**WhatsApp + SMS**", "Can you reach parents on both channels from one place?"],
+            ["3", "**CBC & 8-4-4 reports**", "Printable term report cards without retyping marks."],
+            ["4", "**Timetables & attendance**", "Rosters published instantly; same-day parent alerts."],
+            ["5", "**Time to go live**", "Can you collect fees this term, not next year?"],
+            ["6", "**Multi-campus**", "Sister campuses with consolidated reports?"],
+            ["7", "**Support & security**", "Who answers on reporting day? Role-based access? Backups?"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "the-seven",
+      "heading": "The 7 best Zeraki alternatives",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "At a glance. Confirm each vendor's current capabilities directly.",
+          "headers": ["System", "Best for", "Automatic M-Pesa", "WhatsApp", "Go-live"],
+          "rows": [
+            ["**SQUL**", "**Most Kenyan schools**", "**Yes (Daraja)**", "**Yes**", "**~2 weeks**"],
+            ["EdAdmin", "Large established schools", "Partial", "No", "Months"],
+            ["SchoolMaster", "Accounting-heavy schools", "Partial", "No", "Months"],
+            ["Fedena", "Groups & colleges", "No", "No", "Months"],
+            ["OpenSIS", "Tech-savvy / self-hosted", "No", "No", "Self-run"],
+            ["Sebae / custom builds", "Schools with IT staff", "Self-built", "Self-built", "Project"],
+            ["Excel + WhatsApp", "Very small schools", "No", "Manual", "Instant"]
+          ]
+        },
+        {
+          "type": "mock",
+          "variant": "fees",
+          "caption": "The reason most schools switch: a payment matched to the right learner automatically, not by hand."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "1. SQUL — the strongest overall alternative",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is built for the operational reality of a Kenyan school office. Where Zeraki is strongest on analytics, SQUL is strongest on the two jobs that decide a term: reconciling fees and reaching parents."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa reconciliation (Daraja)** — Paybill and till payments matched to the right learner, balances and receipts updated the same day.",
+            "**WhatsApp and SMS** — reminders, absence alerts and exam notices on both channels from one place.",
+            "**CBC and 8-4-4 report cards** — captured once, printed ready.",
+            "**Timetables, duty rosters, and same-day attendance alerts.**",
+            "**Multi-campus** with consolidated reports, and a **free term** to start."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "If you want the direct head-to-head, read [SQUL vs Zeraki](/blog/squl-vs-zeraki)."
+        }
+      ]
+    },
+    {
+      "id": "others",
+      "heading": "2–7. The rest of the shortlist",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**EdAdmin** — mature and feature-deep, often chosen by larger or more established institutions; onboarding and cost can be heavy for a small school.",
+            "**SchoolMaster** — leans accounting-first, good for bursars who think in ledgers; lighter on parent communication.",
+            "**Fedena** — a broad global ERP for groups and colleges; not Kenyan-first, so no native M-Pesa or WhatsApp.",
+            "**OpenSIS** — open-source and customisable for schools with in-house IT; you own the servers, security and training.",
+            "**Custom builds** — tailored to one school, but high cost, maintenance risk, and a single point of failure.",
+            "**Excel + WhatsApp** — the familiar baseline; cheap to start, expensive in bursar hours every single day."
+          ]
+        },
+        {
+          "type": "image",
+          "src": "/screenshots/class.jpg",
+          "alt": "Teachers in a Kenyan classroom",
+          "caption": "Whatever you choose, the test is the same: does it reduce work for the office, or just move it around?"
+        }
+      ]
+    },
+    {
+      "id": "when-zeraki",
+      "heading": "When staying on Zeraki is the right choice",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Be honest with yourself. Zeraki may still be the right fit if:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Your dominant need is **exam analytics and performance reporting**, and that is working well for you.",
+            "Your **fees and parent messaging are already handled** by another tool you are happy with.",
+            "Your **staff are trained and invested** in the current workflows, and switching costs outweigh the gains."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "how-to-switch",
+      "heading": "How to switch without losing a term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Shortlist two",
+              "text": "Pick the two that best match your priority (fees, comms, or analytics) and book a live demo of your own workflow."
+            },
+            {
+              "title": "Import learners",
+              "text": "Bring your existing register across — see [how to move from Excel](/blog/move-from-excel-to-school-management-system)."
+            },
+            {
+              "title": "Link guardian phones",
+              "text": "This powers M-Pesa matching and parent alerts, so get it right first."
+            },
+            {
+              "title": "Collect fees before opening day",
+              "text": "Most schools are live within about two weeks; start on a free term to de-risk it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verdict",
+      "heading": "The verdict",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "If your priority is automatic M-Pesa reconciliation and WhatsApp plus SMS parent engagement, **SQUL is the strongest Zeraki alternative in Kenya**, with EdAdmin and SchoolMaster behind it for different reasons. If analytics is your whole game and it is already working, staying put is a legitimate choice. Whichever way you go, judge each option on the seven criteria above — not on brand recognition."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is the best Zeraki alternative in Kenya?",
+      "answer": "For most Kenyan schools, SQUL is the strongest alternative because it focuses on automatic M-Pesa reconciliation and WhatsApp plus SMS parent messaging, which Zeraki does not centre on. EdAdmin and SchoolMaster are other options for different priorities."
+    },
+    {
+      "question": "Does SQUL do everything Zeraki does?",
+      "answer": "Both cover CBC/8-4-4 report cards and timetables. SQUL leads on automatic M-Pesa and WhatsApp/SMS; Zeraki leads on exam analytics and league tables. Choose based on which matters more to your school."
+    },
+    {
+      "question": "How hard is it to move from Zeraki to another system?",
+      "answer": "Most schools import their learner list and link guardian phone numbers, then start collecting fees within about two weeks. The main work is data, not downtime."
+    },
+    {
+      "question": "Are there free school management systems in Kenya?",
+      "answer": "Yes — open-source options like OpenSIS are free to license but cost in IT staff and training. SQUL offers a free term so you can prove value before paying."
+    },
+    {
+      "question": "Will switching disrupt a term?",
+      "answer": "Not if you schedule it before opening day. Start on a free term, import learners, and go live for fee collection in the first two weeks."
+    },
+    {
+      "question": "Can I keep using Zeraki for analytics and add SQUL?",
+      "answer": "Some schools do run both, but most prefer one system so records agree. SQUL covers CBC and 8-4-4 report cards, so it can often replace a separate analytics tool."
+    }
+  ],
+  "cta": {
+    "heading": "Try the leading Zeraki alternative free for a term",
+    "body": "Start on SQUL's free term and see automatic M-Pesa reconciliation and WhatsApp and SMS parent messaging in your own school.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "SQUL vs Zeraki: why SQUL wins", "href": "/blog/squl-vs-zeraki" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "Zeraki pricing in Kenya", "href": "/blog/zeraki-pricing-kenya" },
+    { "title": "Zeraki review: is it right for your school?", "href": "/blog/zeraki-review" },
+    { "title": "Free vs paid school management software in Kenya", "href": "/blog/free-vs-paid-school-management-software-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "slug": "school-admissions-learner-records-kenya",
+  "path": "/blog/school-admissions-learner-records-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "School Admissions and Learner Records in Kenya (2026 Guide)",
+  "h1": "School Admissions and Learner Records in Kenya (2026 Guide)",
+  "description": "School admissions and learner records in Kenya — a clean admission flow, one complete profile per learner, guardian details and secure record-keeping.",
+  "primaryKeyword": "school admissions Kenya",
+  "secondaryKeywords": [
+    "learner records Kenya",
+    "school admission process Kenya",
+    "student records management Kenya",
+    "guardian contacts school Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Admissions",
+  "intro": [
+    "Admissions is the front door of the school, and learner records are the whole house. Handle both well and every downstream task — fees, attendance, reports, compliance — gets easier. This guide covers **school admissions and learner records in Kenya**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "The aim is simple: one complete profile per learner, with guardian details captured properly, retrievable in seconds."
+  ],
+  "sections": [
+    {
+      "id": "why",
+      "heading": "Why admissions and records decide so much",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Guardian phone numbers power everything** — fee reminders, absence alerts, exam notices.",
+            "**The admission number is the key** for fees, attendance and reports.",
+            "**Records are legal and pastoral** — they must be accurate and confidential.",
+            "**First impressions stick** — a smooth admission flow signals a well-run school."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flow",
+      "heading": "A clean admission flow",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Enquiry and application",
+              "text": "Capture the learner's details and the guardian's contacts at first contact — not on a scrap of paper."
+            },
+            {
+              "title": "Assessment or interview",
+              "text": "Where used, record the outcome and any placement decision."
+            },
+            {
+              "title": "Issue the admission number",
+              "text": "One unique number per learner, used everywhere thereafter."
+            },
+            {
+              "title": "Assign class and stream",
+              "text": "Place the learner so timetables, registers and fee structures line up."
+            },
+            {
+              "title": "Link guardians",
+              "text": "Record at least one primary guardian phone number for messaging and M-Pesa matching."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "heading": "What a learner record should contain",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Field", "Why it matters"],
+          "rows": [
+            ["Admission number", "The unique key across fees, attendance and reports"],
+            ["Full name & class", "Registers, timetables and exam lists"],
+            ["Guardian name & phone", "Fee reminders, absence alerts, receipts"],
+            ["Health notes", "Clinic and emergency response"],
+            ["Admission date", "History and compliance"],
+            ["Notes & discipline", "A single, confidential history"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Get the phone number right",
+          "text": "The guardian's phone number is the most valuable field in the record. A wrong number means the parent misses every alert and every fee reminder."
+        }
+      ]
+    },
+    {
+      "id": "retrieval",
+      "heading": "Records you can retrieve in seconds",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A record only counts if you can produce it when asked — during an inspection, an emergency, or a parent visit. That means one searchable place per learner, not a file cabinet plus a spreadsheet plus a WhatsApp message."
+        },
+        {
+          "type": "paragraph",
+          "text": "See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software) for handling these records lawfully and securely."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Duplicate admission numbers** — collisions break fee and report matching.",
+            "**Missing guardian phones** — communication and M-Pesa matching fail.",
+            "**Records in three places** — nothing agrees during an inspection.",
+            "**No confidentiality** — sensitive notes visible to the wrong staff."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What information should a Kenyan school capture at admission?",
+      "answer": "At minimum: the learner's name, date of birth, class, admission number, at least one guardian's name and phone number, and any health notes. The admission number and guardian phone are the two fields everything else depends on."
+    },
+    {
+      "question": "Why do schools use an admission number?",
+      "answer": "It is a unique key that ties a learner to their fees, attendance, and report cards. Duplicate or missing numbers cause incorrect balances and mismatched reports."
+    },
+    {
+      "question": "Where should learner records be kept?",
+      "answer": "In one secure, searchable system with role-based access, so records can be produced on demand and sensitive information is limited to those who need it."
+    },
+    {
+      "question": "Are learner records protected under Kenyan law?",
+      "answer": "Yes — learner records are personal data under the Data Protection Act, so schools should limit access, keep records secure, and handle exports and messaging carefully. This is general guidance, not legal advice."
+    }
+  ],
+  "cta": {
+    "heading": "One profile per learner, captured at admission",
+    "body": "SQUL captures admissions, guardian contacts and learner records in one secure place — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School registration and compliance in Kenya", "href": "/blog/school-compliance-registration-kenya" },
+    { "title": "Learner data protection in Kenya", "href": "/blog/learner-data-protection-kenya-school-software" },
+    { "title": "Student discipline and welfare", "href": "/blog/student-discipline-and-welfare-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" }
+  ]
+}

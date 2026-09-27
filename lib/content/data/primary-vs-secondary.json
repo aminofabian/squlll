@@ -1,0 +1,266 @@
+{
+  "slug": "school-management-software-primary-schools-kenya",
+  "path": "/blog/school-management-software-primary-schools-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "School Management Software for Primary Schools Kenya (2026)",
+  "h1": "School Management Software for Primary Schools Kenya (2026)",
+  "description": "Choosing school management software for primary schools in Kenya? Compare what CBC Grade 1–9 schools need — fees, M-Pesa, WhatsApp and report cards.",
+  "primaryKeyword": "school management software for primary schools Kenya",
+  "secondaryKeywords": [
+    "primary school management system Kenya",
+    "CBC Grade 1–9 assessment software",
+    "primary school fees M-Pesa Kenya",
+    "school management software for secondary schools Kenya",
+    "combined primary and junior secondary software"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Primary & secondary",
+  "intro": [
+    "If you run a primary school in Kenya, the [best school management software in Kenya](/blog/best-school-management-software-kenya) is the one that fits *your* learners — not the one built for a boarding secondary school with Form 4 exam analytics you will never use.",
+    "Most \"primary\" schools in Kenya are no longer purely primary. CBC now carries the same learner from Grade 1 to Grade 9, and many schools also run Form 1–4 on 8-4-4. That changes the question from \"primary or secondary software?\" to \"can one system cover both?\"",
+    "This guide sets out what primary schools actually need, how secondary needs differ, and how to choose software that will still fit when your school grows into — or already runs — a secondary section."
+  ],
+  "sections": [
+    {
+      "id": "what-primary-needs",
+      "heading": "What primary schools in Kenya actually need from software",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A Kenyan primary school's needs are narrower — and more specific — than a secondary school's. Three of them decide whether software helps or simply adds another login."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**CBC Grade 1–9 assessment.** Rubrics, strands and continuous assessment for young learners, captured as teachers observe them and turned into term reports without retyping.",
+            "**Many parents, many small M-Pesa payments.** Primary fees often arrive in frequent, smaller amounts, so matching every Paybill or till payment to the right learner matters even more than the amount.",
+            "**Parent communication at primary level.** Absence alerts, homework notices and fee reminders over WhatsApp and SMS, because at this age the school talks to parents constantly."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Secondary features such as Form 4 subject analytics or boarding prep supervision are not wrong — they are simply not what a Grade 1–6 school should pay to carry."
+        }
+      ]
+    },
+    {
+      "id": "how-secondary-differs",
+      "heading": "How secondary school needs differ (Form 1–4 under 8-4-4)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Secondary schools under 8-4-4 have different problems, and the difference shows up in three places."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Subject-based grading and exam analytics.** Many subjects, several teachers per subject, and reporting that ranks and compares — mean score, position, and subject strengths and weaknesses.",
+            "**Boarding, duty rosters and larger fee structures.** House and prep supervision, duty rosters across staff, and fewer but larger fee payments, often made by instalment.",
+            "**Complex timetables.** Streams, shared labs and specialised teachers make the master timetable harder to build than in a primary school."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "None of this means a secondary school needs a *different product* — only that the product must handle both sets of needs when a school spans both stages."
+        }
+      ]
+    },
+    {
+      "id": "primary-vs-secondary",
+      "heading": "Primary vs secondary: what to compare",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "When you shortlist software, compare it against the needs of your actual stages. The table below summarises where primary (Grade 1–9, CBC) and secondary (Form 1–4, 8-4-4) requirements diverge."
+        },
+        {
+          "type": "table",
+          "caption": "Primary vs secondary needs at a glance",
+          "headers": ["Need", "Primary (Grade 1–9, CBC)", "Secondary (Form 1–4, 8-4-4)"],
+          "rows": [
+            ["Assessment model", "CBC rubrics, strands and continuous assessment", "Subject-based grading and exam analytics"],
+            ["Report card format", "Narrative and rubric term reports", "Subject grades, mean score, position and comments"],
+            ["Fee frequency & amounts", "Many small, frequent M-Pesa payments", "Fewer, larger payments, often by instalment"],
+            ["Parent channel", "WhatsApp and SMS for attendance, homework and fees", "WhatsApp and SMS for exams, boarding and fees"],
+            ["Attendance & alerts", "Same-day alerts for young learners", "Same-day alerts, plus boarding and prep oversight"],
+            ["Timetables", "Fewer, simpler lessons; class-teacher led", "Complex subject timetables, streams, labs and duty rosters"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The pattern is clear: primary schools need **breadth of parent contact and simple, frequent fees**; secondary schools need **depth in grading and complexity in operations**. A growable school should look for both."
+        }
+      ]
+    },
+    {
+      "id": "combined-school",
+      "heading": "The combined-school problem: Grade 1–9 plus Form 1–4 on one platform",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Many Kenyan schools are now **combined**: a primary section running CBC Grade 1–9, and a secondary section running Form 1–4 on 8-4-4. Running one system for the primary section and another for the secondary section means two homes for one school's data."
+        }
+      ]
+    },
+    {
+      "id": "one-version-of-truth",
+      "heading": "Why two systems create two versions of the truth",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Two systems create two versions of the truth. The parent list drifts apart, the fee balances never agree, and the director's morning question — \"how many learners, how much collected, how much outstanding?\" — has no single answer."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Duplicate learner records** for siblings, or for a learner who moves between sections.",
+            "**Duplicate data entry** for the same staff and the same families.",
+            "**No group-level report** for the director or board — just two sets of exports stapled together."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A combined view on one platform removes that reconciliation work entirely, which is why \"combined primary and junior secondary software\" is fast becoming the real search term for Kenyan head teachers."
+        }
+      ]
+    },
+    {
+      "id": "fee-collection",
+      "heading": "Fee collection for primary schools: many parents, many small M-Pesa payments",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Primary schools feel M-Pesa pressure differently: hundreds of parents, each paying a small amount, often in more than one instalment. Done by hand, that is hundreds of matches every week of the term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Matching Paybill and till payments to the right learner.** The account number (ideally the admission number) or the guardian's registered phone identifies the learner automatically, so the balance updates the same day.",
+            "**Partial payments and receipts.** Primary fees often arrive in parts; the balance should reflect each payment and issue a receipt each time, not only when the total is cleared.",
+            "**Reminders that reflect the real balance.** With live balances, reminders go only to parents who actually owe — see [fee reminder templates for SMS and WhatsApp](/blog/school-fee-reminder-sms-whatsapp-kenya)."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For the mechanics, including what happens when a reference is wrong, see [automatic M-Pesa reconciliation for schools](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "report-cards",
+      "heading": "Report cards parents actually understand",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "At primary level the report card is the artefact parents judge the school by, and it should be both accurate and easy to read."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**CBC narrative and rubric report cards** that describe what a learner can do, not only a score — captured as the teacher assesses.",
+            "**Print-ready term reports for every level**, in the format each stage requires, produced without retyping a single mark.",
+            "**Consistency for parents.** One platform that produces the right report for Grade 1–9 and for Form 1–4 means one standard across the whole school."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For a closer look at the CBC side, see [CBC report card software in Kenya](/blog/cbc-report-card-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "what-to-leave-out",
+      "heading": "What a primary school can leave out — and what it must not",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Keeping costs sane is part of choosing well. A primary school can often leave out the heaviest secondary-grade machinery without losing anything it needs today."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Worth skipping, for now:** deep Form 4 subject analytics, boarding house management, and complex multi-stream timetabling — unless you actually run those.",
+            "**Non-negotiables:** reliable fee records, automatic M-Pesa reconciliation, WhatsApp and SMS parent messaging, and daily backups with role-based access.",
+            "**Grow into it, not out of it:** choose a system whose secondary features are already there, so adding a section later is a setting, not a migration."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Ask before you skip",
+          "text": "Confirm that a feature you skip today can be switched on later without a new contract — otherwise \"cheaper now\" quietly becomes \"migrate later\"."
+        },
+        {
+          "type": "paragraph",
+          "text": "Attendance alerting sits firmly in the non-negotiable column for primary schools: young learners cannot report their own absence, so [attendance tracking with parent SMS alerts](/blog/student-attendance-tracking-parent-sms) becomes a welfare feature, not a luxury."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL handles CBC Grade 1–9 and 8-4-4 Form 1–4 in one platform, so a growing primary school never runs two systems or migrates records."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**CBC and 8-4-4 in one place** — Grade 1–9 rubrics, strands and continuous assessment alongside Form 1–4, with [CBC report card software](/blog/cbc-report-card-software-kenya) that prints term reports parents understand.",
+            "**Automatic M-Pesa (Daraja) reconciliation** for the hundreds of small payments a primary school collects, matched to the right learner with balances updated the same day.",
+            "**WhatsApp *and* bulk SMS** for absence alerts, homework notices and fee reminders — see [attendance tracking with parent SMS alerts](/blog/student-attendance-tracking-parent-sms).",
+            "**Same-day attendance with automatic parent notifications** for young learners.",
+            "**Live in about two weeks**, with a free term to start."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Run next term on SQUL free",
+          "text": "Import your Grade 1–9 learners, take attendance, collect fees by M-Pesa and print report cards before you pay anything."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Is there software built specifically for Kenyan primary schools?",
+      "answer": "Yes, but the more useful question is whether it covers CBC Grade 1–9 *and* a secondary section. SQUL handles both, so a primary school that grows into Grade 9 or adds Form 1–4 does not have to change systems."
+    },
+    {
+      "question": "Can one system handle both my primary and secondary sections?",
+      "answer": "Yes. A system built for both CBC Grade 1–9 and 8-4-4 Form 1–4 keeps one learner record and one fee balance, and gives the director a combined view instead of two sets of exports."
+    },
+    {
+      "question": "How long does it take a primary school to go live?",
+      "answer": "With an existing learner list, most primary schools go live in about two weeks — the main work is importing learners and linking guardian phone numbers for M-Pesa matching and parent messaging."
+    }
+  ],
+  "cta": {
+    "heading": "Run your primary school's next term on SQUL",
+    "body": "Import your Grade 1–9 learners, take attendance, collect fees by M-Pesa and print report cards — free for a term, before you pay anything.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "CBC report card software in Kenya", "href": "/blog/cbc-report-card-software-kenya" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "Student attendance tracking with parent SMS alerts", "href": "/blog/student-attendance-tracking-parent-sms" },
+    { "title": "Automating school fee reminders over SMS and WhatsApp", "href": "/blog/school-fee-reminder-sms-whatsapp-kenya" }
+  ]
+}

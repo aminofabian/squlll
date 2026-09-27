@@ -1,0 +1,187 @@
+{
+  "slug": "school-staff-management-kenya",
+  "path": "/blog/school-staff-management-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "Managing Teachers and Staff in a Kenyan School (2026 Guide)",
+  "h1": "Managing Teachers and Staff in a Kenyan School (2026 Guide)",
+  "description": "How to manage teachers and staff in a Kenyan school — recruitment, deployment, duty rosters, performance feedback, development and keeping clean records.",
+  "primaryKeyword": "school staff management Kenya",
+  "secondaryKeywords": [
+    "managing teachers Kenya",
+    "school HR Kenya",
+    "teacher deployment Kenya",
+    "school duty roster"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "People",
+  "intro": [
+    "Your staff are the school's engine. Managing them well — hiring the right people, deploying them sensibly, supporting their teaching, and keeping clean records — is the difference between a school that runs on systems and one that runs on the head teacher's energy. This guide covers **staff management in a Kenyan school**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "It applies to public and private schools, and to both teaching and non-teaching staff."
+  ],
+  "sections": [
+    {
+      "id": "why",
+      "heading": "Why people management decides the school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Staffing is your largest cost** — so getting deployment right has the biggest financial impact.",
+            "**Teaching quality is a management outcome** — not a mystery of talent.",
+            "**Turnover is expensive** — recruiting and training replacements drains a term.",
+            "**Fairness is culture** — visible, consistent decisions build the trust that keeps good teachers."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recruit",
+      "heading": "Recruitment and deployment",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Define the need",
+              "text": "Which subjects, which streams, which terms — and whether it is permanent, contract, or a top-up over TSC staff."
+            },
+            {
+              "title": "Recruit transparently",
+              "text": "Advertise, shortlist against criteria, and interview with a small panel. Document the decision."
+            },
+            {
+              "title": "Deploy before the term",
+              "text": "Match teachers to subjects and streams before teaching starts, not in week two."
+            },
+            {
+              "title": "Orient them",
+              "text": "A short induction on the timetable, records, and expectations saves weeks of confusion."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "TSC and school-board staff",
+          "text": "Public schools mix TSC-employed teachers with Board of Management staff. Know which terms apply to whom, and keep both sets documented."
+        }
+      ]
+    },
+    {
+      "id": "rosters",
+      "heading": "Duty rosters and daily deployment",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The fastest way to end arguments about who was supposed to be where is to publish the roster. Class timetables, exam invigilation, and duty rosters (including boarding and overnight duties) should be visible to everyone the moment they change."
+        },
+        {
+          "type": "table",
+          "headers": ["Roster", "Covers", "Published to"],
+          "rows": [
+            ["Class timetable", "Subject teaching per stream", "All teachers"],
+            ["Duty roster", "Daily and weekly duties", "All staff"],
+            ["Boarding duties", "Overnight and weekend cover", "Boarding staff"],
+            ["Exam invigilation", "Per session", "All teachers"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Digital rosters beat notice boards. See [school timetable software in Kenya](/blog/school-timetable-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "performance",
+      "heading": "Performance, feedback and development",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Observe lessons** — regular, supportive observation beats one high-stakes appraisal.",
+            "**Give feedback promptly** — within days, while it is useful.",
+            "**Develop people** — subject workshops, peer observation, and mentoring for new teachers.",
+            "**Recognise good work** — a little recognition goes a long way in retention.",
+            "**Address problems early** — documented, fair, and private."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Performance management connects directly to academics — see [implementing CBC in your school](/blog/cbc-implementation-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "heading": "Keeping clean staff records",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "For each staff member you should be able to produce, quickly: contract, qualifications, deployment history, and any performance notes. When an inspection or an HR question arrives, the record should already exist. Treat staff data as personal data — access controlled and backed up."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Deploying after term starts** — lessons go uncovered while you shuffle.",
+            "**Rosters on paper only** — nobody knows which version is current.",
+            "**No records** — HR questions become detective work.",
+            "**Appraisal by ambush** — feedback that arrives once a year is not feedback.",
+            "**Ignoring morale** — good teachers leave quietly, then loudly."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I deploy teachers effectively in a Kenyan school?",
+      "answer": "Match teachers to subjects and streams before the term begins, publish the timetable and duty rosters, and orient new staff with a short induction. Deploying after teaching starts leaves lessons uncovered."
+    },
+    {
+      "question": "What is the difference between TSC and Board of Management staff?",
+      "answer": "Public schools employ teachers through the Teachers Service Commission, while boards of management hire additional staff under their own terms. Know which conditions apply to each group and document both."
+    },
+    {
+      "question": "How should a school appraise teachers?",
+      "answer": "Through regular, supportive lesson observation with prompt feedback, plus development opportunities — not a single end-of-year appraisal. Document decisions fairly and privately."
+    },
+    {
+      "question": "How do we keep staff records organised?",
+      "answer": "Keep a contract, qualifications, deployment history and performance notes for every staff member in one secure place, with access controlled as personal data."
+    },
+    {
+      "question": "How do we publish duty rosters?",
+      "answer": "Use a digital roster visible to all staff, including boarding and overnight duties. It ends arguments about who was supposed to be where."
+    }
+  ],
+  "cta": {
+    "heading": "Publish rosters and keep staff records in one place",
+    "body": "SQUL handles timetables, duty rosters and staff records for Kenyan schools — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "School leadership and governance in Kenya", "href": "/blog/school-leadership-and-governance-kenya" },
+    { "title": "Implementing CBC in your school", "href": "/blog/cbc-implementation-school-kenya" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" }
+  ]
+}

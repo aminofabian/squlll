@@ -1,0 +1,283 @@
+{
+  "slug": "move-from-excel-to-school-management-system",
+  "path": "/blog/move-from-excel-to-school-management-system",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Move From Excel to a School Management System: Kenya Guide",
+  "h1": "Move From Excel to a School Management System: Kenya Guide",
+  "description": "Thinking of moving from Excel to a school management system? See the 6-step migration playbook Kenyan schools use — and how SQUL goes live in two weeks.",
+  "primaryKeyword": "move from Excel to school management system",
+  "secondaryKeywords": [
+    "school data migration Kenya",
+    "Excel school register",
+    "import student data school software",
+    "spreadsheet to school system",
+    "school records digitisation Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "ToFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Migration & Data",
+  "intro": [
+    "Most Kenyan schools are not choosing between spreadsheets and software cold — they already run on Excel, and it mostly works, until it does not. If you are weighing the [top school management software in Kenya](/blog/best-school-management-software-kenya), the honest question is not whether migration is possible, but whether the disruption is worth it.",
+    "This guide treats the move as a data-cleanup project first and a software project second. You will see why Excel eventually fails, what actually migrates cleanly, a six-step migration playbook, and how to keep your old file as a safety net without running two systems."
+  ],
+  "sections": [
+    {
+      "id": "why-excel",
+      "heading": "Why Kenyan schools still run on Excel — and when it stops working",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Excel is cheap, familiar, and flexible, which is exactly why schools stick with it. A learner register, a fee book, and a mark sheet live in three files, usually owned by one person who knows how they fit together. It works until the school outgrows one person's memory."
+        },
+        {
+          "type": "paragraph",
+          "text": "**The day the fee register and the class register disagree** is the day the cracks show. A learner appears on one list but not the other, a balance is retyped into a second file, and nobody can say which figure is true."
+        },
+        {
+          "type": "paragraph",
+          "text": "**When the person who knows the spreadsheet leaves,** the knowledge leaves with them. The next person inherits files with hidden columns, broken formulas, and no instructions — and the school pays for weeks of guesswork."
+        }
+      ]
+    },
+    {
+      "id": "hidden-costs",
+      "heading": "The hidden costs of a spreadsheet school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Spreadsheets do not have a licence fee, but they have a cost. It just lands on people rather than the budget line."
+        },
+        {
+          "type": "table",
+          "caption": "What a spreadsheet school is really paying",
+          "headers": ["Symptom", "What it costs the school", "Who feels it"],
+          "rows": [
+            ["Multiple versions of the same file", "Wrong balances and lost marks", "Bursar, class teachers"],
+            ["M-Pesa matched by hand", "Afternoons lost every reporting day", "Bursar"],
+            ["No single source of truth", "Board figures cannot be trusted", "Principal, board"],
+            ["Data on personal phones and laptops", "Learner data leaves the school's control", "Administrator, board"],
+            ["One person holds the knowledge", "High risk if they are away or leave", "Whole school"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "signs",
+      "heading": "Signs it is time to migrate",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "You maintain more than one register and reconcile them by eye.",
+            "Fee balances are retyped from the M-Pesa statement into a spreadsheet.",
+            "Report cards are built by copying marks between files.",
+            "A parent's query about a balance takes more than a minute to answer.",
+            "Only one person can produce the reporting figures.",
+            "Learner and guardian data sits on personal devices.",
+            "You have caught at least one error caused by an old file version."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "If three or more of these sound familiar, the cost of staying on Excel is already higher than the cost of moving."
+        },
+        {
+          "type": "paragraph",
+          "text": "A useful test is to time a single task: ask the person who keeps the fee book to answer one parent's balance query and produce that learner's payment history. If it takes more than a minute, the spreadsheet is already the bottleneck — and reporting day will make it worse."
+        }
+      ]
+    },
+    {
+      "id": "what-migrates",
+      "heading": "What migrates cleanly and what needs cleaning first",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Not all data is equal. Some imports itself; some must be agreed and cleaned before it is worth loading. This is the table to share with whoever owns the spreadsheets."
+        },
+        {
+          "type": "table",
+          "caption": "Data readiness for migration",
+          "headers": ["Data type", "Migration readiness", "Prep needed"],
+          "rows": [
+            ["Learners (names, admission numbers, class and stream)", "Migrates cleanly", "One row per learner; consistent admission numbers"],
+            ["Guardians and contacts", "Migrates cleanly", "De-duplicate phone numbers; at least one guardian per learner"],
+            ["Opening fee balances", "Needs care", "One agreed balance per learner at a single cut-off date"],
+            ["Marks and assessment history", "Partial", "Decide what carries forward; clean term and subject labels"],
+            ["Attendance history", "Usually not migrated", "Start fresh at go-live; keep old registers as an archive"],
+            ["Staff and roles", "Migrates cleanly", "List staff and the system role each one needs"],
+            ["Timetables and duty rosters", "Rebuilt in-system", "Have the current timetable ready to enter or import"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "The one figure you must get right",
+          "text": "Opening fee balances are the hardest and most important data to migrate. Agree a single cut-off date, freeze the balances on that date, and load exactly those figures — because every payment after go-live is matched against them."
+        },
+        {
+          "type": "paragraph",
+          "text": "It helps to move in this order: learners first, then guardians, then opening balances. Each step gives you something to check against the spreadsheet before the next one lands, so an error is caught early rather than at the end of the import."
+        }
+      ]
+    },
+    {
+      "id": "playbook",
+      "heading": "The migration playbook — six steps",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Audit and clean your spreadsheets",
+              "text": "Find every file that matters — register, fee book, mark sheet, staff list — and remove duplicates, merged cells, and stray columns before you go near an import."
+            },
+            {
+              "title": "Map your columns to system fields",
+              "text": "Line up each spreadsheet column (name, admission number, class, guardian phone) with the matching field in the system, and fill any gaps first."
+            },
+            {
+              "title": "Import learners and opening fee balances",
+              "text": "Load the cleaned learner and guardian list, then the frozen opening balances for the agreed cut-off date."
+            },
+            {
+              "title": "Verify totals against your Excel figures",
+              "text": "Check that the system's learner count and total fee balance match the spreadsheet totals before you go live. If they differ, fix it now, not later."
+            },
+            {
+              "title": "Train the bursar and class teachers",
+              "text": "Show the bursar how payments reconcile, and the teachers how to mark attendance and enter marks — on the phones they already carry."
+            },
+            {
+              "title": "Go live and freeze the old file",
+              "text": "Pick a date, switch to the system, and mark the old spreadsheet read-only so no one keeps a parallel copy."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keeping-excel",
+      "heading": "Keeping Excel as a safety net — without running two systems",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "You do not have to delete your spreadsheets on day one — but you must stop editing them. Keep the final file as a **read-only archive** so you can look back at how a figure was reached, and export from the system whenever you need a working view."
+        },
+        {
+          "type": "paragraph",
+          "text": "The rule is simple: **one system is the source of truth, and it is the new one.** The moment staff keep updating the old file in parallel, you are back to two versions of the truth — the exact problem you migrated to escape."
+        }
+      ]
+    },
+    {
+      "id": "how-squl",
+      "heading": "How SQUL makes migration painless",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is built for the way Kenyan schools actually hold data: a class list and a fee book in Excel. You import a cleaned learner list and your opening fee balances, and you are ready to collect fees."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Go live in about two weeks** with one clean import of learners, guardians, staff, and opening fee balances.",
+            "**Automatic reconciliation keeps the opening balance honest** — because M-Pesa matching starts the day you go live, the figure you imported stays correct.",
+            "**One system replaces three files.** The register, the fee book, and the mark sheet live together, so there is no version control over WhatsApp.",
+            "**Role-based access** means only the right people can edit each dataset after go-live.",
+            "**Free term to start:** migrate, run a full term, and decide before you commit."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Bringing the fee book across?",
+          "text": "See the [bursar's guide to reconciling fees and M-Pesa](/blog/bursar-guide-reconcile-school-fees-mpesa) for the daily routine your opening balances feed into."
+        }
+      ]
+    },
+    {
+      "id": "fears",
+      "heading": "Common migration fears, answered",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "**\"We tried software once and went back to Excel.\"** That usually means the school kept both systems running at once, so nobody trusted either. This time, freeze the old file on go-live day and commit to one source of truth."
+        },
+        {
+          "type": "paragraph",
+          "text": "**\"Our secretary is not technical.\"** The tools that suit Kenyan schools work in a browser on any phone, and the daily tasks are a register and a fee check — not IT. Training is measured in hours, not weeks."
+        },
+        {
+          "type": "paragraph",
+          "text": "**\"It will disrupt the term.\"** Migration does not have to happen mid-term. Import, verify, and train before the term starts, then go live on the first day, when balances are already frozen and agreed."
+        },
+        {
+          "type": "paragraph",
+          "text": "**\"What if we lose something?\"** Keep the final spreadsheets as a read-only archive. You keep the history, and the system becomes the place where new work happens."
+        }
+      ]
+    },
+    {
+      "id": "bottom-line",
+      "heading": "The bottom line",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Schools rarely fail at migration because of the software — they fail because the spreadsheet was a mess and nobody owned the data. Treat the move as a cleanup project, follow the six steps, and the software part is the easy half."
+        },
+        {
+          "type": "paragraph",
+          "text": "You can start free for a term: import one class list, verify it against your Excel totals, and run a full term before you commit."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Do we have to migrate mid-term?",
+      "answer": "No. The cleanest time to move is the start of a new term, when opening balances are agreed. If you must move mid-term, freeze balances on a single cut-off date and load those exact figures."
+    },
+    {
+      "question": "What if our Excel file is a mess?",
+      "answer": "That is normal, and it is the first step of the playbook. Clean duplicates, merged cells, and stray columns before importing, and agree one opening balance per learner. A tidy import is worth more than a fast one."
+    },
+    {
+      "question": "Will we lose historical records?",
+      "answer": "Keep your final spreadsheets as a read-only archive so nothing is lost. Marks and assessment history can often be carried forward in part; older attendance is usually best left in the archive and started fresh at go-live."
+    },
+    {
+      "question": "How long does migration take?",
+      "answer": "With a cleaned class list and opening balances ready, most schools go live in about two weeks. The main work is on the data, not the software."
+    },
+    {
+      "question": "Can we keep using Excel after we move?",
+      "answer": "For reference, yes — export from the system whenever you need a working view. Just do not keep editing the old file, or you will recreate the two-versions problem you moved to fix."
+    }
+  ],
+  "cta": {
+    "heading": "Bring your school out of the spreadsheet",
+    "body": "Start your free term with SQUL — import one class list, verify it against your Excel totals, and run a full term before you commit.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "Paper registers vs digital school records", "href": "/blog/paper-registers-vs-digital-school-records" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "Free vs paid school management software in Kenya", "href": "/blog/free-vs-paid-school-management-software-kenya" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" }
+  ]
+}

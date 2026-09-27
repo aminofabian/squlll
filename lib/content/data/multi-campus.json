@@ -1,0 +1,275 @@
+{
+  "slug": "multi-campus-school-management-system",
+  "path": "/blog/multi-campus-school-management-system",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Multi Campus School Management System in Kenya (2026)",
+  "h1": "Multi Campus School Management System in Kenya (2026)",
+  "description": "Running two or more campuses? See how a multi campus school management system gives separate campus control and one consolidated principal report.",
+  "primaryKeyword": "multi campus school management system",
+  "secondaryKeywords": [
+    "school group management software Kenya",
+    "multi branch school system Kenya",
+    "consolidated school reports for directors",
+    "school management software for academies Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Multi-campus",
+  "intro": [
+    "Opening a second campus changes your job. What worked as a single head teacher becomes group leadership: more learners, more staff, more fee structures — and a director who needs one straight answer about the whole school, not three. If you are comparing the [school management software in Kenya](/blog/best-school-management-software-kenya) market, multi-campus support is usually the feature that makes or breaks the choice.",
+    "Most systems force a bad choice: one messy shared account across every campus, or a separate subscription per branch with no group reporting. A multi campus school management system should give you **separate on the ground, joined up at the top**.",
+    "This guide explains the two ways Kenyan groups run campuses, what breaks when each branch runs its own system, what a multi-campus system must do, and how to roll out campus by campus without a months-long IT project."
+  ],
+  "sections": [
+    {
+      "id": "two-ways",
+      "heading": "One school or many? The two ways groups run campuses",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Before comparing software, be clear about how your group actually operates. Kenyan school groups tend to fall into two models, and they need different things from a system."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Centralised.** One school with shared pupils and a shared fee structure, spread across sites. Learners may move between sites, and leadership treats the group as a single institution.",
+            "**Federated.** Separate fees, budgets and staff per campus, under one owner or board. Each campus is operationally independent, but leadership still needs a group-level picture."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Most real groups sit somewhere between the two. The point is that a good system must support **both** without forcing you to rebuild your structure to fit the software."
+        }
+      ]
+    },
+    {
+      "id": "what-breaks",
+      "heading": "What breaks when each campus runs its own system",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "On paper, a subscription per branch looks simple. In practice it creates three problems that grow every term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Two versions of the truth on enrolment and arrears.** Each campus reports its own numbers, and combining them is a spreadsheet exercise that no one trusts.",
+            "**Duplicated data entry and duplicated cost.** The same staff, the same families and the same fee rules are entered again and again — and paid for again and again.",
+            "**No group-level report for the director or board.** When the board asks how the group is performing, there is no single answer, only a folder of branch exports."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "must-do",
+      "heading": "What a multi campus system must do",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Four capabilities separate a real multi-campus system from a single-school product sold twice."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Separate classes, staff and fee structures per campus.** Each branch keeps its own timetable, staff list and fee rules — Grade stages and amounts can differ entirely.",
+            "**One learner record that can move between campuses.** A learner who transfers within the group keeps their history instead of being re-entered from scratch.",
+            "**Consolidated principal and board reports.** Enrolment, collections and arrears roll up across campuses in one place, with exports ready for a meeting.",
+            "**Role-based access that respects campus boundaries.** Campus staff see only their campus; leadership sees the whole group."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "multi-vs-separate",
+      "heading": "Multi campus vs separate systems per branch",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Separate system per campus vs one multi-campus system",
+          "headers": ["Requirement", "Separate system per campus", "One multi campus system (SQUL)"],
+          "rows": [
+            ["Group reporting", "None — export and combine by hand", "**Consolidated** for principal and board"],
+            ["Cost per branch", "A subscription per branch", "**One platform**, campuses as needed"],
+            ["Learner transfers", "Re-enter the learner at the new campus", "**Record moves** with the learner"],
+            ["Fee structures", "Set separately, reported separately", "**Per campus**, consolidated upward"],
+            ["Staff access", "Staff log into each branch separately", "**Role-based**, scoped to their campus"],
+            ["Onboarding time", "Repeats for every branch", "**Roll out campus by campus**"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The deciding factor is rarely the licence line. It is the **group report**: if leadership cannot see enrolment, collections and arrears across campuses without manual work, the branches are effectively separate schools sharing a name."
+        }
+      ]
+    },
+    {
+      "id": "consolidated-reporting",
+      "heading": "Consolidated reporting for the principal and the board",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Consolidation is where a multi-campus system earns its keep. Leadership should not have to ask each branch for figures and then reconcile them."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Enrolment across campuses** — total and per site, by grade or form, so growth and capacity are visible at a glance.",
+            "**Collections and arrears across campuses** — what has come in and what is outstanding, rolled up for the group and drillable by branch.",
+            "**Exports ready for a board meeting** — a single summary the director can present, rather than stapling separate branch reports together."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Match the report to the decision",
+          "text": "Ask a vendor to show the exact consolidated report the board will see, not a mock-up. The wording \"consolidated reports\" should map to a real output."
+        },
+        {
+          "type": "paragraph",
+          "text": "There is also a governance point here. A board that meets once a term needs figures it can trust on the day, not a request to \"allow us to confirm with the branches\". Consolidated reporting turns a negotiation into a fact, which makes the meeting shorter and the decisions firmer."
+        }
+      ]
+    },
+    {
+      "id": "fees-mpesa",
+      "heading": "Fees and M-Pesa across campuses",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Fees are where multi-campus accounting usually gets messy — and where automatic reconciliation matters most."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Separate Paybills or tills, one reconciliation view.** Each campus can keep its own Paybill or till, while leadership sees all collections together.",
+            "**Automatic matching per campus, per learner.** Payments are matched to the right learner at the right campus using the admission number or registered phone, with balances and receipts updated the same day.",
+            "**Clean arrears by site.** Because every payment reconciles as it arrives, the group arrears figure is trustworthy, not a best guess."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For how that matching works, see [automatic M-Pesa reconciliation for schools](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "rollout",
+      "heading": "Rolling out campus by campus (and going live in ~2 weeks)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A multi-campus rollout should not be a big-bang IT project. The sane approach is to onboard one campus fully, prove it, then repeat."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Start with one campus",
+              "text": "Import that campus's learners, classes, staff and fee structure, and run a real term on it — including its actual Paybill or till."
+            },
+            {
+              "title": "Confirm the consolidated view",
+              "text": "Check that the principal and board report reads correctly for the first campus, so the template is right before more sites join."
+            },
+            {
+              "title": "Add the next campus",
+              "text": "Repeat the import for the second site, keeping its fee structure separate. Because the platform is already live, each campus can go live in about two weeks."
+            },
+            {
+              "title": "Extend role-based access",
+              "text": "Give each campus's staff scoped access as it joins, so boundaries stay clean from day one."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "heading": "Data security and access across campuses",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "More campuses means more people handling learner data, so access control matters more, not less."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Role-based permissions** so campus staff see only their campus, while leadership sees the group — see [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software) for what to insist on.",
+            "**Daily backups** across every campus, so a lost device or a bad edit is recoverable.",
+            "**Data Protection Act awareness** baked into how the group handles learner and payment records, not bolted on afterwards."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A useful test at group level is to ask who can see a learner's record once that learner has moved between campuses. If the answer is \"everyone with a login\", the access model is too loose. Boundaries should follow people, not just campuses."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is multi-campus by design: run each campus separately with its own classes and fee structures, while the principal sees consolidated reports."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Multi-campus by design** — separate campuses on one platform, no per-branch re-entry of the same data.",
+            "**Consolidated principal and board reports** across campuses for enrolment, collections and arrears, with exports ready for a meeting.",
+            "**Automatic M-Pesa (Daraja) reconciliation per campus** — separate Paybill or till, payments matched to the right learner, balances and receipts the same day.",
+            "**Role-based access** so campus staff see only their campus while leadership sees the group.",
+            "**Daily backups and Data Protection Act awareness** across every campus.",
+            "**Go live in about two weeks per campus**, onboarding one branch and then the next."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Start with one campus",
+          "text": "Bring your campuses together on SQUL — start a free term on your first campus, run its real Paybill through the system, then decide about the rest."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can one account run two campuses with different fee structures?",
+      "answer": "Yes, with a system built for it. Each campus keeps its own classes, staff and fee structure, while leadership sees a consolidated view — that is how SQUL models a group."
+    },
+    {
+      "question": "Can a learner transfer between our campuses and keep their record?",
+      "answer": "With a multi-campus system, yes — the learner record moves with the learner instead of being re-entered at the new campus, so fees, attendance and marks stay in one history."
+    },
+    {
+      "question": "Is multi-campus more expensive than separate systems?",
+      "answer": "It usually works out cheaper, because you run one platform instead of a subscription per branch — and you save the staff time spent stapling together separate reports. Confirm current pricing with the vendor."
+    }
+  ],
+  "cta": {
+    "heading": "Bring your campuses together on SQUL",
+    "body": "Start a free term on your first campus, run its real Paybill through the system, and see consolidated reports before you commit the rest.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "Learner data protection in Kenya", "href": "/blog/learner-data-protection-kenya-school-software" },
+    { "title": "School management system pricing in Kenya", "href": "/blog/school-management-system-price-in-kenya" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" }
+  ]
+}

@@ -1,0 +1,282 @@
+{
+  "slug": "school-management-system-price-in-kenya",
+  "path": "/blog/school-management-system-price-in-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "School Management System Price in Kenya: 2026 Guide",
+  "h1": "School Management System Price in Kenya: 2026 Guide",
+  "description": "School management system price in Kenya explained: pricing models, realistic budget bands, hidden costs and how to compare quotes per learner per term.",
+  "primaryKeyword": "school management system price in Kenya",
+  "secondaryKeywords": [
+    "school management software cost Kenya",
+    "school software pricing per term",
+    "school management system quotation Kenya",
+    "how much does school software cost in Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Pricing & Budget",
+  "intro": [
+    "**Quick answer:** Kenyan school software is priced in four common ways — a per-term subscription per school or campus, a per-learner fee, a one-off licence plus support, or a free-but-limited tier. To compare fairly, translate every quote into a **cost per learner, per term**, and check what is excluded. The [best school management software in Kenya](/blog/best-school-management-software-kenya) guide ranks the options; this page is about what they cost and how to read the quotes.",
+    "This guide explains the models Kenyan vendors actually use, the budget bands schools plan around, the hidden costs that surprise people, and why a **free term, then per-term pricing** model lowers your risk."
+  ],
+  "sections": [
+    {
+      "id": "pricing-models",
+      "heading": "How Kenyan school software is priced (the four common models)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Almost every quote you receive will be a variation of one of four models. Recognising the model helps you see what is really being sold."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Per-term subscription.** A flat fee per school or per campus, billed each of the three terms. Predictable for a school with stable enrolment.",
+            "**Per-learner pricing.** A rate multiplied by the number of learners, per term. Scales with growth, but jumps when enrolment rises.",
+            "**One-off licence + support.** An upfront payment plus an annual support fee. Suits capital-budget approvals.",
+            "**Free tier.** KES 0, usually limited. Good for trying a tool, but the core features you need may sit behind a paywall."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "per-term",
+      "heading": "Per-term subscription (per school or per campus)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is the model most Kenyan schools find easiest to budget, because it maps to how schools run: three terms, one fee each. The key question is whether the price is **per school or per campus** — a group with three branches should confirm the campus terms before signing."
+        }
+      ]
+    },
+    {
+      "id": "per-learner",
+      "heading": "Per-learner pricing",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Per-learner pricing looks fair — you pay for what you use — but it makes the cost rise exactly when growth should feel like a good thing. Model it at your current and projected enrolment before you commit."
+        }
+      ]
+    },
+    {
+      "id": "licence-free",
+      "heading": "One-off licence + support, and \"free but limited\" tools",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A licence spreads the cost upfront and then asks for annual support. Free tiers and open-source tools remove the licence fee, but often leave M-Pesa reconciliation, WhatsApp messaging and CBC report cards to you. That trade-off is the subject of [free vs paid school management software](/blog/free-vs-paid-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "what-you-pay-for",
+      "heading": "What you actually pay for (and what should be included)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The subscription is only part of the story. Understand what sits inside the core price and what is billed on top."
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "heading": "Core: fees/M-Pesa, communication, records",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "For a Kenyan school, the core should cover the three jobs that matter most: **automatic M-Pesa reconciliation**, **WhatsApp and SMS** to parents, and **CBC and 8-4-4** report cards. If any of these is a bolt-on, your real cost is higher than the headline."
+        }
+      ]
+    },
+    {
+      "id": "optional",
+      "heading": "Optional: message credits, training, data migration",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Training, data import and message volumes are the usual extras. Ask whether **SMS and WhatsApp messages are bundled or billed as credits**, whether **data import and bursar training** are included in onboarding, and whether a second campus is a separate line."
+        }
+      ]
+    },
+    {
+      "id": "compare-fairly",
+      "heading": "Comparing quotes fairly — cost per learner, per term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Quotes arrive in different shapes, so normalise them. Divide the total term cost by the number of learners to get a **cost per learner, per term** — then compare that single number."
+        },
+        {
+          "type": "table",
+          "caption": "Pricing models at a glance",
+          "headers": ["Pricing model", "Typical basis", "Best for", "Watch out for"],
+          "rows": [
+            ["Per-term subscription", "Flat per school/term", "Stable enrolment", "What's excluded per campus?"],
+            ["Per-learner", "x KES per learner/term", "Growing schools", "Cost jumps with enrolment"],
+            ["One-off licence", "Upfront + support", "Capex budgets", "Upgrade and support fees"],
+            ["Free tier", "KES 0, limited", "Trying things out", "Paywalled core features"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "**Illustrative note:** the \"typical basis\" column describes the *shapes* of pricing models, not current market rates. Treat all third-party figures as illustrative and confirm them on each vendor's live site before you budget."
+        }
+      ]
+    },
+    {
+      "id": "hidden-costs",
+      "heading": "Hidden costs that surprise Kenyan schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The extras are where budgets go wrong. Three catch schools most often."
+        }
+      ]
+    },
+    {
+      "id": "message-costs",
+      "heading": "SMS/WhatsApp message costs",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "If messages are billed as credits, a term with heavy fee reminders and absence alerts costs more than a quiet one. Ask for the rate and whether it is bundled. Message rates change, so treat any figure you are quoted as illustrative."
+        }
+      ]
+    },
+    {
+      "id": "import-training-hardware",
+      "heading": "Data import, training and hardware",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Importing learners and guardian records, training the bursar and teachers, and any hardware or connectivity upgrades are real costs. Good onboarding includes them; confirm what is included rather than assuming."
+        }
+      ]
+    },
+    {
+      "id": "budget",
+      "heading": "What a realistic annual software budget looks like",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Rather than quote a market rate, build your budget from your own numbers. A simple approach:"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Take your **cost per learner, per term** from each quote.",
+            "Multiply by your **learner count** and by **three terms**.",
+            "Add **message credits**, **training** and any **second campus** line.",
+            "Compare the total against the **bursar hours and unreconciled fees** the system removes."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Budget on value, not just price",
+          "text": "The cheapest quote is rarely the cheapest system. A slightly higher subscription that reconciles M-Pesa automatically and reaches every parent can cost less per term than the time it saves."
+        }
+      ]
+    },
+    {
+      "id": "free-term",
+      "heading": "Why \"free term, then per-term\" lowers your risk",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The hardest part of buying school software is not the price — it is the fear of paying for a term and finding it does not fit. Starting with a **free term** removes that fear."
+        },
+        {
+          "type": "list",
+          "items": [
+            "You test with **real learners, real Paybill or till payments, and a real report card** before you pay.",
+            "You see the **actual bursar time saved**, not a claim in a proposal.",
+            "You can **walk away** at the end of the term if it does not fit, with no licence to write off.",
+            "Only then do you agree **per-term pricing**, with live numbers behind the decision."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL keeps pricing simple and honest: a **free term to start, then per-term pricing**, with no invented figures and no lock-in before you have seen it work."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa (Daraja) reconciliation** that reduces bursar time — the biggest cost a free tool leaves behind.",
+            "**WhatsApp and SMS in one place**, so there is no separate messaging vendor to pay.",
+            "**CBC and 8-4-4 report cards** from the same system, so you do not buy a separate exam tool.",
+            "**Onboarding includes data import and bursar training**, so the real total is clearer.",
+            "**Multi-campus** consolidation and **role-based access with daily backups** as standard.",
+            "**Live in about two weeks**, so the free term is short and decisive."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Want the numbers?",
+          "text": "See how to compare models in [free vs paid school management software in Kenya](/blog/free-vs-paid-school-management-software-kenya) and how to run a fair evaluation in [how to choose a school management system in Kenya](/blog/how-to-choose-school-management-system-kenya)."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How much does school management software cost in Kenya?",
+      "answer": "It depends on the model. Kenyan vendors commonly price per term (per school or campus), per learner, as a one-off licence with support, or as a free-but-limited tier. Compare every quote as a cost per learner, per term. SQUL offers a free term to start, then per-term pricing."
+    },
+    {
+      "question": "Is per-learner or per-term pricing cheaper?",
+      "answer": "Neither is universally cheaper. Per-term suits stable enrolment; per-learner punishes growth. Model both at your current and projected numbers before deciding."
+    },
+    {
+      "question": "Are SMS and WhatsApp messages included in the price?",
+      "answer": "Sometimes bundled, sometimes billed as credits. Ask directly, and treat any per-message rate as illustrative, because messaging costs change over time."
+    },
+    {
+      "question": "Is the free term genuinely free?",
+      "answer": "The offer exists so you can test on real data before you commit. Confirm the terms with the vendor, then use the term to reconcile real payments and print a real report card."
+    },
+    {
+      "question": "What hidden costs should we budget for?",
+      "answer": "Message credits, data import, training, and any additional campuses are the usual extras. Confirm what onboarding includes so the total, not just the subscription, is on the table."
+    }
+  ],
+  "cta": {
+    "heading": "See the real cost before you commit",
+    "body": "Start your free term with SQUL, then decide on per-term pricing with live numbers from your own school.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "Free vs paid school management software in Kenya", "href": "/blog/free-vs-paid-school-management-software-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" }
+  ]
+}

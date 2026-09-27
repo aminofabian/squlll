@@ -1,0 +1,158 @@
+{
+  "slug": "school-calendar-term-planning-kenya",
+  "path": "/blog/school-calendar-term-planning-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "The School Calendar and Term Planning in Kenya (2026)",
+  "h1": "The School Calendar and Term Planning in Kenya (2026 Guide)",
+  "description": "The school calendar and term planning in Kenya — mapping the term cycle, planning exams and reports, communicating dates, and reviewing what slipped.",
+  "primaryKeyword": "school calendar Kenya",
+  "secondaryKeywords": [
+    "school term planning Kenya",
+    "school term dates Kenya",
+    "school exam schedule Kenya",
+    "school yearly plan Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Calendar",
+  "intro": [
+    "A school term has a rhythm, and the schools that run calmly are the ones that plan it. Term planning is the discipline of deciding, in advance, when teaching happens, when assessment happens, and when parents hear from the school. This guide covers **the school calendar and term planning in Kenya**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "Do it once properly and every term gets easier."
+  ],
+  "sections": [
+    {
+      "id": "cycle",
+      "heading": "The shape of a term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Window", "Focus", "Who is involved"],
+          "rows": [
+            ["Before opening", "Admissions, fees, staffing, timetable", "Head, bursar, HODs"],
+            ["Weeks 1–2", "Fee collection, settling in, baseline checks", "Bursar, teachers"],
+            ["Mid-term", "Teaching depth, continuous assessment", "Teachers, HODs"],
+            ["End-of-term exams", "Assessment and marking", "All teachers"],
+            ["Closing", "Reports, results, arrears review", "Head, bursar"],
+            ["Between terms", "Review, repair, recruit, plan", "Leadership"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "heading": "Planning the term in advance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Fix the key dates",
+              "text": "Opening, closing, exams, and any events — published before the term begins."
+            },
+            {
+              "title": "Map coverage",
+              "text": "Agree schemes of work so teaching keeps pace across streams. See [implementing CBC](/blog/cbc-implementation-school-kenya)."
+            },
+            {
+              "title": "Schedule assessment",
+              "text": "Decide which strands or topics are assessed, and when."
+            },
+            {
+              "title": "Publish timetables and rosters",
+              "text": "Class timetables and staff duty rosters, visible to everyone."
+            },
+            {
+              "title": "Plan the communication moments",
+              "text": "Fee structure, reminders, results — on WhatsApp and SMS."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "communication",
+      "heading": "Communicating the calendar",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Parents plan around your dates the moment you share them. Send term dates and exam periods early over WhatsApp and SMS, remind them before closing, and confirm fee payment windows so families are not caught out. See [parent and community engagement](/blog/parent-engagement-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "heading": "Reviewing the term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A short review between terms turns experience into improvement. Ask what slipped, why, and what next term will do differently. Feed the findings straight into the next budget and calendar."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Coverage** — did teaching finish the planned work?",
+            "**Results** — where did learners struggle, and what will you change?",
+            "**Finances** — arrears trend and spend versus budget.",
+            "**Operations** — what broke, what was late, what needs repair."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Dates announced late** — families and staff caught unprepared.",
+            "**No visible timetables** — lessons and duties uncertain.",
+            "**Assessment left to the last minute** — reports late and rushed.",
+            "**No between-terms review** — the same problems repeat.",
+            "**Exam periods unplanned** — clashing with other events."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What should a Kenyan school term calendar include?",
+      "answer": "Opening and closing dates, exam periods, key events, teaching coverage milestones, and the communication moments for fees and results — published before the term begins."
+    },
+    {
+      "question": "When should term dates be shared with parents?",
+      "answer": "As early as possible, ideally before the end of the previous term, over WhatsApp and SMS, with reminders before closing."
+    },
+    {
+      "question": "How do we plan assessment across a term?",
+      "answer": "Decide up front which strands or topics will be assessed and when, so marks are captured as teaching happens and reports are not rushed at the end."
+    },
+    {
+      "question": "Why review the term afterwards?",
+      "answer": "A short between-terms review turns experience into improvement — coverage, results, finances and operations all feed the next budget and calendar."
+    }
+  ],
+  "cta": {
+    "heading": "Publish the calendar, keep everyone on rhythm",
+    "body": "SQUL handles timetables and parent updates so your term runs to plan — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "Implementing CBC in your school", "href": "/blog/cbc-implementation-school-kenya" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "slug": "digital-transformation-schools-kenya",
+  "path": "/blog/digital-transformation-schools-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "Digital Transformation for Kenyan Schools (2026 Guide)",
+  "h1": "Digital Transformation for Kenyan Schools (2026 Guide)",
+  "description": "Digital transformation for Kenyan schools — what to digitise first, choosing tools, staff training, data protection and managing change without disruption.",
+  "primaryKeyword": "digital transformation for schools Kenya",
+  "secondaryKeywords": [
+    "school digitisation Kenya",
+    "school management system adoption",
+    "going paperless school Kenya",
+    "school technology strategy"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Digital",
+  "intro": [
+    "Digital transformation sounds grand, but for a Kenyan school it is refreshingly practical: stop retyping the same information into three places, and start collecting fees and talking to parents without the manual grind. This guide covers **digital transformation for schools in Kenya** — what to digitise first, how to choose tools, and how to bring staff along. It is part of our guide to [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "The goal is not technology for its own sake. It is less work and better records."
+  ],
+  "sections": [
+    {
+      "id": "what",
+      "heading": "What digital transformation means for a school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "It means moving the records and routines that create the most friction onto systems that do the repetitive work: matching payments, sending messages, storing marks, and producing reports. Done well, it removes retyping and makes every record agree."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Not the same as buying a laptop trolley",
+          "text": "Devices are optional. The transformation is in the workflow — a fee payment that matches itself, a message that reaches every parent, a report that prints."
+        }
+      ]
+    },
+    {
+      "id": "sequence",
+      "heading": "What to digitise first",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Sequence by pain, not by ambition. Start where the manual work costs the most hours and the most money."
+        },
+        {
+          "type": "table",
+          "headers": ["Priority", "Digitise", "Why first"],
+          "rows": [
+            ["1", "**Fee collection & M-Pesa**", "Biggest time sink and the school's revenue"],
+            ["2", "**Parent messaging**", "Reduces arrears, disputes and questions"],
+            ["3", "**Learner records & attendance**", "One source of truth per learner"],
+            ["4", "**CBC marks & report cards**", "Ends retyping and late reports"],
+            ["5", "**Timetables & rosters**", "Removes daily confusion"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "choose",
+      "heading": "Choosing tools that fit",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Start with one platform, not five** — records that agree beat features that don't.",
+            "**Mobile-first** — staff use phones more than desktops.",
+            "**Kenyan-first features** — automatic M-Pesa, WhatsApp and SMS, CBC reports.",
+            "**Fast to go live** — weeks, not a term-long project.",
+            "**Able to leave** — your data exportable, no lock-in."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "See the [best school management software in Kenya](/blog/best-school-management-software-kenya) and the [buyer's guide](/blog/how-to-choose-school-management-system-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "change",
+      "heading": "Bringing staff along",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Pick a champion",
+              "text": "One enthusiastic staff member who learns the system deeply and helps others."
+            },
+            {
+              "title": "Train by role",
+              "text": "Bursars, teachers and admins each learn only what they use."
+            },
+            {
+              "title": "Show an early win",
+              "text": "A same-day M-Pesa receipt converts sceptics faster than any memo."
+            },
+            {
+              "title": "Support through the first term",
+              "text": "Friction in week one becomes a habit by week ten if supported."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "heading": "Data protection is part of the plan",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Digitising means more learner data in one place, so security and lawful handling matter. Insist on role-based access, backups, and a clear export policy. See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software)."
+        }
+      ]
+    },
+    {
+      "id": "measure",
+      "heading": "Measuring progress",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Hours saved** — especially in fee reconciliation and messaging.",
+            "**Arrears trend** — falling arrears show parents are engaged.",
+            "**Report turnaround** — how fast term reports reach parents.",
+            "**Record accuracy** — fewer disputes about balances or marks."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Boiling the ocean** — digitising everything at once.",
+            "**Too many tools** — records that disagree with each other.",
+            "**No training** — a good system used badly.",
+            "**Ignoring data protection** — learner data handled loosely.",
+            "**Choosing on price alone** — the cheapest option rarely is."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What should a Kenyan school digitise first?",
+      "answer": "Fee collection and M-Pesa reconciliation first, because they consume the most time and involve the school's revenue — then parent messaging, learner records and attendance, and CBC marks and report cards."
+    },
+    {
+      "question": "Do schools need new devices to go digital?",
+      "answer": "Not necessarily. Most systems are browser-based and work on the phones staff already have. The transformation is in the workflow, not the hardware."
+    },
+    {
+      "question": "How do we get staff to adopt a school system?",
+      "answer": "Pick one champion, train each role only on what they use, show an early win such as a same-day M-Pesa receipt, and support staff through the first term."
+    },
+    {
+      "question": "What about learner data when going digital?",
+      "answer": "Insist on role-based access, daily backups and a clear export policy. Learner records are personal data under Kenya's Data Protection Act and must be handled lawfully."
+    }
+  ],
+  "cta": {
+    "heading": "Digitise the work that costs the most hours",
+    "body": "SQUL starts with automatic M-Pesa and parent messaging, then records and reports — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "Move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "Learner data protection in Kenya", "href": "/blog/learner-data-protection-kenya-school-software" }
+  ]
+}

@@ -1,0 +1,270 @@
+{
+  "slug": "school-management-software-boarding-schools-kenya",
+  "path": "/blog/school-management-software-boarding-schools-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "School Management Software for Boarding Schools in Kenya (2026)",
+  "h1": "School Management Software for Boarding Schools in Kenya (2026)",
+  "description": "What boarding schools in Kenya need from school management software — automatic M-Pesa fees, WhatsApp parent updates, duty rosters and dorm roll call.",
+  "primaryKeyword": "school management software for boarding schools Kenya",
+  "secondaryKeywords": [
+    "boarding school management system Kenya",
+    "school fees software boarding Kenya",
+    "boarding school parent communication Kenya",
+    "dorm roll call and duty rosters Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Boarding schools",
+  "intro": [
+    "Boarding schools ask more of a management system than day schools do. Parents live far away, fees carry a boarding levy, roll call happens in the dormitory and not just the classroom, and staff work overnight routines that a timetable alone cannot capture. If you are comparing the [best school management software in Kenya](/blog/best-school-management-software-kenya), this guide focuses on what boarding schools specifically need.",
+    "We walk through the fees, communication, and records that boarders' parents care about, why a spreadsheet plus WhatsApp groups breaks down at scale, and the questions to ask before you choose a system for a boarding or mixed day-and-boarding school."
+  ],
+  "sections": [
+    {
+      "id": "whats-different",
+      "heading": "What makes a boarding school different",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A boarding school runs two shifts of life on one campus. The office side looks familiar, but the operating reality pushes a management system into places a day school never goes:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Parents are far away.** A parent in another county cannot walk in to ask a question, so almost every update — fees, health, discipline, exam results — has to travel to them.",
+            "**Fees include a boarding levy.** Tuition, boarding, and activity charges must be broken down and reconciled together, term by term.",
+            "**Roll call is twice a day, in two places.** A learner can be marked present in class and still be missing from the dorm.",
+            "**Staff run overnight routines.** Duty rosters cover matrons, cooks, and security, not just teaching staff.",
+            "**Reports are posted or collected.** Closing-day logistics and end-of-term documents matter more when learners travel home."
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "How day-school assumptions break in a boarding context",
+          "headers": ["Assumption", "Day school", "Boarding school"],
+          "rows": [
+            ["Fees", "Tuition and levies", "Tuition + boarding + activities"],
+            ["Attendance", "Morning roll in class", "Class roll **and** dorm roll"],
+            ["Parent contact", "Often in person", "Almost entirely remote"],
+            ["Staff rosters", "Teaching duties", "Teaching **plus** overnight duties"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "why-generic-fails",
+      "heading": "Why generic software falls short for boarding",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Many schools start with Excel plus a WhatsApp group per class. It works until term opens: hundreds of fee payments land in a few days, parents flood the office with \"did you receive my money?\", and the dorm register lives in a separate book from the class register."
+        },
+        {
+          "type": "table",
+          "headers": ["Need", "Excel + WhatsApp", "Boarding-ready system"],
+          "rows": [
+            ["Match M-Pesa to the right boarder", "Manual, by hand", "**Automatic**"],
+            ["Boarding levy in the fee structure", "Separate spreadsheet", "**One term fee structure**"],
+            ["Reach distant parents", "Group chats, missed messages", "**WhatsApp + SMS**"],
+            ["Duty rosters for night staff", "Notice board", "**Published rosters**"],
+            ["Dorm and class roll call", "Two registers", "**Same-day, one record**"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fees",
+      "heading": "Fees and M-Pesa for boarding schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Fees are where boarding schools feel the most pressure, because the amounts are larger and the payment window is shorter. The right system handles the boarding levy the way parents and auditors expect — as one term fee structure, not three disconnected figures."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa reconciliation.** Parents pay to your Paybill or till; each payment is matched to the right boarder, and the balance and receipt update the same day.",
+            "**One term fee structure.** Tuition, boarding, and activity charges are broken down together so a boarder's balance is a single, correct number.",
+            "**Arrears by class or dorm.** See who owes what before closing day, not after.",
+            "**Receipts to distant parents.** A parent who pays from another county gets a receipt on WhatsApp or SMS the same day."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "The reconciliation deep-dive",
+          "text": "For how automatic matching works end to end, see [how M-Pesa integration works in school software](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "comms",
+      "heading": "Keeping boarding parents informed",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "For a boarding parent, distance turns every unanswered question into anxiety. Communication is not a nice-to-have; it is the service parents are actually paying for."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Term dates and opening reminders** over WhatsApp and SMS, so travel is planned in advance.",
+            "**Absence and roll-call alerts.** If a boarder is not in class or not in the dorm, the parent hears it the same day.",
+            "**Exam results and report notices** sent as learners prepare to travel home.",
+            "**Fee reminders** sent only once a balance is confirmed, so they reach real defaulters."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Two channels, one inbox",
+          "text": "Not every guardian uses WhatsApp. Sending on [WhatsApp and SMS](/blog/school-fee-reminder-sms-whatsapp-kenya) from one place means no parent is left out."
+        }
+      ]
+    },
+    {
+      "id": "routines",
+      "heading": "Timetables, duty rosters and dorm roll call",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Boarding life is a schedule, and the schedule changes often. A system should publish changes to staff instantly rather than pinning a new paper copy on the notice board."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Publish the class timetable",
+              "text": "Form 3 West's Friday lessons are visible to every teacher the moment you publish."
+            },
+            {
+              "title": "Publish the duty roster",
+              "text": "Matron, cook, and security duties for the week are assigned and visible, so overnight coverage is never guesswork."
+            },
+            {
+              "title": "Record dorm roll call",
+              "text": "Evening and morning attendance is captured alongside the class roll, so the two never contradict each other."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "heading": "Learner records, health and discipline",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Every boarder needs one profile — admission number, class, guardian contacts, notes, and discipline history — instead of a file in the office and a separate book in the dormitory. When a parent calls, staff should be able to answer from one screen."
+        },
+        {
+          "type": "paragraph",
+          "text": "Because these records include sensitive notes, access matters. Role-based permissions keep bursars, teachers, and administrators within their own scope, and daily backups mean a single lost device is not a lost record. For what to insist on, see [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software)."
+        }
+      ]
+    },
+    {
+      "id": "multi-campus",
+      "heading": "Mixed day and boarding, or multiple campuses",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Many Kenyan schools run a day section and a boarding section, or a main campus plus a satellite. The system should let each run with its own classes and fee structures while the principal sees consolidated reports. See [managing multi-campus schools with one system](/blog/multi-campus-school-management-system) for how that works."
+        }
+      ]
+    },
+    {
+      "id": "how-to-choose",
+      "heading": "How to choose a boarding-ready system",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**\"Does M-Pesa reconcile automatically, or does my bursar import a statement?\"** For large boarding payments, manual matching is where errors and delays live.",
+            "**\"Can one term fee structure carry tuition, boarding, and activities together?\"** If boarding is a separate ledger, you will chase two balances for one learner.",
+            "**\"Can we record both class and dorm attendance?\"** Two registers in two systems always disagree.",
+            "**\"How do you reach a parent who is not on WhatsApp?\"** The answer should be SMS, not \"we ask them to join a group\".",
+            "**\"How are overnight staff duties published?\"** Duty rosters should be digital and instant.",
+            "**\"How fast can we go live before opening day?\"** You do not want a term-long migration project."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL was built for Kenyan schools, and boarding schools use it for the same four jobs that matter most: getting fees reconciled, reaching distant parents, running the daily schedule, and keeping one clean record per learner."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa reconciliation** so boarding fees and levies match to the right learner the same day.",
+            "**WhatsApp and SMS** updates for parents who are far from the school gate.",
+            "**Timetables and duty rosters** published instantly, including overnight staff.",
+            "**Same-day attendance** from class and dorm, with parent alerts.",
+            "**Multi-campus** support for schools running day and boarding, or several sites.",
+            "**Live in about two weeks** — import learners and start fee collection before opening day."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Check your specific needs",
+          "text": "Every boarding school has its own routines — pocket-money ledgers, exeat books, or a clinic log may sit outside the core system. Ask any vendor to show your exact workflow in a live demo, not a slide."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can school management software handle boarding fees and levies?",
+      "answer": "Yes. A boarding-ready system puts tuition, boarding, and activity charges into one term fee structure per learner, then reconciles M-Pesa payments against that single balance automatically. SQUL does this and issues same-day receipts."
+    },
+    {
+      "question": "How do boarding parents get updates when they live far away?",
+      "answer": "By WhatsApp and SMS. Term dates, absence alerts, exam notices, and fee reminders reach guardians on the channel they already use, without another WhatsApp group the school has to manage."
+    },
+    {
+      "question": "Does the system support dorm roll call as well as class attendance?",
+      "answer": "The strongest systems record both against one learner record with same-day parent alerts. Two separate registers is exactly the problem to avoid."
+    },
+    {
+      "question": "Can we run a day section and a boarding section on one system?",
+      "answer": "Yes. Each section can have its own classes and fee structures while the principal sees consolidated reports. SQUL supports this through multi-campus configuration."
+    },
+    {
+      "question": "How long does it take to go live before a term opens?",
+      "answer": "Most Kenyan schools import learners and begin fee collection within about two weeks — enough to be ready before opening day, without a term-long IT project."
+    }
+  ],
+  "cta": {
+    "heading": "Give boarders' parents the same visibility as day parents",
+    "body": "Start your free term with SQUL and reconcile boarding fees, send WhatsApp and SMS updates, and run class and dorm roll call from one place.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "How M-Pesa integration works in school software", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "Automating fee reminders over SMS and WhatsApp", "href": "/blog/school-fee-reminder-sms-whatsapp-kenya" },
+    { "title": "Managing multi-campus schools with one system", "href": "/blog/multi-campus-school-management-system" },
+    { "title": "Attendance tracking with parent SMS alerts", "href": "/blog/student-attendance-tracking-parent-sms" },
+    { "title": "School management software for primary schools in Kenya", "href": "/blog/school-management-software-primary-schools-kenya" }
+  ]
+}

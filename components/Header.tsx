@@ -11,13 +11,14 @@ type HeaderProps = {
 const HERO_NAV = [
   { label: "Schools", href: "/schools" },
   { label: "Students", href: "/students" },
-  { label: "Academics", href: "/academics" },
+  { label: "Guides", href: "/blog" },
   { label: "Fees", href: "/register" },
 ] as const
 
 const DEFAULT_NAV = [
   { label: "Schools", href: "/schools" },
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Guides", href: "/blog" },
   { label: "Students", href: "/students" },
   { label: "Academics", href: "/academics" },
 ] as const

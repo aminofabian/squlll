@@ -1,0 +1,259 @@
+{
+  "slug": "learner-data-protection-kenya-school-software",
+  "path": "/blog/learner-data-protection-kenya-school-software",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Learner Data Protection in Kenya: School Software Guide",
+  "h1": "Learner Data Protection in Kenya: School Software Guide",
+  "description": "What Kenyan schools must know about learner data protection, from the Data Protection Act 2019 to role-based access and backups in your school software.",
+  "primaryKeyword": "learner data protection Kenya school software",
+  "secondaryKeywords": [
+    "Data Protection Act 2019 schools",
+    "student data privacy Kenya",
+    "school data breach Kenya",
+    "ODPC compliance for schools",
+    "role-based access school software"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Data Protection",
+  "intro": [
+    "Every school in Kenya holds a large amount of personal data about children and their families. If you are choosing [school management software in Kenya](/blog/best-school-management-software-kenya), that data is one of the main things you are being trusted with — so it belongs in the buying decision, not in the small print.",
+    "This guide translates Kenya's Data Protection Act 2019 into school decisions: what counts as personal data, who is the data controller and who is the processor, what to ask a vendor, and what to insist on before you sign."
+  ],
+  "sections": [
+    {
+      "id": "why-now",
+      "heading": "Why learner data protection matters to Kenyan schools now",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A school holds names, ages, admission numbers, birth certificates, guardian phone numbers, fee balances, health notes, and assessment records. Much of that is sensitive, and almost all of it identifies a child. That is precisely the kind of data the Data Protection Act 2019 was written to protect."
+        },
+        {
+          "type": "paragraph",
+          "text": "**What counts as personal data in a school.** Anything that identifies a learner or their family: names, contacts, admission and assessment records, fee balances, photos, and health or discipline notes. Special categories — such as health data — attract extra care."
+        },
+        {
+          "type": "paragraph",
+          "text": "**Paper files, phones, and spreadsheets — where exposure actually happens.** A locked cabinet is reasonably safe. The real risk is the shadow copy: the Excel register emailed between staff, the class list in a teacher's personal phone, the fee book on a laptop that leaves the compound. Digitising without controls simply moves the risk."
+        }
+      ]
+    },
+    {
+      "id": "act-2019",
+      "heading": "Kenya's Data Protection Act 2019 in plain terms",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The Data Protection Act 2019 governs how personal data about people in Kenya is collected and used, and it created the Office of the Data Protection Commissioner (ODPC) to oversee it. At a high level, it asks anyone handling personal data to follow a set of principles:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Lawfulness, fairness, and transparency** — collect data for a lawful reason and be open about it.",
+            "**Purpose limitation** — use data only for the purpose it was collected for.",
+            "**Data minimisation** — collect only what you actually need.",
+            "**Accuracy** — keep records correct and up to date.",
+            "**Storage limitation** — do not keep data longer than necessary.",
+            "**Security** — protect data with appropriate technical and organisational measures.",
+            "**Accountability** — be able to show how you comply."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "This is not legal advice",
+          "text": "This page explains the Act at a high level for school decision-making. It is not legal advice. Confirm your school's specific obligations with a qualified Kenyan lawyer or the ODPC before relying on them."
+        }
+      ]
+    },
+    {
+      "id": "controller-vs-processor",
+      "heading": "Who is a data controller vs a data processor (school vs vendor)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Controller and processor in a school-software relationship",
+          "headers": ["Role", "Who it usually is", "What they do"],
+          "rows": [
+            ["Data controller", "The school", "Decides why and how learner and parent data is used"],
+            ["Data processor", "The software vendor", "Handles that data only on the school's instructions"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "In plain terms, the **school is usually the data controller** because it decides what learner data is collected and why. A vendor hosting that data is typically a **data processor**, acting on the school's instructions. This framing is widely used, but it should be confirmed for your specific arrangement, and schools should expect a written data-processing agreement with the vendor."
+        }
+      ]
+    },
+    {
+      "id": "rights-and-odpc",
+      "heading": "Rights of learners and parents, and the ODPC",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The Act gives data subjects rights that, for a school, usually belong to the parent or guardian acting for a child. At a high level these include the right to be informed, to access data, to have it corrected, to have it erased in some circumstances, to object to certain processing, and to lodge a complaint with the ODPC."
+        },
+        {
+          "type": "paragraph",
+          "text": "**The ODPC** is the regulator. It publishes guidance, handles complaints, and is the body schools register with and turn to when something goes wrong. For children's data, breach notification, registration requirements, and any limits on sending personal data outside Kenya, the details matter — and they change as regulations and guidance evolve."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Specifics to verify",
+          "text": "Confirm before relying on them: the children's data provisions and whether parental consent is required, breach-notification timelines, registration of data controllers and processors with the ODPC, and any restrictions on transferring personal data outside Kenya. Check the latest ODPC guidance and regulations rather than a blog summary."
+        }
+      ]
+    },
+    {
+      "id": "risks",
+      "heading": "Where schools come unstuck — risks of mismanaged learner data",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Common learner-data risks in Kenyan schools",
+          "headers": ["Risk", "Example in a Kenyan school", "Impact"],
+          "rows": [
+            ["Shadow copies of data", "An Excel fee book emailed between staff and phones", "Data leaves the school's control"],
+            ["Over-broad access", "Every staff member can open every learner's record", "Unnecessary exposure; hard to trace"],
+            ["No working backups", "A laptop fails and the term's marks are lost", "Loss of records; no way to restore"],
+            ["No breach plan", "A phone with class lists is lost, and no one knows what to do", "Slow, ad-hoc response; poor accountability"],
+            ["Keeping data too long", "Old learner files kept indefinitely after transfer", "Breaches the storage-limitation principle"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compliant-checklist",
+      "heading": "What a compliant school management system must do",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "You do not need to be a lawyer to judge a system — you need to know what good looks like and what to ask. Use this table as a checklist."
+        },
+        {
+          "type": "table",
+          "caption": "Requirements, what good looks like, and questions for the vendor",
+          "headers": ["Requirement", "What good looks like", "Question to ask the vendor"],
+          "rows": [
+            ["Role-based access", "Staff see only the learner data their role requires", "\"Can a class teacher see fee balances? Can the bursar edit marks?\""],
+            ["Daily backups", "A recent, restorable copy exists", "\"How often do you back up, and how do you restore?\""],
+            ["Data minimisation", "Only fields the school needs are collected", "\"Which fields are mandatory, and why?\""],
+            ["Retention controls", "Records can be archived or deleted on a policy", "\"How do we remove data we no longer need?\""],
+            ["Breach readiness", "A clear process for reporting and containing an incident", "\"What happens if data is exposed, and who tells us?\""],
+            ["Auditability", "Changes to records are logged", "\"Can we see who edited a learner's record and when?\""]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ask-vendor",
+      "heading": "What to ask your software vendor before you sign",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**\"Where does learner data live, and who can access it?\"** You want a clear answer about hosting and internal access.",
+            "**\"Can you show me role-based access in the live product?\"** Not a slide — the actual permission screens.",
+            "**\"How often do you back up, and how do you restore?\"** A backup you have never tested is not a backup.",
+            "**\"What is your breach-notification process?\"** You need to know how and when you would be told.",
+            "**\"Will you sign a data-processing agreement?\"** The school is usually the controller; the vendor should accept the processor role.",
+            "**\"Can we export and delete our data?\"** Portability and deletion matter at the end of a contract, not just the start."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Judge the answer, not the badge",
+          "text": "A vendor waving the word \"certified\" is telling you less than one who can show you access controls, a tested backup, and a signed processing agreement. Ask for the specifics."
+        }
+      ]
+    },
+    {
+      "id": "squl-approach",
+      "heading": "How SQUL approaches data protection",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is built with Kenya's Data Protection Act in mind, and we describe features rather than make legal promises. We are not claiming a certification here — we are telling you what the product does and how it reduces the number of places learner data can leak."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Role-based access** so staff only see the learner data their role requires.",
+            "**Daily backups** to reduce the impact of loss or accidental deletion.",
+            "**One system, fewer shadow copies** — the register, fee book, and mark sheet live in one place instead of scattered phones and spreadsheets.",
+            "**Data-protection awareness** built into how the product is designed and discussed, stated honestly and not as a legal guarantee.",
+            "**Free term to start:** review access controls and backup behaviour before you commit."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Because payments reconcile automatically through the same platform, balance data stays in one controlled place too — see how [M-Pesa integration for school management software in Kenya](/blog/mpesa-integration-school-management-software-kenya) handles that."
+        }
+      ]
+    },
+    {
+      "id": "bottom-line",
+      "heading": "The bottom line — and your next step",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Learner data protection is not a technical detail — it is part of running a school responsibly. Understand the principles, know that your school is most likely the controller, and ask a vendor to show its access controls and backups rather than tell you about them."
+        },
+        {
+          "type": "paragraph",
+          "text": "For anything specific to your school, seek legal review. Then start free with one term and inspect the controls for yourself before you commit."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Do we need parental consent to store a learner's data?",
+      "answer": "The Act sets a high bar for children's data, and parental consent is often involved, but the exact requirement depends on the circumstances and how children's data provisions are applied. Confirm the current position with a qualified lawyer or the ODPC rather than relying on a general rule."
+    },
+    {
+      "question": "Are we allowed to keep data outside Kenya?",
+      "answer": "The Act places conditions on transferring personal data outside Kenya. Whether a particular vendor's hosting is permitted depends on those conditions, so confirm the current rules and the vendor's data locations before you sign."
+    },
+    {
+      "question": "What should we do if data is exposed?",
+      "answer": "Have a plan before it happens. Contain the incident, assess the risk to learners, follow the Act's breach-reporting requirements — including notifying the ODPC where required — and keep a record of what you did. Confirm the current timelines with the ODPC."
+    },
+    {
+      "question": "Does the school or the vendor own the data?",
+      "answer": "The school generally remains the data controller and stays responsible for the learner data, while the vendor processes it on the school's behalf as a processor. That is why a written data-processing agreement matters."
+    },
+    {
+      "question": "Is SQUL certified or compliant?",
+      "answer": "We do not make certification or legal-compliance claims. SQUL provides role-based access, daily backups, and a single system that reduces shadow copies of learner data. Review those features and your own obligations before you commit."
+    }
+  ],
+  "cta": {
+    "heading": "See learner-data controls in practice",
+    "body": "Start your free term with SQUL — review role-based access and daily backups before you sign anything.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "Managing multi-campus schools with one system", "href": "/blog/multi-campus-school-management-system" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" }
+  ]
+}

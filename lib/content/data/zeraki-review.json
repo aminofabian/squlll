@@ -1,0 +1,190 @@
+{
+  "slug": "zeraki-review",
+  "path": "/blog/zeraki-review",
+  "kind": "cluster",
+  "status": "published",
+  "title": "Zeraki Review 2026: Is It Right for Your Kenyan School?",
+  "h1": "Zeraki Review 2026: Is It Right for Your Kenyan School?",
+  "description": "A balanced Zeraki review for Kenyan schools — what it does best, where it falls short on M-Pesa and WhatsApp, who it suits, and the strongest alternative.",
+  "primaryKeyword": "Zeraki review",
+  "secondaryKeywords": [
+    "Zeraki review Kenya",
+    "Zeraki school management system",
+    "is Zeraki good",
+    "Zeraki pros and cons"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Review",
+  "image": "/screenshots/class2.jpg",
+  "intro": [
+    "This is a fair, plainly-written **Zeraki review** for Kenyan schools: what it is genuinely good at, where it leaves gaps, who it suits, and what to pick instead if your priorities are different. It sits alongside our bigger picture, the [best school management software in Kenya](/blog/best-school-management-software-kenya).",
+    "We are a competing vendor, so hold us to a higher standard: we have written what Zeraki gets right, not only what suits us. Judge each claim against your own school, and verify current details with Zeraki directly."
+  ],
+  "quickAnswer": "Editor's note: this review describes features and positioning at a high level from public information, and competitor details change over time. Verify current capabilities and pricing with Zeraki before deciding. Last reviewed September 2026.",
+  "sections": [
+    {
+      "id": "what-it-is",
+      "heading": "What Zeraki is",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Zeraki is one of the most recognisable education-technology names in Kenya. It is best known among secondary schools, and its reputation rests largely on **exam analytics and academic reporting** — the work of turning marks into insight a head teacher can act on. It also offers SMS-based communication, which is the channel many Kenyan schools already use."
+        }
+      ]
+    },
+    {
+      "id": "strengths",
+      "heading": "What Zeraki does well",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Exam analytics.** Performance analysis and reporting are its strongest suit, and schools that compete on results value this.",
+            "**Brand trust.** Parents, staff and boards often already know the name, which lowers the explanation cost of adopting it.",
+            "**Secondary-school focus.** Its footprint is strong in secondary schools, where exam reporting matters most.",
+            "**SMS communication.** It reaches parents over SMS, which works for guardians who are not on WhatsApp."
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "Zeraki scorecard for a Kenyan school (indicative).",
+          "headers": ["Area", "Zeraki"],
+          "rows": [
+            ["Exam analytics & reporting", "**Strong**"],
+            ["CBC & 8-4-4 report cards", "Strong"],
+            ["Automatic M-Pesa reconciliation", "Not the core focus"],
+            ["WhatsApp parent messaging", "Not a core channel"],
+            ["Timetables & attendance", "Available / limited"],
+            ["Go-live speed", "Weeks"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gaps",
+      "heading": "Where it falls short for many schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Zeraki is a good fit for some schools and a poorer fit for others. The gaps schools most often raise are operational:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Fees.** Automatic, Daraja-based M-Pesa reconciliation is not what Zeraki is centred on, so bursars can still end up matching payments by hand.",
+            "**WhatsApp.** SMS-only messaging misses parents who live in WhatsApp, and reminders are less effective as a result.",
+            "**One system.** If you also need live fee balances and two-channel messaging, you may end up adding another tool.",
+            "**Time to value.** Getting to \"we are collecting fees in it\" can take longer than a school would like."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Verify, don't assume",
+          "text": "Vendors ship new features constantly. If fees or WhatsApp matter to you, ask Zeraki to show those exact workflows in a live demo before you rule it in or out."
+        }
+      ]
+    },
+    {
+      "id": "who-should",
+      "heading": "Who Zeraki suits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "Schools whose **top priority is exam analytics and reporting**.",
+            "Schools that are **already trained on it** and for whom switching is not worth it.",
+            "Schools whose **fee reconciliation and parent messaging** are already handled acceptably elsewhere."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alternative",
+      "heading": "The strongest alternative if fees and WhatsApp matter",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "If your review of Zeraki leaves you wanting more on fees and parent communication, the natural alternative is **SQUL**, which was built around exactly those two jobs."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa reconciliation (Daraja)** — Paybill and till payments matched to the right learner automatically.",
+            "**WhatsApp and SMS** — reminders, absence alerts and exam notices on both channels from one place.",
+            "**CBC and 8-4-4 report cards**, plus timetables, duty rosters, and same-day attendance alerts.",
+            "**Free term to start**, then per-term pricing, and live in about two weeks."
+          ]
+        },
+        {
+          "type": "mock",
+          "variant": "whatsapp",
+          "caption": "The gap SQUL closes: reaching parents on WhatsApp and SMS, and closing the loop with a receipt."
+        },
+        {
+          "type": "paragraph",
+          "text": "Compare the two directly in [SQUL vs Zeraki](/blog/squl-vs-zeraki), or see the broader [Zeraki alternatives](/blog/zeraki-alternatives-kenya) list."
+        }
+      ]
+    },
+    {
+      "id": "verdict",
+      "heading": "The verdict",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Zeraki is a credible, well-known platform and a genuinely good choice for schools whose priority is exam analytics. For schools whose daily pain is **obtaining and reconciling fees and reaching parents**, it is not the strongest fit, and **SQUL** is the better alternative — stronger on automatic M-Pesa and WhatsApp plus SMS, with CBC reports included. Decide on your own priorities, and demand a live demo of the workflows you actually run."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Is Zeraki a good school management system?",
+      "answer": "Yes, for the right school. Zeraki is strong on exam analytics and reporting and is well known in Kenyan secondary schools. It is a weaker fit if automatic M-Pesa reconciliation and WhatsApp parent messaging are your priorities."
+    },
+    {
+      "question": "What are the downsides of Zeraki?",
+      "answer": "Schools most often note that automatic M-Pesa reconciliation and WhatsApp messaging are not its focus, so fee handling and parent communication can need extra tools. Verify current capabilities with the vendor."
+    },
+    {
+      "question": "Does Zeraki handle school fees and M-Pesa?",
+      "answer": "It offers school-fees features, but automatic Daraja-based reconciliation is not its core focus. Confirm the exact M-Pesa workflow in a demo before relying on it."
+    },
+    {
+      "question": "What is the best alternative to Zeraki?",
+      "answer": "If fees and parent communication are your priority, SQUL is the strongest alternative — automatic M-Pesa reconciliation and WhatsApp plus SMS, with CBC report cards, for a free term to start."
+    },
+    {
+      "question": "Is Zeraki good for primary schools?",
+      "answer": "Zeraki is best known in secondary schools. Primary and CBC-focused schools should compare options that centre on CBC assessment and fee collection, such as SQUL."
+    },
+    {
+      "question": "Should I switch from Zeraki?",
+      "answer": "Switch if your biggest problems are fee reconciliation and reaching parents on WhatsApp. Stay if exam analytics is your priority and is working well for you."
+    }
+  ],
+  "cta": {
+    "heading": "Compare SQUL against Zeraki for yourself",
+    "body": "Start a free term and see automatic M-Pesa reconciliation and WhatsApp and SMS parent messaging in your school before you decide.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "SQUL vs Zeraki: why SQUL wins", "href": "/blog/squl-vs-zeraki" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "Zeraki alternatives in Kenya", "href": "/blog/zeraki-alternatives-kenya" },
+    { "title": "Zeraki pricing in Kenya", "href": "/blog/zeraki-pricing-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "WhatsApp integration for school management systems", "href": "/blog/whatsapp-integration-school-management-system" }
+  ]
+}

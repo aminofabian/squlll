@@ -1,0 +1,185 @@
+{
+  "slug": "cbc-implementation-school-kenya",
+  "path": "/blog/cbc-implementation-school-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "Implementing CBC in Your School: A Practical Guide (2026)",
+  "h1": "Implementing CBC in Your School: A Practical Guide (2026)",
+  "description": "How to implement CBC in a Kenyan school — plan coverage, capture rubrics and strands, report to parents, and support teachers through the transition.",
+  "primaryKeyword": "CBC implementation in schools Kenya",
+  "secondaryKeywords": [
+    "CBC assessment Kenya",
+    "CBET rubrics strands",
+    "CBC report card Kenya",
+    "competency based curriculum Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Academics",
+  "intro": [
+    "The Competency-Based Curriculum changed what \"good\" looks like in a Kenyan classroom: from marks to competencies, from one exam to continuous assessment, from covering a syllabus to building skills. Implementing it well is a management job as much as a teaching one. This guide covers **CBC implementation in schools in Kenya**, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "We focus on the practical: planning, capturing assessment, reporting to parents, and supporting teachers through the transition."
+  ],
+  "sections": [
+    {
+      "id": "what-changes",
+      "heading": "What CBC changes for a school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Old habit (8-4-4)", "CBC approach"],
+          "rows": [
+            ["One terminal exam", "Continuous, competency-based assessment"],
+            ["A single mark per subject", "Rubrics against strands and sub-strands"],
+            ["Recall of content", "Demonstrated skills and values"],
+            ["Report = marks", "Report = competency levels and progress"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The management implication is records: CBC generates far more assessment data than a single exam, and it must be captured once, well, and reported clearly."
+        }
+      ]
+    },
+    {
+      "id": "planning",
+      "heading": "Planning coverage and schemes of work",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Map the strands** for each grade and subject at the start of term.",
+            "**Agree schemes of work** so teaching keeps pace across streams.",
+            "**Sequence assessment** — decide which strands are assessed when.",
+            "**Review weekly** — coverage drifts if it is not checked."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "assessment",
+      "heading": "Assessment: rubrics and strands",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Good CBC assessment is captured at the point of observation, not reconstructed from memory at the end of term. Teachers record rubric levels — often exceeding, meeting, approaching, or below expectation — against each strand."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Assess as you teach** — record strand-level observations during activities.",
+            "**Use consistent rubrics** across streams so reports are comparable.",
+            "**Capture once, digitally** — a spreadsheet per teacher guarantees inconsistencies.",
+            "**Review before reporting** — spot missing strands and gaps in time to fill them."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Capture, don't retype",
+          "text": "A school management system with CBC assessment built in removes the end-of-term retyping that eats teaching time. See [CBC report card software in Kenya](/blog/cbc-report-card-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "heading": "Reporting to parents",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC reports are richer than a mark sheet, and parents find them harder to read. The school's job is to make them clear: competency levels per strand, a short teacher comment, and what the parent can do to help. Print-ready, consistent reports do more for parent trust than any newsletter."
+        },
+        {
+          "type": "paragraph",
+          "text": "Deliver reports on time over WhatsApp and SMS, and send notices parents will actually read — see [fee reminders over SMS and WhatsApp](/blog/school-fee-reminder-sms-whatsapp-kenya) for the messaging approach."
+        }
+      ]
+    },
+    {
+      "id": "teachers",
+      "heading": "Supporting teachers through the change",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Train on rubrics**, not just on the curriculum document.",
+            "**Peer observation** — teachers learn CBC design from each other.",
+            "**Share exemplars** — good assessment tasks spread fast.",
+            "**Protect time** — CBC assessment takes time; do not bury teachers in unrelated paperwork."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "transition",
+      "heading": "Living with the transition to 8-4-4",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Kenyan schools currently run both models: CBC in the lower years and 8-4-4 in the upper secondary years (mid-transition). Manage both from one system so records agree. For the academic side, see [CBC report card software](/blog/cbc-report-card-software-kenya) and the [best school management software in Kenya](/blog/best-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common pitfalls",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Assessment by memory** at term's end, instead of as you teach.",
+            "**Inconsistent rubrics** across streams, making reports incomparable.",
+            "**Paper-first capture** that has to be retyped into reports.",
+            "**Parents left in the dark** about how to read CBC reports.",
+            "**No time for teachers** — the curriculum suffocates under admin."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do schools in Kenya implement CBC?",
+      "answer": "By mapping strands per grade and subject, agreeing schemes of work, capturing rubric-based assessment continuously, and reporting competency levels to parents. Consistent rubrics and digital capture are what keep it manageable."
+    },
+    {
+      "question": "What are rubrics in CBC?",
+      "answer": "Rubrics describe levels of competency — commonly exceeding, meeting, approaching, or below expectation — against each strand. Teachers record a level as learners demonstrate the skill."
+    },
+    {
+      "question": "Do Kenyan schools still use 8-4-4?",
+      "answer": "Schools are mid-transition: CBC covers the lower grades while 8-4-4 applies to the upper secondary years. Good systems handle both so records stay consistent."
+    },
+    {
+      "question": "How do we report CBC to parents?",
+      "answer": "With print-ready reports showing competency levels per strand and a short teacher comment, delivered on time over WhatsApp or SMS. Clarity builds parent trust."
+    },
+    {
+      "question": "Can software make CBC easier?",
+      "answer": "Yes. Capturing rubrics and strands in a school management system removes end-of-term retyping and produces report cards directly. See our CBC report card guide."
+    }
+  ],
+  "cta": {
+    "heading": "Capture CBC once, report it cleanly",
+    "body": "SQUL holds CBC rubrics and strands and produces print-ready term report cards — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "CBC report card software in Kenya", "href": "/blog/cbc-report-card-software-kenya" },
+    { "title": "Managing teachers and staff in a Kenyan school", "href": "/blog/school-staff-management-kenya" },
+    { "title": "Parent and community engagement", "href": "/blog/parent-engagement-school-kenya" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" }
+  ]
+}

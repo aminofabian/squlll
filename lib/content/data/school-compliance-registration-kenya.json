@@ -1,0 +1,207 @@
+{
+  "slug": "school-compliance-registration-kenya",
+  "path": "/blog/school-compliance-registration-kenya",
+  "kind": "cluster",
+  "topic": "Running a school",
+  "status": "published",
+  "title": "School Registration and Compliance in Kenya: A 2026 Guide",
+  "h1": "School Registration and Compliance in Kenya: A 2026 Guide",
+  "description": "School registration and compliance in Kenya — licensing, Ministry requirements, health and safety, learner data protection, and inspections.",
+  "primaryKeyword": "school registration in Kenya",
+  "secondaryKeywords": [
+    "school compliance Kenya",
+    "register a school Kenya",
+    "Ministry of Education requirements Kenya",
+    "school inspection Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Compliance",
+  "intro": [
+    "Compliance is the part of school management nobody enjoys until an inspection arrives. Staying registered, safe, and lawful protects the school from existential risk. This guide covers **school registration and compliance in Kenya** at a practical level, part of our wider guide on [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya).",
+    "We focus on what a head or director actually has to keep on top of — and where to keep it so it can be produced on demand."
+  ],
+  "quickAnswer": "This article is general guidance, not legal advice, and regulations change. Confirm current requirements with the relevant Ministry of Education, county, or regulatory office before acting.",
+  "sections": [
+    {
+      "id": "overview",
+      "heading": "The compliance landscape at a glance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Area", "What it covers", "Who to confirm with"],
+          "rows": [
+            ["Registration & licensing", "Operating legally as a school", "Ministry of Education / county"],
+            ["Health & safety", "Buildings, sanitation, fire, food", "Public health / county"],
+            ["Learner records", "Accurate, complete registers", "Ministry guidance"],
+            ["Data protection", "Lawful handling of personal data", "Office of the Data Protection Commissioner"],
+            ["Inspections", "Readiness at any time", "Ministry inspectors"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Verify, don't assume",
+          "text": "Requirements and fees change. Treat the categories below as a checklist of areas to confirm with the relevant office, not as a fixed legal text."
+        }
+      ]
+    },
+    {
+      "id": "registration",
+      "heading": "Registering and licensing a school",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A new school must be registered and licensed before it operates. The process typically involves demonstrating suitable premises, staffing, and facilities to the relevant authorities. If you are opening a school, start the process well before you intend to admit learners — it is not a formality to do over a weekend."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Prepare the premises",
+              "text": "Classrooms, sanitation, water, and safety provisions that will pass inspection."
+            },
+            {
+              "title": "Document your staffing and curriculum",
+              "text": "Qualified teachers and a defined programme of study."
+            },
+            {
+              "title": "Lodge the application",
+              "text": "Submit to the relevant authority and keep copies of everything."
+            },
+            {
+              "title": "Maintain the licence",
+              "text": "Note renewal dates and inspection cycles so nothing lapses."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ministry",
+      "heading": "Ministry of Education requirements",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Curriculum delivery** aligned to national policy, including CBC and the 8-4-4 transition.",
+            "**Qualified staff** and appropriate learner–teacher ratios.",
+            "**Accurate records** — admissions, attendance, and assessment.",
+            "**Reporting** to the relevant education office as required."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Curriculum management itself is covered in [implementing CBC in your school](/blog/cbc-implementation-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "safety",
+      "heading": "Health, safety and welfare",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Buildings and grounds** — safe structures, maintained facilities.",
+            "**Sanitation and water** — adequate and clean.",
+            "**Fire and emergency** — exits, extinguishers, and a plan.",
+            "**Food handling** — safe kitchens, especially for boarders.",
+            "**Health records** — a clinic log and learner health notes where relevant."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "heading": "Learner data protection",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Learner records are personal data, and Kenyan law now expects schools to handle them properly — with a lawful basis, limited access, and security. In practice this means role-based access (staff see only what they need), backups, and care with exports and messaging. See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software) for what to require from any system you use."
+        }
+      ]
+    },
+    {
+      "id": "inspections",
+      "heading": "Surviving inspections without panic",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "The five-minute test",
+          "text": "Could you produce, within five minutes, your registration, latest inspection report, staff records, and learner registers? If not, that is your compliance work for the week."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Keep a compliance file** — physical and digital.",
+            "**Track renewal dates** — licences, safety certificates, staff clearances.",
+            "**Record inspections** and the actions you took in response.",
+            "**Fix findings** rather than arguing about them."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common compliance gaps",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Lapsed licences** nobody tracked.",
+            "**Records in three places** that disagree during an inspection.",
+            "**Outdated safety provisions** (expired extinguishers, blocked exits).",
+            "**Loose handling of learner data** — access, exports, and messaging.",
+            "**No record** of how a previous inspection finding was resolved."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do you register a school in Kenya?",
+      "answer": "A new school must be registered and licensed before operating, demonstrating suitable premises, staffing and facilities to the relevant authority. Requirements change, so confirm the current process with the Ministry of Education or county office before applying."
+    },
+    {
+      "question": "What records must a Kenyan school keep?",
+      "answer": "Typically registration and licences, inspection reports, staff records, and complete learner registers (admissions and attendance). Keep them current and retrievable on demand."
+    },
+    {
+      "question": "Is learner data protected by law in Kenya?",
+      "answer": "Yes — learner records are personal data under Kenya's Data Protection Act. Schools should limit access, secure records, and handle messaging and exports carefully. This is general guidance, not legal advice."
+    },
+    {
+      "question": "How should a school prepare for an inspection?",
+      "answer": "Keep a compliance file with registration, inspection history, staff records and learner registers, track renewal dates, and fix previous findings. If you can produce the key documents within minutes, you are prepared."
+    },
+    {
+      "question": "Where can I confirm current school requirements?",
+      "answer": "Directly with the relevant Ministry of Education office, your county, and the Office of the Data Protection Commissioner for data matters. Regulations and fees change, so verify rather than assume."
+    }
+  ],
+  "cta": {
+    "heading": "Keep compliant records, ready to produce",
+    "body": "SQUL gives Kenyan schools secure learner records, staff records and reports with role-based access — free for your first term.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "How to manage a school in Kenya", "href": "/blog/how-to-manage-a-school-in-kenya" },
+    { "title": "Learner data protection in Kenya", "href": "/blog/learner-data-protection-kenya-school-software" },
+    { "title": "School leadership and governance in Kenya", "href": "/blog/school-leadership-and-governance-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "Implementing CBC in your school", "href": "/blog/cbc-implementation-school-kenya" }
+  ]
+}

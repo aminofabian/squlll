@@ -1,0 +1,343 @@
+{
+  "slug": "how-to-choose-school-management-system-kenya",
+  "path": "/blog/how-to-choose-school-management-system-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "How to Choose a School Management System in Kenya (2026)",
+  "h1": "How to Choose a School Management System in Kenya (2026)",
+  "description": "How to choose a school management system in Kenya: the 10 questions, must-have features, demo checklist, red flags and a scoring sheet to compare vendors.",
+  "primaryKeyword": "how to choose a school management system in Kenya",
+  "secondaryKeywords": [
+    "school management system buyer's checklist Kenya",
+    "CBC compliant school management system",
+    "school software selection criteria",
+    "questions to ask school software vendors Kenya",
+    "school management system demo checklist"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Choosing a system",
+  "intro": [
+    "Choosing the [top school management software in Kenya](/blog/best-school-management-software-kenya) is a procurement decision, not a shopping one. Knowing **how to choose a school management system in Kenya** means running a short, repeatable process: define your school's real needs, score every vendor against the same checklist, and test before you commit.",
+    "This guide gives you that process — the 10 questions that separate a system you can actually run from a demo that merely looked good, the must-haves versus nice-to-haves, how to run a demo, how to use a free term as a trial, the red flags, and a simple scoring sheet you can take to the board."
+  ],
+  "sections": [
+    {
+      "id": "start-with-school",
+      "heading": "Start with your school, not the software",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Every good evaluation starts with an honest picture of your school. Two schools of the same size can need very different systems, depending on their levels, campuses, and the pains that keep the principal up at night."
+        }
+      ]
+    },
+    {
+      "id": "size-levels-campuses",
+      "heading": "Size, levels and campuses (Grade 1–9, Form 1–4, multi-site)",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A 150-learner Grade 1–9 academy needs something very different from a 1,200-learner secondary school with three Form 1–4 streams. Note whether you run **CBC (Grade 1–9)**, **8-4-4 (Form 1–4)**, or both, and how many campuses or branches must report to one principal."
+        }
+      ]
+    },
+    {
+      "id": "biggest-pains",
+      "heading": "Your two biggest pains: fees, communication, or records",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Rank the pain. For most Kenyan schools it is fees first — M-Pesa that nobody can reconcile — then parent communication, then records. A system that fixes your top two problems really well is worth more than one that does everything adequately."
+        }
+      ]
+    },
+    {
+      "id": "ten-questions",
+      "heading": "The 10 questions that decide it (the buyer's checklist)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Ask every shortlisted vendor the same ten questions, and write down the answers. The differences become obvious quickly."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Does it reconcile M-Pesa automatically?** Not \"we import a statement\" — does each Paybill or till payment match to the right learner as it arrives?",
+            "**Does it reach parents on both WhatsApp and SMS?** One channel leaves some parents out.",
+            "**Is it CBC and 8-4-4 ready?** Can it store strands, rubrics and continuous assessment, and print term report cards for both?",
+            "**How long until we are live?** Weeks, not a term.",
+            "**How are timetables and duty rosters handled?** Can staff build and change them without a specialist?",
+            "**Does attendance flow to parents the same day?** Or is it a register that never leaves the office?",
+            "**Can we run multiple campuses** with a consolidated view for the principal?",
+            "**What about roles, backups and data protection?** Who can see what, and how is data protected?",
+            "**What exactly is included in the price,** and what is billed separately?",
+            "**What does support look like in the first term,** when it matters most?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "q-mpesa",
+      "heading": "Does it reconcile M-Pesa automatically?",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is the single most important question for a Kenyan school. \"Integration\" that means importing a statement still leaves the bursar matching payments by hand. Automatic reconciliation through Safaricom's Daraja API is the difference. See [M-Pesa integration in school management software](/blog/mpesa-integration-school-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "q-parents",
+      "heading": "Does it reach parents on both WhatsApp and SMS?",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Communication that only works on WhatsApp excludes guardians without smartphones; SMS-only feels dated and text-bound. The reliable answer is [WhatsApp with SMS fallback](/blog/whatsapp-integration-school-management-system)."
+        }
+      ]
+    },
+    {
+      "id": "q-cbc",
+      "heading": "Is it CBC and 8-4-4 ready?",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Confirm it handles CBC rubrics and strands for Grade 1–9 and exam records for Form 1–4, and prints ready report cards for both. If you run both systems, one platform avoids double entry. See [CBC report card software in Kenya](/blog/cbc-report-card-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "q-live",
+      "heading": "How long until we are live?",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A long implementation is where enthusiasm dies. Ask for a realistic go-live date and what the vendor needs from you to hit it, then hold them to it in writing."
+        }
+      ]
+    },
+    {
+      "id": "must-vs-nice",
+      "heading": "Feature must-haves vs nice-to-haves",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Not every feature is worth paying for. This is the line most Kenyan schools should draw:"
+        },
+        {
+          "type": "table",
+          "caption": "Must-have vs nice-to-have for Kenyan schools",
+          "headers": ["Requirement", "Must-have for Kenyan schools", "Nice-to-have"],
+          "rows": [
+            ["Fees", "Automatic M-Pesa reconciliation", "Payroll integration"],
+            ["Communication", "WhatsApp + SMS to parents", "Custom message templates"],
+            ["Records", "CBC + 8-4-4 report cards", "Bulk historical archive"],
+            ["Timetabling", "Instant timetable + duty roster", "Auto-conflict detection"],
+            ["Attendance", "Same-day capture + parent alerts", "Biometric capture"],
+            ["Deployment", "Live in ~2 weeks", "On-premise hosting"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Anything in the middle column that a vendor cannot demonstrate is a reason to keep looking. The right column is where you spend more, only if you genuinely need it."
+        }
+      ]
+    },
+    {
+      "id": "run-a-demo",
+      "heading": "How to run a good demo (and what to ask to see live)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A demo is a test, not a performance. Bring your own data and your own hardest case."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Give the vendor **one real learner's fee position** and ask them to reconcile an M-Pesa payment in front of you.",
+            "Ask them to send a **WhatsApp message and an SMS** to your own phone, not a demo phone.",
+            "Ask them to build a **small timetable** and show a **duty roster**.",
+            "Ask to see a **CBC report card** printed for a learner you describe.",
+            "Ask what is **not shown** in the demo because it is a paid extra."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Use your data, not theirs",
+          "text": "A vendor's tidy demo data hides the mess in your own records. The systems that cope with your real admission numbers, siblings and spelling mistakes are the ones that will survive contact with your school."
+        }
+      ]
+    },
+    {
+      "id": "trials-free-term",
+      "heading": "Trials, pilots and the \"free term\" — how to test before you commit",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The lowest-risk way to choose is to run a real term on the system before you pay for one. A **free term to start, then per-term pricing** turns the decision into evidence rather than a pitch."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Import one class, not everything",
+              "text": "Start with a single class or stream, including the guardians' phone numbers, so you can test real messaging."
+            },
+            {
+              "title": "Run your real fees through it",
+              "text": "Send live Paybill or till payments into the trial and see whether they reconcile without your bursar's help."
+            },
+            {
+              "title": "Print one real report card",
+              "text": "Enter one class's assessment data and produce a term report card you would actually hand to a parent."
+            },
+            {
+              "title": "Score it, then decide",
+              "text": "Compare the trial against the same checklist, and only then talk about the per-term price."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "heading": "Red flags that should end the conversation",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**\"We import the M-Pesa statement.\"** That is not reconciliation, and it leaves the hardest job with your bursar.",
+            "**\"Pricing on request only.\"** A vendor unwilling to explain its model is a budget risk for a school.",
+            "**No free term or real trial.** If you cannot test it on your own data, you are being asked to buy on faith.",
+            "**\"The system needs six months to go live.\"** Long implementations rarely get shorter.",
+            "**No clear answer on backups or data protection.** Learner data deserves a straight answer, not a shrug."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-backups",
+      "heading": "Questions to ask about data, backups and the Data Protection Act",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Records of learners, fees and parents are personal data. Ask the security questions out loud and expect plain answers:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Who can see what?** Look for **role-based access**, so the bursar, principal and accountant each see only their scope.",
+            "**Are backups automatic?** Daily backups protect you from the day a hard drive or a mistake removes a term's records.",
+            "**Where does the data live,** and who owns it if you leave?",
+            "**How is Kenya's Data Protection Act handled?** Consent, retention and access should be part of the design, not just a policy PDF. See [learner data protection in Kenya](/blog/learner-data-protection-kenya-school-software)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scoring-sheet",
+      "heading": "A simple scoring sheet to compare vendors",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Put your shortlist on one page and score each vendor from 1 to 5 on the criteria that matter most. Weight a criterion more heavily if it is critical — for a Kenyan school, M-Pesa reconciliation and parent messaging usually deserve the heaviest weighting."
+        },
+        {
+          "type": "table",
+          "caption": "Example scoring sheet (1–5 per vendor)",
+          "headers": ["Criterion", "Weight", "Vendor A", "Vendor B", "Vendor C"],
+          "rows": [
+            ["Automatic M-Pesa reconciliation", "High", "", "", ""],
+            ["WhatsApp + SMS to parents", "High", "", "", ""],
+            ["CBC + 8-4-4 report cards", "High", "", "", ""],
+            ["Timetables and duty rosters", "Medium", "", "", ""],
+            ["Same-day attendance alerts", "Medium", "", "", ""],
+            ["Multi-campus consolidation", "Medium", "", "", ""],
+            ["Security, backups, support", "High", "", "", ""],
+            ["Time to go live", "High", "", "", ""]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Score on demonstrated evidence, not promises. The vendor that wins on the screening and the trial is the one you can defend at the board."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is the worked benchmark we suggest schools test against. It is built around the criteria above, and you can score it yourself during a **free term** before any per-term price is agreed."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa (Daraja) reconciliation** for Paybill and till payments.",
+            "**WhatsApp and SMS** parent engagement from one record.",
+            "**CBC and 8-4-4** rubrics, strands and print-ready term report cards.",
+            "**Instant timetables and duty rosters**, with **same-day attendance** and parent alerts.",
+            "**Multi-campus** consolidation for a principal-level view.",
+            "**Role-based access and daily backups**, and **live in about two weeks**."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How long does it take to choose and go live with a school management system in Kenya?",
+      "answer": "Run a short, structured selection: define needs, score vendors against one checklist, demo on your own data, then trial with a free term. With a system like SQUL, most schools go live in about two weeks once the trial is over."
+    },
+    {
+      "question": "What is the single most important feature to check?",
+      "answer": "Automatic M-Pesa reconciliation. It is the task your bursar repeats most often, and the one where \"integration\" most often turns out to be a spreadsheet import in disguise."
+    },
+    {
+      "question": "Should we choose a CBC-only or a general system?",
+      "answer": "Choose one that handles both CBC (Grade 1–9) and 8-4-4 (Form 1–4) if you run, or may run, both. That avoids double entry and a separate exam tool."
+    },
+    {
+      "question": "Is a free term a real trial?",
+      "answer": "It should be. A genuine free term lets you import real learners, reconcile real fees and print a real report card. Anything less is just a longer demo."
+    },
+    {
+      "question": "How do we justify the spend to the board?",
+      "answer": "Score every vendor on one sheet, attach the trial evidence, and show the per-term cost against the bursar time and unreconciled fees it removes. The pricing guide explains how to compare quotes."
+    }
+  ],
+  "cta": {
+    "heading": "Choose with evidence, not a sales pitch",
+    "body": "Start your free term with SQUL and score it against your own checklist before you spend a shilling.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "School management system pricing in Kenya", "href": "/blog/school-management-system-price-in-kenya" },
+    { "title": "Free vs paid school management software in Kenya", "href": "/blog/free-vs-paid-school-management-software-kenya" },
+    { "title": "How to move from Excel to a school management system", "href": "/blog/move-from-excel-to-school-management-system" },
+    { "title": "How M-Pesa integration works in a school management system", "href": "/blog/mpesa-integration-school-management-software-kenya" }
+  ]
+}

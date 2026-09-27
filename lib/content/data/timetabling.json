@@ -1,0 +1,287 @@
+{
+  "slug": "school-timetable-software-kenya",
+  "path": "/blog/school-timetable-software-kenya",
+  "kind": "cluster",
+  "status": "published",
+  "title": "School Timetable Software in Kenya: Buyer's Guide (2026)",
+  "h1": "School Timetable Software in Kenya: Buyer's Guide (2026)",
+  "description": "Compare school timetable software in Kenya. See how SQUL publishes conflict-free timetables and duty rosters instantly — and how to choose the right fit.",
+  "primaryKeyword": "school timetable software Kenya",
+  "secondaryKeywords": [
+    "timetable generator for schools Kenya",
+    "school duty roster software",
+    "CBC timetable Kenya",
+    "exam timetable software Kenya",
+    "secondary school timetable software"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-09-01",
+  "kicker": "Timetables & rosters",
+  "intro": [
+    "A paper or Excel master timetable is a term-start ritual most Kenyan deputies would happily retire. If you are evaluating [school management software in Kenya](/blog/best-school-management-software-kenya), timetabling is where a dedicated tool earns its keep — or does not.",
+    "Schools rarely fail because they cannot draw a grid. They fail because clashes, last-minute changes and duty rosters are never communicated to staff in time. The timetable on the staffroom wall is out of date the moment a teacher is absent.",
+    "This buyer's guide covers what timetable software must actually do, how it copes with CBC and 8-4-4, and how SQUL builds, publishes and protects your timetable — with automatic conflict detection before anything goes live."
+  ],
+  "sections": [
+    {
+      "id": "why-break",
+      "heading": "Why timetables break in Kenyan schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Timetables break for operational reasons, not cosmetic ones. The same three pressures show up in almost every Kenyan school."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Shared teachers, shared labs and double-stream classes.** One teacher may teach several streams, and a single lab or workshop may be needed by more than one class at once — which is exactly where clashes hide.",
+            "**CBC vs 8-4-4 structures.** A school running Grade 1–9 and Form 1–4 is managing two different shapes of timetable in one building.",
+            "**Last-minute change.** When a teacher is absent or a lesson is swapped, a printed grid cannot tell anyone fast enough, so the change lives in one person's head."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For CBC vs 8-4-4 specifically, the lesson counts and period conventions can differ, so confirm current KICD guidance before you fix a period structure. The software should adapt to your structure, not force one."
+        },
+        {
+          "type": "paragraph",
+          "text": "The deeper problem is that a timetable is not one document. It is the class grid, the teacher loads, the room bookings and the supervision roster, all of which must agree. When those live in separate files, one change silently breaks the others, and the person who finds out first is usually a learner standing outside the wrong door."
+        }
+      ]
+    },
+    {
+      "id": "must-do",
+      "heading": "What \"school timetable software Kenya\" must actually do",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Use this checklist when you compare tools. The first four are deal-breakers for any Kenyan school; the rest depend on your setup."
+        },
+        {
+          "type": "table",
+          "caption": "Timetable software: must-have feature checklist",
+          "headers": ["Feature", "Why it matters", "Deal-breaker?"],
+          "rows": [
+            ["Conflict detection", "Catches double-booked teachers, classes and rooms before publishing", "**Yes**"],
+            ["Instant publishing", "Teachers see the current version, not the wall copy", "**Yes**"],
+            ["CBC & 8-4-4 support", "Handles Grade 1–9 and Form 1–4 structures and streams", "**Yes**"],
+            ["Duty rosters", "Covers prep, games and supervision, not just lessons", "**Yes**"],
+            ["Exam timetables", "Produces exam schedules from the same setup", "Useful"],
+            ["Multi-campus", "Separate timetables per campus, one consolidated view", "If you run a group"],
+            ["Audit trail", "Shows who changed what, and when", "Useful"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "paper-excel-software",
+      "heading": "Paper, Excel, or dedicated software?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Excel is not the enemy — it is simply a general tool doing a specialised job. The table shows where the limits show up."
+        },
+        {
+          "type": "table",
+          "caption": "Paper vs Excel vs dedicated timetable software",
+          "headers": ["", "Paper", "Excel", "Dedicated software (SQUL)"],
+          "rows": [
+            ["Cost", "Printing each term", "Staff hours each term", "Per-term licence"],
+            ["Clash detection", "Manual, by eye", "Manual formulas at best", "**Automatic**"],
+            ["Speed of change", "Redraw and reprint", "Re-edit and re-print", "**Change and republish instantly**"],
+            ["Publishing", "Wall copy only", "Printout or email", "**Instant to staff devices**"],
+            ["Duty rosters", "Separate sheet", "Separate sheet", "**Built in**"],
+            ["Audit trail", "None", "Version confusion", "**Yes**"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The decisive row is **publishing**. All three can produce a grid; only one can tell every teacher about a change the moment it happens."
+        }
+      ]
+    },
+    {
+      "id": "how-squl-builds",
+      "heading": "How SQUL builds, publishes, and protects your timetable",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL treats the timetable as a living thing that staff read on their phones, not a document that gets printed once a term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic conflict detection before you publish**, so double-booked teachers, classes and rooms are caught while you can still fix them.",
+            "**Instant publishing to staff devices**, so the current version always wins over the wall copy.",
+            "**Duty rosters for day and boarding schools**, covering prep, games and supervision alongside lessons.",
+            "**Shared data with attendance and fees**, so class lists and staff details are not re-typed into a separate tool."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conflict-detection",
+      "heading": "Automatic conflict detection before you publish",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A clash is easy to create and hard to spot. A teacher has two classes in the same period, or a lab is booked twice, and the error only surfaces when two groups arrive at the same door."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Teacher clashes.** One teacher cannot be in two classes in the same period.",
+            "**Room clashes.** Two classes cannot share one lab or workshop at once.",
+            "**Class clashes.** A stream cannot be in two lessons at the same time.",
+            "**Load checks.** Spot when a teacher's assigned periods exceed what is sensible before term even starts."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Catch it before publishing",
+          "text": "Conflict detection is only useful if it runs *before* the timetable goes live. Fixing clashes on paper costs a redraw; fixing them after publishing costs a term of confusion."
+        }
+      ]
+    },
+    {
+      "id": "first-term",
+      "heading": "Step-by-step — your first term timetable",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Setting up a term timetable should be a short, ordered sequence rather than a heroic all-nighter."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Import classes, streams, subjects and teachers",
+              "text": "Bring in your existing structure instead of rebuilding it from zero, so the data matches attendance and fee records."
+            },
+            {
+              "title": "Set periods, breaks and lunch",
+              "text": "Define the school day once — including breaks and lunch — and reuse it every term."
+            },
+            {
+              "title": "Assign teacher-subject-class loads",
+              "text": "Capture who teaches what, and to which streams, so the system knows the constraints before it builds the grid."
+            },
+            {
+              "title": "Generate the grid and resolve flagged conflicts",
+              "text": "Let the software propose the timetable, then work through the clashes it flags before anything is published."
+            },
+            {
+              "title": "Publish and notify staff",
+              "text": "Publish to staff devices so every teacher has the current version, with duty rosters attached."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Six timetabling mistakes Kenyan schools keep making",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Building the timetable in one person's head.** The deputy becomes a single point of failure; if they are absent, nobody can safely change the grid.",
+            "**Publishing on the staffroom wall only.** Half the staff see yesterday's version, and last-minute changes never reach them.",
+            "**Forgetting duty rosters, games and prep supervision.** Lessons are only part of the day; uncovered supervision is where problems start.",
+            "**Ignoring shared rooms.** Labs, workshops and libraries get double-booked because nothing checks room availability.",
+            "**Rebuilding from scratch every term.** Without a reusable structure, each term repeats last term's work.",
+            "**Leaving no audit trail.** When the timetable changes, nobody can see who changed what, or when."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "which-is-right",
+      "heading": "Which timetable software is right for your school?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Ask these questions before you buy, and insist on seeing the real thing rather than a slideshow."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**\"Show me conflict detection with a deliberate clash.\"** If the tool cannot flag a double-booked teacher, it is a drawing tool, not timetable software.",
+            "**\"How do staff see a change?\"** Instant publishing to a phone is the whole point; a printout is not.",
+            "**\"Does it handle Grade 1–9 and Form 1–4?\"** Confirm it supports both CBC and 8-4-4 structures if you run either. See [how to choose a school management system in Kenya](/blog/how-to-choose-school-management-system-kenya).",
+            "**\"Can it produce exam timetables too?\"** Ask for a sample exam schedule from the same setup.",
+            "**\"How long until we are live?\"** For most schools, expect about two weeks once structures are imported."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL's angle is simple: timetables and duty rosters publish instantly, with automatic conflict detection before anything goes live, so the deputy stops firefighting and teachers always see the current version."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Instant publishing with automatic conflict detection** — catch double-bookings before you publish, not after.",
+            "**Duty rosters built in**, covering prep, games and supervision for day and boarding schools.",
+            "**CBC and 8-4-4 aware**, supporting Grade 1–9 and Form 1–4 structures and streams.",
+            "**One platform with attendance and M-Pesa fee reconciliation**, so class lists and staff data are shared, not re-typed.",
+            "**Multi-campus**, with each campus keeping its own timetable while the principal gets a consolidated view.",
+            "**Role-based access** so the Director of Studies edits while teachers view.",
+            "**Live in about two weeks**, importing your existing class, staff and subject data instead of rebuilding from zero."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Build one term first",
+          "text": "Start your free term with SQUL, build one conflict-free timetable, publish it to staff, and see the difference before you pay a shilling."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can the software handle both CBC (Grade 1–9) and 8-4-4 (Form 1–4)?",
+      "answer": "A good Kenyan timetable tool should. SQUL supports Grade 1–9 and Form 1–4 structures and streams, so a school running both curricula keeps one timetable system instead of two."
+    },
+    {
+      "question": "What happens when a teacher is absent?",
+      "answer": "Because the timetable is published to staff devices and not just a wall, a change or duty swap reaches everyone instantly. The same platform that marks attendance can flag the absence, so cover is arranged against the current version."
+    },
+    {
+      "question": "Does it produce exam timetables too?",
+      "answer": "It should, from the same class and subject setup. Ask for a sample exam schedule during the demo rather than assuming the lesson grid is the only output."
+    }
+  ],
+  "cta": {
+    "heading": "Build one conflict-free timetable before you pay",
+    "body": "Start your free term with SQUL, publish your term timetable and duty rosters to staff, and see the difference before you pay a shilling.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" },
+    { "title": "Student attendance tracking with parent SMS alerts", "href": "/blog/student-attendance-tracking-parent-sms" },
+    { "title": "CBC report card software in Kenya", "href": "/blog/cbc-report-card-software-kenya" },
+    { "title": "How to choose a school management system in Kenya", "href": "/blog/how-to-choose-school-management-system-kenya" },
+    { "title": "Managing multi-campus schools with one system", "href": "/blog/multi-campus-school-management-system" }
+  ]
+}
