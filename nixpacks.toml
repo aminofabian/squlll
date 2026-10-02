@@ -1,17 +1,13 @@
+# Prefer the Dockerfile for Coolify. Kept so accidental Nixpacks deploys
+# still run Next correctly (previous start cmd pointed at Nest build/index.js).
 [phases.setup]
-nixPkgs = ['bun']
-aptPkgs = ['build-essential']
-env = { NIXPACKS_PATH = "/app/node_modules/.bin:$PATH" }
+nixPkgs = ['bun', 'nodejs_22']
 
 [phases.install]
-# Removed --frozen-lockfile to allow lockfile regeneration
-cmds = ['bun install --ignore-scripts']
+cmds = ['bun install --frozen-lockfile']
 
 [phases.build]
-# Assuming your project has a build step, otherwise remove this
 cmds = ['bun run build']
 
 [start]
-# Run the actual entry file, or replace with "bun start" if defined in package.json
-cmd = 'bun run build/index.js'
-
+cmd = 'bun run start:prod -- -p 3000 -H 0.0.0.0'
