@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { resolveHostViaBackend } from '@/lib/host-resolution'
+import { cookieHasRole, SUPER_ADMIN_ROLE } from '@/lib/auth/role-cookie'
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl
@@ -46,7 +47,9 @@ export async function proxy(request: NextRequest) {
     const userRole = request.cookies.get('userRole')?.value
     const accessToken = request.cookies.get('accessToken')?.value
 
-    if (!accessToken || userRole !== 'SUPER_ADMIN') {
+    // Tolerate a comma-joined role value, which can happen when a proxy or the
+    // browser merges duplicate `userRole` cookies.
+    if (!accessToken || !cookieHasRole(userRole, SUPER_ADMIN_ROLE)) {
       const loginUrl = new URL('/superadmin/login', request.url)
       loginUrl.searchParams.set('next', url.pathname)
       return NextResponse.redirect(loginUrl)

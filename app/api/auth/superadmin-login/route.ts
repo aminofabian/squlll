@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { resolveGraphqlEndpoint } from "@/lib/graphql-endpoint";
-import {
-  getSessionCookieOptions,
-  setSuperAdminSessionCookies,
-} from "@/lib/auth/session-cookies";
+import { setSuperAdminSessionCookies } from "@/lib/auth/session-cookies";
+import { getAuthCookieOptions } from "@/lib/auth/cookie-domain";
 
 const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint();
 
@@ -57,7 +55,10 @@ export async function POST(request: Request) {
     }
 
     const cookieStore = await cookies();
-    const cookieOptions = getSessionCookieOptions(new URL(request.url));
+    // Scope cookies to the host the browser is actually on (proxy-aware), matching
+    // the other auth routes. Deriving this from `request.url` yields the server's
+    // internal hostname behind a proxy, which breaks super-admin sessions.
+    const cookieOptions = getAuthCookieOptions(request);
 
     setSuperAdminSessionCookies(cookieStore, cookieOptions, {
       accessToken: userData.accessToken,

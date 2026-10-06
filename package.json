@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "smoke:superadmin": "node scripts/smoke-superadmin-auth.mjs",
     "start:prod": "next start",
     "clear-cache": "node scripts/clear-cache.js"
   },

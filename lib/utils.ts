@@ -10,13 +10,15 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function getCookie(name: string): string | null {
   if (typeof window === 'undefined') return null;
-  
+
+  // A name can legitimately appear more than once in `document.cookie` (e.g. a
+  // host-only cookie alongside a shared-domain one). Take the last occurrence so
+  // the most recently written value wins, instead of returning null.
+  const prefix = `; ${name}=`;
   const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(';').shift() || null;
-  }
-  return null;
+  const index = value.lastIndexOf(prefix);
+  if (index === -1) return null;
+  return value.slice(index + prefix.length).split(';').shift() || null;
 }
 
 /**

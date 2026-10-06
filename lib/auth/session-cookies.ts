@@ -1,5 +1,4 @@
 import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { resolveCookieDomain } from "./cookie-domain";
 
 export interface SessionCookieOptions {
   domain?: string;
@@ -33,17 +32,6 @@ const SESSION_COOKIE_NAMES = [
   "tenantSubdomain",
   "schoolUrl",
 ] as const;
-
-export function getSessionCookieOptions(requestUrl: URL): SessionCookieOptions {
-  const domain = resolveCookieDomain(requestUrl.hostname);
-  const isProd = process.env.NODE_ENV === "production";
-  return {
-    domain,
-    // Shared-domain cookies use `none`; host-only cookies use `lax`.
-    sameSite: domain ? "none" : "lax",
-    secure: isProd,
-  };
-}
 
 export function clearSessionCookies(
   cookieStore: CookieStore,
