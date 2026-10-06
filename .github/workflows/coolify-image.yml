@@ -1,5 +1,11 @@
-# Builds the Next.js image off-box and pushes it to GHCR; Coolify on
-# 148.113.255.170 only pulls and runs it.
+# Builds the Next.js image off-box, pushes it to GHCR, triggers a Coolify
+# redeploy, then verifies the new image is actually serving traffic.
+#
+# Coolify deploy secrets (repo → Settings → Secrets → Actions):
+#   COOLIFY_DEPLOY_WEBHOOK  http://148.113.255.170:8000/api/v1/deploy?uuid=lyryozr5xh9q27v3fihvvedk&force=false
+#   COOLIFY_DEPLOY_TOKEN    a Coolify API token with deploy scope
+# The token must have Deploy permission or Coolify answers 401 and nothing
+# deploys. Optional: SMOKE_EMAIL / SMOKE_PASSWORD run the full auth smoke test.
 name: Coolify image
 
 on:
@@ -17,11 +23,14 @@ permissions:
 
 env:
   IMAGE: ghcr.io/aminofabian/squlll
+  BASE_URL: https://squl.co.ke
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    outputs:
+      deploy_triggered: ${{ steps.coolify.outputs.triggered }}
     steps:
       - uses: actions/checkout@v4
 
@@ -52,12 +61,64 @@ jobs:
             NEXT_PUBLIC_SITE_URL=https://www.squl.co.ke
 
       - name: Trigger Coolify deploy
+        id: coolify
         env:
           WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
           TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
         run: |
           if [ -z "$WEBHOOK" ] || [ -z "$TOKEN" ]; then
-            echo "Coolify webhook not configured; deploy manually."
+            echo "::warning::Coolify deploy secrets not set; image published but not redeployed. Trigger Coolify manually (UI → squl-frontend → Deploy)."
+            echo "triggered=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           curl -fsS -H "Authorization: Bearer $TOKEN" "$WEBHOOK"
+          echo "triggered=true" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_SHA: ${{ github.sha }}
+      DEPLOY_TRIGGERED: ${{ needs.build.outputs.deploy_triggered }}
+      SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+      SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for the new image to serve traffic
+        if: env.DEPLOY_TRIGGERED == 'true'
+        run: |
+          set -uo pipefail
+          echo "Waiting for $EXPECTED_SHA at $BASE_URL/api/version"
+          live=""
+          for i in $(seq 1 30); do
+            live=$(curl -s --max-time 10 "$BASE_URL/api/version" \
+              | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{process.stdout.write(String(JSON.parse(d).sha||""))}catch{}})')
+            echo "attempt $i: live sha = ${live:-<none>}"
+            [ "$live" = "$EXPECTED_SHA" ] && break
+            sleep 15
+          done
+          if [ "$live" != "$EXPECTED_SHA" ]; then
+            echo "::error::Coolify deploy was triggered but the new image never served traffic within the timeout."
+            exit 1
+          fi
+          echo "New image is live."
+
+      - name: Deploy health checks
+        run: |
+          set -euo pipefail
+          login=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$BASE_URL/superadmin/login")
+          echo "/superadmin/login -> $login"
+          [ "$login" = "200" ]
+          loc=$(curl -s -o /dev/null -w '%{redirect_url}' --max-time 20 "$BASE_URL/dashboard")
+          echo "/dashboard -> $loc"
+          case "$loc" in
+            *"/superadmin/login"*) echo "Dashboard guard OK." ;;
+            *) echo "::error::/dashboard did not redirect to /superadmin/login"; exit 1 ;;
+          esac
+
+      # Runs only when SMOKE_EMAIL / SMOKE_PASSWORD are configured; otherwise the
+      # script prints SKIP and exits 0.
+      - name: Super-admin auth smoke test
+        run: node scripts/smoke-superadmin-auth.mjs "$BASE_URL"
