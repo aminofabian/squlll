@@ -63,6 +63,18 @@ export interface ParentReceiptRecord {
   } | null
 }
 
+export interface ParentOutstandingInvoice {
+  id: string
+  invoiceNumber: string
+  termName?: string | null
+  academicYearName?: string | null
+  dueDate?: string | null
+  totalAmount: number
+  paidAmount: number
+  balanceAmount: number
+  status: string
+}
+
 export interface ParentChildFeeOverview {
   studentId: string
   studentName?: string | null
@@ -74,6 +86,7 @@ export interface ParentChildFeeOverview {
   paymentStatus: ParentPaymentStatus
   byPlan: ParentFeePlanBreakdown[]
   recentPayments: ParentPaymentRecord[]
+  outstandingInvoices: ParentOutstandingInvoice[]
 }
 
 export interface ParentConsolidatedFees {
@@ -124,6 +137,17 @@ const CHILD_FEE_OVERVIEW = `
         paymentMethod
         transactionReference
         paymentDate
+      }
+      outstandingInvoices {
+        id
+        invoiceNumber
+        termName
+        academicYearName
+        dueDate
+        totalAmount
+        paidAmount
+        balanceAmount
+        status
       }
     }
   }
@@ -402,10 +426,12 @@ export async function initiateParentCustodyStk(
   subdomain: string,
   input: {
     studentId: string
+    invoiceId?: string
     amount: number
     phone: string
     accountReference?: string
     notes?: string
+    advancePayment?: boolean
   },
 ): Promise<ParentStkIntent> {
   const data = await chatGraphqlFetch<{

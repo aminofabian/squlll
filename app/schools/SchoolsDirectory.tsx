@@ -5,11 +5,10 @@ import { ArrowUpRight, Building2, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { PlatformSchool } from './types'
+import { schoolPortalUrl } from '@/lib/auth/post-login-navigation'
 
 function schoolSiteUrl(subdomain: string): string {
-  const isProd = process.env.NODE_ENV === 'production'
-  if (isProd) return `https://${subdomain}.squl.co.ke`
-  return `http://${subdomain}.localhost:3000`
+  return schoolPortalUrl(subdomain)
 }
 
 function initials(name: string): string {

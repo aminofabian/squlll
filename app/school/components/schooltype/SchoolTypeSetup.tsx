@@ -316,6 +316,65 @@ export const SchoolTypeSetup = () => {
   const [currentStep, setCurrentStep] = useState<number>(1)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [setupComplete, setSetupComplete] = useState<boolean>(false)
+
+  // Per-tenant class (grade level) customizations made in this step, keyed by
+  // `${levelName}::${originalClassName}`. Only affects this tenant's setup —
+  // global curriculum/grade-level names are never changed.
+  const [classOverrides, setClassOverrides] = useState<
+    Record<string, { name: string; removed: boolean }>
+  >({})
+
+  const renameClass = useCallback(
+    (levelName: string, originalName: string, name: string) => {
+      const key = `${levelName}::${originalName}`
+      setClassOverrides((prev) => ({
+        ...prev,
+        [key]: { name, removed: prev[key]?.removed ?? false },
+      }))
+    },
+    [],
+  )
+
+  const removeClass = useCallback(
+    (levelName: string, originalName: string) => {
+      const key = `${levelName}::${originalName}`
+      setClassOverrides((prev) => ({
+        ...prev,
+        [key]: { name: prev[key]?.name ?? originalName, removed: true },
+      }))
+    },
+    [],
+  )
+
+  const restoreClass = useCallback(
+    (levelName: string, originalName: string) => {
+      const key = `${levelName}::${originalName}`
+      setClassOverrides((prev) => {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
+    },
+    [],
+  )
+
+  const buildGradeLevelOverrides = useCallback(
+    () =>
+      Object.entries(classOverrides)
+        .map(([key, value]) => {
+          const [levelName, originalName] = key.split('::')
+          const customName =
+            value.name && value.name !== originalName ? value.name : undefined
+          return {
+            levelName,
+            originalName,
+            customName,
+            removed: value.removed || undefined,
+          }
+        })
+        .filter((o) => o.customName || o.removed),
+    [classOverrides],
+  )
   
   // Refs for scroll animations
   const levelsSectionRef = useRef<HTMLDivElement>(null)
@@ -734,7 +793,10 @@ export const SchoolTypeSetup = () => {
           method: 'POST',
           headers,
           credentials: 'include',
-          body: JSON.stringify({ levelNames }),
+          body: JSON.stringify({
+            levelNames,
+            gradeLevelOverrides: buildGradeLevelOverrides(),
+          }),
         });
 
         const responseData = await response.json();
@@ -1185,6 +1247,10 @@ export const SchoolTypeSetup = () => {
                       selectedLevels={selectedLevels}
                       toggleLevel={toggleLevel}
                       levelsSectionRef={levelsSectionRef}
+                      classOverrides={classOverrides}
+                      onRenameClass={renameClass}
+                      onRemoveClass={removeClass}
+                      onRestoreClass={restoreClass}
                     />
                   </div>
                 </div>

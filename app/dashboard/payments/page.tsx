@@ -18,6 +18,9 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { usePlatformPayments } from "@/lib/superadmin/usePlatformPayments";
+import { SmsGatewayPanel } from "./_components/SmsGatewayPanel";
+import { SmsCreditsPanel } from "./_components/SmsCreditsPanel";
+import { PlatformDeliveryPanel } from "./_components/PlatformDeliveryPanel";
 import { CreditCard, Loader2, ShieldCheck } from "lucide-react";
 
 export default function PlatformPaymentsPage() {
@@ -346,6 +349,12 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
             </div>
           </div>
         </div>
+
+        <SmsGatewayPanel />
+
+        <SmsCreditsPanel />
+
+        <PlatformDeliveryPanel />
       </div>
     </DashboardLayout>
   );

@@ -234,7 +234,10 @@ export const Step4Document = ({
 
     return (
         <div className="space-y-5">
-            <FeesWizardSection title="Official fee structure">
+            <FeesWizardSection
+                title="Official fee structure"
+                description="Pick the grade and terms to show, then preview the letter before you save."
+            >
                 <FeeLetterSetupPanel
                     grades={selectedGrades}
                     previewGrade={previewGrade}

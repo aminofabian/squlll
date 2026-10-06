@@ -35,6 +35,9 @@ import {
 import { UserPlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { sanitizeApiUserMessage } from "@/lib/utils/api-user-messages";
+import { requestInviteTeacher } from "@/lib/api/invite-teacher";
+import { splitFullName } from "@/lib/utils/teacher-import";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { InvitationSuccessModal } from "./InvitationSuccessModal";
 
@@ -93,25 +96,6 @@ function formatPhoneNumber(value: string): string {
   }
 
   return cleaned;
-}
-
-function splitName(fullName: string): {
-  firstName: string;
-  lastName: string;
-  fullName: string;
-} {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return { firstName: "", lastName: "", fullName: "" };
-  }
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: parts[0], fullName: parts[0] };
-  }
-  return {
-    firstName: parts[0],
-    lastName: parts.slice(1).join(" "),
-    fullName: parts.join(" "),
-  };
 }
 
 const fieldShell =
@@ -229,57 +213,46 @@ export function CreateTeacherDrawer({
       isSubmittingRef.current = true;
       setIsLoading(true);
 
-      const { firstName, lastName, fullName } = splitName(data.fullName);
-      const isEmailDeliveryFailure = (message: string) =>
-        message.toLowerCase().includes("failed to send email");
+      const { firstName, lastName, fullName } = splitFullName(data.fullName);
 
       try {
-        const createTeacherDto = {
+        const invited = await requestInviteTeacher({
           email: data.email.trim(),
           fullName,
           firstName,
           lastName,
-          role: "TEACHER",
           gender: data.gender,
           department: data.department.toLowerCase(),
           phoneNumber: data.phoneNumber.trim(),
-        };
-
-        const response = await fetch("/api/school/invite-teacher", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ createTeacherDto }),
         });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          if (result.error && isEmailDeliveryFailure(result.error)) {
-            await finishInvitation({
-              email: data.email.trim(),
-              fullName,
-              status: "PENDING",
-              createdAt: new Date().toISOString(),
-              emailSent: false,
-            });
-            return;
-          }
-
-          throw new Error(result.error || "Failed to send invitation");
-        }
-
         await finishInvitation({
-          ...result.inviteTeacher,
-          emailSent: result.inviteTeacher.emailSent !== false,
+          ...invited,
+          emailSent: invited.emailSent !== false,
         });
 
         toast.success("Invitation sent", {
           description: `${fullName} will receive an email to set up their account.`,
         });
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Could not send invitation";
-        toast.error("Invitation failed", { description: message, duration: 8000 });
+        if ((error as { code?: string }).code === "EMAIL_SEND_FAILED") {
+          await finishInvitation({
+            email: data.email.trim(),
+            fullName,
+            status: "PENDING",
+            createdAt: new Date().toISOString(),
+            emailSent: false,
+          });
+          return;
+        }
+
+        toast.error("Invitation failed", {
+          description: sanitizeApiUserMessage(
+            error,
+            "Could not send the invitation. Please try again.",
+          ),
+          duration: 8000,
+        });
       } finally {
         isSubmittingRef.current = false;
         setIsLoading(false);

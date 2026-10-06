@@ -1,4 +1,5 @@
 import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+import { resolveCookieDomain } from "./cookie-domain";
 
 export interface SessionCookieOptions {
   domain?: string;
@@ -34,26 +35,13 @@ const SESSION_COOKIE_NAMES = [
 ] as const;
 
 export function getSessionCookieOptions(requestUrl: URL): SessionCookieOptions {
-  if (process.env.NODE_ENV === "production") {
-    return {
-      domain: ".squl.co.ke",
-      sameSite: "none",
-      secure: true,
-    };
-  }
-
-  if (requestUrl.hostname.endsWith(".localhost")) {
-    return {
-      domain: ".localhost",
-      sameSite: "lax",
-      secure: false,
-    };
-  }
-
+  const domain = resolveCookieDomain(requestUrl.hostname);
+  const isProd = process.env.NODE_ENV === "production";
   return {
-    domain: undefined,
-    sameSite: "lax",
-    secure: false,
+    domain,
+    // Shared-domain cookies use `none`; host-only cookies use `lax`.
+    sameSite: domain ? "none" : "lax",
+    secure: isProd,
   };
 }
 

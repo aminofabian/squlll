@@ -73,7 +73,7 @@ export function StaffDirectorySidebar({
     <div className="flex min-h-0 flex-1 flex-col pt-1">
       <div className="relative mb-3 shrink-0">
         <Search
-          className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/40 dark:text-white/40"
           aria-hidden
         />
         <Input
@@ -98,25 +98,29 @@ export function StaffDirectorySidebar({
       </div>
 
       <div className={staffDirectoryMeta}>
-        <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45 dark:text-white/45">
           Directory
         </p>
-        <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
+        <p className="mt-0.5 text-xs text-[#1a4d42]/60 dark:text-white/50">
+          <span className="font-semibold text-[#0a1f1a] dark:text-white">
             {staff.length}
           </span>{" "}
           staff ·{" "}
-          <span className="text-primary">{activeCount} active</span>
+          <span className="text-[#246a59] dark:text-[#8fe3c8]">
+            {activeCount} active
+          </span>
         </p>
       </div>
 
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
         {isLoading ? (
-          <p className="py-8 text-center text-xs text-slate-400">Loading…</p>
+          <p className="py-8 text-center text-xs text-[#1a4d42]/50 dark:text-white/45">
+            Loading…
+          </p>
         ) : filtered.length === 0 ? (
           <div className="py-8 text-center">
-            <User className="mx-auto mb-2 h-5 w-5 text-slate-300 dark:text-slate-600" />
-            <p className="text-xs text-slate-400">
+            <User className="mx-auto mb-2 h-5 w-5 text-[#1a4d42]/30 dark:text-white/25" />
+            <p className="text-xs text-[#1a4d42]/50 dark:text-white/45">
               {searchTerm ? "No matches" : "No staff in this view"}
             </p>
           </div>
@@ -135,17 +139,17 @@ export function StaffDirectorySidebar({
                   <StaffInitials name={staffDisplayName(member)} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                      <span className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white">
                         {staffDisplayName(member)}
                       </span>
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-full",
-                          member.isActive ? "bg-emerald-500" : "bg-amber-400",
+                          "h-1.5 w-1.5 shrink-0 rounded-none",
+                          member.isActive ? "bg-emerald-500" : "bg-amber-500",
                         )}
                       />
                     </div>
-                    <p className="truncate text-[11px] text-slate-400">
+                    <p className="truncate text-[11px] text-[#1a4d42]/45 dark:text-white/40">
                       {formatStaffLabel(member.role)}
                       {member.department
                         ? ` · ${formatStaffLabel(member.department)}`
@@ -160,7 +164,7 @@ export function StaffDirectorySidebar({
       </div>
 
       {filtered.length > displayedCount ? (
-        <div className="mt-2 shrink-0 border-t border-slate-200/40 pt-2 dark:border-slate-800/50">
+        <div className="mt-2 shrink-0 border-t border-[#1a4d42]/10 pt-2 dark:border-white/10">
           <Button
             variant="ghost"
             size="sm"

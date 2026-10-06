@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { resolveHostViaBackend } from '@/lib/host-resolution'
 
-export function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = request.nextUrl
   const hostname = request.headers.get('host') || ''
   const isProd = process.env.NODE_ENV === 'production'
-  
-  // React 19 compatibility: Add headers to prevent module loading issues
-  const response = NextResponse.next()
-  response.headers.set('X-React-Version', '19')
-  response.headers.set('X-Next-Version', '15.3.3')
-  
+
   console.log('Middleware - Processing request:', {
     hostname,
     pathname: url.pathname,
@@ -18,16 +14,20 @@ export function middleware(request: NextRequest) {
     isProd,
     userAgent: request.headers.get('user-agent')?.substring(0, 100)
   })
-  
-  // Define your domains
-  const currentHost = 
-    process.env.NODE_ENV === 'production'
-      ? hostname.replace(`.squl.co.ke`, '')
-      : hostname.replace(`.localhost:3000`, '')
+
+  // Host without port, used for subdomain matching. Supports any dev port
+  // (e.g. mirema.localhost:3002), not just :3000.
+  const host = hostname.split(':')[0].toLowerCase()
+  const incomingPort = hostname.split(':')[1] || ''
+  const apexDomain = isProd ? 'squl.co.ke' : 'localhost'
+  const apexHost = isProd ? 'squl.co.ke' : `localhost${incomingPort ? `:${incomingPort}` : ''}`
+  const currentHost = host.endsWith(`.${apexDomain}`)
+    ? host.slice(0, -(apexDomain.length + 1))
+    : host
 
   // Exclude static files and api routes
-  if (url.pathname.startsWith('/_next') || 
-      url.pathname.startsWith('/api') || 
+  if (url.pathname.startsWith('/_next') ||
+      url.pathname.startsWith('/api') ||
       url.pathname.startsWith('/static') ||
       url.pathname.includes('.')) {
     console.log('Middleware - Skipping static/api route:', url.pathname)
@@ -35,9 +35,10 @@ export function middleware(request: NextRequest) {
   }
 
   // Check if this is a subdomain (excluding www)
-  const isSubdomain = hostname.includes(isProd ? '.squl.co.ke' : '.localhost:3000') &&
-    !hostname.startsWith('www.') &&
-    hostname !== (isProd ? 'squl.co.ke' : 'localhost:3000')
+  const isSubdomain = host.endsWith(`.${apexDomain}`) &&
+    !host.startsWith('www.') &&
+    host !== apexDomain
+  const isWWW = host.startsWith('www.')
 
   // Protect super admin dashboard routes on the apex domain only.
   // School subdomains also use /dashboard but rewrite to /school/[subdomain]/dashboard.
@@ -59,62 +60,66 @@ export function middleware(request: NextRequest) {
     isProd
   })
 
-  if (isSubdomain) {
+  // Decide which school to serve. Platform subdomains keep the fast, backend-free
+  // path. Any other host (a tenant's own domain) is resolved through the API —
+  // results are cached in-process, so this only runs for real custom domains.
+  let effectiveSubdomain: string | null = isSubdomain ? currentHost : null
+
+  if (!effectiveSubdomain && !isWWW && host !== apexDomain) {
+    try {
+      const resolution = await resolveHostViaBackend(hostname)
+      if (resolution?.subdomain) {
+        effectiveSubdomain = resolution.subdomain
+      }
+    } catch (error) {
+      console.error('Middleware - Custom domain resolution failed:', error)
+    }
+  }
+
+  if (effectiveSubdomain) {
     // Special handling for signup routes with tokens - redirect to main domain
     if ((url.pathname === '/signup' || url.pathname === '/teacher-signup') && url.searchParams.has('token')) {
-      const mainDomain = isProd ? 'https://squl.co.ke' : 'http://localhost:3001'
+      const mainDomain = isProd ? 'https://squl.co.ke' : `http://${apexHost}`
       const redirectUrl = new URL(`${mainDomain}/signup${url.search}`)
-      
-      console.log('Middleware - Redirecting signup with token to main domain:', {
-        from: request.url,
-        to: redirectUrl.toString(),
-        path: url.pathname,
-        token: url.searchParams.get('token')?.substring(0, 20) + '...'
-      })
-      
       return NextResponse.redirect(redirectUrl)
     }
-    
-    // For other subdomain requests, rewrite the path to include /school/[subdomain]
-    const schoolPrefix = `/school/${currentHost}`
+
+    // Rewrite the path to include /school/[subdomain]. If the path already
+    // targets this school (custom-domain in-app links use /school/[subdomain]),
+    // don't double-prefix.
+    const schoolPrefix = `/school/${effectiveSubdomain}`
     const rewritePath = url.pathname.startsWith(schoolPrefix)
       ? url.pathname
       : `${schoolPrefix}${url.pathname === '/' ? '' : url.pathname}`
-    
-    console.log('Middleware - Subdomain request, rewriting:', {
+
+    console.log('Middleware - School request, rewriting:', {
       hostname,
       originalPath: url.pathname,
       rewritePath,
-      currentHost,
+      effectiveSubdomain,
       search: url.search
     })
-    
+
     try {
-      // Create the rewrite URL
       const rewriteUrl = new URL(rewritePath + url.search, request.url)
-      
-      // Create response with proper headers to prevent caching issues
-      const response = NextResponse.rewrite(rewriteUrl)
-      
-      // Add headers to prevent caching and ensure proper module loading
-      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-      response.headers.set('Pragma', 'no-cache')
-      response.headers.set('Expires', '0')
-      response.headers.set('X-Subdomain', currentHost)
-      
-      return response
+      const rewriteResponse = NextResponse.rewrite(rewriteUrl)
+
+      // Prevent caching issues and ensure proper module loading
+      rewriteResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      rewriteResponse.headers.set('Pragma', 'no-cache')
+      rewriteResponse.headers.set('Expires', '0')
+      rewriteResponse.headers.set('X-Subdomain', effectiveSubdomain)
+      rewriteResponse.headers.set('X-Tenant-Host', host)
+
+      return rewriteResponse
     } catch (error) {
       console.error('Middleware - Error during rewrite:', error)
-      // Fallback to next() if rewrite fails
       return NextResponse.next()
     }
   }
 
   // Handle www subdomain - ensure it works the same as root domain
-  const isWWW = hostname.startsWith('www.')
   if (isWWW) {
-    // For www subdomain, just pass through to the normal routing
-    // This ensures www.example.com/school/abc works the same as example.com/school/abc
     console.log('Middleware - Processing www subdomain:', {
       hostname,
       pathname: url.pathname
@@ -137,4 +142,4 @@ export const config = {
      */
     '/((?!api|_next|static|[\\w-]+\\.\\w+).*)',
   ],
-} 
+}

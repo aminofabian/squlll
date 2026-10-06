@@ -24,6 +24,7 @@ import {
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { sanitizeApiUserMessage } from "@/lib/utils/api-user-messages";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { StaffAddTrigger, type StaffAddTriggerVariant } from "./StaffAddTrigger";
 
@@ -239,13 +240,18 @@ export function CreateStaffDrawer({
       const result = await response.json();
 
       if (!response.ok) {
-        if (result.details && Array.isArray(result.details)) {
-          const errorMessages = result.details
-            .map((error: { message?: string }) => error.message)
-            .join(", ");
-          throw new Error(`Validation failed: ${errorMessages}`);
-        }
-        throw new Error(result.error || "Failed to create staff member");
+        const detail = Array.isArray(result.details)
+          ? result.details
+              .map((error: { message?: string }) => error.message)
+              .filter(Boolean)
+              .join(", ")
+          : undefined;
+        const staffError = new Error(
+          result.error || detail || "Failed to create staff member",
+        ) as Error & { code?: string; status?: number };
+        staffError.code = result.code;
+        staffError.status = response.status;
+        throw staffError;
       }
 
       const staffData = result.inviteStaff;
@@ -259,10 +265,10 @@ export function CreateStaffDrawer({
       onOpenChange(false);
     } catch (error) {
       toast.error("Creation failed", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Could not create staff member",
+        description: sanitizeApiUserMessage(
+          error,
+          "Could not create the staff member. Please try again.",
+        ),
       });
     } finally {
       setIsSubmitting(false);

@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PanelLeftClose, PanelLeftOpen, Loader2, X } from "lucide-react";
 import { CreateStudentDrawer } from "./components/CreateStudentDrawer";
+import { ImportStudentsDrawer } from "./components/ImportStudentsDrawer";
 import { StudentsEmptyHero } from "./components/StudentsEmptyHero";
 import { StudentDetailsView } from "./components/StudentDetailsView";
 import { StudentsPulseHero } from "./components/StudentsPulseHero";
@@ -443,13 +444,21 @@ export default function StudentsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {!selectedStudentId ? (
-                  <CreateStudentDrawer
-                    defaultOpen={openAddStudent}
-                    onStudentCreated={() => {
-                      refetch();
-                      clearFilters();
-                    }}
-                  />
+                  <>
+                    <ImportStudentsDrawer
+                      onImported={() => {
+                        refetch();
+                        clearFilters();
+                      }}
+                    />
+                    <CreateStudentDrawer
+                      defaultOpen={openAddStudent}
+                      onStudentCreated={() => {
+                        refetch();
+                        clearFilters();
+                      }}
+                    />
+                  </>
                 ) : null}
               </div>
             </div>
@@ -624,6 +633,12 @@ export default function StudentsPage() {
                         )}
                         <div className="flex flex-wrap items-center gap-2">
                           <StudentsBulkActions students={tableStudents} />
+                          <ImportStudentsDrawer
+                            triggerVariant="toolbar"
+                            onImported={() => {
+                              refetch();
+                            }}
+                          />
                           <CreateStudentDrawer
                             triggerVariant="toolbar"
                             onStudentCreated={() => {
@@ -639,12 +654,20 @@ export default function StudentsPage() {
                           "flex justify-end",
                         )}
                       >
-                        <CreateStudentDrawer
-                          triggerVariant="toolbar"
-                          onStudentCreated={() => {
-                            refetch();
-                          }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <ImportStudentsDrawer
+                            triggerVariant="toolbar"
+                            onImported={() => {
+                              refetch();
+                            }}
+                          />
+                          <CreateStudentDrawer
+                            triggerVariant="toolbar"
+                            onStudentCreated={() => {
+                              refetch();
+                            }}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { schoolPortalUrl } from '@/lib/auth/post-login-navigation';
 import {
   CheckCircle2,
   Copy,
@@ -67,7 +68,7 @@ export function InvitationSuccessModal({
 }: InvitationSuccessModalProps) {
   const [copied, setCopied] = useState(false);
   const emailFailed = invitationData.emailSent === false;
-  const portalUrl = `${schoolSubdomain}.squl.co.ke/teacher`;
+  const portalUrl = schoolPortalUrl(schoolSubdomain, '/teacher');
 
   const copyEmail = async () => {
     await navigator.clipboard.writeText(invitationData.email);

@@ -237,7 +237,9 @@ export function FeesStatementHero({
   onRefresh,
   onViewPaymentHistory,
   onRecordPayment,
+  onAdvancePayment,
   refreshing,
+  stkAvailable,
 }: {
   overview: ParentChildFeeOverview | null
   childName?: string
@@ -245,7 +247,10 @@ export function FeesStatementHero({
   onRefresh?: () => void
   onViewPaymentHistory?: () => void
   onRecordPayment?: () => void
+  onAdvancePayment?: () => void
   refreshing?: boolean
+  /** M-Pesa Express (STK) is configured for this school — pay straight to the till. */
+  stkAvailable?: boolean
 }) {
   if (!overview && !loading) return null
 
@@ -333,15 +338,26 @@ export function FeesStatementHero({
           </div>
 
           {cleared && overview.totalBilled > 0 ? (
-            <div className="mt-2 flex items-center gap-2 rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 text-[11px] text-emerald-800">
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 text-[11px] text-emerald-800">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>All fees for this account are settled. Thank you.</span>
+              <span className="min-w-0 flex-1">
+                All fees for this account are settled. Thank you.
+              </span>
+              {stkAvailable && onAdvancePayment ? (
+                <button
+                  type="button"
+                  onClick={onAdvancePayment}
+                  className="shrink-0 rounded border border-emerald-300 bg-white px-2 py-0.5 text-[10px] font-medium text-emerald-800 hover:bg-emerald-100"
+                >
+                  Pay ahead
+                </button>
+              ) : null}
             </div>
           ) : null}
 
           {showPayCta ? (
             <>
-              <FeesPayJourneyStrip className="mt-2" />
+              <FeesPayJourneyStrip className="mt-2" stk={stkAvailable} />
               <div className="mt-2 flex gap-2">
                 <Button
                   type="button"
@@ -349,8 +365,12 @@ export function FeesStatementHero({
                   className="h-9 flex-1 gap-1.5 text-xs shadow-sm"
                   onClick={onRecordPayment}
                 >
-                  <Wallet className="h-3.5 w-3.5" />
-                  Record payment
+                  {stkAvailable ? (
+                    <Smartphone className="h-3.5 w-3.5" />
+                  ) : (
+                    <Wallet className="h-3.5 w-3.5" />
+                  )}
+                  {stkAvailable ? 'Pay fees' : 'Record payment'}
                 </Button>
                 {onViewPaymentHistory ? (
                   <Button
@@ -364,6 +384,15 @@ export function FeesStatementHero({
                   </Button>
                 ) : null}
               </div>
+              {stkAvailable && onAdvancePayment ? (
+                <button
+                  type="button"
+                  onClick={onAdvancePayment}
+                  className="mt-1.5 text-[10px] font-medium text-primary hover:underline"
+                >
+                  Add an advance payment →
+                </button>
+              ) : null}
             </>
           ) : null}
 
@@ -399,8 +428,16 @@ export function FeesStatementHero({
   )
 }
 
-function FeesPayJourneyStrip({ className }: { className?: string }) {
-  const steps = ['Pay school', 'Save code', 'Record here']
+function FeesPayJourneyStrip({
+  className,
+  stk,
+}: {
+  className?: string
+  stk?: boolean
+}) {
+  const steps = stk
+    ? ['Tap Pay fees', 'Enter M-Pesa PIN', 'Receipt lands here']
+    : ['Pay school', 'Save code', 'Record here']
   return (
     <p
       className={cn(
@@ -846,25 +883,28 @@ export const FeesTableOfContents = FeesCompactNav
 /* ─── Metric strip (below document) ─── */
 export function FeesRecordsEmpty({
   onRecordPayment,
+  stkAvailable,
 }: {
   onRecordPayment?: () => void
+  stkAvailable?: boolean
 }) {
   return (
     <div className={cn(feesSurface, 'px-3 py-6 text-center')}>
       <Receipt className="mx-auto h-8 w-8 text-slate-300" />
       <p className="mt-2 text-xs font-medium text-slate-700">No payments yet</p>
       <p className={cn('mt-1 text-[10px]', feesMuted)}>
-        After you pay via M-Pesa or bank, record it here so finance can confirm.
+        {stkAvailable
+          ? 'Pay with M-Pesa Express and your receipt appears here automatically.'
+          : 'After you pay via M-Pesa or bank, record it here so finance can confirm.'}
       </p>
       {onRecordPayment ? (
         <Button
           type="button"
           size="sm"
-          variant="outline"
           className="mt-3 h-8 text-xs"
           onClick={onRecordPayment}
         >
-          Record your first payment
+          {stkAvailable ? 'Pay fees now' : 'Record your first payment'}
         </Button>
       ) : null}
     </div>
@@ -874,28 +914,63 @@ export function FeesRecordsEmpty({
 export function FeesStatusNote({
   status,
   onRecordPayment,
+  stkAvailable,
 }: {
   status?: ParentPaymentStatus
   onRecordPayment?: () => void
+  stkAvailable?: boolean
 }) {
+  const rows = stkAvailable
+    ? [
+        {
+          icon: Smartphone,
+          tone: 'text-emerald-600',
+          text: 'Tap Pay fees, then approve the M-Pesa prompt on your phone.',
+        },
+        {
+          icon: Banknote,
+          tone: 'text-slate-500',
+          text: 'Money goes straight to the school till or paybill — no code to type.',
+        },
+        {
+          icon: Receipt,
+          tone: 'text-primary',
+          text: 'Your receipt lands here the moment Safaricom confirms.',
+        },
+      ]
+    : [
+        {
+          icon: Smartphone,
+          tone: 'text-emerald-600',
+          text: 'Pay using school M-Pesa or bank details, then tap Record payment.',
+        },
+        {
+          icon: Banknote,
+          tone: 'text-slate-500',
+          text: 'Add your confirmation code and a photo of the slip when you can.',
+        },
+        {
+          icon: Receipt,
+          tone: 'text-primary',
+          text: 'Finance verifies and issues an official receipt number.',
+        },
+      ]
+
   return (
     <div className={cn(feesSurface, 'space-y-2 px-2.5 py-2.5')}>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-        How recording works
+        {stkAvailable ? 'How paying works' : 'How recording works'}
       </p>
       <ul className="space-y-1.5 text-[10px] leading-relaxed text-slate-600">
-        <li className="flex gap-2">
-          <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-          Pay using school M-Pesa or bank details, then tap Record payment.
-        </li>
-        <li className="flex gap-2">
-          <Banknote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
-          Add your confirmation code and a photo of the slip when you can.
-        </li>
-        <li className="flex gap-2">
-          <Receipt className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-          Finance verifies and issues an official receipt number.
-        </li>
+        {rows.map((row) => {
+          const Icon = row.icon
+          return (
+            <li key={row.text} className="flex gap-2">
+              <Icon className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', row.tone)} />
+              {row.text}
+            </li>
+          )
+        })}
       </ul>
       <div className="flex flex-wrap items-center gap-2 border-t border-slate-200/80 pt-2">
         {status ? (
@@ -914,7 +989,7 @@ export function FeesStatusNote({
             onClick={onRecordPayment}
             className="text-[10px] font-medium text-primary hover:underline"
           >
-            Record payment →
+            {stkAvailable ? 'Pay fees →' : 'Record payment →'}
           </button>
         ) : null}
       </div>

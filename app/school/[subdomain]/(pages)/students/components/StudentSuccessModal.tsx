@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { schoolPortalUrl } from '@/lib/auth/post-login-navigation';
 import {
   CheckCircle2,
   Copy,
@@ -107,7 +108,7 @@ export function StudentSuccessModal({
   schoolSubdomain = 'school',
 }: StudentSuccessModalProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const portalUrl = `${schoolSubdomain}.squl.co.ke/student`;
+  const portalUrl = schoolPortalUrl(schoolSubdomain, '/student');
 
   const copyText = async (text: string, field: string, message: string) => {
     await navigator.clipboard.writeText(text);

@@ -1,10 +1,29 @@
-/** Build absolute URL for a school subdomain (dev + prod). */
-export function schoolPortalUrl(subdomain: string, path: string): string {
-  const isProd = process.env.NODE_ENV === 'production';
-  const protocol = isProd ? 'https://' : 'http://';
-  const domain = isProd ? 'squl.co.ke' : 'localhost:3000';
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${protocol}${subdomain}.${domain}${normalizedPath}`;
+/** Build the absolute URL for a school's portal (school subdomain host). */
+export function schoolPortalUrl(subdomain: string, path = "/"): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  // In the browser, derive the host + port from the current location so local
+  // dev stays on the local host (e.g. http://school.localhost:3002) instead of
+  // redirecting to the production domain.
+  if (typeof window !== "undefined") {
+    const { hostname, port } = window.location;
+    const isLocal =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.endsWith(".localhost");
+
+    if (isLocal) {
+      const portSuffix = port ? `:${port}` : "";
+      return `http://${subdomain}.localhost${portSuffix}${normalizedPath}`;
+    }
+
+    return `https://${subdomain}.squl.co.ke${normalizedPath}`;
+  }
+
+  // SSR fallback (no window available).
+  const isProd = process.env.NODE_ENV === "production";
+  const base = isProd ? "squl.co.ke" : "localhost:3002";
+  return `${isProd ? "https://" : "http://"}${subdomain}.${base}${normalizedPath}`;
 }
 
 /** Relative path after sign-in (subdomain middleware rewrites to /school/[subdomain]/…). */

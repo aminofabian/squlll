@@ -128,7 +128,7 @@ export function ParentConsolidatedFeeCard({
                 onClick={onPayFees}
               >
                 <Wallet className="h-3.5 w-3.5" />
-                Record payment · {formatCurrency(summary.totalOutstanding)}
+                Pay fees · {formatCurrency(summary.totalOutstanding)}
               </Button>
             ) : summary.totalOutstanding <= 0 && summary.totalBilled > 0 ? (
               <p className="rounded-lg border border-emerald-200/60 bg-emerald-50/50 px-3 py-2 text-center text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">

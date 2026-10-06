@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { sanitizeApiUserMessage } from "@/lib/utils/api-user-messages";
 import { graphqlClient } from "@/lib/graphql-client";
 import { gql } from "graphql-request";
 import { getTenantInfo } from "@/lib/utils";
@@ -240,7 +241,12 @@ export function LinkParentDrawer({
 
       const result = await response.json();
       if (result.errors?.length) {
-        throw new Error(result.errors[0]?.message || "Failed to invite parent");
+        const firstError = result.errors[0];
+        const error = new Error(
+          firstError?.message || "Failed to invite parent",
+        ) as Error & { code?: string };
+        error.code = firstError?.extensions?.code;
+        throw error;
       }
       if (!result.data?.inviteParent) {
         throw new Error("No invitation was created");
@@ -255,7 +261,10 @@ export function LinkParentDrawer({
       onLinked();
     } catch (err) {
       toast.error("Could not invite parent", {
-        description: err instanceof Error ? err.message : "Please try again.",
+        description: sanitizeApiUserMessage(
+          err,
+          "Please check the details and try again.",
+        ),
       });
     } finally {
       setIsSubmitting(false);
@@ -283,7 +292,12 @@ export function LinkParentDrawer({
       setOpen(false);
       onLinked();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to link parent");
+      toast.error("Could not link parent", {
+        description: sanitizeApiUserMessage(
+          err,
+          "Could not link this parent. Please try again.",
+        ),
+      });
     } finally {
       setLinkingParentId(null);
     }

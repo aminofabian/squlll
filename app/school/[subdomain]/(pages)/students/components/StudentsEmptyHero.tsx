@@ -2,6 +2,7 @@
 
 import { GraduationCap, Users } from "lucide-react";
 import { CreateStudentDrawer } from "./CreateStudentDrawer";
+import { ImportStudentsDrawer } from "./ImportStudentsDrawer";
 
 interface StudentsEmptyHeroProps {
   defaultOpen?: boolean;
@@ -30,13 +31,19 @@ export function StudentsEmptyHero({
       </p>
 
       <div className="relative mt-6 flex flex-col items-center gap-3">
-        <CreateStudentDrawer
-          defaultOpen={defaultOpen}
-          triggerVariant="hero"
-          onStudentCreated={onStudentCreated}
-        />
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <CreateStudentDrawer
+            defaultOpen={defaultOpen}
+            triggerVariant="hero"
+            onStudentCreated={onStudentCreated}
+          />
+          <ImportStudentsDrawer
+            triggerVariant="hero"
+            onImported={onStudentCreated}
+          />
+        </div>
         <p className="text-[11px] text-[#1a4d42]/45">
-          Takes about a minute · admission number auto-generated
+          Or import a whole class list from CSV, Excel or JSON
         </p>
       </div>
     </div>

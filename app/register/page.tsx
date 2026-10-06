@@ -13,6 +13,7 @@ import {
   Check,
   Circle,
 } from "lucide-react";
+import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
 
 // ─── Schema ────────────────────────────────────────────────────
 
@@ -246,10 +247,10 @@ export default function SignupPage() {
           userData.tenant?.subdomain ||
           userData.subdomainUrl?.split(".")[0] ||
           userData.user.schoolUrl;
-        const isProd = process.env.NODE_ENV === "production";
-        const protocol = isProd ? "https://" : "http://";
-        const host = isProd ? "squl.co.ke" : "localhost:3000";
-        const loginUrl = `${protocol}${subdomain}.${host}/login?registered=true&email=${encodeURIComponent(userData.user.email)}`;
+        const loginUrl = schoolPortalUrl(
+          subdomain,
+          `/login?registered=true&email=${encodeURIComponent(userData.user.email)}`,
+        );
 
         setTimeout(() => {
           window.location.replace(loginUrl);

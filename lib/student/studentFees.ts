@@ -63,6 +63,18 @@ export interface StudentReceiptRecord {
   } | null
 }
 
+export interface StudentOutstandingInvoice {
+  id: string
+  invoiceNumber: string
+  termName?: string | null
+  academicYearName?: string | null
+  dueDate?: string | null
+  totalAmount: number
+  paidAmount: number
+  balanceAmount: number
+  status: string
+}
+
 export interface StudentFeeOverview {
   balance: StudentFeeBalance
   outstanding: number
@@ -72,6 +84,28 @@ export interface StudentFeeOverview {
   paymentStatus: StudentPaymentStatus
   byPlan: StudentFeePlanBreakdown[]
   recentPayments: StudentPaymentRecord[]
+  outstandingInvoices: StudentOutstandingInvoice[]
+}
+
+export interface MpesaCustodyAvailability {
+  available: boolean
+  custodyProvider: string
+  platformDarajaEnabled: boolean
+  reason?: string | null
+}
+
+export interface MpesaStkIntent {
+  id: string
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | string
+  amount: number
+  phone: string
+  checkoutRequestId?: string | null
+  resultCode?: string | null
+  resultDesc?: string | null
+  mpesaReceipt?: string | null
+  paymentId?: string | null
+  invoiceId?: string | null
+  createdAt: string
 }
 
 const MY_FEE_OVERVIEW = `
@@ -119,6 +153,17 @@ const MY_FEE_OVERVIEW = `
           term { name }
           academicYear { name }
         }
+      }
+      outstandingInvoices {
+        id
+        invoiceNumber
+        termName
+        academicYearName
+        dueDate
+        totalAmount
+        paidAmount
+        balanceAmount
+        status
       }
     }
   }
@@ -168,6 +213,51 @@ const MY_RECEIPT_PDF = `
   }
 `
 
+const MPESA_CUSTODY_AVAILABILITY = `
+  query MpesaCustodyAvailability {
+    mpesaCustodyAvailability {
+      available
+      custodyProvider
+      platformDarajaEnabled
+      reason
+    }
+  }
+`
+
+const INITIATE_MPESA_STK = `
+  mutation InitiateMyMpesaStk($input: InitiateCustodyMpesaStkInput!) {
+    initiateCustodyMpesaStk(input: $input) {
+      id
+      status
+      amount
+      phone
+      checkoutRequestId
+      resultCode
+      resultDesc
+      mpesaReceipt
+      paymentId
+      invoiceId
+      createdAt
+    }
+  }
+`
+
+const MY_STK_INTENT = `
+  query MyStkIntent($id: String!) {
+    custodyMpesaStkIntent(id: $id) {
+      id
+      status
+      amount
+      phone
+      resultCode
+      resultDesc
+      mpesaReceipt
+      paymentId
+      invoiceId
+    }
+  }
+`
+
 export async function fetchMyFeeOverview(
   subdomain: string,
 ): Promise<StudentFeeOverview> {
@@ -211,6 +301,43 @@ export async function fetchMyReceiptPdf(
     subdomain,
   )
   return data.myReceiptPdf
+}
+
+export async function fetchMpesaCustodyAvailability(
+  subdomain: string,
+): Promise<MpesaCustodyAvailability> {
+  const data = await chatGraphqlFetch<{
+    mpesaCustodyAvailability: MpesaCustodyAvailability
+  }>(MPESA_CUSTODY_AVAILABILITY, {}, subdomain)
+  return data.mpesaCustodyAvailability
+}
+
+/**
+ * Fire a Lipa Na M-Pesa Express (STK) push to the student's phone for a
+ * specific invoice. The student authorises it with their M-Pesa PIN.
+ */
+export async function initiateMyMpesaStk(
+  subdomain: string,
+  input: { invoiceId: string; amount: number; phone: string; notes?: string },
+): Promise<MpesaStkIntent> {
+  const data = await chatGraphqlFetch<{ initiateCustodyMpesaStk: MpesaStkIntent }>(
+    INITIATE_MPESA_STK,
+    { input },
+    subdomain,
+  )
+  return data.initiateCustodyMpesaStk
+}
+
+export async function fetchMyStkIntent(
+  subdomain: string,
+  id: string,
+): Promise<MpesaStkIntent> {
+  const data = await chatGraphqlFetch<{ custodyMpesaStkIntent: MpesaStkIntent }>(
+    MY_STK_INTENT,
+    { id },
+    subdomain,
+  )
+  return data.custodyMpesaStkIntent
 }
 
 export function formatStudentPaymentStatus(status: StudentPaymentStatus): string {

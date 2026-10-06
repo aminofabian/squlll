@@ -18,7 +18,7 @@ function toGraphQLError(error: unknown): GraphQLError {
 
 export async function POST(request: Request) {
   try {
-    const { levelNames } = await request.json();
+    const { levelNames, gradeLevelOverrides } = await request.json();
     
     const cookieStore = await cookies();
     let token: string | undefined;
@@ -49,11 +49,37 @@ export async function POST(request: Request) {
 
     // Prepare GraphQL mutation
     const levelNamesString = levelNames.map((name: string) => `"${name}"`).join(',\n');
+
+    // Tenant-scoped class customizations (rename/remove). Serialized as GraphQL
+    // input literals; only the tenant's names change, globals are untouched.
+    type OverrideInput = {
+      levelName: string;
+      originalName: string;
+      customName?: string;
+      removed?: boolean;
+    };
+    const overridesClause =
+      Array.isArray(gradeLevelOverrides) && gradeLevelOverrides.length > 0
+        ? `, gradeLevelOverrides: [${(gradeLevelOverrides as OverrideInput[])
+            .map((o) => {
+              const parts = [
+                `levelName: ${JSON.stringify(o.levelName)}`,
+                `originalName: ${JSON.stringify(o.originalName)}`,
+              ];
+              if (o.customName != null) {
+                parts.push(`customName: ${JSON.stringify(o.customName)}`);
+              }
+              if (o.removed) parts.push('removed: true');
+              return `{ ${parts.join(', ')} }`;
+            })
+            .join(', ')}]`
+        : '';
+
     const mutation = `
       mutation {
         configureSchoolLevelsByNames(levelNames: [
           ${levelNamesString}
-        ]) {
+        ]${overridesClause}) {
           id
           selectedLevels {
             id

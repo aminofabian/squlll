@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowUpRight,
+  BookOpen,
   MoreHorizontal,
   Sparkles,
   UserPlus,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +31,7 @@ import { useClassSubjectsForLevel } from "../utils/useClassSubjectsForLevel";
 import { filterStudentsForClass } from "../utils/filterStudentsForClass";
 import { studentsClassHref } from "../utils/class-page-links";
 import { cn } from "@/lib/utils";
+import { classesDotGrid } from "./classes-ui";
 
 interface StudentLike {
   grade?: {
@@ -93,21 +96,18 @@ function classStatus(
   if (studentCount === 0) {
     return {
       label: "Empty class",
-      className:
-        "border-[#1a4d42]/15 bg-[#e8f2ef] text-[#1a4d42]/65 dark:border-white/15 dark:bg-slate-800",
+      className: "border-white/15 bg-white/[0.06] text-white/60",
     };
   }
   if (!hasTeacher || !subjectsCovered) {
     return {
       label: "Setup in progress",
-      className:
-        "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200",
+      className: "border-amber-400/30 bg-amber-400/10 text-amber-200",
     };
   }
   return {
     label: "Ready to teach",
-    className:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200",
+    className: "border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
   };
 }
 
@@ -260,33 +260,31 @@ export function ClassesClassDetail({
       </button>
 
       <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden bg-[#0a1f1a] text-white">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.35] dark:opacity-20"
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, rgb(36 106 89 / 0.12) 1px, transparent 0)`,
-              backgroundSize: "20px 20px",
-            }}
+            className="pointer-events-none absolute inset-0 opacity-[0.14]"
+            style={classesDotGrid}
           />
-          <div className="relative bg-gradient-to-br from-[#246a59]/[0.06] via-white to-[#f8fbfa] px-4 py-5 dark:from-[#246a59]/12 dark:via-[#0c1a17] dark:to-[#071411] sm:px-6 sm:py-6">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#246a59]/45 blur-3xl" />
+          <div className="relative px-4 py-5 sm:px-6 sm:py-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-base font-bold tracking-tight text-white shadow-none sm:h-16 sm:w-16 sm:text-lg">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-base font-bold tracking-tight text-white ring-1 ring-white/10 sm:h-16 sm:w-16 sm:text-lg">
                   {monogram}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#246a59]/75">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fe3c8]/80">
                     {levelName}
                   </p>
-                  <h2 className="mt-0.5 font-display text-xl font-normal tracking-tight text-[#0a1f1a] dark:text-white sm:text-2xl">
+                  <h2 className="mt-0.5 font-display text-xl font-normal tracking-tight text-white sm:text-2xl">
                     {title}
                   </h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
                     {studentCount === 0 ? (
                       <Link
                         href="/students?action=add"
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-none border px-2.5 py-0.5 text-[10px] font-semibold transition-colors hover:border-[#246a59]/40 hover:bg-[#246a59]/5",
+                          "inline-flex items-center gap-1 rounded-none border px-2.5 py-0.5 text-[10px] font-semibold transition-colors hover:bg-white/10",
                           status.className,
                         )}
                       >
@@ -305,25 +303,35 @@ export function ClassesClassDetail({
                         {status.label}
                       </span>
                     )}
+                    <span className="inline-flex items-center gap-1 rounded-none border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] tabular-nums text-white/70">
+                      <Users className="h-3 w-3" />
+                      {studentCount} student{studentCount === 1 ? "" : "s"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-none border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] tabular-nums text-white/70">
+                      <BookOpen className="h-3 w-3" />
+                      {totalCount === 0
+                        ? "No subjects"
+                        : `${assignedCount}/${totalCount} staffed`}
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                 {classTeacher ? (
-                  <div className="rounded-none border border-[#1a4d42]/12 bg-white/90 px-2.5 py-1.5 text-right dark:border-white/15 dark:bg-[#0c1a17]/80">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
+                  <div className="rounded-none border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-right">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-white/45">
                       {teacherRole}
                     </p>
                     <div className="mt-0.5 flex items-center justify-end gap-2">
-                      <span className="max-w-[10rem] truncate text-xs font-semibold text-[#0a1f1a] dark:text-white">
+                      <span className="max-w-[10rem] truncate text-xs font-semibold text-white">
                         {classTeacher.teacher.fullName}
                       </span>
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2 text-[11px] text-[#246a59] hover:bg-[#246a59]/10"
+                        className="h-7 px-2 text-[11px] text-[#8fe3c8] hover:bg-white/10"
                         onClick={onAssignTeacher}
                       >
                         Change
@@ -334,7 +342,7 @@ export function ClassesClassDetail({
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 gap-1.5 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
+                    className="h-8 gap-1.5 rounded-none bg-[#246a59] text-xs text-white shadow-none hover:bg-[#1a4d42]"
                     onClick={onAssignTeacher}
                   >
                     <UserPlus className="h-3.5 w-3.5" />
@@ -347,7 +355,7 @@ export function ClassesClassDetail({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 gap-1.5 border-[#1a4d42]/12 bg-white/80 px-3 text-xs backdrop-blur-sm"
+                        className="h-8 gap-1.5 border-white/15 bg-white/[0.06] px-3 text-xs text-white/80 backdrop-blur-sm hover:bg-white/10 hover:text-white"
                         aria-label="More actions"
                       >
                         <MoreHorizontal className="h-3.5 w-3.5" />
@@ -374,6 +382,10 @@ export function ClassesClassDetail({
                 ) : null}
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="px-4 py-4 sm:px-6 sm:py-5">
 
             {studentCount === 0 ? (
               <div className="mt-4 rounded-none border border-[#246a59]/25 bg-[#246a59]/[0.07] px-4 py-3.5 dark:border-[#246a59]/30 dark:bg-[#246a59]/10">
@@ -478,14 +490,15 @@ export function ClassesClassDetail({
               </div>
             ) : null}
 
-            <ClassDetailMetrics
-              gradeId={grade.id}
-              streamName={streamName}
-              streamStudentCount={streamStudentCount}
-            />
+            <div className="mt-4">
+              <ClassDetailMetrics
+                gradeId={grade.id}
+                streamName={streamName}
+                streamStudentCount={streamStudentCount}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
       <ClassStudentsRoster
         gradeId={grade.id}

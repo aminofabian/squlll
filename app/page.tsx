@@ -35,8 +35,41 @@ import {
   Mail,
   MapPin,
   Phone,
+  ArrowRight,
+  Globe,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react"
+import {
+  ConnectDomainPreview,
+  LiveDomainPreview,
+  type PreviewImage,
+} from "@/components/marketing/DomainPreviews"
+
+/** Optional real captures — drop into public/screenshots/ and fill these in. */
+const DOMAIN_HOME_SHOTS: { connect?: PreviewImage; live?: PreviewImage } = {}
+
+const DOMAIN_HOME_HIGHLIGHTS: {
+  icon: LucideIcon
+  title: string
+  body: string
+}[] = [
+  {
+    icon: Globe,
+    title: "Use a domain you own",
+    body: "Point myschool.ac.ke at your SQUL site — no developer, no DNS headaches.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Free, auto-renewed HTTPS",
+    body: "We issue and renew the certificate, so every page loads securely.",
+  },
+  {
+    icon: CreditCard,
+    title: "Or buy the domain right here",
+    body: "Search, order, and pay with M-Pesa — we register it and wire up the site.",
+  },
+]
 
 const LANDING_PLATFORM_MODULES: {
   icon: LucideIcon
@@ -315,7 +348,7 @@ const LANDING_FOOTER_PRODUCT_LINKS: { label: string; href: string }[] = [
   { label: "M-Pesa & fee balances", href: "/register" },
   { label: "Admissions & records", href: "/register" },
   { label: "CBC & report cards", href: "/register" },
-  { label: "Timetables & attendance", href: "/register" },
+  { label: "Custom domains", href: "/custom-domains" },
 ]
 
 const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
@@ -2102,6 +2135,76 @@ export default function Home() {
                   <LandingDeepDiveBlock {...dive} />
                 </Reveal>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Custom domains — the school's own web address */}
+        <section
+          id="custom-domains"
+          className="relative border-t border-emerald-900/10 bg-white py-20 sm:py-24"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <LandingSectionHeader
+              kicker="Your own web address"
+              title={
+                <>
+                  Give your school a
+                  <span className="block text-[#1d5547]">domain parents trust</span>
+                </>
+              }
+              description="Run your site on myschool.ac.ke with free HTTPS — connect a domain you already own, or buy a new one and pay with M-Pesa, straight from your dashboard."
+            />
+
+            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
+              <Reveal>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <ConnectDomainPreview image={DOMAIN_HOME_SHOTS.connect} />
+                  <LiveDomainPreview image={DOMAIN_HOME_SHOTS.live} />
+                </div>
+              </Reveal>
+
+              <Reveal delay={120}>
+                <ul className="space-y-6">
+                  {DOMAIN_HOME_HIGHLIGHTS.map((item) => (
+                    <li key={item.title} className="flex gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1d5547] shadow-sm">
+                        <item.icon
+                          size={18}
+                          strokeWidth={2}
+                          className="text-white"
+                          aria-hidden
+                        />
+                      </span>
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                          {item.body}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link href="/custom-domains">
+                    <Button className="h-11 rounded-lg bg-[#1d5547] px-5 font-semibold text-white hover:bg-[#246a59]">
+                      See how domains work
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button
+                      variant="outline"
+                      className="h-11 rounded-lg border-[#1a4d42]/25 px-5 font-semibold text-[#0a1f1a]"
+                    >
+                      Start free term
+                    </Button>
+                  </Link>
+                </div>
+              </Reveal>
             </div>
           </div>
         </section>

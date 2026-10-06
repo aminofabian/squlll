@@ -7,8 +7,10 @@ import {
   fetchChildPaymentHistory,
   fetchChildReceipts,
   fetchMyChildrenFeeSummary,
+  fetchParentPaymentInstructions,
   type ParentChildFeeOverview,
   type ParentConsolidatedFees,
+  type ParentPaymentInstructions,
   type ParentPaymentRecord,
   type ParentReceiptRecord,
 } from './parentFees'
@@ -123,6 +125,36 @@ export function useParentChildPayments(
   })
 
   return { payments, loading, refetch: load }
+}
+
+export function useParentPaymentInstructions(subdomain: string) {
+  const [instructions, setInstructions] =
+    useState<ParentPaymentInstructions | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    if (!subdomain) return
+    setLoading(true)
+    try {
+      const data = await fetchParentPaymentInstructions(subdomain)
+      setInstructions(data)
+    } catch {
+      setInstructions(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [subdomain])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  return {
+    instructions,
+    stkAvailable: Boolean(instructions?.stkAvailable),
+    loading,
+    refetch: load,
+  }
 }
 
 export function useParentChildReceipts(

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 /** Shared shell for fee structure wizard steps */
 export function FeesWizardSection({
     title,
+    description,
     children,
     className,
     action,
@@ -13,6 +14,8 @@ export function FeesWizardSection({
     'data-fee-print-hide': printHide,
 }: {
     title: string
+    /** One-line plain-language hint shown under the heading */
+    description?: string
     children: ReactNode
     className?: string
     action?: ReactNode
@@ -28,11 +31,18 @@ export function FeesWizardSection({
                 className,
             )}
         >
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/90 px-4 py-2.5">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    {title}
-                </h3>
-                {action}
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/90 px-4 py-3">
+                <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">
+                        {title}
+                    </h3>
+                    {description ? (
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                            {description}
+                        </p>
+                    ) : null}
+                </div>
+                {action ? <div className="shrink-0">{action}</div> : null}
             </div>
             <div className={cn(!noPadding && 'p-4')}>{children}</div>
         </section>

@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Check, ArrowDown } from 'lucide-react'
-import { Level } from './types'
+import { ClassOverride, Level } from './types'
 import { ClassCard } from './ClassCard'
 
 interface LevelCardProps {
@@ -11,6 +11,10 @@ interface LevelCardProps {
   toggleLevel: (e: React.MouseEvent, typeId: string, levelName: string) => void
   selectedType: string
   showHint?: boolean
+  classOverrides?: Record<string, ClassOverride>
+  onRenameClass?: (levelName: string, originalName: string, name: string) => void
+  onRemoveClass?: (levelName: string, originalName: string) => void
+  onRestoreClass?: (levelName: string, originalName: string) => void
 }
 
 export const LevelCard: React.FC<LevelCardProps> = ({
@@ -18,28 +22,19 @@ export const LevelCard: React.FC<LevelCardProps> = ({
   isSelected,
   toggleLevel,
   selectedType,
-  showHint = false
+  showHint = false,
+  classOverrides,
+  onRenameClass,
+  onRemoveClass,
+  onRestoreClass,
 }) => {
   const [hasInteracted, setHasInteracted] = useState(false)
-
-  useEffect(() => {
-    if (isSelected) {
-      setHasInteracted(true)
-    }
-  }, [isSelected])
 
   const shouldShowArrow = showHint && !hasInteracted && !isSelected
 
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault()
-        toggleLevel(e, selectedType, level.level)
-        setHasInteracted(true)
-      }}
-      onMouseDown={(e) => e.preventDefault()}
-      className={`group relative overflow-visible transition-all duration-150 rounded-md border-2 cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-[#246a59]/50 focus:ring-offset-1 z-0
+    <div
+      className={`group relative overflow-visible transition-all duration-150 rounded-md border-2 w-full text-left z-0
         ${isSelected
           ? 'bg-gradient-to-br from-[#246a59]/12 to-white shadow-sm border-[#246a59] ring-1 ring-[#246a59]/20'
           : 'bg-white hover:bg-[#246a59]/8 border-gray-200 hover:border-[#246a59] hover:shadow-sm hover:ring-1 hover:ring-[#246a59]/15 active:bg-[#246a59]/12'
@@ -61,9 +56,19 @@ export const LevelCard: React.FC<LevelCardProps> = ({
       {isSelected && (
         <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#246a59] to-[#1a4d42]" />
       )}
-      
-      {/* Main content */}
-      <div className="p-2.5 relative pointer-events-none">
+
+      {/* Header — clicking toggles the whole level selection */}
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        onClick={(e) => {
+          e.preventDefault()
+          toggleLevel(e, selectedType, level.level)
+          setHasInteracted(true)
+        }}
+        onMouseDown={(e) => e.preventDefault()}
+        className="w-full cursor-pointer rounded-md p-2.5 pb-1 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/50 focus-visible:ring-offset-1"
+      >
         <div className="flex items-start justify-between gap-1.5 mb-1">
           <div className="flex-1 min-w-0">
             <h3 className={`font-bold text-sm transition-colors duration-150 truncate ${
@@ -91,13 +96,22 @@ export const LevelCard: React.FC<LevelCardProps> = ({
             )}
           </div>
         </div>
+      </button>
 
-        <div className="grid grid-cols-2 gap-0.5 pointer-events-none">
-          {level.classes.map((cls) => (
-            <ClassCard key={cls.name} cls={cls} />
-          ))}
-        </div>
+      {/* Classes — interactive when the level is selected (rename / remove per tenant) */}
+      <div className="grid grid-cols-2 gap-1 px-2.5 pb-2.5">
+        {level.classes.map((cls) => (
+          <ClassCard
+            key={cls.name}
+            cls={cls}
+            editable={isSelected}
+            override={classOverrides?.[`${level.level}::${cls.name}`]}
+            onRename={(name) => onRenameClass?.(level.level, cls.name, name)}
+            onRemove={() => onRemoveClass?.(level.level, cls.name)}
+            onRestore={() => onRestoreClass?.(level.level, cls.name)}
+          />
+        ))}
       </div>
-    </button>
+    </div>
   )
 }

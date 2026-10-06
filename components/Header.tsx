@@ -10,17 +10,17 @@ type HeaderProps = {
 
 const HERO_NAV = [
   { label: "Schools", href: "/schools" },
-  { label: "Students", href: "/students" },
+  { label: "Domains", href: "/custom-domains" },
   { label: "Guides", href: "/blog" },
   { label: "Fees", href: "/register" },
 ] as const
 
 const DEFAULT_NAV = [
   { label: "Schools", href: "/schools" },
+  { label: "Domains", href: "/custom-domains" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Guides", href: "/blog" },
   { label: "Students", href: "/students" },
-  { label: "Academics", href: "/academics" },
 ] as const
 
 export function Header({ variant = "default" }: HeaderProps) {

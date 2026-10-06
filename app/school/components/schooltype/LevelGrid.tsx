@@ -1,7 +1,7 @@
 'use client'
 
 import React, { RefObject, useState, useEffect } from 'react'
-import { SchoolType } from './types'
+import { ClassOverride, SchoolType } from './types'
 import { LevelCard } from './LevelCard'
 
 interface LevelGridProps {
@@ -10,6 +10,10 @@ interface LevelGridProps {
   selectedLevels: Record<string, Set<string>>
   toggleLevel: (e: React.MouseEvent, typeId: string, levelName: string) => void
   levelsSectionRef: RefObject<HTMLDivElement | null>
+  classOverrides?: Record<string, ClassOverride>
+  onRenameClass?: (levelName: string, originalName: string, name: string) => void
+  onRemoveClass?: (levelName: string, originalName: string) => void
+  onRestoreClass?: (levelName: string, originalName: string) => void
 }
 
 export const LevelGrid: React.FC<LevelGridProps> = ({
@@ -17,7 +21,11 @@ export const LevelGrid: React.FC<LevelGridProps> = ({
   selectedType,
   selectedLevels,
   toggleLevel,
-  levelsSectionRef
+  levelsSectionRef,
+  classOverrides,
+  onRenameClass,
+  onRemoveClass,
+  onRestoreClass
 }) => {
   const [showHint, setShowHint] = useState(true)
   const selectedCount = selectedLevels[selectedType]?.size || 0
@@ -51,6 +59,10 @@ export const LevelGrid: React.FC<LevelGridProps> = ({
               toggleLevel={toggleLevel}
               selectedType={selectedType}
               showHint={shouldShowHint}
+              classOverrides={classOverrides}
+              onRenameClass={onRenameClass}
+              onRemoveClass={onRemoveClass}
+              onRestoreClass={onRestoreClass}
             />
           )
         })}

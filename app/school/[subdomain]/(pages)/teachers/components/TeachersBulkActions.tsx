@@ -2,10 +2,21 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Mail } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { TeachersListItem } from "../utils/mapGraphqlTeacher";
-import { exportTeachersToCsv } from "../utils/exportTeachersCsv";
+import {
+  exportTeachersToCsv,
+  exportTeachersToJson,
+} from "../utils/exportTeachersCsv";
 import { resendPendingInvitations } from "../utils/invitationActions";
 import type { PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
 
@@ -14,6 +25,9 @@ interface TeachersBulkActionsProps {
   invitations: PendingInvitation[];
   onInvitationsUpdated?: () => void;
 }
+
+const actionButtonClass =
+  "h-6 gap-1 rounded-none border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]";
 
 export function TeachersBulkActions({
   teachers,
@@ -26,14 +40,17 @@ export function TeachersBulkActions({
     .filter((inv) => inv.status === "PENDING")
     .map((inv) => inv.id);
 
-  const handleExport = () => {
-    if (teachers.length === 0) {
-      toast.error("No teachers to export");
-      return;
-    }
-    const date = new Date().toISOString().slice(0, 10);
+  const date = new Date().toISOString().slice(0, 10);
+  const exportSummary = `Exported ${teachers.length} teacher${teachers.length !== 1 ? "s" : ""}`;
+
+  const handleExportCsv = () => {
     exportTeachersToCsv(teachers, `teachers-${date}.csv`);
-    toast.success(`Exported ${teachers.length} teacher${teachers.length !== 1 ? "s" : ""}`);
+    toast.success(exportSummary);
+  };
+
+  const handleExportJson = () => {
+    exportTeachersToJson(teachers, `teachers-${date}.json`);
+    toast.success(exportSummary);
   };
 
   const handleResendAll = async () => {
@@ -74,24 +91,41 @@ export function TeachersBulkActions({
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-1">
       {teachers.length > 0 ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-6 gap-1 rounded-none border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]"
-          onClick={handleExport}
-        >
-          <Download className="h-3 w-3" />
-          Export
-          <span className="text-[#1a4d42]/40">({teachers.length})</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={actionButtonClass}
+            >
+              <Download className="h-3 w-3" />
+              Export
+              <span className="text-[#1a4d42]/40">({teachers.length})</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-none">
+            <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-slate-400">
+              Download as
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleExportCsv} className="gap-2 text-xs">
+              <FileSpreadsheet className="h-3.5 w-3.5 opacity-70" />
+              CSV spreadsheet
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportJson} className="gap-2 text-xs">
+              <FileJson className="h-3.5 w-3.5 opacity-70" />
+              JSON
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : null}
       {pendingInviteIds.length > 0 ? (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="h-6 gap-1 rounded-none border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]"
+          className={actionButtonClass}
           onClick={() => void handleResendAll()}
           disabled={isResending}
         >

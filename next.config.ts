@@ -1,6 +1,12 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Pin the workspace root so Next.js/Turbopack doesn't infer it from a
+  // stray package-lock.json in a parent directory (e.g. the home folder).
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   // Configure server external packages
   serverExternalPackages: [],
   

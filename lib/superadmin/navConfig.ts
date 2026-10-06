@@ -7,6 +7,7 @@ import {
   Activity,
   Settings,
   Smartphone,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 
@@ -66,6 +67,11 @@ export const SUPERADMIN_NAV_SECTIONS: NavSection[] = [
         href: "/dashboard/payments",
         label: "M-Pesa",
         icon: Smartphone,
+      },
+      {
+        href: "/dashboard/domains",
+        label: "Domains",
+        icon: Globe,
       },
     ],
   },

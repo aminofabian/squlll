@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GraduationCap, ArrowLeft, Shield } from "lucide-react";
+import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -35,14 +36,18 @@ export default function LoginPage() {
         throw new Error(data.error || "Sign in failed");
       }
 
+      const subdomain: string | undefined =
+        data.tenantSubdomain ||
+        data.tenant?.subdomain ||
+        data.subdomainUrl?.split(".")[0];
+
       if (data.membership?.role === "ADMIN") {
         router.push("/dashboard");
+      } else if (subdomain) {
+        // Keep local dev on the local host instead of redirecting to *.squl.co.ke
+        window.location.href = schoolPortalUrl(subdomain);
       } else {
-        if (data.subdomainUrl) {
-          window.location.href = `https://${data.subdomainUrl}`;
-        } else {
-          router.push("/dashboard");
-        }
+        router.push("/dashboard");
       }
     } catch (error) {
       setError(

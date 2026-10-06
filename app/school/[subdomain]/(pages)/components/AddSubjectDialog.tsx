@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search, BookOpenCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -225,7 +225,7 @@ export function AddSubjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg gap-0 overflow-hidden border-slate-200/80 bg-slate-50/50 p-0 dark:border-slate-800 dark:bg-slate-950">
+      <DialogContent className="sm:max-w-lg gap-0 overflow-hidden border-slate-200/80 bg-slate-50 p-0 dark:border-slate-800 dark:bg-slate-950">
         <DialogHeader className="border-b border-slate-200/80 bg-white px-5 py-4 text-left dark:border-slate-800 dark:bg-slate-900">
           <DialogTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
             Add subject
@@ -277,11 +277,25 @@ export function AddSubjectDialog({
                   <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                 </div>
               ) : filteredAvailable.length === 0 ? (
-                <p className="py-8 text-center text-xs text-slate-400">
-                  {available.length === 0
-                    ? "All catalog subjects for this level are already added."
-                    : "No subjects match your search."}
-                </p>
+                <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white/70 px-6 py-8 text-center dark:border-slate-700 dark:bg-slate-900/40">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800">
+                    {available.length === 0 ? (
+                      <BookOpenCheck className="h-5 w-5" />
+                    ) : (
+                      <Search className="h-5 w-5" />
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    {available.length === 0
+                      ? "Every catalog subject is already added"
+                      : "No subjects match your search"}
+                  </p>
+                  <p className="max-w-[22rem] text-xs text-slate-500 dark:text-slate-400">
+                    {available.length === 0
+                      ? "Nothing left to add from the catalog for this level. Switch to Custom subject to create your own."
+                      : "Try a different name or code."}
+                  </p>
+                </div>
               ) : (
                 <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
                   {filteredAvailable.map((subject) => (

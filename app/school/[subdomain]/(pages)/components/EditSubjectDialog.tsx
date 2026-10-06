@@ -192,7 +192,7 @@ export function EditSubjectDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg gap-0 overflow-hidden border-slate-200/80 bg-slate-50/50 p-0 dark:border-slate-800 dark:bg-slate-950">
+      <DialogContent className="sm:max-w-lg gap-0 overflow-hidden border-slate-200/80 bg-slate-50 p-0 dark:border-slate-800 dark:bg-slate-950">
         <DialogHeader className="border-b border-slate-200/80 bg-white px-5 py-4 text-left dark:border-slate-800 dark:bg-slate-900">
           <DialogTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
             Edit subject

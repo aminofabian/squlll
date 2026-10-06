@@ -324,19 +324,20 @@ export function SchoolOnboardingWizard() {
     toast.success("Term added to list");
   };
 
-  const handleCreateTermDrafts = async () => {
-    if (!activeAcademicYear) return;
-    if (termDrafts.length === 0) {
+  const handleCreateTermDrafts = async (): Promise<boolean> => {
+    if (!activeAcademicYear) return false;
+
+    const included = termDrafts.filter((t) => t.included !== false);
+    if (included.length === 0) {
       toast.error("Add at least one term");
-      return;
+      return false;
     }
 
     setIsCreatingTerms(true);
     let created = 0;
     const errors: string[] = [];
 
-    for (const draft of termDrafts) {
-      if (draft.included === false) continue;
+    for (const draft of included) {
       try {
         const response = await fetch("/api/school/create-term", {
           method: "POST",
@@ -365,7 +366,6 @@ export function SchoolOnboardingWizard() {
       toast.success(`Created ${created} term${created === 1 ? "" : "s"}`);
       setTermDrafts([]);
       await refetchYears();
-      if (errors.length === 0) setCurrentStep(3);
     }
     if (errors.length > 0) {
       toast.error(errors[0] || "Some terms could not be created");
@@ -374,6 +374,8 @@ export function SchoolOnboardingWizard() {
     }
 
     setIsCreatingTerms(false);
+    // Advance only when everything saved cleanly.
+    return created > 0 && errors.length === 0;
   };
 
   const handleCreateStreams = async (): Promise<boolean> => {
@@ -537,8 +539,6 @@ export function SchoolOnboardingWizard() {
               moeYear={moeCalendarYear}
               customTerm={customTerm}
               onCustomTermChange={setCustomTerm}
-              isCreating={isCreatingTerms}
-              onCreateDrafts={handleCreateTermDrafts}
               onAddCustomTerm={handleAddCustomTerm}
             />
           </OnboardingStep>
@@ -676,25 +676,36 @@ export function SchoolOnboardingWizard() {
         ? "Skip for now"
         : "Skip";
 
+  const includedTermCount = termDrafts.filter(
+    (t) => t.included !== false,
+  ).length;
+
   const continueDisabled =
-    (currentStep === 1 && !hasAcademicYear) || (currentStep === 2 && !hasTerms);
+    (currentStep === 1 && !hasAcademicYear) ||
+    (currentStep === 2 && !hasTerms && includedTermCount === 0) ||
+    (currentStep === 2 && isCreatingTerms);
 
   const continueLabel =
     currentStep === 6
       ? "Open dashboard"
-      : currentStep === 3 && plannedStreamCreates > 0
-        ? `Save ${plannedStreamCreates} & continue`
-        : currentStep === 4
-          ? "Continue"
+      : currentStep === 2 && includedTermCount > 0
+        ? `Save ${includedTermCount} term${includedTermCount === 1 ? "" : "s"} & continue`
+        : currentStep === 3 && plannedStreamCreates > 0
+          ? `Save ${plannedStreamCreates} & continue`
           : "Continue";
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (currentStep === 6) {
       finishOnboarding();
       return;
     }
     if (currentStep === 3) {
       void handleStreamsContinue();
+      return;
+    }
+    if (currentStep === 2 && includedTermCount > 0) {
+      const ok = await handleCreateTermDrafts();
+      if (ok) goNext();
       return;
     }
     goNext();
@@ -717,7 +728,10 @@ export function SchoolOnboardingWizard() {
         onContinue={handleContinue}
         continueLabel={continueLabel}
         isContinueDisabled={continueDisabled}
-        isLoading={currentStep === 3 && isCreatingStreams}
+        isLoading={
+          (currentStep === 2 && isCreatingTerms) ||
+          (currentStep === 3 && isCreatingStreams)
+        }
       >
         {renderStepContent()}
       </OnboardingShell>

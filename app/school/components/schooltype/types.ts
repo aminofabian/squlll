@@ -6,6 +6,12 @@ export interface Class {
   description?: string
 }
 
+/** Tenant-scoped customization of a class name (never touches global names). */
+export interface ClassOverride {
+  name: string
+  removed: boolean
+}
+
 export interface Level {
   level: string
   classes: Class[]

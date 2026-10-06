@@ -16,7 +16,6 @@ import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { ClassesClassDetail } from "./components/ClassesClassDetail";
 import { X } from "lucide-react";
-import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { ClassesPulseHero } from "./components/ClassesPulseHero";
 import { ClassesQuickLinks } from "./components/ClassesQuickLinks";
 import { ClassesCampusOverview } from "./components/ClassesCampusOverview";
@@ -30,7 +29,6 @@ import { AssignTeacherModal } from "../components/AssignTeacherModal";
 import { AddSubjectDialog } from "../components/AddSubjectDialog";
 import { type ClassAction } from "./components/ClassActionBar";
 import { DashboardGradeSheet } from "../dashboard/components/DashboardGradeSheet";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BookOpen, Layers, Plus, UserPlus } from "lucide-react";
 import { formatGradeDisplayName } from "@/lib/utils/grade-display";
@@ -51,7 +49,6 @@ export default function ClassesPage() {
   const [selectedGradeId, setSelectedGradeId] = useState("");
   const [selectedLevelId, setSelectedLevelId] = useState("");
   const [selectedStreamId, setSelectedStreamId] = useState("");
-  const [isGradePanelOpen, setIsGradePanelOpen] = useState(false);
   const [isGradeSheetOpen, setIsGradeSheetOpen] = useState(false);
   const [showSubjectsDrawer, setShowSubjectsDrawer] = useState(false);
   const [showAddStreamModal, setShowAddStreamModal] = useState(false);
@@ -98,15 +95,6 @@ export default function ClassesPage() {
       break;
     }
   }, [searchParams, config?.selectedLevels]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsGradePanelOpen(window.innerWidth >= 1280);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const selectedGrade = useMemo(() => {
     if (!selectedGradeId || !config) return null;
@@ -229,17 +217,6 @@ export default function ClassesPage() {
     setSelectedStreamId("");
     syncClassUrl("", "", "");
   }, [syncClassUrl]);
-
-  const openClassFromOverview = useCallback(
-    (gradeId: string, levelId: string, streamId?: string) => {
-      if (streamId) {
-        handleStreamSelect(streamId, gradeId, levelId);
-      } else {
-        handleGradeSelect(gradeId, levelId);
-      }
-    },
-    [handleGradeSelect, handleStreamSelect],
-  );
 
   const openAddSubject = useCallback(
     (context: {
@@ -377,85 +354,57 @@ export default function ClassesPage() {
 
   return (
     <div className="flex min-h-full flex-col bg-[#f3f7f5] dark:bg-[#071411]">
-      <div className="flex min-w-0 flex-1">
-        <aside
-          className={cn(
-            "hidden shrink-0 flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] lg:flex",
-            isGradePanelOpen ? "w-56" : "w-0 overflow-hidden border-r-0",
-          )}
-          aria-label="Grade navigation"
-        >
-          {isGradePanelOpen ? (
-            <div className="sticky top-[2.75rem] flex max-h-[calc(100vh-5.5rem)] flex-col overflow-hidden px-2 py-2">
-              <SchoolSearchFilter
-                className="h-full"
-                variant="minimal"
-                type="grades"
-                onGradeSelect={handleGradeSelect}
-                onStreamSelect={handleStreamSelect}
-                isLoading={isLoading}
-                selectedGradeId={selectedGradeId}
-                selectedStreamId={selectedStreamId}
-              />
-            </div>
-          ) : null}
-        </aside>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <ClassesPageHeader
+          title={headerTitle}
+          subtitle={headerSubtitle}
+          hasGradeSelected={Boolean(selectedGradeId)}
+          onOpenGradePicker={() => setIsGradeSheetOpen(true)}
+          actions={pageActions}
+        />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <ClassesPageHeader
-            title={headerTitle}
-            subtitle={headerSubtitle}
-            hasGradeSelected={Boolean(selectedGradeId)}
-            onOpenGradePicker={() => setIsGradeSheetOpen(true)}
-            actions={pageActions}
-            showDesktopGradeToggle
-            isGradePanelOpen={isGradePanelOpen}
-            onToggleGradePanel={() => setIsGradePanelOpen((open) => !open)}
-          />
+        <div className="flex-1">
+          <div className="mx-auto max-w-6xl space-y-3 p-3 sm:space-y-5 sm:p-4">
+            {!selectedGradeId ? (
+              <>
+                <ClassesPulseHero
+                  config={config}
+                  isLoading={isLoading}
+                  studentCount={studentCount}
+                  studentsLoading={statsLoading}
+                />
 
-          <div className="flex-1">
-            <div className="mx-auto max-w-6xl space-y-2 p-3 sm:space-y-2.5 sm:p-4">
-              {!selectedGradeId ? (
-                <>
-                  <ClassesPulseHero
-                    config={config}
-                    isLoading={isLoading}
-                    studentCount={studentCount}
-                    studentsLoading={statsLoading}
-                  />
+                <ClassesQuickLinks
+                  onOpenSubjects={() => setShowSubjectsDrawer(true)}
+                />
 
-                  <ClassesQuickLinks
-                    onOpenSubjects={() => setShowSubjectsDrawer(true)}
-                  />
-
-                  <ClassesCampusOverview
-                    config={config}
-                    students={students}
-                    isLoading={isLoading}
-                    onOpenGradePicker={() => setIsGradeSheetOpen(true)}
-                    onGradeSelect={handleGradeSelect}
-                    onStreamSelect={handleStreamSelect}
-                  />
-                </>
-              ) : (
-                selectedGrade?.grade &&
-                filteredLevels[0] && (
-                  <ClassesClassDetail
-                    displayName={selectedGrade.displayName}
-                    levelName={selectedGrade.levelName}
-                    streamName={selectedGrade.streamName}
-                    grade={selectedGrade.grade}
-                    level={filteredLevels[0]}
-                    selectedStreamId={selectedStreamId}
-                    students={students}
-                    onClear={clearFilters}
-                    onStreamSelect={handleStreamSelectInGrade}
-                    onAssignTeacher={openAssignTeacher}
-                    actions={pageActions}
-                  />
-                )
-              )}
-            </div>
+                <ClassesCampusOverview
+                  config={config}
+                  students={students}
+                  isLoading={isLoading}
+                  onOpenGradePicker={() => setIsGradeSheetOpen(true)}
+                  onGradeSelect={handleGradeSelect}
+                  onStreamSelect={handleStreamSelect}
+                />
+              </>
+            ) : (
+              selectedGrade?.grade &&
+              filteredLevels[0] && (
+                <ClassesClassDetail
+                  displayName={selectedGrade.displayName}
+                  levelName={selectedGrade.levelName}
+                  streamName={selectedGrade.streamName}
+                  grade={selectedGrade.grade}
+                  level={filteredLevels[0]}
+                  selectedStreamId={selectedStreamId}
+                  students={students}
+                  onClear={clearFilters}
+                  onStreamSelect={handleStreamSelectInGrade}
+                  onAssignTeacher={openAssignTeacher}
+                  actions={pageActions}
+                />
+              )
+            )}
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { WizardProgress } from './WizardProgress'
 import { StepFees, type StepFeesValue, groupGradesByTermAmount, representativeTermTotal } from './steps/StepFees'
@@ -69,8 +69,8 @@ interface FeeStructureWizardProps {
 }
 
 const steps = [
-    { number: 1, title: 'Fees' },
-    { number: 2, title: 'Breakdown' },
+    { number: 1, title: 'Amount' },
+    { number: 2, title: 'Fee lines' },
     { number: 3, title: 'Letter' },
 ]
 
@@ -1099,10 +1099,13 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
 
     const stepSubtitle =
         currentStep === 1
-            ? 'Year, grades, and term total'
+            ? 'Who pays, and how much each term'
             : currentStep === 2
-              ? 'Split into fee lines'
-              : 'Name, letter preview, and save'
+              ? 'Split the term total into fee lines'
+              : 'Preview the letter, then save'
+
+    const continueLabel =
+        currentStep === 1 ? 'Continue to fee lines' : 'Continue to letter'
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
@@ -1172,17 +1175,27 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             {currentStep === 3 && (
                                 <div className="space-y-5">
                                     <div>
-                                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-400">
-                                            Schedule name
+                                        <label
+                                            htmlFor="schedule-name"
+                                            className="block text-sm font-medium text-slate-900"
+                                        >
+                                            Name this fee schedule
                                         </label>
+                                        <p className="mt-0.5 text-xs text-slate-500">
+                                            A label you&apos;ll recognise later, like
+                                            the year or grade group.
+                                        </p>
                                         <Input
+                                            id="schedule-name"
                                             value={formData.name}
                                             onChange={(e) =>
                                                 updateFormData('name', e.target.value)
                                             }
                                             placeholder="e.g. 2026-2027 · All grades"
                                             className={
-                                                errors?.name ? 'border-red-500' : undefined
+                                                errors?.name
+                                                    ? 'mt-2 border-red-500'
+                                                    : 'mt-2'
                                             }
                                         />
                                         {errors?.name ? (
@@ -1212,19 +1225,28 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 ) : null}
 
                 <div className="shrink-0 flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-3">
-                    <Button
-                        variant="ghost"
-                        onClick={handleBack}
-                        disabled={currentStep <= 1 || isProvisioningSetup}
-                        size="sm"
-                        className="text-slate-600"
-                    >
-                        <ArrowLeft className="h-4 w-4 mr-1" />
-                        Back
-                    </Button>
+                    {currentStep > 1 ? (
+                        <Button
+                            variant="ghost"
+                            onClick={handleBack}
+                            disabled={isProvisioningSetup}
+                            size="sm"
+                            className="shrink-0 whitespace-nowrap text-slate-600"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-1" />
+                            Back
+                        </Button>
+                    ) : (
+                        <span aria-hidden />
+                    )}
 
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" onClick={onClose} size="sm" className="text-slate-500">
+                        <Button
+                            variant="ghost"
+                            onClick={onClose}
+                            size="sm"
+                            className="shrink-0 whitespace-nowrap text-slate-500"
+                        >
                             Cancel
                         </Button>
 
@@ -1233,13 +1255,13 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 onClick={() => void handleNext()}
                                 disabled={isProvisioningSetup}
                                 size="sm"
-                                className="text-white"
+                                className="shrink-0 whitespace-nowrap text-white"
                                 style={{ backgroundColor: FEES_BRAND.primary }}
                             >
                                 {isProvisioningSetup ? (
                                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
                                 ) : null}
-                                Continue
+                                {continueLabel}
                                 <ArrowRight className="h-4 w-4 ml-1" />
                             </Button>
                         ) : (
@@ -1247,7 +1269,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 size="sm"
-                                className="text-white"
+                                className="shrink-0 whitespace-nowrap text-white"
                                 style={{ backgroundColor: FEES_BRAND.primary }}
                             >
                                 {isSaving ? (
@@ -1256,7 +1278,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                         Saving…
                                     </>
                                 ) : isEditMode ? (
-                                    'Save'
+                                    'Save changes'
                                 ) : (
                                     'Save fee schedule'
                                 )}
@@ -1266,8 +1288,16 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 </div>
 
                 {showSuccess && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95">
-                        <p className="text-lg font-semibold text-emerald-800">Schedule saved</p>
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-white/95">
+                        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                            <CheckCircle2 className="h-8 w-8 text-emerald-700" />
+                        </span>
+                        <p className="text-lg font-semibold text-emerald-800">
+                            {isEditMode ? 'Fee schedule updated' : 'Fee schedule saved'}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                            Taking you back to the fees page…
+                        </p>
                     </div>
                 )}
             </SheetContent>

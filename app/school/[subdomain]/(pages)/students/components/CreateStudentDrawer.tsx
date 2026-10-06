@@ -35,6 +35,9 @@ import {
 import { Loader2, X } from "lucide-react"
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { sanitizeStudentUserMessage } from '@/lib/utils/student-user-messages'
+import { requestCreateStudent } from '@/lib/api/create-student'
+import { emailFromName } from '@/lib/utils/student-import'
 import { StudentSuccessModal } from './StudentSuccessModal'
 import { StudentsEnrollTrigger, type EnrollTriggerVariant } from './StudentsEnrollTrigger'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
@@ -88,13 +91,6 @@ function formatPhoneNumber(value: string): string {
   }
 
   return cleaned
-}
-
-function emailFromName(name: string): string {
-  const cleanName = name.toLowerCase()
-    .replace(/[^a-z\s]/g, '')
-    .replace(/\s+/g, '')
-  return cleanName ? `${cleanName}@squl.ac.ke` : 'studentname@squl.ac.ke'
 }
 
 function getGradeNumber(gradeName: string): number {
@@ -234,30 +230,17 @@ export function CreateStudentDrawer({
   const canSubmit = identityComplete && placementComplete && contactComplete
 
   const createStudentMutation = useMutation({
-    mutationFn: async (data: StudentFormData) => {
+    mutationFn: (data: StudentFormData) => {
       const studentEmail = data.student_email?.trim() || emailFromName(data.name)
-
-      const response = await fetch('/api/school/create-student', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: data.name,
-          admission_number: data.admission_number,
-          gender: data.gender,
-          grade: data.grade,
-          stream: data.stream,
-          phone: data.phone,
-          student_email: studentEmail,
-        }),
+      return requestCreateStudent({
+        name: data.name,
+        admission_number: data.admission_number,
+        gender: data.gender,
+        grade: data.grade,
+        stream: data.stream,
+        phone: data.phone,
+        student_email: studentEmail,
       })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create student')
-      }
-
-      return result.createStudent
     },
     onSuccess: (studentData) => {
       queryClient.setQueryData(['students'], (oldData: { students?: unknown[] } | undefined) => {
@@ -292,9 +275,30 @@ export function CreateStudentDrawer({
       onStudentCreated(studentData.user.name)
     },
     onError: (error) => {
-      toast.error("Enrollment failed", {
-        description: error instanceof Error ? error.message : "Something went wrong",
+      toast.error("Couldn't enroll learner", {
+        description: sanitizeStudentUserMessage(error),
       })
+
+      // Point the user at the field that needs fixing, so the toast isn't the
+      // only clue about what to change.
+      const code = (error as { code?: string }).code
+      const raw = error instanceof Error ? error.message : ""
+      if (
+        code === "STUDENT_ADMISSION_EXISTS" ||
+        /admission number[^.]*already exists/i.test(raw)
+      ) {
+        form.setError("admission_number", {
+          message: "That admission number is already on your register.",
+        })
+      } else if (
+        code === "USER_ALREADY_EXISTS" ||
+        /email[^.]*already exists/i.test(raw)
+      ) {
+        setShowCustomEmail(true)
+        form.setError("student_email", {
+          message: "That email is already in use — choose a different one.",
+        })
+      }
     },
   })
 

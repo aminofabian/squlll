@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-// Use internal GraphQL proxy route instead of external endpoint
-const GRAPHQL_ENDPOINT = 'http://localhost:3004/api/graphql';
-
 // GraphQL Error Classification
 enum GraphQLErrorType {
   SCHEMA_NOT_IMPLEMENTED = 'schema_not_implemented',

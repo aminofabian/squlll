@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
+import { getAuthCookieOptions } from '@/lib/auth/cookie-domain'
 
 const IMPERSONATE_MUTATION = `
   mutation ImpersonateTenantAdmin($tenantId: String!) {
@@ -79,19 +80,21 @@ export async function POST(request: Request) {
 
     const requestUrl = new URL(request.url)
     const isProduction = process.env.NODE_ENV === 'production'
-    let domain: string | undefined
-    let sameSite: 'lax' | 'none' = 'lax'
-    let secure = false
+    // Cookie scope follows the host the browser is on.
+    const { domain, sameSite, secure } = getAuthCookieOptions(request)
 
-    if (isProduction) {
-      domain = '.squl.co.ke'
-      sameSite = 'none'
-      secure = true
-    } else if (requestUrl.hostname.endsWith('.localhost')) {
-      domain = '.localhost'
-      sameSite = 'lax'
-      secure = false
-    }
+    // Prefer the backend's portal URL when it targets a real host (e.g. a
+    // school's custom domain); rebuild against the current host otherwise so
+    // local dev uses the actual port.
+    const apex = isProduction ? 'squl.co.ke' : 'localhost'
+    const port = requestUrl.port
+    const subdomain = payload.subdomain.trim().toLowerCase()
+    const portalUrl =
+      isProduction && /^https?:\/\//.test(payload.portalUrl)
+        ? payload.portalUrl
+        : `${isProduction ? 'https' : 'http'}://${subdomain}.${apex}${
+            port ? `:${port}` : ''
+          }/dashboard`
 
     const maxAge = 60 * 60 * 8 // 8 hours for support sessions
 
@@ -167,7 +170,7 @@ export async function POST(request: Request) {
       path: '/',
       maxAge,
     })
-    cookieStore.set('subdomainUrl', `${payload.subdomain}.squl.co.ke`, {
+    cookieStore.set('subdomainUrl', `${subdomain}.${apex}${port ? `:${port}` : ''}`, {
       httpOnly: false,
       secure,
       sameSite,
@@ -178,7 +181,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      portalUrl: payload.portalUrl,
+      portalUrl,
       message: payload.message,
       school: {
         id: payload.tenantId,

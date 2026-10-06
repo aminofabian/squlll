@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
+import { getAuthCookieOptions } from '@/lib/auth/cookie-domain'
 
 const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint()
 
@@ -111,26 +112,9 @@ export async function POST(request: Request) {
       )
     }
     
-    // Get domain for cookies (for subdomain support)
-    const requestUrl = new URL(request.url)
-    let domain: string | undefined = undefined
-    let sameSite: 'lax' | 'none' = 'lax';
-    let secure = false;
-    
-    if (process.env.NODE_ENV === 'production') {
-      domain = '.squl.co.ke'
-      sameSite = 'none';
-      secure = true;
-    } else if (requestUrl.hostname.endsWith('.localhost')) {
-      // For .localhost subdomains in dev, set domain to .localhost to share cookies
-      domain = '.localhost';
-      sameSite = 'lax';
-      secure = false;
-    } else if (requestUrl.hostname.includes('localhost')) {
-      domain = undefined
-      sameSite = 'lax';
-      secure = false;
-    }
+    // Cookie scope follows the host the browser is on, so a school signing in on
+    // its own domain gets host-only cookies and platform subdomains share one.
+    const { domain, sameSite, secure } = getAuthCookieOptions(request)
     
     // Set authentication cookies
     const cookieStore = await cookies()

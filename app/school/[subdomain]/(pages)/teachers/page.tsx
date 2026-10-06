@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateTeacherDrawer } from "./components/CreateTeacherDrawer";
+import { ImportTeachersDrawer } from "./components/ImportTeachersDrawer";
 import { TeachersSearchSidebar } from "./components/TeachersSearchSidebar";
 import { TeacherDetailView } from "./components/TeacherDetailView";
 import { TeachersStats } from "./components/TeachersStats";
@@ -226,10 +227,13 @@ function TeachersPage() {
               </div>
               <div className="flex items-center gap-2">
                 {!selectedTeacherId && (
-                  <CreateTeacherDrawer
-                    onTeacherCreated={handleTeacherCreated}
-                    defaultOpen={openAddTeacher}
-                  />
+                  <>
+                    <ImportTeachersDrawer onImported={handleTeacherCreated} />
+                    <CreateTeacherDrawer
+                      onTeacherCreated={handleTeacherCreated}
+                      defaultOpen={openAddTeacher}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -301,7 +305,11 @@ function TeachersPage() {
                   Invite your first teacher to get started. They&apos;ll receive an
                   email to set up their account.
                 </p>
-                <div className="mt-5 flex justify-center">
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <ImportTeachersDrawer
+                    triggerVariant="hero"
+                    onImported={handleTeacherCreated}
+                  />
                   <CreateTeacherDrawer
                     onTeacherCreated={handleTeacherCreated}
                     defaultOpen={openAddTeacher}
@@ -326,13 +334,19 @@ function TeachersPage() {
                       departmentFilter={departmentFilter}
                       onDepartmentFilterChange={setDepartmentFilter}
                     />
-                    <TeachersBulkActions
-                      teachers={filteredTeachers}
-                      invitations={invitations}
-                      onInvitationsUpdated={() => {
-                        if (tenantId) fetchPendingInvitations(tenantId);
-                      }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <ImportTeachersDrawer
+                        triggerVariant="toolbar"
+                        onImported={handleTeacherCreated}
+                      />
+                      <TeachersBulkActions
+                        teachers={filteredTeachers}
+                        invitations={invitations}
+                        onInvitationsUpdated={() => {
+                          if (tenantId) fetchPendingInvitations(tenantId);
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
 

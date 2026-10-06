@@ -17,9 +17,12 @@ import {
   CheckSquare,
   Trophy,
   MessageCircle,
+  MessageSquareText,
+  BellRing,
   Settings,
   LayoutGrid,
   Globe,
+  Link2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -56,6 +59,9 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
   {
     items: [
       { title: "Website", shortLabel: "Website", href: "/website", icon: Globe },
+      { title: "Custom domain", shortLabel: "Domain", href: "/domains", icon: Link2 },
+      { title: "Reminders", shortLabel: "Reminders", href: "/reminders", icon: BellRing },
+      { title: "SMS messages", shortLabel: "SMS", href: "/sms-credits", icon: MessageSquareText },
       { title: "Settings", shortLabel: "Settings", href: "/settings", icon: Settings },
     ],
   },
@@ -85,7 +91,10 @@ export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
   { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
   { title: "Enrollment", href: "/enrollment", icon: Medal },
   { title: "Communication", href: "/communication", icon: MessageCircle },
+  { title: "Reminders", href: "/reminders", icon: BellRing },
+  { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },
   { title: "Website", href: "/website", icon: Globe },
+  { title: "Custom domain", href: "/domains", icon: Link2 },
 ];
 
 export interface SchoolNavSection {
@@ -129,7 +138,10 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
       { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
       { title: "Enrollment", href: "/enrollment", icon: Medal },
       { title: "Communication", href: "/communication", icon: MessageCircle },
+      { title: "Reminders", href: "/reminders", icon: BellRing },
+      { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },
       { title: "Website", href: "/website", icon: Globe },
+      { title: "Custom domain", href: "/domains", icon: Link2 },
     ],
   },
 ];

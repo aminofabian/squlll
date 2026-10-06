@@ -31,3 +31,16 @@ export const teachersTabTrigger =
 
 export const teachersBadge =
   "rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[10px] font-medium capitalize text-[#1a4d42]";
+
+/* ---- Overview surface (staff pulse) --------------------------------- */
+
+/** Dark ink hero panel */
+export const teachersInkPanel =
+  "relative overflow-hidden rounded-none border border-[#0a1f1a] bg-[#0a1f1a] text-white shadow-[3px_3px_0_0_rgba(10,31,26,0.14)]";
+
+/** Subtle dot-grid texture for hero panels */
+export const teachersDotGrid = {
+  backgroundImage:
+    "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.45) 1px, transparent 0)",
+  backgroundSize: "22px 22px",
+} as const;

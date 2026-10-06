@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -43,8 +42,12 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const [connected, setConnected] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
 
+  // Connect once per school subdomain and keep the socket alive across in-app
+  // navigation; only tear down when leaving the school or hitting an auth route.
+  const shouldConnect = Boolean(subdomain) && !isAuthRoute(pathname)
+
   useEffect(() => {
-    if (!subdomain || isAuthRoute(pathname)) {
+    if (!shouldConnect || !subdomain) {
       return
     }
 
@@ -92,7 +95,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       setSocket(null)
       setConnected(false)
     }
-  }, [subdomain, pathname])
+  }, [shouldConnect, subdomain])
 
   const value = useMemo(
     () => ({ socket, connected, connectionError }),

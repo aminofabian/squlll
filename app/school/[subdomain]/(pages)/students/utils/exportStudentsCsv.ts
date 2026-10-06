@@ -1,43 +1,34 @@
 import type { StudentRow } from "../components/StudentsTable";
+import { downloadTextFile, rowsToCsv } from "@/lib/utils/import-file";
 
-function escapeCsv(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
+type Column = { label: string; value: (student: StudentRow) => string };
+
+const COLUMNS: Column[] = [
+  { label: "Name", value: (s) => s.name },
+  { label: "Admission number", value: (s) => s.admissionNumber },
+  { label: "Grade", value: (s) => s.grade },
+  { label: "Stream", value: (s) => s.stream },
+  {
+    label: "Status",
+    value: (s) => (s.status === "active" ? "Active" : "Inactive"),
+  },
+  { label: "Class assigned", value: (s) => (s.missingStream ? "No" : "Yes") },
+];
 
 export function exportStudentsToCsv(
   students: StudentRow[],
   filename = "students-export.csv",
 ) {
-  const headers = [
-    "Name",
-    "Admission number",
-    "Grade",
-    "Stream",
-    "Status",
-    "Class assigned",
-  ];
+  const rows = students.map((student) => COLUMNS.map((col) => col.value(student)));
+  downloadTextFile(filename, rowsToCsv(COLUMNS.map((c) => c.label), rows), "text/csv;charset=utf-8");
+}
 
-  const rows = students.map((student) => [
-    student.name,
-    student.admissionNumber,
-    student.grade,
-    student.stream,
-    student.status === "active" ? "Active" : "Inactive",
-    student.missingStream ? "No" : "Yes",
-  ]);
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => escapeCsv(String(cell))).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+export function exportStudentsToJson(
+  students: StudentRow[],
+  filename = "students-export.json",
+) {
+  const records = students.map((student) =>
+    Object.fromEntries(COLUMNS.map((col) => [col.label, col.value(student)])),
+  );
+  downloadTextFile(filename, JSON.stringify(records, null, 2), "application/json");
 }

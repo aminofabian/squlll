@@ -5,6 +5,7 @@ import {
   Banknote,
   Building2,
   Camera,
+  Check,
   CheckCircle2,
   Copy,
   ImagePlus,
@@ -26,9 +27,11 @@ import { Label } from '@/components/ui/label'
 import {
   fetchParentPaymentInstructions,
   formatCurrency,
+  formatFeeDate,
   initiateParentCustodyStk,
   pollParentCustodyStk,
   submitParentPayment,
+  type ParentOutstandingInvoice,
   type ParentPaymentInstructions,
 } from '@/lib/parent/parentFees'
 import {
@@ -60,6 +63,12 @@ interface ParentMakePaymentSheetProps {
   studentId: string
   childName?: string
   outstanding: number
+  /** Outstanding invoices the parent can settle individually via M-Pesa Express. */
+  invoices?: ParentOutstandingInvoice[]
+  /** Invoice to preselect when the sheet opens (e.g. from a row's Pay button). */
+  initialInvoiceId?: string | null
+  /** Open with the advance-payment toggle already on. */
+  initialAdvance?: boolean
   onSuccess?: (receiptNumber?: string) => void
 }
 
@@ -129,6 +138,9 @@ export function ParentMakePaymentSheet({
   studentId,
   childName,
   outstanding,
+  invoices = [],
+  initialInvoiceId,
+  initialAdvance = false,
   onSuccess,
 }: ParentMakePaymentSheetProps) {
   const { toast } = useToast()
@@ -147,11 +159,31 @@ export function ParentMakePaymentSheet({
   const [proofPreview, setProofPreview] = useState<string | null>(null)
   const [submittedReceipt, setSubmittedReceipt] = useState<string | null>(null)
   const [payMode, setPayMode] = useState<'stk' | 'manual'>('manual')
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  const [advance, setAdvance] = useState(false)
   const [stkPhone, setStkPhone] = useState('')
   const [stkBusy, setStkBusy] = useState(false)
   const [stkStatus, setStkStatus] = useState<string | null>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
+
+  const invoicesRef = useRef(invoices)
+  const initialInvoiceIdRef = useRef(initialInvoiceId)
+  const initialAdvanceRef = useRef(initialAdvance)
+  useEffect(() => {
+    invoicesRef.current = invoices
+    initialInvoiceIdRef.current = initialInvoiceId
+    initialAdvanceRef.current = initialAdvance
+  }, [invoices, initialInvoiceId, initialAdvance])
+
+  const selectedInvoice =
+    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
+
+  const parsedAmount = Number(amount.replace(/,/g, ''))
+  const advanceCredit =
+    advance && selectedInvoice && Number.isFinite(parsedAmount)
+      ? Math.max(0, parsedAmount - selectedInvoice.balanceAmount)
+      : 0
 
   const loadInstructions = useCallback(async () => {
     if (!subdomain) return
@@ -173,8 +205,19 @@ export function ParentMakePaymentSheet({
       setStkBusy(false)
       return
     }
+    const list = invoicesRef.current ?? []
+    const chosenId = initialInvoiceIdRef.current ?? list[0]?.id ?? null
+    const chosen = list.find((invoice) => invoice.id === chosenId) ?? null
+    setSelectedInvoiceId(chosenId)
+    setAdvance(Boolean(initialAdvanceRef.current))
     setError(null)
-    setAmount(outstanding > 0 ? String(Math.round(outstanding)) : '')
+    setAmount(
+      chosen
+        ? String(Math.round(chosen.balanceAmount))
+        : outstanding > 0
+          ? String(Math.round(outstanding))
+          : '',
+    )
     setMethod('MPESA')
     setReference('')
     setNotes('')
@@ -221,7 +264,17 @@ export function ParentMakePaymentSheet({
   }
 
   const handlePayFull = () => {
+    if (selectedInvoice) {
+      setAmount(String(Math.round(selectedInvoice.balanceAmount)))
+      return
+    }
     if (outstanding > 0) setAmount(String(Math.round(outstanding)))
+  }
+
+  const handleSelectInvoice = (invoice: ParentOutstandingInvoice) => {
+    setSelectedInvoiceId(invoice.id)
+    setAmount(String(Math.round(invoice.balanceAmount)))
+    setError(null)
   }
 
   const copyText = async (text: string, label: string) => {
@@ -243,6 +296,18 @@ export function ParentMakePaymentSheet({
     }
 
     if (payMode === 'stk') {
+      if (
+        !advance &&
+        selectedInvoice &&
+        parsed > selectedInvoice.balanceAmount
+      ) {
+        setError(
+          `That is more than the ${formatCurrency(
+            selectedInvoice.balanceAmount,
+          )} outstanding on this invoice.`,
+        )
+        return
+      }
       if (!stkPhone.trim()) {
         setError('Enter the Safaricom number that should receive the PIN prompt')
         return
@@ -252,9 +317,11 @@ export function ParentMakePaymentSheet({
       try {
         const intent = await initiateParentCustodyStk(subdomain, {
           studentId,
+          invoiceId: selectedInvoiceId ?? undefined,
           amount: parsed,
           phone: stkPhone.trim(),
           notes: notes.trim() || undefined,
+          advancePayment: advance || undefined,
         })
         setStkStatus('Waiting for PIN on your phone…')
         toast({
@@ -500,6 +567,48 @@ export function ParentMakePaymentSheet({
                         </div>
                       ) : null}
 
+                      {payMode === 'stk' && invoices.length > 0 ? (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-slate-700">
+                            Which invoice?
+                          </Label>
+                          <div className="space-y-1">
+                            {invoices.map((invoice) => (
+                              <button
+                                key={invoice.id}
+                                type="button"
+                                onClick={() => handleSelectInvoice(invoice)}
+                                disabled={stkBusy}
+                                className={cn(
+                                  'flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2 text-left transition-colors disabled:opacity-60',
+                                  selectedInvoiceId === invoice.id
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-slate-200 bg-white hover:bg-slate-50',
+                                )}
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate text-[11px] font-medium text-slate-800">
+                                    {invoice.termName ?? 'This term'}
+                                    {invoice.academicYearName
+                                      ? ` · ${invoice.academicYearName}`
+                                      : ''}
+                                  </span>
+                                  <span className="block truncate font-mono text-[10px] text-slate-400">
+                                    {invoice.invoiceNumber}
+                                    {invoice.dueDate
+                                      ? ` · due ${formatFeeDate(invoice.dueDate)}`
+                                      : ''}
+                                  </span>
+                                </span>
+                                <span className="shrink-0 text-[11px] font-semibold tabular-nums text-slate-800">
+                                  {formatCurrency(invoice.balanceAmount)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <Label
@@ -530,7 +639,54 @@ export function ParentMakePaymentSheet({
                           required
                           disabled={stkBusy}
                         />
+                        {payMode === 'stk' && selectedInvoice && !advance ? (
+                          <p className="text-[10px] text-slate-400">
+                            Part payments are fine — the rest stays on this invoice.
+                          </p>
+                        ) : null}
                       </div>
+
+                      {payMode === 'stk' ? (
+                        <button
+                          type="button"
+                          onClick={() => setAdvance((v) => !v)}
+                          disabled={stkBusy}
+                          aria-pressed={advance}
+                          className={cn(
+                            'flex w-full items-start gap-2 rounded-md border px-2.5 py-2 text-left transition-colors disabled:opacity-60',
+                            advance
+                              ? 'border-primary bg-primary/10'
+                              : 'border-slate-200 bg-white hover:bg-slate-50',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                              advance
+                                ? 'border-primary bg-primary text-white'
+                                : 'border-slate-300 bg-white',
+                            )}
+                          >
+                            {advance ? <Check className="h-3 w-3" /> : null}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[11px] font-medium text-slate-800">
+                              Advance payment
+                            </span>
+                            <span className="block text-[10px] leading-relaxed text-slate-500">
+                              Pay ahead — anything above the invoice balance is kept as
+                              credit for future fees.
+                            </span>
+                          </span>
+                        </button>
+                      ) : null}
+
+                      {advanceCredit > 0 ? (
+                        <p className="rounded-md border border-emerald-200 bg-emerald-50/80 px-2.5 py-1.5 text-[10px] text-emerald-800">
+                          {formatCurrency(advanceCredit)} above the balance will be
+                          saved as credit.
+                        </p>
+                      ) : null}
 
                       {payMode === 'stk' ? (
                         <div className="space-y-1.5">

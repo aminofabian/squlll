@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Loader2, RefreshCw, Wallet, X } from 'lucide-react'
+import { Download, Loader2, RefreshCw, Smartphone, Wallet, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   useParentChildFeeOverview,
   useParentChildPayments,
   useParentChildReceipts,
+  useParentPaymentInstructions,
 } from '@/lib/parent/useParentFees'
 import {
   downloadPdfDataUrl,
@@ -77,6 +78,8 @@ export function ParentFeesSection({
   const [plansClearedOpen, setPlansClearedOpen] = useState(false)
   const [recordsTab, setRecordsTab] = useState<'payments' | 'receipts'>('payments')
   const [paySheetOpen, setPaySheetOpen] = useState(false)
+  const [payInvoiceId, setPayInvoiceId] = useState<string | null>(null)
+  const [payAdvance, setPayAdvance] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null)
 
   const activeStudentId = children[selectedChild]?.studentId ?? null
@@ -108,6 +111,13 @@ export function ParentFeesSection({
     loading: receiptsLoading,
     refetch: refetchReceipts,
   } = useParentChildReceipts(subdomain, activeStudentId)
+
+  const { stkAvailable } = useParentPaymentInstructions(subdomain)
+
+  const outstandingInvoices = useMemo(
+    () => overview?.outstandingInvoices ?? [],
+    [overview?.outstandingInvoices],
+  )
 
   const groupedItems = useMemo(
     () => groupFeeItems(overview?.balance.items ?? []),
@@ -175,7 +185,23 @@ export function ParentFeesSection({
     return () => window.clearTimeout(t)
   }, [paymentSuccess])
 
-  const openPaySheet = () => setPaySheetOpen(true)
+  const openPaySheet = () => {
+    setPayInvoiceId(null)
+    setPayAdvance(false)
+    setPaySheetOpen(true)
+  }
+
+  const openInvoicePay = (invoiceId: string) => {
+    setPayInvoiceId(invoiceId)
+    setPayAdvance(false)
+    setPaySheetOpen(true)
+  }
+
+  const openAdvancePay = () => {
+    setPayInvoiceId(null)
+    setPayAdvance(true)
+    setPaySheetOpen(true)
+  }
 
   const handleRefreshAll = () => {
     void refetch()
@@ -319,7 +345,60 @@ export function ParentFeesSection({
             payments.length > 0 ? scrollToRecords : undefined
           }
           onRecordPayment={canRecordPayment ? openPaySheet : undefined}
+          onAdvancePayment={stkAvailable ? openAdvancePay : undefined}
+          stkAvailable={stkAvailable}
         />
+
+        {stkAvailable && outstandingInvoices.length > 0 ? (
+          <div className="border-b border-emerald-100/80 bg-emerald-50/40 px-3 py-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
+                <Smartphone className="h-3.5 w-3.5 text-emerald-600" />
+                Outstanding invoices
+              </h3>
+              <span className="text-[10px] text-slate-500">
+                Settle instantly with M-Pesa Express
+              </span>
+            </div>
+            <div className="space-y-1">
+              {outstandingInvoices.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-100 bg-white px-2.5 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-[11px] font-medium text-slate-800">
+                      {invoice.termName ?? 'This term'}
+                      {invoice.academicYearName
+                        ? ` · ${invoice.academicYearName}`
+                        : ''}
+                    </p>
+                    <p className="truncate font-mono text-[10px] text-slate-400">
+                      {invoice.invoiceNumber}
+                      {invoice.dueDate
+                        ? ` · due ${formatFeeDate(invoice.dueDate)}`
+                        : ''}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-[11px] font-semibold tabular-nums text-slate-900">
+                      {formatCurrency(invoice.balanceAmount)}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 gap-1 px-2 text-[10px]"
+                      onClick={() => openInvoicePay(invoice.id)}
+                    >
+                      <Smartphone className="h-3 w-3" />
+                      Pay
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {overview && (plansDue.length > 0 || plansCleared.length > 0) ? (
           <FeesSectionBlock
@@ -423,6 +502,7 @@ export function ParentFeesSection({
                 ) : payments.length === 0 ? (
                   <FeesRecordsEmpty
                     onRecordPayment={canRecordPayment ? openPaySheet : undefined}
+                    stkAvailable={stkAvailable}
                   />
                 ) : (
                   <FeesPaymentTimeline
@@ -442,6 +522,7 @@ export function ParentFeesSection({
                 ) : receipts.length === 0 ? (
                   <FeesRecordsEmpty
                     onRecordPayment={canRecordPayment ? openPaySheet : undefined}
+                    stkAvailable={stkAvailable}
                   />
                 ) : (
                   <ul className="space-y-1">
@@ -494,7 +575,8 @@ export function ParentFeesSection({
 
       <FeesStatusNote
         status={overview?.paymentStatus}
-                    onRecordPayment={canRecordPayment ? openPaySheet : undefined}
+        onRecordPayment={canRecordPayment ? openPaySheet : undefined}
+        stkAvailable={stkAvailable}
       />
 
       {canRecordPayment ? (
@@ -505,7 +587,7 @@ export function ParentFeesSection({
             onClick={openPaySheet}
           >
             <Wallet className="h-4 w-4" />
-            Record {formatCurrency(overview!.outstanding)}
+            {stkAvailable ? 'Pay' : 'Record'} {formatCurrency(overview!.outstanding)}
           </Button>
         </div>
       ) : null}
@@ -518,6 +600,9 @@ export function ParentFeesSection({
           studentId={activeStudentId}
           childName={activeChildName}
           outstanding={overview?.outstanding ?? 0}
+          invoices={outstandingInvoices}
+          initialInvoiceId={payInvoiceId}
+          initialAdvance={payAdvance}
           onSuccess={handlePaymentSuccess}
         />
       ) : null}

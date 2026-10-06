@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { resolveUpstreamGraphqlEndpoint } from '@/lib/graphql-endpoint';
+import { tenantSubdomainForHost } from '@/lib/host-resolution';
 
 /** Best-effort tenantId from a JWT payload (dual-flow local Nest has no JWT strategy). */
 function tenantIdFromJwt(token?: string): string | undefined {
@@ -50,14 +51,12 @@ export async function POST(request: Request) {
       request.headers.get('x-tenant-subdomain')?.trim() ||
       cookieStore.get('tenantSubdomain')?.value;
     if (!tenantSubdomain) {
-      const host = request.headers.get('host') ?? '';
-      // Local: school.localhost:3000 · Prod: school.squl.co.ke
-      const sub = host.match(
-        /^([a-z0-9-]+)\.(localhost|squl\.co\.ke)(?::\d+)?$/i,
-      )?.[1];
-      if (sub && sub !== 'localhost' && sub !== 'www') {
-        tenantSubdomain = sub.toLowerCase();
-      }
+      // Platform subdomains resolve locally; custom domains ask the API.
+      const host =
+        request.headers.get('x-forwarded-host') ??
+        request.headers.get('host') ??
+        '';
+      tenantSubdomain = (await tenantSubdomainForHost(host)) ?? undefined;
     }
 
     let body;

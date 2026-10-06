@@ -8,6 +8,7 @@ import { Copy } from 'lucide-react'
 import { CategorySplitEditor } from '../../CategorySplitEditor'
 import { initSplitsForCategories } from '../../../lib/categorySplits'
 import { roundToNearestTen } from '../../../lib/feesAmounts'
+import { FEES_BRAND } from '../../../lib/fees-ui'
 import { sortTermsForLetter } from '../../../lib/sortTermsForLetter'
 import {
   FeesAmountTable,
@@ -183,14 +184,19 @@ export function StepBreakdown({
   return (
     <div className="space-y-5">
       <p className="text-sm text-slate-600">
-        Split each term total into line items. Remaining must be{' '}
-        <span className="font-medium text-slate-800">0</span> to continue.
+        Now share out the term total across your fee lines. Each term&apos;s
+        lines should add up to the total, so the{' '}
+        <span className="font-medium text-slate-800">Remaining</span> row
+        reaches 0.
       </p>
 
-      <FeesWizardSection title="Fee breakdown">
+      <FeesWizardSection
+        title="Split the total across fee lines"
+        description="Type what each line costs for every term below."
+      >
         {(formData.selectedBuckets || []).length === 0 ? (
           <p className="text-sm text-amber-800">
-            No fee lines yet. Go back and pick lines on the bill.
+            No fee lines yet. Go back and choose what the fee covers.
           </p>
         ) : (
           <FeesAmountTable>
@@ -308,7 +314,9 @@ export function StepBreakdown({
             disabled={sortedTerms.length < 2}
           >
             <Copy className="h-3.5 w-3.5" />
-            Copy Term 1 → all
+            {sortedTerms[0]?.name
+              ? `Copy ${sortedTerms[0].name} to all terms`
+              : 'Copy first term to all'}
           </Button>
           <Button
             type="button"
@@ -317,7 +325,7 @@ export function StepBreakdown({
             className="h-8 text-xs"
             onClick={autoFillTuition}
           >
-            Auto-fill Tuition
+            Put the remaining into Tuition
           </Button>
         </div>
 
@@ -333,10 +341,14 @@ export function StepBreakdown({
         open={showAdvanced}
         onToggle={(e) => setShowAdvanced((e.target as HTMLDetailsElement).open)}
       >
-        <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600">
-          Advanced: percent split
+        <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+          Prefer percentages? Split the total by share
         </summary>
         <div className="border-t border-slate-100 px-3 py-3">
+          <p className="mb-3 text-xs text-slate-500">
+            Set how much of the term total each line should get, then apply it
+            to every term.
+          </p>
           <CategorySplitEditor
             categories={categories}
             splits={draftSplits}
@@ -346,10 +358,11 @@ export function StepBreakdown({
           <Button
             type="button"
             size="sm"
-            className="mt-2 h-8 text-xs"
+            className="mt-2 h-8 text-xs text-white"
+            style={{ backgroundColor: FEES_BRAND.primary }}
             onClick={() => redistributeFromSplits(draftSplits)}
           >
-            Apply % to amounts
+            Apply this split
           </Button>
         </div>
       </details>

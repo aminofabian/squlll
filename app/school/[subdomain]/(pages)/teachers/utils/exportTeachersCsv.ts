@@ -1,51 +1,38 @@
 import type { TeachersListItem } from "./mapGraphqlTeacher";
+import { downloadTextFile, rowsToCsv } from "@/lib/utils/import-file";
 
-function escapeCsv(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
+type Column = { label: string; value: (teacher: TeachersListItem) => string };
+
+const COLUMNS: Column[] = [
+  { label: "Name", value: (t) => t.name },
+  { label: "Employee ID", value: (t) => t.employeeId ?? "" },
+  { label: "Email", value: (t) => t.contacts.email },
+  { label: "Phone", value: (t) => t.contacts.phone },
+  { label: "Department", value: (t) => t.department },
+  {
+    label: "Status",
+    value: (t) => (t.status === "active" ? "Active" : "Not activated"),
+  },
+  { label: "Subjects", value: (t) => t.subjects.join("; ") },
+  { label: "Grades", value: (t) => t.grades.join("; ") },
+  { label: "Profile complete", value: (t) => (t.hasCompletedProfile ? "Yes" : "No") },
+  { label: "Date joined", value: (t) => t.joinDate ?? "" },
+];
 
 export function exportTeachersToCsv(
   teachers: TeachersListItem[],
   filename = "teachers-export.csv",
 ) {
-  const headers = [
-    "Name",
-    "Employee ID",
-    "Email",
-    "Phone",
-    "Department",
-    "Status",
-    "Subjects",
-    "Grades",
-    "Profile complete",
-    "Date joined",
-  ];
+  const rows = teachers.map((teacher) => COLUMNS.map((col) => col.value(teacher)));
+  downloadTextFile(filename, rowsToCsv(COLUMNS.map((c) => c.label), rows), "text/csv;charset=utf-8");
+}
 
-  const rows = teachers.map((teacher) => [
-    teacher.name,
-    teacher.employeeId ?? "",
-    teacher.contacts.email,
-    teacher.contacts.phone,
-    teacher.department,
-    teacher.status === "active" ? "Active" : "Not activated",
-    teacher.subjects.join("; "),
-    teacher.grades.join("; "),
-    teacher.hasCompletedProfile ? "Yes" : "No",
-    teacher.joinDate ?? "",
-  ]);
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => escapeCsv(String(cell))).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+export function exportTeachersToJson(
+  teachers: TeachersListItem[],
+  filename = "teachers-export.json",
+) {
+  const records = teachers.map((teacher) =>
+    Object.fromEntries(COLUMNS.map((col) => [col.label, col.value(teacher)])),
+  );
+  downloadTextFile(filename, JSON.stringify(records, null, 2), "application/json");
 }

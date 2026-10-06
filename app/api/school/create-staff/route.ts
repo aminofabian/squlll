@@ -109,11 +109,22 @@ export async function POST(request: Request) {
     const result = await response.json();
     console.log('GraphQL response:', result);
     
-    if (result.errors) {
+    if (result.errors?.length) {
       console.error('InviteStaff mutation failed:', result.errors);
+      const firstError = result.errors[0];
+      const extensions = firstError?.extensions ?? {};
       return NextResponse.json(
-        { error: 'Error creating staff record', details: result.errors },
-        { status: 500 }
+        {
+          error: firstError?.message || 'Error creating staff record',
+          code: extensions.code,
+          details: result.errors,
+        },
+        {
+          status:
+            typeof extensions.statusCode === 'number'
+              ? extensions.statusCode
+              : 500,
+        }
       );
     }
 

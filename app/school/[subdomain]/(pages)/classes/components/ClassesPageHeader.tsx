@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Filter, MoreHorizontal } from "lucide-react";
+import { BookOpen, Filter, MoreHorizontal, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import type { ClassAction } from "./ClassActionBar";
 import {
   classesActionButton,
-  classesGhostButton,
   classesIconButton,
 } from "./classes-ui";
 
@@ -67,15 +66,42 @@ export function ClassesPageHeader({
             </span>
           </Button>
 
+          <div className="hidden items-center gap-1 lg:flex">
+            {actions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Button
+                  key={action.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={action.disabled}
+                  title={action.disabled ? action.disabledReason : action.label}
+                  onClick={action.onClick}
+                  className={classesActionButton}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {action.label}
+                </Button>
+              );
+            })}
+          </div>
+
           {showDesktopGradeToggle && onToggleGradePanel ? (
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className={cn(classesGhostButton, "hidden lg:inline-flex")}
+              size="icon"
+              className={cn(classesIconButton, "hidden lg:inline-flex")}
               onClick={onToggleGradePanel}
+              aria-label={isGradePanelOpen ? "Hide grade panel" : "Show grade panel"}
+              title={isGradePanelOpen ? "Hide grade panel" : "Show grade panel"}
             >
-              {isGradePanelOpen ? "Hide panel" : "Grades"}
+              {isGradePanelOpen ? (
+                <PanelLeftClose className="h-4 w-4" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4" />
+              )}
             </Button>
           ) : null}
 
@@ -84,7 +110,7 @@ export function ClassesPageHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className={classesIconButton}
+                className={cn(classesIconButton, "lg:hidden")}
                 aria-label="Class actions"
               >
                 <MoreHorizontal className="h-4 w-4" />

@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { schoolPortalUrl } from '@/lib/auth/post-login-navigation'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Form,
@@ -231,26 +232,12 @@ export default function SignupContent({
       })
 
       setTimeout(() => {
-        const currentOrigin = window.location.origin
-        const currentHost = window.location.host
-        let targetUrl: string
-
-        if (currentOrigin.includes('localhost')) {
-          targetUrl = `http://${subdomain}.localhost:3001`
-        } else {
-          const domainParts = currentHost.split('.')
-          if (domainParts.length >= 2) {
-            const mainDomain = domainParts.slice(1).join('.')
-            targetUrl = `https://${subdomain}.${mainDomain}`
-          } else {
-            targetUrl = `https://${subdomain}.squal.co.ke`
-          }
-        }
-
-        window.location.href =
-          signupType === 'staff'
-            ? `${targetUrl}/staff`
-            : `${targetUrl}/teacher`
+        // Stay on the local host in dev (any port) instead of the backend (:3001)
+        // or a hardcoded prod domain.
+        window.location.href = schoolPortalUrl(
+          subdomain,
+          signupType === 'staff' ? '/staff' : '/teacher',
+        )
       }, 3000)
     } catch (err) {
       if (err instanceof Error) {

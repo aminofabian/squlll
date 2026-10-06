@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Landmark,
   Loader2,
-  Pencil,
   Plus,
   School,
   Smartphone,
@@ -18,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { TermDraft } from "@/lib/utils/school-calendar-presets";
 import { useMpesaCustody } from "@/app/school/[subdomain]/(pages)/fees/hooks/useMpesaCustody";
@@ -292,8 +290,6 @@ type TermsStepProps = {
   moeYear: number;
   customTerm: TermDraft;
   onCustomTermChange: (t: TermDraft) => void;
-  isCreating: boolean;
-  onCreateDrafts: () => void;
   onAddCustomTerm: () => void;
 };
 
@@ -313,10 +309,19 @@ export function TermsStepContent({
   moeYear,
   customTerm,
   onCustomTermChange,
-  isCreating,
-  onCreateDrafts,
   onAddCustomTerm,
 }: TermsStepProps) {
+  const [activeTerm, setActiveTerm] = useState<number>(0);
+
+  // Sync activeTerm to termDrafts so the wizard picks up the correct isActive
+  useEffect(() => {
+    const next = termDrafts.map((t, i) => ({
+      ...t,
+      active: i === activeTerm,
+    }));
+    onTermDraftsChange(next);
+  }, [activeTerm]);
+
   if (!hasAcademicYear) {
     return (
       <p className="text-sm text-[#1a4d42]/70 border border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/5 dark:text-white/60 p-4">
@@ -328,17 +333,6 @@ export function TermsStepContent({
   if (hasTerms && existingTermNames) {
     return <DoneBanner label="Terms are set up" detail={existingTermNames} />;
   }
-
-  const [activeTerm, setActiveTerm] = useState<number>(0);
-
-  // Sync activeTerm to termDrafts so the wizard picks up the correct isActive
-  useEffect(() => {
-    const next = termDrafts.map((t, i) => ({
-      ...t,
-      active: i === activeTerm,
-    }));
-    onTermDraftsChange(next);
-  }, [activeTerm]);
 
   const updateDraft = (
     index: number,
@@ -354,242 +348,259 @@ export function TermsStepContent({
     onTermDraftsChange(next);
   };
 
-  const modeOptions = [
-    { id: "suggested" as const, label: "Auto-split" },
-    { id: "moe" as const, label: `MoE ${moeYear}` },
-    { id: "custom" as const, label: "Add manually" },
-  ];
+  const includedCount = termDrafts.filter((t) => t.included !== false).length;
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        Divide{" "}
-        <strong className="text-slate-800 dark:text-slate-200">
+      <p className="text-sm leading-relaxed text-[#1a4d42]/75 dark:text-white/60">
+        A school year is usually split into teaching terms. Choose how you&apos;d
+        like to set up{" "}
+        <strong className="text-[#0a1f1a] dark:text-white">
           {academicYearName}
         </strong>{" "}
-        into teaching periods. Pick a template, edit the list, then save.
+        — you can fine-tune every date afterwards.
       </p>
 
-      <div className="flex p-1 bg-[#eef3f1] dark:bg-white/5 gap-1 border border-[#1a4d42]/10">
-        {modeOptions.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onTermModeChange(id)}
-            className={`flex-1 text-xs sm:text-sm font-medium py-2.5 px-2 transition-all ${
-              termMode === id
-                ? "bg-[#0a1f1a] text-white dark:bg-emerald-400 dark:text-[#0a1f1a]"
-                : "text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/50"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {/* How do you want to set up your terms? */}
+      <div className="grid gap-2 sm:grid-cols-3">
+        <PresetOption
+          selected={termMode === "suggested"}
+          onClick={() => onTermModeChange("suggested")}
+          title="Split it for me"
+          subtitle="We space the terms evenly across the year"
+        />
+        <PresetOption
+          selected={termMode === "moe"}
+          onClick={() => onTermModeChange("moe")}
+          title={`Kenya MoE ${moeYear}`}
+          subtitle="Use the Ministry's official term dates"
+        />
+        <PresetOption
+          selected={termMode === "custom"}
+          onClick={() => onTermModeChange("custom")}
+          title="I'll enter my own"
+          subtitle="Type the name and dates for each term"
+        />
       </div>
 
       {termMode === "suggested" && (
-        <Card className="rounded-none shadow-none">
-          <CardContent className="pt-4 space-y-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <Label className="text-sm">Number of terms</Label>
+        <div className="space-y-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+                How many terms?
+              </p>
+              <p className="mt-0.5 text-xs text-[#1a4d42]/60 dark:text-white/50">
+                Most Kenyan schools use three.
+              </p>
+            </div>
+            <div className="flex items-center border border-[#1a4d42]/15 bg-white p-0.5 dark:border-white/15 dark:bg-[#0a1f1a]">
               {[2, 3, 4].map((n) => (
-                <Button
+                <button
                   key={n}
                   type="button"
-                  size="sm"
-                  variant={suggestedTermCount === n ? "secondary" : "ghost"}
-                  className="rounded-none"
                   onClick={() => onSuggestedTermCountChange(n)}
+                  aria-pressed={suggestedTermCount === n}
+                  className={cn(
+                    "h-9 w-11 text-sm font-semibold transition-colors",
+                    suggestedTermCount === n
+                      ? "bg-[#0a1f1a] text-white dark:bg-emerald-400 dark:text-[#0a1f1a]"
+                      : "text-[#1a4d42]/60 hover:text-[#0a1f1a] dark:text-white/50 dark:hover:text-white",
+                  )}
                 >
                   {n}
-                </Button>
+                </button>
               ))}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="rounded-none"
-                onClick={onApplySuggested}
-              >
-                <Pencil className="h-3.5 w-3.5 mr-1" />
-                Generate dates
-              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              We&apos;ll spread dates evenly across your academic year. You can
-              edit each row below.
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <button
+            type="button"
+            onClick={onApplySuggested}
+            className="inline-flex w-full items-center justify-center gap-2 border border-[#246a59]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#246a59] transition-colors hover:bg-[#246a59]/[0.06] dark:bg-[#0a1f1a] sm:w-auto"
+          >
+            <Sparkles className="h-4 w-4" />
+            Fill in the dates
+          </button>
+          <p className="text-xs text-[#1a4d42]/55 dark:text-white/45">
+            We&apos;ll spread the dates evenly — tweak any of them below.
+          </p>
+        </div>
       )}
 
       {termMode === "moe" && (
-        <Card className="border-dashed rounded-none shadow-none">
-          <CardContent className="pt-4">
-            <p className="text-sm text-muted-foreground mb-3">
-              Optional shortcut for Kenyan public schools — official {moeYear}{" "}
-              term dates from the Ministry of Education.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="rounded-none"
-              onClick={onApplyMoe}
-            >
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              Load MoE term dates
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/5">
+          <p className="text-sm leading-relaxed text-[#1a4d42]/75 dark:text-white/60">
+            For Kenyan public schools — we&apos;ll fill in the Ministry of
+            Education&apos;s official term names and dates for {moeYear}.
+          </p>
+          <button
+            type="button"
+            onClick={onApplyMoe}
+            className="inline-flex w-full items-center justify-center gap-2 border border-[#246a59]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#246a59] transition-colors hover:bg-[#246a59]/[0.06] dark:bg-[#0a1f1a] sm:w-auto"
+          >
+            <Sparkles className="h-4 w-4" />
+            Use official MoE dates
+          </button>
+        </div>
       )}
 
       {termMode === "custom" && (
-        <Card className="rounded-none shadow-none">
-          <CardContent className="pt-4 space-y-3">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Name</Label>
-                <Input
-                  placeholder="Term 1"
-                  value={customTerm.name}
-                  onChange={(e) =>
-                    onCustomTermChange({ ...customTerm, name: e.target.value })
-                  }
-                  className="rounded-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Start</Label>
-                <DateField
-                  compact
-                  showHint={false}
-                  value={customTerm.startDate}
-                  onChange={(v) =>
-                    onCustomTermChange({ ...customTerm, startDate: v })
-                  }
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">End</Label>
-                <DateField
-                  compact
-                  showHint={false}
-                  value={customTerm.endDate}
-                  min={customTerm.startDate || undefined}
-                  onChange={(v) =>
-                    onCustomTermChange({ ...customTerm, endDate: v })
-                  }
-                />
-              </div>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              className="rounded-none"
-              onClick={onAddCustomTerm}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Add to list
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/5">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FieldGroup label="Term name">
+              <Input
+                placeholder="e.g. First Term"
+                value={customTerm.name}
+                onChange={(e) =>
+                  onCustomTermChange({ ...customTerm, name: e.target.value })
+                }
+                className={onboardingInputClass}
+              />
+            </FieldGroup>
+            <FieldGroup label="Starts">
+              <DateField
+                compact
+                showHint={false}
+                value={customTerm.startDate}
+                onChange={(v) =>
+                  onCustomTermChange({ ...customTerm, startDate: v })
+                }
+              />
+            </FieldGroup>
+            <FieldGroup label="Ends">
+              <DateField
+                compact
+                showHint={false}
+                value={customTerm.endDate}
+                min={customTerm.startDate || undefined}
+                onChange={(v) =>
+                  onCustomTermChange({ ...customTerm, endDate: v })
+                }
+              />
+            </FieldGroup>
+          </div>
+          <button
+            type="button"
+            onClick={onAddCustomTerm}
+            className="inline-flex w-full items-center justify-center gap-2 border border-[#246a59]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#246a59] transition-colors hover:bg-[#246a59]/[0.06] dark:bg-[#0a1f1a] sm:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Add this term
+          </button>
+        </div>
       )}
 
-      {termDrafts.length > 0 && (
+      {termDrafts.length > 0 ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium uppercase tracking-wider text-slate-400">
-              Terms to create ({termDrafts.filter((t) => t.included).length})
-            </Label>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/50 dark:text-white/40">
+              {includedCount} term{includedCount === 1 ? "" : "s"} ready to save
+            </p>
+            <p className="text-xs text-[#1a4d42]/45 dark:text-white/35">
+              Mark the term you&apos;re in right now
+            </p>
           </div>
-          <ul className="border border-[#1a4d42]/15 dark:border-white/10 divide-y divide-[#1a4d42]/10">
-            {termDrafts.map((term, i) => (
-              <li
-                key={`${term.name}-${i}`}
-                className="p-3 bg-white dark:bg-[#0c1a17]"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <Checkbox
-                    id={`include-term-${i}`}
-                    checked={term.included ?? true}
-                    onCheckedChange={(checked) => {
-                      updateDraft(i, "included", checked === true);
-                    }}
-                  />
-                  <Label
-                    htmlFor={`include-term-${i}`}
-                    className="flex-1 text-sm font-medium text-[#0a1f1a] dark:text-white cursor-pointer"
-                  >
-                    {term.name || "Unnamed term"}
-                  </Label>
-                  {term.included !== false && (
+          <ul className="space-y-2">
+            {termDrafts.map((term, i) => {
+              const included = term.included !== false;
+              const isActive = activeTerm === i;
+              return (
+                <li
+                  key={`${term.name}-${i}`}
+                  className={cn(
+                    "border p-3 transition-colors",
+                    included
+                      ? "border-[#1a4d42]/15 bg-white dark:border-white/10 dark:bg-[#0c1a17]"
+                      : "border-dashed border-[#1a4d42]/20 bg-[#f8fbfa] dark:bg-white/5",
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id={`include-term-${i}`}
+                      checked={included}
+                      onCheckedChange={(checked) =>
+                        updateDraft(i, "included", checked === true)
+                      }
+                    />
+                    <div className="min-w-0 flex-1">
+                      <Label
+                        htmlFor={`include-term-${i}`}
+                        className={cn(
+                          "cursor-pointer text-sm font-semibold",
+                          included
+                            ? "text-[#0a1f1a] dark:text-white"
+                            : "text-[#1a4d42]/45 line-through",
+                        )}
+                      >
+                        {term.name || "Unnamed term"}
+                      </Label>
+                      {included && (
+                        <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/40">
+                          {formatDisplayDate(term.startDate)} →{" "}
+                          {formatDisplayDate(term.endDate)}
+                        </p>
+                      )}
+                    </div>
+                    {included && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTerm(isActive ? -1 : i)}
+                        title="Mark the term your school is currently in"
+                        className={cn(
+                          "shrink-0 border px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                          isActive
+                            ? "border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                            : "border-[#1a4d42]/15 bg-[#f3f7f5] text-[#1a4d42]/60 hover:border-emerald-300 hover:text-emerald-700 dark:border-white/15 dark:bg-white/5 dark:text-white/50",
+                        )}
+                      >
+                        {isActive ? "Current term" : "Set as current"}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => {
-                        setActiveTerm(activeTerm === i ? -1 : i);
-                      }}
-                      className={`text-xs font-medium px-2.5 py-1 border transition-colors ${
-                        activeTerm === i
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                          : "bg-[#f3f7f5] text-[#1a4d42]/55 border-[#1a4d42]/12 hover:border-emerald-300 hover:text-emerald-700"
-                      }`}
+                      onClick={() =>
+                        onTermDraftsChange(termDrafts.filter((_, j) => j !== i))
+                      }
+                      aria-label={`Remove ${term.name || "term"}`}
+                      title="Remove this term"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-transparent text-[#1a4d42]/40 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
                     >
-                      {activeTerm === i ? "Active term" : "Set as active"}
+                      <Trash2 className="h-4 w-4" />
                     </button>
+                  </div>
+                  {included && (
+                    <div className="mt-3 grid gap-3 pl-7 sm:grid-cols-2">
+                      <FieldGroup label="Starts">
+                        <DateField
+                          compact
+                          showHint={false}
+                          value={term.startDate}
+                          aria-label={`${term.name} start date`}
+                          onChange={(v) => updateDraft(i, "startDate", v)}
+                        />
+                      </FieldGroup>
+                      <FieldGroup label="Ends">
+                        <DateField
+                          compact
+                          showHint={false}
+                          value={term.endDate}
+                          min={term.startDate || undefined}
+                          aria-label={`${term.name} end date`}
+                          onChange={(v) => updateDraft(i, "endDate", v)}
+                        />
+                      </FieldGroup>
+                    </div>
                   )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 rounded-none"
-                    onClick={() =>
-                      onTermDraftsChange(termDrafts.filter((_, j) => j !== i))
-                    }
-                    aria-label="Remove term"
-                  >
-                    <Trash2 className="h-4 w-4 text-[#1a4d42]/40" />
-                  </Button>
-                </div>
-                <div className="ml-8 grid gap-2 sm:grid-cols-2">
-                  <DateField
-                    compact
-                    showHint={false}
-                    value={term.startDate}
-                    disabled={term.included === false}
-                    aria-label={`${term.name} start date`}
-                    onChange={(v) => updateDraft(i, "startDate", v)}
-                  />
-                  <DateField
-                    compact
-                    showHint={false}
-                    value={term.endDate}
-                    min={term.startDate || undefined}
-                    disabled={term.included === false}
-                    aria-label={`${term.name} end date`}
-                    onChange={(v) => updateDraft(i, "endDate", v)}
-                  />
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
-          <Button
-            onClick={onCreateDrafts}
-            disabled={
-              isCreating || termDrafts.filter((t) => t.included).length === 0
-            }
-            className="w-full h-12 rounded-none bg-[#0a1f1a] hover:bg-[#246a59] shadow-[3px_3px_0_0_rgba(36,106,89,0.35)]"
-          >
-            {isCreating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving terms...
-              </>
-            ) : (
-              `Save ${termDrafts.filter((t) => t.included).length} selected term${termDrafts.filter((t) => t.included).length === 1 ? "" : "s"}`
-            )}
-          </Button>
+        </div>
+      ) : (
+        <div className="border border-dashed border-[#1a4d42]/20 bg-[#f8fbfa] p-6 text-center dark:border-white/10 dark:bg-white/5">
+          <p className="text-sm text-[#1a4d42]/60 dark:text-white/50">
+            No terms yet — pick an option above and we&apos;ll add them here.
+          </p>
         </div>
       )}
     </div>
@@ -615,9 +626,9 @@ type StreamsStepProps = {
 
 const LETTER_PRESETS = ["A", "B", "C", "D"] as const;
 const BULK_PRESETS: { label: string; names: string[]; hint: string }[] = [
-  { label: "1 stream", names: ["A"], hint: "One class per grade" },
-  { label: "2 streams", names: ["A", "B"], hint: "Common split" },
-  { label: "3 streams", names: ["A", "B", "C"], hint: "Larger school" },
+  { label: "One class", names: ["A"], hint: "Good for small schools" },
+  { label: "Two classes", names: ["A", "B"], hint: "Most schools pick this" },
+  { label: "Three classes", names: ["A", "B", "C"], hint: "Larger intakes, split three ways" },
 ];
 
 function newStreamDraft(name = "", capacity = "30"): StreamDraft {
@@ -747,7 +758,7 @@ export function StreamsStepContent({
       {/* What is a stream? */}
       <div className="border border-[#1a4d42]/12 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 p-3 sm:p-3.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#246a59] mb-2">
-          What you&apos;re creating
+          What&apos;s a stream?
         </p>
         <div className="flex flex-wrap items-center gap-2 text-sm text-[#0a1f1a] dark:text-white">
           <span className="font-medium">{sampleGrade}</span>
@@ -763,9 +774,10 @@ export function StreamsStepContent({
             </span>
           </span>
         </div>
-        <p className="mt-2 text-xs text-[#1a4d42]/60 dark:text-white/45 leading-relaxed">
-          Each stream is a class section students join. Pick a quick pattern for
-          every grade, then tweak any row.
+        <p className="mt-2 text-xs leading-relaxed text-[#1a4d42]/60 dark:text-white/45">
+          A stream is a class section students join — like 4A or 4B. Most schools
+          keep one to three per grade. We&apos;ll set the same pattern for every
+          grade, and you can adjust any grade below.
         </p>
       </div>
 
@@ -795,6 +807,7 @@ export function StreamsStepContent({
                 key={preset.label}
                 type="button"
                 onClick={() => applyBulkToAll(preset.names)}
+                title={preset.hint}
                 className={`border px-2 py-2.5 text-center transition-colors ${
                   active
                     ? "border-[#246a59] bg-[#246a59] text-white"
@@ -803,11 +816,18 @@ export function StreamsStepContent({
               >
                 <span className="block text-xs font-semibold">{preset.label}</span>
                 <span
-                  className={`block text-[10px] mt-0.5 ${
-                    active ? "text-white/75" : "text-[#1a4d42]/45"
+                  className={`block text-[10px] mt-0.5 tabular-nums font-medium ${
+                    active ? "text-white/80" : "text-[#246a59]/75"
                   }`}
                 >
                   {preset.names.join(" · ")}
+                </span>
+                <span
+                  className={`hidden sm:block text-[10px] mt-0.5 leading-snug ${
+                    active ? "text-white/60" : "text-[#1a4d42]/45"
+                  }`}
+                >
+                  {preset.hint}
                 </span>
               </button>
             );
@@ -821,8 +841,8 @@ export function StreamsStepContent({
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
             Per grade
           </p>
-          <p className="text-[10px] text-[#1a4d42]/40 tabular-nums">
-            Cap. = max learners
+          <p className="text-[10px] text-[#1a4d42]/40">
+            Seats = max learners · edit anytime
           </p>
         </div>
 
@@ -863,7 +883,7 @@ export function StreamsStepContent({
                   {drafts.map((draft) => (
                     <div
                       key={draft.id}
-                      className="inline-flex items-center border border-[#246a59]/25 bg-[#f3f7f5] dark:bg-[#071411] dark:border-[#246a59]/35"
+                      className="inline-flex items-center border border-[#246a59]/25 bg-[#f3f7f5] transition-all duration-150 hover:border-[#246a59]/45 hover:shadow-sm dark:bg-[#071411] dark:border-[#246a59]/35"
                     >
                       <span className="pl-2 pr-1 text-[10px] font-semibold uppercase tracking-wide text-[#246a59]/70">
                         Stream
@@ -879,10 +899,16 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} stream name`}
-                        className="h-8 w-10 rounded-none border-0 bg-transparent px-0 text-center text-sm font-bold text-[#0a1f1a] shadow-none focus-visible:ring-0 dark:text-white"
+                        className="h-8 w-10 rounded-none border-0 bg-transparent px-0 text-center text-sm font-bold text-[#0a1f1a] shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06] dark:text-white"
                         placeholder="?"
                       />
                       <span className="h-5 w-px bg-[#1a4d42]/15" aria-hidden />
+                      <span
+                        className="pl-1.5 pr-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45"
+                        title="Max learners per stream"
+                      >
+                        Seats
+                      </span>
                       <Input
                         type="number"
                         min={1}
@@ -895,19 +921,20 @@ export function StreamsStepContent({
                             e.target.value,
                           )
                         }
-                        aria-label={`${grade.gradeName} ${draft.name || "stream"} capacity`}
-                        className="h-8 w-11 rounded-none border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1a4d42]/70 shadow-none focus-visible:ring-0"
-                        title="Capacity"
+                        aria-label={`${grade.gradeName} ${draft.name || "stream"} seats (max learners)`}
+                        className="h-8 w-11 rounded-none border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1a4d42]/70 shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06]"
+                        title="Seats (max learners)"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           removeGradeDraft(grade.gradeId, draft.id)
                         }
-                        className="flex h-8 w-7 items-center justify-center text-[#1a4d42]/35 hover:bg-red-50 hover:text-red-600"
+                        className="mr-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-[#1a4d42]/35 transition-all duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
                         aria-label={`Remove stream ${draft.name || ""} from ${grade.gradeName}`}
+                        title="Remove stream"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3 w-3" strokeWidth={2.5} />
                       </button>
                     </div>
                   ))}
@@ -915,7 +942,7 @@ export function StreamsStepContent({
                   <button
                     type="button"
                     onClick={() => addStreamToGrade(grade.gradeId, grade)}
-                    className="inline-flex h-8 items-center gap-1 border border-dashed border-[#1a4d42]/25 px-2 text-[11px] font-medium text-[#1a4d42]/55 hover:border-[#246a59]/50 hover:text-[#246a59]"
+                    className="inline-flex h-8 items-center gap-1 border border-dashed border-[#1a4d42]/25 px-2 text-[11px] font-medium text-[#1a4d42]/55 transition-colors hover:border-[#246a59]/50 hover:bg-[#246a59]/[0.04] hover:text-[#246a59]"
                   >
                     <Plus className="h-3 w-3" />
                     Add

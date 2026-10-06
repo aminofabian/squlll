@@ -181,6 +181,11 @@ export const useGraphQLFeeStructures = () => {
           statusText: response.statusText,
           errorText: errorText.substring(0, 500)
         });
+        if (response.status === 429) {
+          throw new Error(
+            'The server is busy right now. Please wait a few seconds and try again.',
+          );
+        }
         throw new Error(`GraphQL request failed with status ${response.status}: ${response.statusText}`);
       }
 
