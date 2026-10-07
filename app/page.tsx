@@ -358,6 +358,19 @@ const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
   { label: "Book a walkthrough", href: "/login" },
 ]
 
+/**
+ * Public download for the SQUL mobile app (Android APK).
+ *
+ * NOTE: the fallback is an EAS "internal" artifact, which the free plan retains
+ * only for a short window (`expire-internal-free-builds`, ~2 weeks). Point
+ * NEXT_PUBLIC_APP_DOWNLOAD_URL at a permanent copy (CDN / object storage) so the
+ * link keeps working; the fallback is just a convenience default. Swap to an
+ * App Store / Play Store URL once those listings exist.
+ */
+const LANDING_APP_DOWNLOAD_URL =
+  process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL?.trim() ||
+  "https://expo.dev/artifacts/eas/8ENiuD10HedgWxUUuL1akD9B8-v58ytN1Fs-Arn95zk.apk"
+
 function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
     <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1d5547] shadow-sm">
@@ -1885,7 +1898,7 @@ export default function Home() {
                 onSelectStudent={selectStudent}
               />
 
-              <div className="mt-6 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
+              <div className="mt-6 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center lg:justify-start">
                 <Link href="/register" className="w-full sm:w-auto">
                   <Button
                     size="lg"
@@ -1904,6 +1917,21 @@ export default function Home() {
                     See a demo
                   </Button>
                 </Link>
+                <a
+                  href={LANDING_APP_DOWNLOAD_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full sm:w-auto"
+                >
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-lg h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
+                  >
+                    <Smartphone className="mr-2 h-3.5 w-3.5" />
+                    Download the app
+                  </Button>
+                </a>
               </div>
 
               <p className="mt-4 text-xs leading-relaxed text-white/90 sm:text-sm">
@@ -2355,6 +2383,17 @@ export default function Home() {
                         </Link>
                       </li>
                     ))}
+                    <li>
+                      <a
+                        href={LANDING_APP_DOWNLOAD_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-white/65 transition-colors hover:text-emerald-200"
+                      >
+                        <Smartphone size={15} className="text-emerald-300/90" aria-hidden />
+                        Download the app
+                      </a>
+                    </li>
                   </ul>
                 </div>
 
