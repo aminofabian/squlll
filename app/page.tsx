@@ -45,6 +45,7 @@ import {
   LiveDomainPreview,
   type PreviewImage,
 } from "@/components/marketing/DomainPreviews"
+import { WalkthroughDialog } from "@/components/marketing/WalkthroughDialog"
 
 /** Optional real captures — drop into public/screenshots/ and fill these in. */
 const DOMAIN_HOME_SHOTS: { connect?: PreviewImage; live?: PreviewImage } = {}
@@ -355,7 +356,6 @@ const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
   { label: "Schools on Squl", href: "/schools" },
   { label: "Start free term", href: "/register" },
   { label: "Sign in", href: "/login" },
-  { label: "Book a walkthrough", href: "/login" },
 ]
 
 /**
@@ -1783,6 +1783,7 @@ export default function Home() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [demoPaused, setDemoPaused] = useState(false)
   const [previewMode, setPreviewMode] = useState<HeroPreviewMode>("phone")
+  const [walkthroughOpen, setWalkthroughOpen] = useState(false)
   const studentsMetric = useAnimatedNumber(HERO_DEMO_STATS.students.target, { delay: 400 })
   const feeMetric = useAnimatedNumber(HERO_DEMO_STATS.feeCollection.target, { delay: 500 })
   const teacherMetric = useAnimatedNumber(48, { delay: 600 })
@@ -2394,6 +2395,16 @@ export default function Home() {
                         Download the app
                       </a>
                     </li>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => setWalkthroughOpen(true)}
+                        className="inline-flex items-center gap-2 text-sm text-white/65 transition-colors hover:text-emerald-200"
+                      >
+                        <CalendarClock size={15} className="text-emerald-300/90" aria-hidden />
+                        Book a walkthrough
+                      </button>
+                    </li>
                   </ul>
                 </div>
 
@@ -2457,6 +2468,8 @@ export default function Home() {
           </div>
         </footer>
       </main>
+
+      <WalkthroughDialog open={walkthroughOpen} onOpenChange={setWalkthroughOpen} />
     </div>
   )
 }
