@@ -9,7 +9,7 @@ const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint();
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password, name, signupToken } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -38,15 +38,27 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query: mutation,
-        variables: { input: { email, password, name } },
+        variables: {
+          input: {
+            email,
+            password,
+            name,
+            // Only sent when configured server-side (SUPER_ADMIN_SIGNUP_TOKEN).
+            ...(typeof signupToken === "string" && signupToken.trim()
+              ? { signupToken: signupToken.trim() }
+              : {}),
+          },
+        },
       }),
     });
 
     const data = await response.json();
 
     if (data.errors) {
-      const message = data.errors[0]?.message || "Signup failed";
-      return NextResponse.json({ error: message }, { status: 400 });
+      const firstError = data.errors[0];
+      const message = firstError?.message || "Signup failed";
+      const status = firstError?.extensions?.statusCode === 403 ? 403 : 400;
+      return NextResponse.json({ error: message }, { status });
     }
 
     const userData = data.data.superAdminSignup;

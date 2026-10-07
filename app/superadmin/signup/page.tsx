@@ -11,6 +11,7 @@ export default function SuperAdminSignupPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [signupToken, setSignupToken] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function SuperAdminSignupPage() {
       const response = await fetch('/api/auth/superadmin-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, signupToken }),
       })
 
       const data = await response.json()
@@ -117,6 +118,24 @@ export default function SuperAdminSignupPage() {
                 required
                 minLength={6}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="signupToken" className="text-sm font-medium">
+                Invite code <span className="text-slate-400">(optional)</span>
+              </Label>
+              <Input
+                id="signupToken"
+                type="text"
+                placeholder="Required once a super admin exists"
+                className="h-11"
+                value={signupToken}
+                onChange={(e) => setSignupToken(e.target.value)}
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Signup is open only for the first super admin. After that it is
+                closed unless an invite code is configured.
+              </p>
             </div>
 
             <Button

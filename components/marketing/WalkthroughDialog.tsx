@@ -60,6 +60,23 @@ const TIME_OPTIONS = ["Weekday mornings", "Weekday afternoons", "Saturday", "Any
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+const COPY = {
+  walkthrough: {
+    title: "Book a walkthrough",
+    description:
+      "Tell us a little about your school and we\u2019ll set up a live walkthrough of SQUL \u2014 no obligation.",
+    submit: "Request a walkthrough",
+  },
+  demo: {
+    title: "See SQUL in action",
+    description:
+      "Tell us about your school and we\u2019ll give you a live, guided demo \u2014 no obligation.",
+    submit: "Book a live demo",
+  },
+} as const
+
+export type WalkthroughDialogVariant = keyof typeof COPY
+
 const selectClass =
   "flex h-9 w-full min-w-0 border border-black bg-white px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-black"
 
@@ -88,10 +105,13 @@ function Field({
 export function WalkthroughDialog({
   open,
   onOpenChange,
+  variant = "walkthrough",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  variant?: WalkthroughDialogVariant
 }) {
+  const copy = COPY[variant]
   const [form, setForm] = useState<FormState>(EMPTY)
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle")
   const [error, setError] = useState<string | null>(null)
@@ -186,11 +206,8 @@ export function WalkthroughDialog({
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Book a walkthrough</DialogTitle>
-              <DialogDescription>
-                Tell us a little about your school and we&apos;ll set up a live
-                walkthrough of SQUL — no obligation.
-              </DialogDescription>
+              <DialogTitle>{copy.title}</DialogTitle>
+              <DialogDescription>{copy.description}</DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -348,7 +365,7 @@ export function WalkthroughDialog({
                   {status === "sending" ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  {status === "sending" ? "Sending…" : "Request a walkthrough"}
+                  {status === "sending" ? "Sending…" : copy.submit}
                 </Button>
               </div>
             </form>

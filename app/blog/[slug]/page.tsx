@@ -77,7 +77,7 @@ export default async function BlogArticlePage({
     publisher: {
       '@type': 'Organization',
       name: 'SQUL',
-      logo: { '@type': 'ImageObject', url: `${siteUrl}/squl-logo.svg` },
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/squl-logo.png` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     image: article.image ? `${siteUrl}${article.image}` : undefined,

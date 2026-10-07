@@ -1784,6 +1784,7 @@ export default function Home() {
   const [demoPaused, setDemoPaused] = useState(false)
   const [previewMode, setPreviewMode] = useState<HeroPreviewMode>("phone")
   const [walkthroughOpen, setWalkthroughOpen] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const studentsMetric = useAnimatedNumber(HERO_DEMO_STATS.students.target, { delay: 400 })
   const feeMetric = useAnimatedNumber(HERO_DEMO_STATS.feeCollection.target, { delay: 500 })
   const teacherMetric = useAnimatedNumber(48, { delay: 600 })
@@ -1908,16 +1909,16 @@ export default function Home() {
                     Start Your Free Term
                   </Button>
                 </Link>
-                <Link href="/login" className="w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="rounded-lg h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
-                  >
-                    <Play className="mr-2 h-3.5 w-3.5 fill-white" />
-                    See a demo
-                  </Button>
-                </Link>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setDemoOpen(true)}
+                  className="rounded-lg h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
+                >
+                  <Play className="mr-2 h-3.5 w-3.5 fill-white" />
+                  See a demo
+                </Button>
                 <a
                   href={LANDING_APP_DOWNLOAD_URL}
                   target="_blank"
@@ -2470,6 +2471,11 @@ export default function Home() {
       </main>
 
       <WalkthroughDialog open={walkthroughOpen} onOpenChange={setWalkthroughOpen} />
+      <WalkthroughDialog
+        variant="demo"
+        open={demoOpen}
+        onOpenChange={setDemoOpen}
+      />
     </div>
   )
 }

@@ -8,10 +8,13 @@ export const metadata: Metadata = {
   description:
     "SQUL helps schools manage students, academics, fees, timetable, and staff in one secure platform.",
   icons: {
-    // Use the brand logo for consistent search icons.
-    icon: "/squl-logo.svg",
-    shortcut: "/squl-logo.svg",
-    apple: "/squl-logo.svg",
+    // Brand mark: PNGs for search/browser icons, plus public/favicon.svg.
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/icon-192.png",
+    apple: "/apple-icon.png",
   },
   openGraph: {
     type: "website",
@@ -22,10 +25,10 @@ export const metadata: Metadata = {
     siteName: "SQUL",
     images: [
       {
-        url: "/screenshots/ai-generated-9041893_1920.jpg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "SQUL school management platform",
+        alt: "SQUL — Kenya School Management System",
       },
     ],
   },
@@ -34,6 +37,6 @@ export const metadata: Metadata = {
     title: "SQUL | Kenya School Management System",
     description:
       "SQUL helps schools manage students, academics, fees, timetable, and staff in one secure platform.",
-    images: ["/screenshots/ai-generated-9041893_1920.jpg"],
+    images: ["/og-image.png"],
   },
 };

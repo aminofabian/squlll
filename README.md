@@ -20,6 +20,27 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Secret scanning
+
+A dependency-free scanner runs in two places so credentials can't be committed:
+
+- **Pre-commit hook** — enable it once per clone:
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  It scans staged changes and blocks the commit on a hit. Bypass a false
+  positive with `git commit --no-verify`.
+
+- **CI** — `.github/workflows/secret-scan.yml` runs the same scan over every
+  tracked file (`node scripts/scan-secrets.mjs --all`) on each push and PR.
+
+Run it by hand with `node scripts/scan-secrets.mjs` (staged) or
+`node scripts/scan-secrets.mjs --all` (whole repo). Provider keys, private-key
+headers, JWTs, password-bearing URLs and sensitive assignments are flagged; add
+a regex to `.secretsallow` to allow a known-benign match.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

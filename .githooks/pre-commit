@@ -1,0 +1,17 @@
+#!/bin/sh
+# Block commits that look like they contain secrets.
+#
+# Enabled per clone with:  git config core.hooksPath .githooks
+# Bypass once with:        git commit --no-verify
+#
+# The scan lives in scripts/scan-secrets.mjs (dependency-free). If node is not
+# available we warn and allow the commit — CI still runs the scan.
+set -e
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "secret-scan: skipped (node not found on PATH)" >&2
+  exit 0
+fi
+
+root=$(git rev-parse --show-toplevel)
+exec node "$root/scripts/scan-secrets.mjs"

@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  PlusCircle,
   ArrowRight,
   XCircle,
   Save,
@@ -28,9 +27,7 @@ function getStatusBadge(status: string) {
   );
 }
 
-export default function ExamsMarksComponent({
-  subdomain,
-}: ExamsMarksComponentProps) {
+export default function ExamsMarksComponent(_props: ExamsMarksComponentProps) {
   const {
     assessments,
     students,
@@ -416,8 +413,8 @@ export default function ExamsMarksComponent({
             {/* Header */}
             <div className="w-full flex flex-col items-center justify-center pt-12 pb-6 bg-gradient-to-b from-primary/10 to-white print:bg-white print:pt-6 print:pb-2">
               <img
-                src="/squl-logo.svg"
-                alt="School Logo"
+                src="/squl-logo.png"
+                alt="SQUL"
                 className="w-20 h-20 mb-2 print:w-16 print:h-16"
               />
               <div className="text-2xl md:text-3xl font-extrabold text-primary print:text-black tracking-wide uppercase text-center">
