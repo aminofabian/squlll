@@ -70,7 +70,8 @@ jobs:
             echo "::error::Coolify deploy secrets are not set (COOLIFY_DEPLOY_WEBHOOK / COOLIFY_DEPLOY_TOKEN). The image is in GHCR but nothing is serving it — set the secrets so pushes auto-deploy."
             exit 1
           fi
-          curl -fsS -H "Authorization: Bearer $TOKEN" "$WEBHOOK"
+          # The Coolify API deploy endpoint is POST-only; a GET returns 405.
+          curl -fsS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" "$WEBHOOK"
           echo "triggered=true" >> "$GITHUB_OUTPUT"
 
   verify:
