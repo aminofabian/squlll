@@ -8,6 +8,8 @@ export type PlatformSmsSettingsRecord = {
   senderId: string | null;
   hasApiKey: boolean;
   notifyFeePayment: boolean;
+  notifyTransportEmergency: boolean;
+  notifyTransportNoShow: boolean;
   configured: boolean;
   encryptionConfigured: boolean;
   updatedBy: string | null;
@@ -23,6 +25,8 @@ export type UpdatePlatformSmsSettingsInput = {
   clearApiKey?: boolean;
   senderId?: string;
   notifyFeePayment?: boolean;
+  notifyTransportEmergency?: boolean;
+  notifyTransportNoShow?: boolean;
 };
 
 export type SmsTestResult = {
@@ -42,6 +46,8 @@ const SETTINGS_FIELDS = `
   senderId
   hasApiKey
   notifyFeePayment
+  notifyTransportEmergency
+  notifyTransportNoShow
   configured
   encryptionConfigured
   updatedBy

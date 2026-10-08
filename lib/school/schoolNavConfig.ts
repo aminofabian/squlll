@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Users,
   Briefcase,
+  Bus,
   CreditCard,
   FileCheck,
   BookMarked,
@@ -59,6 +60,7 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
   {
     items: [
       { title: "Website", shortLabel: "Website", href: "/website", icon: Globe },
+      { title: "Transport", shortLabel: "Transport", href: "/transport", icon: Bus },
       { title: "Custom domain", shortLabel: "Domain", href: "/domains", icon: Link2 },
       { title: "Reminders", shortLabel: "Reminders", href: "/reminders", icon: BellRing },
       { title: "SMS messages", shortLabel: "SMS", href: "/sms-credits", icon: MessageSquareText },
@@ -80,6 +82,7 @@ export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
 
 /** Less frequent pages — tucked under "More" */
 export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
+  { title: "Transport", href: "/transport", icon: Bus },
   { title: "Parents", href: "/parents", icon: Users },
   { title: "Staff", href: "/staff", icon: Briefcase },
   { title: "Attendances", href: "/attendances", icon: CheckSquare },
@@ -137,6 +140,7 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
       { title: "Analytics", href: "/analytics", icon: PieChart },
       { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
       { title: "Enrollment", href: "/enrollment", icon: Medal },
+      { title: "Transport", href: "/transport", icon: Bus },
       { title: "Communication", href: "/communication", icon: MessageCircle },
       { title: "Reminders", href: "/reminders", icon: BellRing },
       { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },

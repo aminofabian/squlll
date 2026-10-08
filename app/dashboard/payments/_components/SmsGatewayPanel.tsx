@@ -45,6 +45,8 @@ export function SmsGatewayPanel() {
   const [apiKey, setApiKey] = useState("");
   const [senderId, setSenderId] = useState("");
   const [notifyFeePayment, setNotifyFeePayment] = useState(true);
+  const [notifyTransportEmergency, setNotifyTransportEmergency] = useState(true);
+  const [notifyTransportNoShow, setNotifyTransportNoShow] = useState(true);
 
   const [testTo, setTestTo] = useState("");
   const [testMessage, setTestMessage] = useState("");
@@ -57,6 +59,8 @@ export function SmsGatewayPanel() {
     setPartnerId(record.partnerId ?? "");
     setSenderId(record.senderId ?? "");
     setNotifyFeePayment(record.notifyFeePayment);
+    setNotifyTransportEmergency(record.notifyTransportEmergency);
+    setNotifyTransportNoShow(record.notifyTransportNoShow);
   }, []);
 
   useEffect(() => {
@@ -91,6 +95,8 @@ export function SmsGatewayPanel() {
         partnerId,
         senderId,
         notifyFeePayment,
+        notifyTransportEmergency,
+        notifyTransportNoShow,
         ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
         ...(override?.clearApiKey ? { clearApiKey: true } : {}),
       });
@@ -194,6 +200,32 @@ export function SmsGatewayPanel() {
                 <Switch
                   checked={notifyFeePayment}
                   onCheckedChange={setNotifyFeePayment}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Bus emergency alerts</Label>
+                  <p className="text-[11px] text-slate-500">
+                    Text affected guardians when a bus emergency is raised.
+                  </p>
+                </div>
+                <Switch
+                  checked={notifyTransportEmergency}
+                  onCheckedChange={setNotifyTransportEmergency}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Child not on the bus</Label>
+                  <p className="text-[11px] text-slate-500">
+                    Text guardians when their child is marked not present at a stop.
+                  </p>
+                </div>
+                <Switch
+                  checked={notifyTransportNoShow}
+                  onCheckedChange={setNotifyTransportNoShow}
                 />
               </div>
 

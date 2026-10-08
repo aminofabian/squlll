@@ -8,6 +8,7 @@ import {
   Settings,
   Smartphone,
   Globe,
+  Map,
   Inbox,
   type LucideIcon,
 } from "lucide-react";
@@ -73,6 +74,11 @@ export const SUPERADMIN_NAV_SECTIONS: NavSection[] = [
         href: "/dashboard/domains",
         label: "Domains",
         icon: Globe,
+      },
+      {
+        href: "/dashboard/maps",
+        label: "Maps",
+        icon: Map,
       },
       {
         href: "/dashboard/walkthroughs",
