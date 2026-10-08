@@ -2,6 +2,7 @@
 
 import React from "react";
 import {
+  Bus,
   Calendar,
   Clock,
   DollarSign,
@@ -100,6 +101,17 @@ export function DesktopSidebar({
           label: "Payments",
           key: "payments",
           description: "Fees & receipts",
+        },
+      ],
+    },
+    {
+      title: "Transport",
+      items: [
+        {
+          icon: Bus,
+          label: "Transport",
+          key: "transport",
+          description: "Bus & pickup",
         },
       ],
     },

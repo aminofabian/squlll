@@ -31,6 +31,20 @@ const PROVIDERS: { value: MapProviderKind; label: string }[] = [
 const EXAMPLE_STYLE =
   "https://api.maptiler.com/maps/streets-v2/style.json?key={key}";
 
+/** The provider implied by a style URL's host, mirroring the API's heuristics. */
+function providerFromStyleUrl(url: string): MapProviderKind | null {
+  const value = url.trim().toLowerCase();
+  if (!value) return null;
+  if (value.includes("stadiamaps.com")) return "STADIA";
+  if (value.includes("maptiler.com")) return "MAPTILER";
+  if (value.includes("protomaps")) return "PROTOTOMAPS";
+  return null;
+}
+
+function providerLabel(value: MapProviderKind): string {
+  return PROVIDERS.find((provider) => provider.value === value)?.label ?? value;
+}
+
 interface Form {
   enabled: boolean;
   provider: MapProviderKind;
@@ -59,6 +73,10 @@ export function MapsSettingsPanel() {
   const [updated, setUpdated] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+
+  const detectedProvider = providerFromStyleUrl(form.styleUrl);
+  const providerMismatch =
+    detectedProvider !== null && detectedProvider !== form.provider;
 
   const apply = useCallback(
     (record: Awaited<ReturnType<typeof fetchPlatformMapSettings>>) => {
@@ -192,6 +210,24 @@ export function MapsSettingsPanel() {
           <p className="text-xs text-slate-400">
             Use <code>{"{key}"}</code> where the API key belongs.
           </p>
+          {detectedProvider ? (
+            <p className="text-xs text-slate-400">
+              Maps and geocoding use{" "}
+              <span className="font-medium text-slate-600 dark:text-slate-300">
+                {providerLabel(detectedProvider)}
+              </span>
+              , implied by this style URL.
+              {providerMismatch ? (
+                <span className="text-amber-600 dark:text-amber-400">
+                  {" "}
+                  The Provider field says {providerLabel(form.provider)}, but the
+                  style URL implies {providerLabel(detectedProvider)} — the URL
+                  wins for tiles and geocoding. Set Provider to{" "}
+                  {providerLabel(detectedProvider)} to keep them in sync.
+                </span>
+              ) : null}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-2">

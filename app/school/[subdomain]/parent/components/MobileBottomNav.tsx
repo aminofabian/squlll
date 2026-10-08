@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import {
   Bell,
+  Bus,
   Calendar,
   Clock,
   DollarSign,
@@ -88,6 +89,7 @@ export function MobileBottomNav({
   const moreItems: NavItem[] = [
     { icon: Bell, label: "Notifications", key: "notifications" },
     { icon: Clock, label: "Attendance", key: "attendance" },
+    { icon: Bus, label: "Transport", key: "transport" },
     { icon: FileText, label: "Reports", key: "reports" },
   ];
 

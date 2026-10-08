@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   BookOpen,
+  Bus,
   CalendarCheck,
   CalendarDays,
   FileText,
@@ -59,6 +60,7 @@ export const STUDENT_PAGE_TITLES: Record<string, string> = {
   "/student/profile": "Profile",
   "/student/settings": "Settings",
   "/student/fees": "My Fees",
+  "/student/transport": "Transport",
 };
 
 export function getStudentPageTitle(pathname: string): string {
@@ -117,6 +119,12 @@ export const STUDENT_NAV_ITEMS: StudentNavItem[] = [
     title: "My Fees",
     href: "/student/fees",
     icon: Wallet,
+    tab: "more",
+  },
+  {
+    title: "Transport",
+    href: "/student/transport",
+    icon: Bus,
     tab: "more",
   },
   {

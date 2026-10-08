@@ -609,3 +609,406 @@ export async function updateTransportSafetySettings(
   });
   return data.updateTransportSafetySettings;
 }
+
+// ── Student / parent portal (read-only) ──────────────────────────────
+
+export interface PortalRouteStop {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+export interface PortalTrip {
+  id: string;
+  tripDate: string;
+  direction: TripDirection;
+  status: TripStatus;
+  scheduledStartAt: string;
+  actualStartAt?: string | null;
+  actualEndAt?: string | null;
+  delayMinutes: number;
+  route?: { id: string; name: string } | null;
+  vehicle?: {
+    id: string;
+    label: string;
+    registrationNo?: string | null;
+  } | null;
+  driver?: {
+    id: string;
+    phoneNumber?: string | null;
+    user?: { id: string; name: string } | null;
+  } | null;
+}
+
+export interface PortalBoardingEvent {
+  id: string;
+  type: string;
+  occurredAt: string;
+  method?: string | null;
+  note?: string | null;
+  routeStop?: { id: string; name: string } | null;
+}
+
+/** A student's transport picture for today (their own, or a parent's child). */
+export interface StudentTransportToday {
+  studentId: string;
+  studentName?: string | null;
+  isAssigned: boolean;
+  trip?: PortalTrip | null;
+  routeStop?: PortalRouteStop | null;
+  pickupPoint?: string | null;
+  events: PortalBoardingEvent[];
+}
+
+/** The live bus for a single trip (null when the trip isn't active). */
+export interface PortalLivePosition {
+  tripId: string;
+  lat: number;
+  lng: number;
+  recordedAt: string;
+  updatedAt: string;
+  nextStopId?: string | null;
+  nextStopName?: string | null;
+  distanceM?: number | null;
+  etaSeconds?: number | null;
+  approaching?: boolean | null;
+}
+
+const PORTAL_FIELDS = `
+  studentId studentName isAssigned pickupPoint
+  routeStop { id name lat lng }
+  trip {
+    id tripDate direction status scheduledStartAt actualStartAt actualEndAt delayMinutes
+    route { id name }
+    vehicle { id label registrationNo }
+    driver { id phoneNumber user { id name } }
+  }
+  events { id type occurredAt method note routeStop { id name } }
+`;
+
+/** The signed-in student's transport for today. */
+export async function fetchMyTransportToday(): Promise<StudentTransportToday> {
+  const data = await gqlRequest<{ myTransportToday: StudentTransportToday }>({
+    query: `query MyTransportToday { myTransportToday { ${PORTAL_FIELDS} } }`,
+  });
+  return data.myTransportToday;
+}
+
+/** A linked child's transport for today (parent). */
+export async function fetchChildTransportToday(
+  studentId: string,
+): Promise<StudentTransportToday> {
+  const data = await gqlRequest<{ childTransportToday: StudentTransportToday }>({
+    query: `query ChildTransportToday($studentId: ID!) {
+      childTransportToday(studentId: $studentId) { ${PORTAL_FIELDS} }
+    }`,
+    variables: { studentId },
+  });
+  return data.childTransportToday;
+}
+
+/** The latest live position for one trip (active trips only; null otherwise). */
+export async function fetchLiveTripPosition(
+  tripId: string,
+): Promise<PortalLivePosition | null> {
+  const data = await gqlRequest<{ liveTripPosition: PortalLivePosition | null }>({
+    query: `query LiveTripPosition($tripId: ID!) {
+      liveTripPosition(tripId: $tripId) {
+        tripId lat lng recordedAt updatedAt nextStopId nextStopName distanceM etaSeconds approaching
+      }
+    }`,
+    variables: { tripId },
+  });
+  return data.liveTripPosition;
+}
+
+// ── Pickup / home stop requests ───────────────────────────────────────
+
+export type TransportStopRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+/** A parent-submitted pickup/drop point awaiting the school's review. */
+export interface TransportStopRequest {
+  id: string;
+  studentId: string;
+  requestedByUserId: string;
+  name: string;
+  address?: string | null;
+  lat: number;
+  lng: number;
+  direction?: RouteStopDirection | null;
+  scheduledPickupTime?: string | null;
+  notes?: string | null;
+  status: TransportStopRequestStatus;
+  routeId?: string | null;
+  routeStopId?: string | null;
+  reviewedByUserId?: string | null;
+  reviewedAt?: string | null;
+  decisionNote?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  student?: {
+    id: string;
+    user?: { id: string; name: string } | null;
+  } | null;
+  route?: { id: string; name: string } | null;
+  routeStop?: { id: string; name: string } | null;
+}
+
+export interface RequestTransportStopInput {
+  studentId: string;
+  name: string;
+  address?: string;
+  lat: number;
+  lng: number;
+  direction?: RouteStopDirection;
+  scheduledPickupTime?: string;
+  notes?: string;
+}
+
+/** The student's own proposal — same fields, without the student id. */
+export type RequestMyTransportStopInput = Omit<
+  RequestTransportStopInput,
+  "studentId"
+>;
+
+export interface MergeTransportStopRequestsInput {
+  requestIds: string[];
+  routeId: string;
+  name?: string;
+  sequence?: number;
+  direction?: RouteStopDirection;
+  scheduledPickupTime?: string;
+  geofenceRadiusM?: number;
+  lat?: number;
+  lng?: number;
+  note?: string;
+}
+
+export interface ApproveTransportStopRequestInput {
+  requestId: string;
+  routeId: string;
+  name?: string;
+  sequence?: number;
+  direction?: RouteStopDirection;
+  scheduledPickupTime?: string;
+  geofenceRadiusM?: number;
+  note?: string;
+}
+
+const STOP_REQUEST_FIELDS = `
+  id studentId requestedByUserId name address lat lng direction scheduledPickupTime notes
+  status routeId routeStopId reviewedByUserId reviewedAt decisionNote createdAt updatedAt
+  student { id user { id name } }
+  route { id name }
+  routeStop { id name }
+`;
+
+/** A linked child's stop requests, newest first (parent). */
+export async function fetchChildTransportStopRequests(
+  studentId: string,
+): Promise<TransportStopRequest[]> {
+  const data = await gqlRequest<{
+    childTransportStopRequests: TransportStopRequest[];
+  }>({
+    query: `query ChildTransportStopRequests($studentId: ID!) {
+      childTransportStopRequests(studentId: $studentId) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { studentId },
+  });
+  return data.childTransportStopRequests;
+}
+
+/** Propose a new pickup/drop point for a linked child (parent). */
+export async function requestChildTransportStop(
+  input: RequestTransportStopInput,
+): Promise<TransportStopRequest> {
+  const data = await gqlRequest<{
+    requestChildTransportStop: TransportStopRequest;
+  }>({
+    query: `mutation RequestChildTransportStop($input: RequestTransportStopInput!) {
+      requestChildTransportStop(input: $input) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.requestChildTransportStop;
+}
+
+/** The school's stop-request queue (admin). */
+export async function fetchTransportStopRequests(filter?: {
+  status?: TransportStopRequestStatus;
+  studentId?: string;
+}): Promise<TransportStopRequest[]> {
+  const data = await gqlRequest<{
+    transportStopRequests: TransportStopRequest[];
+  }>({
+    query: `query TransportStopRequests($filter: TransportStopRequestFilterInput) {
+      transportStopRequests(filter: $filter) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { filter },
+  });
+  return data.transportStopRequests;
+}
+
+/** Approve a request: creates the stop and assigns the child (admin). */
+export async function approveTransportStopRequest(
+  input: ApproveTransportStopRequestInput,
+): Promise<TransportStopRequest> {
+  const data = await gqlRequest<{
+    approveTransportStopRequest: TransportStopRequest;
+  }>({
+    query: `mutation ApproveTransportStopRequest($input: ApproveTransportStopRequestInput!) {
+      approveTransportStopRequest(input: $input) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.approveTransportStopRequest;
+}
+
+/** The signed-in student's own stop requests, newest first (student). */
+export async function fetchMyTransportStopRequests(): Promise<
+  TransportStopRequest[]
+> {
+  const data = await gqlRequest<{
+    myTransportStopRequests: TransportStopRequest[];
+  }>({
+    query: `query MyTransportStopRequests {
+      myTransportStopRequests { ${STOP_REQUEST_FIELDS} }
+    }`,
+  });
+  return data.myTransportStopRequests;
+}
+
+/** Propose a new pickup/drop point for the signed-in student (student). */
+export async function requestMyTransportStop(
+  input: RequestMyTransportStopInput,
+): Promise<TransportStopRequest> {
+  const data = await gqlRequest<{
+    requestMyTransportStop: TransportStopRequest;
+  }>({
+    query: `mutation RequestMyTransportStop($input: RequestMyTransportStopInput!) {
+      requestMyTransportStop(input: $input) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.requestMyTransportStop;
+}
+
+/** Merge several pending requests into one shared stop (admin). */
+export async function mergeTransportStopRequests(
+  input: MergeTransportStopRequestsInput,
+): Promise<TransportStopRequest[]> {
+  const data = await gqlRequest<{
+    mergeTransportStopRequests: TransportStopRequest[];
+  }>({
+    query: `mutation MergeTransportStopRequests($input: MergeTransportStopRequestsInput!) {
+      mergeTransportStopRequests(input: $input) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.mergeTransportStopRequests;
+}
+
+/** Decline a request with an optional note (admin). */
+export async function rejectTransportStopRequest(input: {
+  requestId: string;
+  note?: string;
+}): Promise<TransportStopRequest> {
+  const data = await gqlRequest<{
+    rejectTransportStopRequest: TransportStopRequest;
+  }>({
+    query: `mutation RejectTransportStopRequest($input: RejectTransportStopRequestInput!) {
+      rejectTransportStopRequest(input: $input) { ${STOP_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.rejectTransportStopRequest;
+}
+
+// ── Driver-proposed permanent stop merges ─────────────────────────────
+
+/** A driver's proposal to permanently merge two route stops. */
+export interface TransportStopMergeRequest {
+  id: string;
+  tripId?: string | null;
+  fromRouteStopId: string | null;
+  toRouteStopId: string | null;
+  requestedByUserId: string;
+  note?: string | null;
+  status: TransportStopRequestStatus;
+  reviewedByUserId?: string | null;
+  reviewedAt?: string | null;
+  decisionNote?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  fromRouteStop?: { id: string; name: string } | null;
+  toRouteStop?: { id: string; name: string } | null;
+}
+
+const MERGE_REQUEST_FIELDS = `
+  id tripId fromRouteStopId toRouteStopId requestedByUserId note status
+  reviewedByUserId reviewedAt decisionNote createdAt updatedAt
+  fromRouteStop { id name }
+  toRouteStop { id name }
+`;
+
+/** The school's driver-proposed stop merges, newest first (admin). */
+export async function fetchTransportStopMergeRequests(
+  status?: TransportStopRequestStatus,
+): Promise<TransportStopMergeRequest[]> {
+  const data = await gqlRequest<{
+    transportStopMergeRequests: TransportStopMergeRequest[];
+  }>({
+    query: `query TransportStopMergeRequests($status: TransportStopRequestStatus) {
+      transportStopMergeRequests(status: $status) { ${MERGE_REQUEST_FIELDS} }
+    }`,
+    variables: { status },
+  });
+  return data.transportStopMergeRequests;
+}
+
+/** Approve a merge: every student moves onto the target stop (admin). */
+export async function approveTransportStopMergeRequest(input: {
+  requestId: string;
+  note?: string;
+}): Promise<TransportStopMergeRequest> {
+  const data = await gqlRequest<{
+    approveTransportStopMergeRequest: TransportStopMergeRequest;
+  }>({
+    query: `mutation ApproveTransportStopMergeRequest($input: ApproveStopMergeRequestInput!) {
+      approveTransportStopMergeRequest(input: $input) { ${MERGE_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.approveTransportStopMergeRequest;
+}
+
+/** Decline a merge proposal (admin). */
+export async function rejectTransportStopMergeRequest(input: {
+  requestId: string;
+  note?: string;
+}): Promise<TransportStopMergeRequest> {
+  const data = await gqlRequest<{
+    rejectTransportStopMergeRequest: TransportStopMergeRequest;
+  }>({
+    query: `mutation RejectTransportStopMergeRequest($input: RejectStopMergeRequestInput!) {
+      rejectTransportStopMergeRequest(input: $input) { ${MERGE_REQUEST_FIELDS} }
+    }`,
+    variables: { input },
+  });
+  return data.rejectTransportStopMergeRequest;
+}
+
+/** Best-effort place name for a coordinate (server-side provider lookup; any user). */
+export async function reverseGeocode(
+  lat: number,
+  lng: number,
+): Promise<string | null> {
+  const data = await gqlRequest<{ reverseGeocode: string | null }>({
+    query: `query ReverseGeocode($lat: Float!, $lng: Float!) {
+      reverseGeocode(lat: $lat, lng: $lng)
+    }`,
+    variables: { lat, lng },
+  });
+  return data.reverseGeocode;
+}

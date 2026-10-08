@@ -15,7 +15,7 @@ import {
   type TransportMapConfig,
 } from "@/lib/school/transportApi";
 import { upsertLiveBus, type PositionEvent } from "@/lib/school/transportLive";
-import { LiveBusesMap } from "./LiveBusesMap";
+import { LiveBusesMap } from "@/components/transport/LiveBusesMap";
 
 function clock(iso?: string | null): string {
   return iso ? new Date(iso).toLocaleTimeString() : "—";

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useCallback, useState, useMemo, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { MobileDashboard } from './components/MobileDashboard'
 import { DesktopDashboard } from './components/DesktopDashboard'
@@ -12,6 +12,7 @@ import { ContentRenderer } from './components/ContentRenderer'
 import { ParentPortalEmptyState } from './components/ParentPortalEmptyState'
 import { useParentPortal } from '@/lib/parent/useParentPortal'
 import { useParentDashboardData } from '@/lib/parent/useParentDashboardData'
+import { parentTabForNotificationHref } from '@/lib/parent/notificationHref'
 import { useNotificationsOptional } from '@/lib/notifications/NotificationProvider'
 import { cn } from '@/lib/utils'
 
@@ -41,6 +42,14 @@ const ParentsPortal = () => {
 
   const selectedChildData = portalChildren[selectedChild]
 
+  // Transport/attendance/etc. notifications link to mobile paths
+  // (`/parent/transport`); map them onto this SPA's tabs instead of navigating.
+  const openNotification = useCallback((href?: string | null) => {
+    const tab = parentTabForNotificationHref(href)
+    if (tab) setActiveTab(tab)
+    setShowNotifications(false)
+  }, [])
+
   const dashboard = useParentDashboardData(
     subdomain,
     selectedChildData,
@@ -61,6 +70,7 @@ const ParentsPortal = () => {
       message: n.body ? `${n.title}: ${n.body}` : n.title,
       time: new Date(n.createdAt).toLocaleString(),
       read: n.read,
+      href: n.href ?? null,
     }))
   }, [notifCtx?.notifications])
 
@@ -144,7 +154,11 @@ const ParentsPortal = () => {
         </div>
       </div>
 
-      <NotificationsPanel notifications={notifications} variant="desktop" />
+      <NotificationsPanel
+        notifications={notifications}
+        onOpen={openNotification}
+        variant="desktop"
+      />
     </div>
   )
 
@@ -207,6 +221,7 @@ const ParentsPortal = () => {
         notifications={notifications}
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
+        onOpen={openNotification}
         variant="mobile"
       />
     </div>

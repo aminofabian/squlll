@@ -8,6 +8,7 @@ import { ParentNotesSection } from './ParentNotesSection';
 import { ParentReportCardSection } from './ParentReportCardSection';
 import { ParentScheduleSection } from './ParentScheduleSection';
 import { ParentMessagesSection } from './ParentMessagesSection';
+import { ParentTransportSection } from './ParentTransportSection';
 import type { ParentPortalChild } from '@/lib/parent/types';
 import type { ParentConsolidatedFees } from '@/lib/parent/parentFees';
 
@@ -215,6 +216,14 @@ export const ContentRenderer = ({
             consolidatedFees={consolidatedFees}
           />
         </>
+      ) : null;
+    case 'transport':
+      return children ? (
+        <ParentTransportSection
+          linkedChildren={children as ParentPortalChild[]}
+          selectedChild={selectedChild}
+          onSelectChild={setSelectedChild}
+        />
       ) : null;
     case 'reports':
       return children ? (

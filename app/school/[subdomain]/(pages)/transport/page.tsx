@@ -7,14 +7,24 @@ import { TripsPanel } from "./_components/TripsPanel";
 import { VehiclesPanel } from "./_components/VehiclesPanel";
 import { DriversPanel } from "./_components/DriversPanel";
 import { LiveMapPanel } from "./_components/LiveMapPanel";
+import { StopRequestsPanel } from "./_components/StopRequestsPanel";
 import { CommandCentrePanel } from "./_components/CommandCentrePanel";
 import { SafetySettingsPanel } from "./_components/SafetySettingsPanel";
 
-type Tab = "overview" | "live" | "routes" | "trips" | "vehicles" | "drivers" | "settings";
+type Tab =
+  | "overview"
+  | "live"
+  | "requests"
+  | "routes"
+  | "trips"
+  | "vehicles"
+  | "drivers"
+  | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "live", label: "Live map" },
+  { id: "requests", label: "Requests" },
   { id: "routes", label: "Routes & stops" },
   { id: "trips", label: "Trips" },
   { id: "vehicles", label: "Vehicles" },
@@ -48,6 +58,7 @@ export default function TransportPage() {
 
       {tab === "overview" ? <CommandCentrePanel /> : null}
       {tab === "live" ? <LiveMapPanel /> : null}
+      {tab === "requests" ? <StopRequestsPanel /> : null}
       {tab === "routes" ? <RoutesPanel /> : null}
       {tab === "trips" ? <TripsPanel /> : null}
       {tab === "vehicles" ? <VehiclesPanel /> : null}

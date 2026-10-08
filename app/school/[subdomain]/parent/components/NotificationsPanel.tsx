@@ -11,16 +11,24 @@ interface Notification {
   message: string;
   time: string;
   read: boolean;
+  href?: string | null;
 }
 
 interface NotificationsPanelProps {
   notifications: Notification[];
   isOpen?: boolean;
   onClose?: () => void;
+  onOpen?: (href?: string | null) => void;
   variant?: "desktop" | "mobile";
 }
 
-function NotificationList({ notifications }: { notifications: Notification[] }) {
+function NotificationList({
+  notifications,
+  onOpen,
+}: {
+  notifications: Notification[];
+  onOpen?: (href?: string | null) => void;
+}) {
   if (notifications.length === 0) {
     return (
       <div className={cn(portalEmptyState, "mx-4 my-6")}>
@@ -33,33 +41,46 @@ function NotificationList({ notifications }: { notifications: Notification[] }) 
 
   return (
     <div className="space-y-2 p-4">
-      {notifications.map((notification) => (
-        <div
-          key={notification.id}
-          className={cn(
-            "rounded-lg border px-3 py-2.5 transition-colors",
-            notification.read
-              ? "border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/30"
-              : "border-primary/20 bg-primary/5 dark:border-primary/30 dark:bg-primary/10",
-          )}
-        >
-          <div className="flex gap-2">
-            <span
-              className={cn(
-                "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                notification.read ? "bg-slate-300" : "bg-primary",
-              )}
-              aria-hidden
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm leading-snug text-slate-800 dark:text-slate-200">
-                {notification.message}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-400">{notification.time}</p>
+      {notifications.map((notification) => {
+        const clickable = Boolean(onOpen && notification.href);
+        const Row = clickable ? "button" : "div";
+
+        return (
+          <Row
+            key={notification.id}
+            type={clickable ? "button" : undefined}
+            onClick={clickable ? () => onOpen?.(notification.href) : undefined}
+            className={cn(
+              "w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
+              clickable && "hover:border-primary/40 hover:bg-primary/10",
+              notification.read
+                ? "border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/30"
+                : "border-primary/20 bg-primary/5 dark:border-primary/30 dark:bg-primary/10",
+            )}
+          >
+            <div className="flex gap-2">
+              <span
+                className={cn(
+                  "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                  notification.read ? "bg-slate-300" : "bg-primary",
+                )}
+                aria-hidden
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm leading-snug text-slate-800 dark:text-slate-200">
+                  {notification.message}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  {notification.time}
+                  {clickable ? (
+                    <span className="ml-1 font-medium text-primary">· View</span>
+                  ) : null}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </Row>
+        );
+      })}
     </div>
   );
 }
@@ -68,6 +89,7 @@ export function NotificationsPanel({
   notifications,
   isOpen = false,
   onClose,
+  onOpen,
   variant = "desktop",
 }: NotificationsPanelProps) {
   const unread = notifications.filter((n) => !n.read).length;
@@ -97,7 +119,7 @@ export function NotificationsPanel({
             </button>
           </div>
           <div className="max-h-[calc(85vh-4rem)] overflow-y-auto">
-            <NotificationList notifications={notifications} />
+            <NotificationList notifications={notifications} onOpen={onOpen} />
           </div>
         </div>
       </div>
@@ -126,7 +148,7 @@ export function NotificationsPanel({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <NotificationList notifications={notifications} />
+        <NotificationList notifications={notifications} onOpen={onOpen} />
       </div>
     </aside>
   );
