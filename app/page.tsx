@@ -361,17 +361,17 @@ const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
 /**
  * Public download for the SQUL mobile app (Android APK).
  *
- * Current build: 2026-10-07 (runtime 0.1.0, the Outfit font + design-system
- * refresh, the admin portal, and the full UI elevation). NOTE: the fallback is
- * an EAS "internal" artifact, which the free plan retains only for a short
- * window (`expire-internal-free-builds`, ~2 weeks). Point
- * NEXT_PUBLIC_APP_DOWNLOAD_URL at a permanent copy (CDN / object storage) so the
- * link keeps working; the fallback is just a convenience default. Swap to an App
- * Store / Play Store URL once those listings exist.
+ * Current build: 2026-10-07 (runtime 0.1.0 — the admin portal + the full UI
+ * elevation).
+ *
+ * The fallback points at a **stable** GitHub Release asset (fixed tag
+ * `app-android-latest`, re-uploaded with `--clobber` on each build) so the link
+ * survives the EAS artifact's ~2-week expiry. `NEXT_PUBLIC_APP_DOWNLOAD_URL`
+ * still overrides it; swap to an App Store / Play Store listing once it exists.
  */
 const LANDING_APP_DOWNLOAD_URL =
   process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL?.trim() ||
-  "https://expo.dev/artifacts/eas/xR2SB1jItlCmWYT21-8NSEocEtZmr60k64CtG7iDGNs.apk"
+  "https://github.com/aminofabian/squlll/releases/download/app-android-latest/squl-app.apk"
 
 function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
