@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { resolveHostViaBackend } from '@/lib/host-resolution'
-import { cookieHasRole, SUPER_ADMIN_ROLE } from '@/lib/auth/role-cookie'
+import { cookieHasRole, parseRoleCookieValues, SUPER_ADMIN_ROLE } from '@/lib/auth/role-cookie'
 import {
   canAccessAdminShell,
   getPostLoginPath,
 } from '@/lib/auth/post-login-navigation'
+
+/**
+ * Read the `role` claim from the access-token JWT (unverified — used only for
+ * UX routing; the API enforces roles elsewhere). Lets the gate work even when
+ * the client-readable `userRole` cookie is missing or stale.
+ */
+function roleFromAccessToken(token: string | undefined): string | undefined {
+  if (!token) return undefined
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return undefined
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const json = JSON.parse(atob(base64)) as { role?: unknown }
+    return typeof json.role === 'string' ? json.role : undefined
+  } catch {
+    return undefined
+  }
+}
 
 /** Top-level segments that belong to the admin (pages) shell. */
 const ADMIN_ROUTE_SEGMENTS = new Set([
@@ -119,12 +137,17 @@ export async function proxy(request: NextRequest) {
     }
 
     // Role gate: non-admin members must never reach the admin (pages) shell.
-    // Enforced server-side so a stale client bundle can't bypass it.
-    const roleCookie = request.cookies.get('userRole')?.value ?? ''
-    const roles = roleCookie
-      .split(',')
-      .map((r) => r.trim())
-      .filter(Boolean)
+    // Enforced server-side so a stale client bundle can't bypass it. Prefer the
+    // role cookie, but fall back to the access token's `role` claim.
+    const cookieRoles = parseRoleCookieValues(
+      request.cookies.get('userRole')?.value,
+    )
+    const tokenRole = roleFromAccessToken(
+      request.cookies.get('accessToken')?.value ??
+        request.cookies.get('access_token')?.value,
+    )
+    const roles =
+      cookieRoles.length > 0 ? cookieRoles : tokenRole ? [tokenRole] : []
     if (roles.length > 0 && !roles.some((r) => canAccessAdminShell(r))) {
       const firstSegment = url.pathname.split('/').filter(Boolean)[0] ?? ''
       if (ADMIN_ROUTE_SEGMENTS.has(firstSegment)) {

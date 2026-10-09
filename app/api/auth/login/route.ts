@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
 import { getAuthCookieOptions } from '@/lib/auth/cookie-domain'
+import { clearSessionCookies } from '@/lib/auth/session-cookies'
 
 const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint()
 
@@ -115,9 +116,14 @@ export async function POST(request: Request) {
     // Cookie scope follows the host the browser is on, so a school signing in on
     // its own domain gets host-only cookies and platform subdomains share one.
     const { domain, sameSite, secure } = getAuthCookieOptions(request)
-    
+
     // Set authentication cookies
     const cookieStore = await cookies()
+
+    // Drop any pre-existing session cookies first (both host-only and shared
+    // scope) so a previous admin/super-admin session can't linger as a second
+    // `userRole` and make the new sign-in ambiguous.
+    clearSessionCookies(cookieStore, { domain, sameSite, secure })
     cookieStore.set('accessToken', userData.tokens.accessToken, {
       httpOnly: true,
       secure,
