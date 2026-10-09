@@ -21,6 +21,33 @@ const IMPERSONATE_MUTATION = `
   }
 `
 
+/**
+ * Accept the backend's portal URL only when it points at a public host.
+ *
+ * The API builds this URL from its own NODE_ENV; if that is not `production`
+ * it returns `http://<sub>.localhost:3000/dashboard`, which would bounce a
+ * support session to localhost. Ignore localhost/private hosts and let the
+ * caller rebuild against the platform subdomain instead.
+ */
+function publicPortalUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string' || !/^https?:\/\//i.test(raw)) return null
+  try {
+    const host = new URL(raw).hostname.toLowerCase()
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host.endsWith('.localhost') ||
+      host.endsWith('.local')
+    ) {
+      return null
+    }
+    return raw
+  } catch {
+    return null
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -83,18 +110,17 @@ export async function POST(request: Request) {
     // Cookie scope follows the host the browser is on.
     const { domain, sameSite, secure } = getAuthCookieOptions(request)
 
-    // Prefer the backend's portal URL when it targets a real host (e.g. a
-    // school's custom domain); rebuild against the current host otherwise so
-    // local dev uses the actual port.
+    // Prefer the backend's portal URL when it targets a public host (e.g. a
+    // school's custom domain); otherwise rebuild against the platform subdomain
+    // so support sessions never bounce to localhost.
     const apex = isProduction ? 'squl.co.ke' : 'localhost'
     const port = requestUrl.port
     const subdomain = payload.subdomain.trim().toLowerCase()
     const portalUrl =
-      isProduction && /^https?:\/\//.test(payload.portalUrl)
-        ? payload.portalUrl
-        : `${isProduction ? 'https' : 'http'}://${subdomain}.${apex}${
-            port ? `:${port}` : ''
-          }/dashboard`
+      publicPortalUrl(payload.portalUrl) ??
+      `${isProduction ? 'https' : 'http'}://${subdomain}.${apex}${
+        port ? `:${port}` : ''
+      }/dashboard`
 
     const maxAge = 60 * 60 * 8 // 8 hours for support sessions
 
