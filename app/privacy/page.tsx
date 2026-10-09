@@ -5,7 +5,7 @@ const SECTIONS = [
   {
     heading: "1. Who we are",
     paragraphs: [
-      `SQUL provides school management software through the SQUL website (${LEGAL_META.websiteUrl}) and the SQUL mobile app. The operator is ${LEGAL_META.entityName}, ${LEGAL_META.postalAddress}, registered with the Office of the Data Protection Commissioner under ${LEGAL_META.odpcRegistrationPlaceholder}.`,
+      `SQUL provides school management software through the SQUL website (${LEGAL_META.websiteUrl}) and the SQUL mobile app. The operator is ${LEGAL_META.entityName}, ${LEGAL_META.postalAddress}. SQUL complies with the Kenya Data Protection Act, 2019 and the guidance of the Office of the Data Protection Commissioner.`,
       "For learner, staff and parent records that a school enters into SQUL, the school is the data controller and SQUL processes that information on the school's instructions. For your SQUL account and app usage, SQUL is the data controller.",
     ],
   },
@@ -37,7 +37,7 @@ const SECTIONS = [
   {
     heading: "5. How long we keep information",
     paragraphs: [
-      `We keep information while your account or the school's subscription is active. After that, we delete or anonymise it within ${LEGAL_META.retentionPlaceholder}, unless the law requires us to keep it longer.`,
+      "We keep information while your account or the school's subscription is active. After that, we delete or anonymise it within 12 months, unless the law requires us to keep it longer.",
     ],
   },
   {

@@ -24,14 +24,14 @@ const SECTIONS = [
   {
     heading: "4. What we keep",
     paragraphs: [
-      "School records such as attendance, grades, fee statements and transport records are held on behalf of the school, which is the data controller for them. The school decides whether those records are kept or deleted. If a record must be kept for legal, tax or accounting reasons, we keep it only for as long as needed: [retention period].",
-      "Backup copies are removed from our systems on their normal rotation: [backup rotation period].",
+      "School records such as attendance, grades, fee statements and transport records are held on behalf of the school, which is the data controller for them. The school decides whether those records are kept or deleted. Where a record must be kept for legal, tax or accounting reasons we keep it only as long as the law requires — in Kenya, up to 5 years for tax and accounting records.",
+      "Backup copies are removed from our systems within 90 days on their normal rotation.",
     ],
   },
   {
     heading: "5. Timing",
     paragraphs: [
-      "We aim to complete a deletion request within [30] days and will confirm to you by email once it is done. If we need more time, we will tell you why.",
+      "We aim to complete a deletion request within 30 days and will confirm to you by email once it is done. If we need more time, we will tell you why.",
     ],
   },
   {

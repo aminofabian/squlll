@@ -29,7 +29,7 @@ const SECTIONS = [
   {
     heading: "5. School fees and payments",
     paragraphs: [
-      "Fee payments made through SQUL are payments to the school. SQUL does not decide fee amounts and is not responsible for a school's fee policies. [Confirm with your payment provider how settlement works before publishing this section.]",
+      "Fee payments made through SQUL are payments to the school. SQUL does not decide fee amounts and is not responsible for a school's fee policies. Payments are processed by licensed payment providers and settled to the school; settlement timing is governed by those providers.",
     ],
   },
   {
@@ -47,7 +47,7 @@ const SECTIONS = [
   {
     heading: "8. Limitation of liability",
     paragraphs: [
-      "To the extent permitted by Kenyan law, SQUL is not liable for indirect or consequential losses arising from use of the service. [Insert liability cap after legal review.]",
+      "To the extent permitted by Kenyan law, SQUL is not liable for indirect or consequential losses arising from use of the service, and our total liability for any claim relating to the service is limited to the fees paid to SQUL by the school in the 12 months before the claim arose.",
     ],
   },
   {
