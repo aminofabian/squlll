@@ -5,6 +5,7 @@ import { useCurrentStudent } from '@/lib/hooks/useCurrentStudent'
 import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears'
 import { useActiveTerm } from '@/lib/hooks/useActiveTerm'
 import { useDomainRealtime } from '@/lib/realtime/useDomainRealtime'
+import { isNoResultsError } from '@/lib/graphql/noResults'
 import {
   fetchStudentRanking,
   fetchStudentReportCard,
@@ -31,8 +32,14 @@ export function useStudentReportCard(subdomain: string) {
       const data = await fetchStudentReportCard(subdomain, student.id, academicYear)
       setReportCard(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load report card')
-      setReportCard(null)
+      // No marks yet is an empty state, not an error.
+      if (isNoResultsError(err)) {
+        setReportCard(null)
+        setError(null)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load report card')
+        setReportCard(null)
+      }
     }
   }, [subdomain, student?.id, academicYear])
 
@@ -95,9 +102,16 @@ export function useStudentPerformance(subdomain: string) {
       setReportCard(card)
       setRanking(rank)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load performance data')
-      setReportCard(null)
-      setRanking(null)
+      // No marks yet is an empty state, not an error.
+      if (isNoResultsError(err)) {
+        setReportCard(null)
+        setRanking(null)
+        setError(null)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load performance data')
+        setReportCard(null)
+        setRanking(null)
+      }
     }
   }, [subdomain, student?.id, academicYear, term])
 

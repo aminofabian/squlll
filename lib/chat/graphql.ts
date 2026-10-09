@@ -34,7 +34,20 @@ export async function chatGraphqlFetch<T>(
   );
 
   if (!response.ok) {
-    throw new Error(`GraphQL request failed (${response.status})`)
+    // Our API returns the real HTTP status alongside the GraphQL error, so prefer
+    // the GraphQL message (e.g. "No marks found …") over a bare status code.
+    let message: string | null = null
+    try {
+      const body = await response.json()
+      if (Array.isArray(body?.errors) && body.errors.length) {
+        message = body.errors
+          .map((e: { message: string }) => e.message)
+          .join(', ')
+      }
+    } catch {
+      message = null
+    }
+    throw new Error(message ?? `GraphQL request failed (${response.status})`)
   }
 
   const result = await response.json()

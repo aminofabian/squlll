@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears'
 import { useActiveTerm } from '@/lib/hooks/useActiveTerm'
 import { useDomainRealtime } from '@/lib/realtime/useDomainRealtime'
+import { isNoResultsError } from '@/lib/graphql/noResults'
 import {
   fetchChildReportCard,
   type ParentReportCardData,
@@ -36,8 +37,14 @@ export function useParentChildReportCard(
       const data = await fetchChildReportCard(subdomain, studentId, term, academicYear)
       setReportCard(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load report card')
-      setReportCard(null)
+      // No report card yet is an empty state, not an error.
+      if (isNoResultsError(err)) {
+        setReportCard(null)
+        setError(null)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load report card')
+        setReportCard(null)
+      }
     } finally {
       setLoading(false)
     }
