@@ -9,6 +9,7 @@ import { useSearchParams } from 'next/navigation'
 import { ArrowRight, CheckCircle2, Shield } from 'lucide-react'
 import { debugAuth, checkAuthStatus } from '@/lib/utils'
 import { getPostLoginPath, schoolPortalUrl } from '@/lib/auth/post-login-navigation'
+import { clearClientSessionCookies } from '@/lib/auth/client-session'
 import type { HomepageConfig } from '@/lib/types/homepage-config'
 import {
   SchoolAuthShell,
@@ -47,6 +48,12 @@ export default function SchoolLoginContent({
       setEmail(decodeURIComponent(emailFromQuery))
     }
   }, [searchParams])
+
+  useEffect(() => {
+    // Clear any stale/duplicate session cookies (e.g. a leftover admin role)
+    // so a previous session can't shadow this sign-in.
+    clearClientSessionCookies()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
