@@ -44,19 +44,6 @@ export function getOtherParticipant(
   }
 }
 
-export function formatMessageTime(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
-
 export function formatRelativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)

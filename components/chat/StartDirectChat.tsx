@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { Loader2, Send } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { chatGraphqlFetch } from '@/lib/chat/graphql'
-import { SEND_MESSAGE } from '@/lib/chat/queries'
-import { useChat } from '@/lib/chat/ChatProvider'
+import { useCallback, useState } from 'react'
+import { Send } from 'lucide-react'
+import { sendMessageViaGraphql } from '@/lib/chat/sendMessageViaGraphql'
+import { ChatComposer } from './ChatComposer'
+import { ChatEmptyState } from './ChatEmptyState'
+import { ChatErrorStack } from './ChatErrorStack'
+import { ChatHeader } from './ChatHeader'
 
 interface StartDirectChatProps {
   recipientType?: string
@@ -15,35 +14,30 @@ interface StartDirectChatProps {
   recipientLabel?: string
   subdomain: string
   onSent: () => void
+  onBack?: () => void
 }
 
+const DEFAULT_RECIPIENT_TYPE = 'TEACHER'
+
 export function StartDirectChat({
-  recipientType = 'TEACHER',
+  recipientType = DEFAULT_RECIPIENT_TYPE,
   recipientId,
   recipientLabel,
   subdomain,
   onSent,
+  onBack,
 }: StartDirectChatProps) {
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSend = useCallback(async () => {
-    if (!draft.trim() || sending) return
+    const content = draft.trim()
+    if (!content || sending) return
     setSending(true)
     setError(null)
     try {
-      await chatGraphqlFetch(
-        SEND_MESSAGE,
-        {
-          input: {
-            recipientType,
-            recipientId,
-            content: draft.trim(),
-          },
-        },
-        subdomain,
-      )
+      await sendMessageViaGraphql(subdomain, { recipientType, recipientId, content })
       setDraft('')
       onSent()
     } catch (err) {
@@ -53,48 +47,29 @@ export function StartDirectChat({
     }
   }, [draft, sending, recipientType, recipientId, subdomain, onSent])
 
+  const contactName = recipientLabel ?? 'this contact'
+
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="border-b border-border px-4 py-3">
-        <p className="text-sm font-semibold text-foreground">
-          {recipientLabel ?? 'New conversation'}
-        </p>
-        <p className="text-xs text-muted-foreground">Start a secure school message</p>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-card">
+      <ChatHeader
+        title={recipientLabel ?? 'New conversation'}
+        subtitle="Start a secure school message"
+        onBack={onBack}
+      />
+      <div className="flex min-h-0 flex-1 flex-col bg-muted/40">
+        <ChatEmptyState
+          icon={Send}
+          title="Start the conversation"
+          description={`Send your first message to ${contactName}.`}
+        />
       </div>
-      <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
-        Send your first message to {recipientLabel ?? 'this contact'}.
-      </div>
-      {error && <p className="px-4 text-xs text-destructive">{error}</p>}
-      <div className="border-t border-border p-3">
-        <div className="flex gap-2">
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Type a message…"
-            rows={2}
-            className="min-h-[44px] resize-none"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                void handleSend()
-              }
-            }}
-          />
-          <Button
-            type="button"
-            size="icon"
-            className="shrink-0 self-end"
-            disabled={!draft.trim() || sending}
-            onClick={() => void handleSend()}
-          >
-            {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </div>
+      <ChatErrorStack errors={[error]} />
+      <ChatComposer
+        value={draft}
+        onChange={setDraft}
+        onSubmit={() => void handleSend()}
+        sending={sending}
+      />
     </div>
   )
 }
