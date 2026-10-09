@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useStudentsStore } from "@/lib/stores/useStudentsStore"
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
 import { mockClasses } from "@/lib/data/mockclasses"
+import { LEGAL_META } from "@/lib/legal/legal-meta"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import {
@@ -2419,24 +2420,24 @@ export default function Home() {
                   <ul className="mt-5 space-y-4">
                     <li>
                       <a
-                        href="mailto:support@squl.edu"
+                        href={`mailto:${LEGAL_META.contactEmail}`}
                         className="flex items-start gap-3 text-sm text-white/65 transition-colors hover:text-emerald-200"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
                           <Mail size={16} className="text-emerald-300/90" aria-hidden />
                         </span>
-                        <span className="pt-1.5">support@squl.edu</span>
+                        <span className="pt-1.5">{LEGAL_META.contactEmail}</span>
                       </a>
                     </li>
                     <li>
                       <a
-                        href="tel:+254700000000"
+                        href={`tel:${LEGAL_META.contactPhoneHref}`}
                         className="flex items-start gap-3 text-sm text-white/65 transition-colors hover:text-emerald-200"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
                           <Phone size={16} className="text-emerald-300/90" aria-hidden />
                         </span>
-                        <span className="pt-1.5">+254 700 000 000</span>
+                        <span className="pt-1.5">{LEGAL_META.contactPhone}</span>
                       </a>
                     </li>
                     <li className="flex items-start gap-3 text-sm text-white/65">
@@ -2444,7 +2445,7 @@ export default function Home() {
                         <MapPin size={16} className="text-emerald-300/90" aria-hidden />
                       </span>
                       <span className="pt-1.5 leading-relaxed">
-                        Nairobi, Kenya
+                        {LEGAL_META.postalAddress}
                         <span className="block text-white/45">Support for schools nationwide</span>
                       </span>
                     </li>
