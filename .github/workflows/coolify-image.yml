@@ -11,6 +11,10 @@ name: Coolify image
 on:
   push:
     branches: [deploy/coolify]
+    # Docs-only changes don't need a production rebuild/redeploy.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
