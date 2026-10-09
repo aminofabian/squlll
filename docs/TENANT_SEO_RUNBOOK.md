@@ -154,3 +154,14 @@ curl -s https://<sub>.squl.co.ke/sitemap.xml
 
 Paste a school URL into Google's **Rich Results Test** to confirm the `School`
 node is valid, and use **URL Inspection** to confirm the self-canonical.
+
+---
+
+## 6. Deploys
+
+- **Frontend** — push to `deploy/coolify`. GitHub Actions builds the image, pushes
+  to GHCR and triggers Coolify; docs-only pushes (`**/*.md`, `docs/**`) are skipped
+  via `paths-ignore` so documentation changes never rebuild production.
+- **Backend** — push to `main`. The `Coolify deploy` workflow pings the Coolify
+  deploy webhook (once `COOLIFY_DEPLOY_WEBHOOK` / `COOLIFY_DEPLOY_TOKEN` secrets
+  exist; until then it logs a warning and skips).
