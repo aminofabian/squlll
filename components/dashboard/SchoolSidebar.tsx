@@ -256,12 +256,22 @@ export function SchoolSidebar({
                     },
                     {
                       label: "Academic",
-                      hrefs: ["/grading"],
+                      hrefs: [
+                        "/attendances",
+                        "/grading",
+                        "/curriculum",
+                        "/school-years",
+                      ],
+                    },
+                    {
+                      label: "Insights",
+                      hrefs: ["/reports", "/analytics"],
                     },
                     {
                       label: "Admissions",
                       hrefs: [
                         "/admissions/applications",
+                        "/enrollment",
                         "/communication",
                       ],
                     },
