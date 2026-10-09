@@ -226,6 +226,37 @@ export async function removeDriver(id: string): Promise<boolean> {
   return data.removeDriver;
 }
 
+/** Change the email a driver signs in with (admin only). */
+export async function adminChangeDriverEmail(
+  userId: string,
+  newEmail: string,
+): Promise<boolean> {
+  const data = await gqlRequest<{ adminChangeUserEmail: boolean }>({
+    query: `mutation AdminChangeDriverEmail($userId: String!, $newEmail: String!) {
+      adminChangeUserEmail(userId: $userId, newEmail: $newEmail)
+    }`,
+    variables: { userId, newEmail },
+  });
+  return data.adminChangeUserEmail;
+}
+
+/**
+ * Set a new password for a driver (admin only). Invalidates all of that user's
+ * existing sessions server-side, so they must sign in again with the new one.
+ */
+export async function adminChangeDriverPassword(
+  userId: string,
+  newPassword: string,
+): Promise<boolean> {
+  const data = await gqlRequest<{ adminChangeUserPassword: boolean }>({
+    query: `mutation AdminChangeDriverPassword($userId: String!, $newPassword: String!) {
+      adminChangeUserPassword(userId: $userId, newPassword: $newPassword)
+    }`,
+    variables: { userId, newPassword },
+  });
+  return data.adminChangeUserPassword;
+}
+
 // ── Routes & stops ────────────────────────────────────────────────────
 
 const STOP_FIELDS = `id routeId name sequence lat lng geofenceRadiusM direction scheduledPickupTime notes`;

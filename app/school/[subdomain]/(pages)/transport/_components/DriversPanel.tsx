@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/dialog";
 import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import {
+  adminChangeDriverEmail,
+  adminChangeDriverPassword,
   fetchDrivers,
   onboardDriver,
   removeDriver,
@@ -40,6 +42,14 @@ const EMPTY = {
   notes: "",
 };
 
+/** Short, human-friendly temporary password (no ambiguous characters). */
+function randomPassword(): string {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  const values = new Uint32Array(10);
+  crypto.getRandomValues(values);
+  return Array.from(values, (v) => chars[v % chars.length]).join("");
+}
+
 export function DriversPanel() {
   const [rows, setRows] = useState<TransportDriver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +59,10 @@ export function DriversPanel() {
   const [tempPassword, setTempPassword] = useState<{ name: string; password: string } | null>(
     null,
   );
+  const [loginDriver, setLoginDriver] = useState<TransportDriver | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginBusy, setLoginBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -130,6 +144,48 @@ export function DriversPanel() {
     }
   };
 
+  const openLogin = (d: TransportDriver) => {
+    setLoginDriver(d);
+    setLoginEmail(d.user?.email ?? "");
+    setLoginPassword("");
+  };
+
+  const closeLogin = () => {
+    setLoginDriver(null);
+    setLoginPassword("");
+  };
+
+  const saveLogin = async () => {
+    if (!loginDriver) return;
+    const currentEmail = (loginDriver.user?.email ?? "").trim().toLowerCase();
+    const nextEmail = loginEmail.trim().toLowerCase();
+    const nextPassword = loginPassword.trim();
+
+    const emailChanged = Boolean(nextEmail) && nextEmail !== currentEmail;
+    if (!emailChanged && !nextPassword) {
+      toast.error("Enter a new email or a new password");
+      return;
+    }
+
+    setLoginBusy(true);
+    try {
+      // The driver signs in with email + password, so update whichever changed.
+      if (emailChanged) {
+        await adminChangeDriverEmail(loginDriver.userId, nextEmail);
+      }
+      if (nextPassword) {
+        await adminChangeDriverPassword(loginDriver.userId, nextPassword);
+      }
+      toast.success("Driver login updated");
+      closeLogin();
+      await load();
+    } catch (err) {
+      toast.error(getDisplayErrorMessage(err));
+    } finally {
+      setLoginBusy(false);
+    }
+  };
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -186,6 +242,9 @@ export function DriversPanel() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => openLogin(d)}>
+                      Login
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => toggle(d)}>
                       {d.isActive ? "Deactivate" : "Activate"}
                     </Button>
@@ -259,6 +318,68 @@ export function DriversPanel() {
             </Button>
             <Button onClick={submit} disabled={busy}>
               {busy ? "Saving…" : "Onboard"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(loginDriver)}
+        onOpenChange={(next) => {
+          if (!next) closeLogin();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Change login
+              {loginDriver?.user?.name ? ` — ${loginDriver.user.name}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="d-login-email">Email</Label>
+              <Input
+                id="d-login-email"
+                type="email"
+                autoComplete="off"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                The email this driver signs in with.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="d-login-password">New password</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="d-login-password"
+                  autoComplete="new-password"
+                  value={loginPassword}
+                  placeholder="Leave blank to keep the current password"
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setLoginPassword(randomPassword())}
+                >
+                  Generate
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Setting a password signs the driver out everywhere and invalidates
+                their previous sessions.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeLogin}>
+              Cancel
+            </Button>
+            <Button onClick={saveLogin} disabled={loginBusy}>
+              {loginBusy ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
