@@ -37,7 +37,7 @@ const SECTIONS = [
   {
     heading: "6. Questions",
     paragraphs: [
-      `If you have questions about this process, contact us at ${LEGAL_META.contactEmail}. You can also read our Privacy Policy for more detail on how we handle personal data.`,
+      `If you have questions about this process, email ${LEGAL_META.contactEmail} or call ${LEGAL_META.contactPhone}. You can also read our Privacy Policy for more detail on how we handle personal data.`,
     ],
   },
 ];

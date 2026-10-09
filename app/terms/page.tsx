@@ -64,7 +64,9 @@ const SECTIONS = [
   },
   {
     heading: "11. Contact",
-    paragraphs: [`Email ${LEGAL_META.contactEmail} with questions about these terms.`],
+    paragraphs: [
+      `Email ${LEGAL_META.contactEmail} or call ${LEGAL_META.contactPhone} with questions about these terms.`,
+    ],
   },
 ];
 

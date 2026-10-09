@@ -5,7 +5,7 @@ const SECTIONS = [
   {
     heading: "1. Who we are",
     paragraphs: [
-      `SQUL provides school management software through the SQUL website (${LEGAL_META.websiteUrl}) and the SQUL mobile app. The operator is ${LEGAL_META.entityName}, ${LEGAL_META.registeredAddressPlaceholder}, registered with the Office of the Data Protection Commissioner under ${LEGAL_META.odpcRegistrationPlaceholder}.`,
+      `SQUL provides school management software through the SQUL website (${LEGAL_META.websiteUrl}) and the SQUL mobile app. The operator is ${LEGAL_META.entityName}, ${LEGAL_META.postalAddress}, registered with the Office of the Data Protection Commissioner under ${LEGAL_META.odpcRegistrationPlaceholder}.`,
       "For learner, staff and parent records that a school enters into SQUL, the school is the data controller and SQUL processes that information on the school's instructions. For your SQUL account and app usage, SQUL is the data controller.",
     ],
   },
@@ -68,7 +68,7 @@ const SECTIONS = [
   {
     heading: "10. Contact us",
     paragraphs: [
-      `Email ${LEGAL_META.contactEmail} with questions about this policy or your information.`,
+      `Email ${LEGAL_META.contactEmail} or call ${LEGAL_META.contactPhone} with questions about this policy or your information.`,
     ],
   },
 ];
