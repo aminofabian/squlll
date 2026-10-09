@@ -25,7 +25,7 @@ export function mapStudentTestToAssignment(
     description: test.instructions ?? '',
     dueDate,
     status: graded ? 'graded' : submitted ? 'submitted' : overdue ? 'overdue' : 'pending',
-    teacher: test.teacher.name,
+    teacher: test.teacher.fullName,
     maxScore: test.totalMarks,
     duration: test.effectiveDuration ?? test.duration,
     startedAt: test.mySubmission?.started_at ?? null,

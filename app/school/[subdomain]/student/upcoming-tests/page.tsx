@@ -128,7 +128,7 @@ export default function StudentUpcomingTestsPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <User className="w-4 h-4" />
-                      {test.teacher.name}
+                      {test.teacher.fullName}
                     </span>
                     <span>{test.totalMarks} marks</span>
                   </div>

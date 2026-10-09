@@ -51,7 +51,7 @@ export interface StudentTestApi {
   instructions?: string | null
   resourceUrl?: string | null
   subject: { id: string; name: string }
-  teacher: { id: string; name: string }
+  teacher: { fullName: string; email?: string | null }
   mySubmission?: StudentTestSubmissionApi | null
 }
 

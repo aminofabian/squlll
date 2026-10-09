@@ -16,7 +16,7 @@ const GET_MY_TESTS = `
       instructions
       resourceUrl
       subject { id name }
-      teacher { id name }
+      teacher { fullName email }
       mySubmission {
         id
         submitted_at
@@ -55,7 +55,7 @@ const GET_MY_UPCOMING_TESTS = `
       totalMarks
       status
       subject { id name }
-      teacher { id name }
+      teacher { fullName email }
     }
   }
 `
@@ -113,7 +113,7 @@ const GET_MY_TEST_BY_ID = `
       instructions
       resourceUrl
       subject { id name }
-      teacher { id name }
+      teacher { fullName email }
       referenceMaterials { id fileUrl fileType fileSize }
       questions { id text type marks order }
     }
