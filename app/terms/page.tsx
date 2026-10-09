@@ -5,7 +5,7 @@ const SECTIONS = [
   {
     heading: "1. Agreement",
     paragraphs: [
-      `By creating an account or using SQUL at ${LEGAL_META.websiteUrl} or in the SQUL mobile app, you agree to these Terms of Service. The service is provided by ${LEGAL_META.entityNamePlaceholder}.`,
+      `By creating an account or using SQUL at ${LEGAL_META.websiteUrl} or in the SQUL mobile app, you agree to these Terms of Service. The service is provided by ${LEGAL_META.entityName}.`,
     ],
   },
   {
