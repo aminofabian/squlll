@@ -566,6 +566,8 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                 overview={feeOverview}
                 loading={feesLoading}
                 onRefresh={refetchFees}
+                subdomain={subdomain}
+                showPay
                 compact
               />
               <StudentLiveLessonStatus compact />
@@ -596,6 +598,8 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                   overview={feeOverview}
                   loading={feesLoading}
                   onRefresh={refetchFees}
+                  subdomain={subdomain}
+                  showPay
                 />
                 {renderQuickActions(false)}
               </div>
