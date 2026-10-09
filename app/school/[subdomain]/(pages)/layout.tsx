@@ -15,6 +15,10 @@ import {
   getTenantIdFromCookies,
   isSchoolOnboardingComplete,
 } from '@/lib/utils/school-onboarding'
+import {
+  canAccessAdminShell,
+  getPostLoginPath,
+} from '@/lib/auth/post-login-navigation'
 
 // Loading component for Suspense fallback
 function LayoutLoading() {
@@ -61,8 +65,9 @@ function SchoolLayoutContent({
   const [isMounted, setIsMounted] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // Drivers/conductors must never see the admin shell — they work from the app.
-  const isDriverShell = userRole === 'DRIVER' || userRole === 'CONDUCTOR'
+  // Only school-admin roles may use the admin shell; everyone else (teachers,
+  // students, parents, staff, drivers, conductors…) has their own portal.
+  const isNonAdminRole = userRole !== '' && !canAccessAdminShell(userRole)
 
   // Public auth / invitation flows — no dashboard chrome
   const signupSegment = params.signup as string | undefined
@@ -96,16 +101,17 @@ function SchoolLayoutContent({
   const [shouldShowLoading, setShouldShowLoading] = useState(true)
 
   useEffect(() => {
-    // Drivers/conductors work from the app — never the admin shell.
-    if (isDriverShell) {
-      router.replace('/driver');
+    // Non-admin members belong in their own portal — bounce them out of the shell.
+    if (isNonAdminRole) {
+      const portal = getPostLoginPath(userRole, true);
+      router.replace(portal === '/dashboard' ? '/login' : portal);
       return;
     }
     if (isSignupPage || isConfigLoading || isConfigured) {
       return;
     }
     router.replace('/setup');
-  }, [isSignupPage, isConfigLoading, isConfigured, isDriverShell, router]);
+  }, [userRole, isNonAdminRole, isSignupPage, isConfigLoading, isConfigured, router]);
 
   useEffect(() => {
     if (
@@ -113,7 +119,7 @@ function SchoolLayoutContent({
       isConfigLoading ||
       !isConfigured ||
       !isMounted ||
-      isDriverShell
+      isNonAdminRole
     ) {
       return;
     }
@@ -121,7 +127,7 @@ function SchoolLayoutContent({
     if (!isSchoolOnboardingComplete(tenantId)) {
       router.replace('/onboarding');
     }
-  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, isDriverShell, router]);
+  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, isNonAdminRole, router]);
 
   useEffect(() => {
     // Only show loading state initially, then let the config loading state take over
@@ -186,9 +192,9 @@ function SchoolLayoutContent({
 
   // Get initials for avatar
 
-  // Drivers/conductors never see the admin shell; the effect above redirects
-  // them to /driver. Render a bare holding view until the redirect lands.
-  if (isDriverShell) {
+  // Non-admin members never see the admin shell; the effect above redirects
+  // them to their portal. Render a bare holding view until the redirect lands.
+  if (isNonAdminRole) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f3f7f5] text-sm text-slate-600 dark:bg-[#071411] dark:text-slate-300">
         Redirecting…

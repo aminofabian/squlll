@@ -54,3 +54,20 @@ export function getPostLoginPath(
       return '/dashboard';
   }
 }
+
+/**
+ * Roles allowed to use the school admin shell (`/school/[subdomain]/(pages)/…`).
+ * Every other role has its own portal and must be kept out.
+ */
+const ADMIN_SHELL_ROLES = new Set<string>([
+  'SCHOOL_ADMIN',
+  'SUPER_ADMIN',
+  'SCHOOL_MANAGER',
+  'TREASURER',
+]);
+
+export function canAccessAdminShell(
+  role: string | undefined | null,
+): boolean {
+  return Boolean(role) && ADMIN_SHELL_ROLES.has(role as string);
+}
