@@ -2,6 +2,37 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { resolveHostViaBackend } from '@/lib/host-resolution'
 import { cookieHasRole, SUPER_ADMIN_ROLE } from '@/lib/auth/role-cookie'
+import {
+  canAccessAdminShell,
+  getPostLoginPath,
+} from '@/lib/auth/post-login-navigation'
+
+/** Top-level segments that belong to the admin (pages) shell. */
+const ADMIN_ROUTE_SEGMENTS = new Set([
+  'dashboard',
+  'students',
+  'classes',
+  'teachers',
+  'timetable',
+  'fees',
+  'exams',
+  'website',
+  'transport',
+  'domains',
+  'reminders',
+  'sms-credits',
+  'settings',
+  'parents',
+  'staff',
+  'grading',
+  'curriculum',
+  'school-years',
+  'reports',
+  'analytics',
+  'enrollment',
+  'communication',
+  'notifications',
+])
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl
@@ -85,6 +116,22 @@ export async function proxy(request: NextRequest) {
       const mainDomain = isProd ? 'https://squl.co.ke' : `http://${apexHost}`
       const redirectUrl = new URL(`${mainDomain}/signup${url.search}`)
       return NextResponse.redirect(redirectUrl)
+    }
+
+    // Role gate: non-admin members must never reach the admin (pages) shell.
+    // Enforced server-side so a stale client bundle can't bypass it.
+    const roleCookie = request.cookies.get('userRole')?.value ?? ''
+    const roles = roleCookie
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean)
+    if (roles.length > 0 && !roles.some((r) => canAccessAdminShell(r))) {
+      const firstSegment = url.pathname.split('/').filter(Boolean)[0] ?? ''
+      if (ADMIN_ROUTE_SEGMENTS.has(firstSegment)) {
+        const portal = getPostLoginPath(roles[0], true)
+        const target = portal === '/dashboard' ? '/login' : portal
+        return NextResponse.redirect(new URL(target, request.url))
+      }
     }
 
     // Rewrite the path to include /school/[subdomain]. If the path already
