@@ -21,6 +21,9 @@ export function formatParticipantLabel(
   const isP1 = currentUserId && conversation.participant1Id === currentUserId
   const type = isP1 ? conversation.participant2Type : conversation.participant1Type
   const id = isP1 ? conversation.participant2Id : conversation.participant1Id
+  const name = isP1 ? conversation.participant2Name : conversation.participant1Name
+  if (name && name.trim()) return name.trim()
+  // Fallback when the server couldn't resolve a name.
   const label = type.charAt(0).toUpperCase() + type.slice(1)
   return `${label} · ${id.slice(0, 8)}…`
 }

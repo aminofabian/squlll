@@ -5,8 +5,10 @@ export const MY_CONVERSATIONS = `
       type
       participant1Type
       participant1Id
+      participant1Name
       participant2Type
       participant2Id
+      participant2Name
       lastMessage
       unreadCount
       updatedAt

@@ -13,8 +13,12 @@ export interface ChatConversation {
   type: string
   participant1Type: string
   participant1Id: string
+  /** Resolved display name for participant 1 (server-populated; may be null). */
+  participant1Name?: string | null
   participant2Type: string
   participant2Id: string
+  /** Resolved display name for participant 2 (server-populated; may be null). */
+  participant2Name?: string | null
   lastMessage?: string | null
   unreadCount: number
   updatedAt: string
