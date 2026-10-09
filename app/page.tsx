@@ -2458,10 +2458,13 @@ export default function Home() {
                 © {new Date().getFullYear()} SQUL. All rights reserved.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-                {["Privacy", "Terms"].map((text) => (
+                {[
+                  { text: "Privacy", href: "/privacy" },
+                  { text: "Terms", href: "/terms" },
+                ].map(({ text, href }) => (
                   <Link
                     key={text}
-                    href="/register"
+                    href={href}
                     className="text-white/50 transition-colors hover:text-emerald-200"
                   >
                     {text}
