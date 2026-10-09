@@ -584,6 +584,16 @@ export function WebsiteStudio() {
   }>(config, 'nav')
   const seo = config.seo ?? {}
 
+  // Search visibility: is the site published, and is the profile complete enough
+  // to surface in local results?
+  const isLive = published != null
+  const missingProfile = [
+    !seo.streetAddress && 'street address',
+    !seo.addressLocality && 'town or city',
+    !(typeof seo.latitude === 'number' && typeof seo.longitude === 'number') &&
+      'map coordinates',
+  ].filter((value): value is string => Boolean(value))
+
   const activeLook =
     HOMEPAGE_TEMPLATES.find((t) => t.id === config.templateId) ||
     HOMEPAGE_TEMPLATES[0]
@@ -788,6 +798,38 @@ export function WebsiteStudio() {
                   <p className="text-[11px] leading-snug text-slate-600">
                     Colors tint your look. Scroll for logo &amp; hero.
                   </p>
+                </div>
+                <div
+                  className={cn(
+                    'flex items-start gap-2 border px-3 py-2.5',
+                    isLive
+                      ? 'border-emerald-200 bg-emerald-50'
+                      : 'border-amber-300 bg-amber-50',
+                  )}
+                >
+                  <Globe
+                    className={cn(
+                      'mt-0.5 h-3.5 w-3.5 shrink-0',
+                      isLive ? 'text-emerald-600' : 'text-amber-600',
+                    )}
+                  />
+                  <div className="min-w-0 text-[11px] leading-snug">
+                    <p className="font-semibold text-slate-800">
+                      {isLive
+                        ? 'Your site is live and can be indexed'
+                        : 'Your site is not published yet'}
+                    </p>
+                    <p className="mt-0.5 text-slate-600">
+                      {isLive
+                        ? 'Google can crawl your pages and rank them.'
+                        : 'Search engines can’t see your site until you publish — use the Publish button to go live.'}
+                    </p>
+                    <p className="mt-1 text-slate-600">
+                      {missingProfile.length === 0
+                        ? 'School profile complete — good for local search.'
+                        : `Add ${missingProfile.join(', ')} in the School profile below to rank for local searches.`}
+                    </p>
+                  </div>
                 </div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                   School colors
