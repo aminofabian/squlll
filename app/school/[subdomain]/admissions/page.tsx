@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import AdmissionsContent from './AdmissionsContent'
 import { fetchPublicHomepageConfigServer } from '../(pages)/components/homepage/homepage-api.server'
@@ -7,6 +8,13 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 export const fetchCache = 'force-no-store'
 export const revalidate = 0
+
+export const metadata: Metadata = {
+  title: 'Admissions & Enrollment',
+  description:
+    'Admission requirements, term dates and enrollment. Apply to the school online.',
+  alternates: { canonical: '/admissions' },
+}
 
 function AdmissionsFallback() {
   return (

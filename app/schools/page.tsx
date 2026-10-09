@@ -4,13 +4,24 @@ import { ArrowRight, Building2, GraduationCap } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/button'
 import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
+import { schoolPortalUrl } from '@/lib/auth/post-login-navigation'
 import { SchoolsDirectory } from './SchoolsDirectory'
 import type { PlatformSchool } from './types'
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.squl.co.ke'
 
 export const metadata: Metadata = {
   title: 'Schools on Squl | Kenya School Management',
   description:
     'Browse schools across Kenya running admissions, fees, CBC marks, and parent portals on Squl.',
+  alternates: { canonical: '/schools' },
+  openGraph: {
+    type: 'website',
+    url: `${SITE_URL}/schools`,
+    title: 'Schools on Squl | Kenya School Management',
+    description:
+      'Browse schools across Kenya running admissions, fees, CBC marks, and parent portals on Squl.',
+  },
 }
 
 async function fetchPlatformSchools(): Promise<PlatformSchool[]> {
@@ -28,6 +39,9 @@ async function fetchPlatformSchools(): Promise<PlatformSchool[]> {
               description
               logoUrl
               tagline
+              published
+              addressLocality
+              addressRegion
             }
           }
         `,
@@ -48,10 +62,31 @@ async function fetchPlatformSchools(): Promise<PlatformSchool[]> {
 }
 
 export default async function SchoolsPage() {
-  const schools = await fetchPlatformSchools()
+  // Only list schools whose public site is live — an un-published school has a
+  // placeholder site that is noindexed, so linking to it would waste crawl budget.
+  const schools = (await fetchPlatformSchools()).filter((s) => s.published)
+
+  // Help crawlers discover every school site from the directory hub.
+  const listSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Schools on Squl',
+    url: `${SITE_URL}/schools`,
+    numberOfItems: schools.length,
+    itemListElement: schools.map((school, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: school.name,
+      url: schoolPortalUrl(school.subdomain),
+    })),
+  }
 
   return (
     <div className="squl-marketing min-h-screen bg-[#f3f7f5] font-sans text-[#0a1f1a]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }}
+      />
       <div className="relative overflow-hidden bg-[#0a1f1a] text-white">
         <div
           className="pointer-events-none absolute inset-0 opacity-40"

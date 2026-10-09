@@ -20,9 +20,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const resolution = await resolveHostViaBackend(host)
     if (resolution?.tenantId) {
       const base = `https://${host}`
+      // Only the publicly indexable pages of a school site — the admin and
+      // portal routes are excluded in robots.txt.
       return [
         { url: `${base}/`, changeFrequency: 'weekly', priority: 1 },
-        { url: `${base}/apply`, changeFrequency: 'monthly', priority: 0.5 },
+        {
+          url: `${base}/admissions`,
+          changeFrequency: 'monthly',
+          priority: 0.8,
+        },
+        { url: `${base}/apply`, changeFrequency: 'monthly', priority: 0.6 },
       ]
     }
   }

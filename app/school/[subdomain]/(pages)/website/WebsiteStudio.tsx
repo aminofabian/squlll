@@ -41,6 +41,7 @@ import {
   type HomepageOfferingItem,
   type HomepageSection,
   type HomepageSectionType,
+  type HomepageSeo,
   type HomepageStatItem,
   type HomepageTemplateId,
   type HomepageTestimonial,
@@ -93,7 +94,7 @@ const STUDIO_STEPS: {
     step: 2,
     label: 'Brand',
     short: 'Brand',
-    hint: 'Colors, logo, and hero photo.',
+    hint: 'Colors, logo, hero, and profile.',
   },
   {
     id: 'sections',
@@ -150,6 +151,20 @@ function patchSlots(
     ...s,
     slots: { ...s.slots, ...patch },
   }))
+}
+
+function patchSeo(
+  config: HomepageConfig,
+  patch: Partial<HomepageSeo>,
+): HomepageConfig {
+  return { ...config, seo: { ...config.seo, ...patch } }
+}
+
+/** Parse an optional numeric input value (`''` → undefined). */
+function numberOrUndefined(value: string): number | undefined {
+  if (!value.trim()) return undefined
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 function getSlots<T extends Record<string, unknown>>(
@@ -567,6 +582,7 @@ export function WebsiteStudio() {
     applyLabel?: string
     links?: HomepageNavLink[]
   }>(config, 'nav')
+  const seo = config.seo ?? {}
 
   const activeLook =
     HOMEPAGE_TEMPLATES.find((t) => t.id === config.templateId) ||
@@ -1058,6 +1074,192 @@ export function WebsiteStudio() {
                                 }),
                                 href: e.target.value,
                               },
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <h3 className="mb-1 text-sm font-semibold">School profile</h3>
+                  <p className="mb-3 text-[11px] leading-snug text-slate-500">
+                    Powers your site&apos;s search results and Google Maps listing.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label="Official school name">
+                      <Input
+                        value={seo.schoolName || ''}
+                        placeholder={schoolName}
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              schoolName: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field label="School type">
+                      <Input
+                        value={seo.schoolType || ''}
+                        placeholder="Primary School"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              schoolType: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Motto">
+                    <Input
+                      value={seo.motto || ''}
+                      placeholder="Knowledge, character, service"
+                      onChange={(e) =>
+                        setDraft(
+                          patchSeo(config, {
+                            motto: e.target.value.trim() || undefined,
+                          }),
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label="Street address">
+                    <Input
+                      value={seo.streetAddress || ''}
+                      placeholder="Mirema Drive"
+                      onChange={(e) =>
+                        setDraft(
+                          patchSeo(config, {
+                            streetAddress: e.target.value.trim() || undefined,
+                          }),
+                        )
+                      }
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label="Town / city">
+                      <Input
+                        value={seo.addressLocality || ''}
+                        placeholder="Nairobi"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              addressLocality: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field label="County">
+                      <Input
+                        value={seo.addressRegion || ''}
+                        placeholder="Nairobi"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              addressRegion: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field label="Postal code">
+                      <Input
+                        value={seo.postalCode || ''}
+                        placeholder="00100"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              postalCode: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field label="Country">
+                      <Input
+                        value={seo.addressCountry || ''}
+                        placeholder="Kenya"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              addressCountry: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label="Year founded">
+                      <Input
+                        type="number"
+                        value={seo.foundedYear ?? ''}
+                        placeholder="1998"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              foundedYear: numberOrUndefined(e.target.value),
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field label="Contact phone">
+                      <Input
+                        value={seo.phone || ''}
+                        placeholder="+254 700 000 000"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              phone: e.target.value.trim() || undefined,
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Contact email">
+                    <Input
+                      type="email"
+                      value={seo.email || ''}
+                      placeholder="info@school.ac.ke"
+                      onChange={(e) =>
+                        setDraft(
+                          patchSeo(config, {
+                            email: e.target.value.trim() || undefined,
+                          }),
+                        )
+                      }
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label="Latitude">
+                      <Input
+                        value={seo.latitude ?? ''}
+                        placeholder="-1.2186"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              latitude: numberOrUndefined(e.target.value),
+                            }),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field label="Longitude">
+                      <Input
+                        value={seo.longitude ?? ''}
+                        placeholder="36.8844"
+                        onChange={(e) =>
+                          setDraft(
+                            patchSeo(config, {
+                              longitude: numberOrUndefined(e.target.value),
                             }),
                           )
                         }

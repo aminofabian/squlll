@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import ApplyContent from './ApplyContent'
 import { fetchPublicHomepageConfigServer } from '../(pages)/components/homepage/homepage-api.server'
@@ -7,6 +8,13 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 export const fetchCache = 'force-no-store'
 export const revalidate = 0
+
+export const metadata: Metadata = {
+  title: 'Apply for Admission',
+  description:
+    'Start your application online — submit your details and the school will get back to you.',
+  alternates: { canonical: '/apply' },
+}
 
 function ApplyFallback() {
   return (

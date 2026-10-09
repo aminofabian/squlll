@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HOMEPAGE_TEMPLATE_THEMES = exports.homepageConfigSchema = exports.homepageSectionSchema = exports.homepageThemeSchema = exports.HOMEPAGE_TEMPLATES = exports.HOMEPAGE_TEMPLATE_IDS = void 0;
+exports.HOMEPAGE_TEMPLATE_THEMES = exports.homepageConfigSchema = exports.homepageSeoSchema = exports.homepageSectionSchema = exports.homepageThemeSchema = exports.HOMEPAGE_TEMPLATES = exports.HOMEPAGE_TEMPLATE_IDS = void 0;
 exports.createDefaultHomepageConfig = createDefaultHomepageConfig;
 exports.parseHomepageConfig = parseHomepageConfig;
 exports.getSection = getSection;
@@ -98,6 +98,7 @@ function createDefaultHomepageConfig(schoolName = 'Our School') {
             paper: '#f3f7f5',
             radiusMode: 'sharp',
         },
+        seo: { addressCountry: 'Kenya' },
         sections: [
             {
                 id: 'nav',
@@ -396,12 +397,28 @@ exports.homepageSectionSchema = zod_1.z.discriminatedUnion('type', [
         slots: footerSlotsSchema,
     }),
 ]);
-/** Strict config contract. Unknown keys are stripped, wrong types rejected. */
+/** Optional school-profile contract for SEO / structured data. */
+exports.homepageSeoSchema = zod_1.z.object({
+    schoolName: zod_1.z.string().optional(),
+    motto: zod_1.z.string().optional(),
+    schoolType: zod_1.z.string().optional(),
+    foundedYear: zod_1.z.number().int().min(1800).max(2100).optional(),
+    streetAddress: zod_1.z.string().optional(),
+    addressLocality: zod_1.z.string().optional(),
+    addressRegion: zod_1.z.string().optional(),
+    postalCode: zod_1.z.string().optional(),
+    addressCountry: zod_1.z.string().optional(),
+    latitude: zod_1.z.number().min(-90).max(90).optional(),
+    longitude: zod_1.z.number().min(-180).max(180).optional(),
+    email: zod_1.z.string().optional(),
+    phone: zod_1.z.string().optional(),
+});
 exports.homepageConfigSchema = zod_1.z.object({
     templateId: zod_1.z.enum(exports.HOMEPAGE_TEMPLATE_IDS),
     theme: exports.homepageThemeSchema,
     logoUrl: zod_1.z.string().optional(),
     sections: zod_1.z.array(exports.homepageSectionSchema),
+    seo: exports.homepageSeoSchema.optional(),
 });
 /* ------------------------------------------------------------------ */
 /* Tolerant normalization                                              */
@@ -413,6 +430,48 @@ exports.homepageConfigSchema = zod_1.z.object({
 /* ------------------------------------------------------------------ */
 function isHomepageSectionType(value) {
     return typeof value === 'string' && value in sectionSlotSchemas;
+}
+const SEO_TEXT_FIELDS = [
+    'schoolName',
+    'motto',
+    'schoolType',
+    'streetAddress',
+    'addressLocality',
+    'addressRegion',
+    'postalCode',
+    'addressCountry',
+    'email',
+    'phone',
+];
+const SEO_NUMBER_FIELDS = ['foundedYear', 'latitude', 'longitude'];
+/** Accept a real number or a numeric string (Studio inputs are text fields). */
+function toFiniteNumber(value) {
+    if (typeof value === 'number' && Number.isFinite(value))
+        return value;
+    if (typeof value === 'string' && value.trim()) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed))
+            return parsed;
+    }
+    return undefined;
+}
+/** Tolerant normalization of the optional SEO profile against a fallback. */
+function parseSeo(raw, fallback) {
+    const next = { ...(fallback ?? {}) };
+    if (!raw || typeof raw !== 'object')
+        return next;
+    const source = raw;
+    for (const key of SEO_TEXT_FIELDS) {
+        const value = source[key];
+        if (typeof value === 'string' && value.trim())
+            next[key] = value.trim();
+    }
+    for (const key of SEO_NUMBER_FIELDS) {
+        const value = toFiniteNumber(source[key]);
+        if (value !== undefined)
+            next[key] = value;
+    }
+    return next;
 }
 function parseTheme(raw, fallback) {
     if (!raw || typeof raw !== 'object')
@@ -517,6 +576,7 @@ function parseHomepageConfig(raw, schoolName = 'Our School') {
         templateId,
         theme,
         sections: sections.length > 0 ? sections : base.sections,
+        seo: parseSeo(source.seo, base.seo),
     };
     if (logoUrl !== undefined)
         result.logoUrl = logoUrl;

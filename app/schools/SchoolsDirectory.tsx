@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ArrowUpRight, Building2, Search } from 'lucide-react'
+import { ArrowUpRight, Building2, MapPin, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { PlatformSchool } from './types'
@@ -20,6 +20,15 @@ function initials(name: string): string {
     .join('')
 }
 
+/** "Mirema, Nairobi" — town and county, de-duplicated when they coincide. */
+function schoolLocation(school: PlatformSchool): string | null {
+  const parts = [school.addressLocality, school.addressRegion]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part))
+  const unique = Array.from(new Set(parts))
+  return unique.length > 0 ? unique.join(', ') : null
+}
+
 export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
   const [query, setQuery] = useState('')
 
@@ -31,7 +40,9 @@ export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
         s.name.toLowerCase().includes(q) ||
         s.subdomain.toLowerCase().includes(q) ||
         (s.tagline || '').toLowerCase().includes(q) ||
-        (s.description || '').toLowerCase().includes(q),
+        (s.description || '').toLowerCase().includes(q) ||
+        (s.addressLocality || '').toLowerCase().includes(q) ||
+        (s.addressRegion || '').toLowerCase().includes(q),
     )
   }, [schools, query])
 
@@ -81,6 +92,7 @@ export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((school, index) => {
             const href = schoolSiteUrl(school.subdomain)
+            const location = schoolLocation(school)
             return (
               <li key={school.id}>
                 <a
@@ -113,6 +125,12 @@ export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
                       <p className="mt-1 truncate font-mono text-[11px] text-[#1a4d42]/45">
                         {school.subdomain}.squl.co.ke
                       </p>
+                      {location && (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-[#1a4d42]/55">
+                          <MapPin className="h-3 w-3 shrink-0 text-[#246a59]/70" />
+                          <span className="truncate">{location}</span>
+                        </p>
+                      )}
                     </div>
                     <ArrowUpRight className="h-4 w-4 shrink-0 text-[#1a4d42]/30 transition-colors group-hover:text-[#246a59]" />
                   </div>
