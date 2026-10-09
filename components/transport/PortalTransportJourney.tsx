@@ -183,6 +183,8 @@ export interface PortalTransportJourneyProps {
   loadToday: () => Promise<StudentTransportToday>;
   /** Optional heading, e.g. the child's name in the parent portal. */
   title?: string;
+  /** True when the viewer is the student themselves (affects "you're next" copy). */
+  self?: boolean;
 }
 
 /**
@@ -193,6 +195,7 @@ export interface PortalTransportJourneyProps {
 export function PortalTransportJourney({
   loadToday,
   title,
+  self = false,
 }: PortalTransportJourneyProps) {
   const [today, setToday] = useState<StudentTransportToday | null>(null);
   const [mapConfig, setMapConfig] = useState<TransportMapConfig | null>(null);
@@ -353,6 +356,10 @@ export function PortalTransportJourney({
       ? activeLive.nextStopId === today.routeStop.id
       : false;
 
+  const isNextPick =
+    Boolean(activeLive?.nextPickStudentId) &&
+    activeLive?.nextPickStudentId === today?.studentId;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -453,6 +460,20 @@ export function PortalTransportJourney({
               <p>
                 An emergency was reported on this bus. The school is responding —
                 the live location is shown below.
+              </p>
+            </div>
+          ) : null}
+
+          {isLive && isNextPick ? (
+            <div className="flex items-start gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                {self
+                  ? "You're the next pick"
+                  : `${today?.studentName ?? "Your child"} is the next pick`}
+                {formatDistance(activeLive?.nextPickDistanceM)
+                  ? ` — the bus is ${formatDistance(activeLive?.nextPickDistanceM)} away.`
+                  : "."}
               </p>
             </div>
           ) : null}

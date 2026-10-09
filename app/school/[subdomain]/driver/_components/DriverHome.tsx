@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   Bus,
+  Loader2,
+  Play,
   RefreshCw,
   Route as RouteIcon,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,9 +22,11 @@ import {
   SchoolPage,
   SchoolStat,
   outlineButtonClass,
+  primaryButtonClass,
 } from "@/components/school/SchoolContentPage";
 import {
   fetchMyDriverTrips,
+  startMyTrip,
   todayIso,
   type DriverTrip,
   type DriverTripStop,
@@ -62,17 +67,34 @@ function totalStops(
   return (trip.stops ?? []).reduce((n, stop) => n + pick(stop), 0);
 }
 
-function TripCard({ trip }: { trip: DriverTrip }) {
+function TripCard({
+  trip,
+  subdomain,
+  onStarted,
+}: {
+  trip: DriverTrip;
+  subdomain: string;
+  onStarted: () => void;
+}) {
   const boarded = totalStops(trip, (s) => s.studentsBoarded);
   const expected = totalStops(trip, (s) => s.studentsExpected);
   const stops = trip.stops?.length ?? 0;
 
+  const start = useMutation({
+    mutationFn: () => startMyTrip(subdomain, trip.id),
+    onSuccess: () => {
+      toast.success("Trip started");
+      onStarted();
+    },
+    onError: (error) =>
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong",
+      ),
+  });
+
   return (
-    <Link
-      href={`/driver/trip/${trip.id}`}
-      className="group flex flex-col gap-3 border border-[#1a4d42]/12 bg-white p-4 transition-colors hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-white/5 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div className="min-w-0 space-y-2">
+    <div className="group flex flex-col gap-3 border border-[#1a4d42]/12 bg-white p-4 transition-colors hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
+      <Link href={`/driver/trip/${trip.id}`} className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0a1f1a] dark:text-white">
             <RouteIcon className="h-4 w-4 text-[#246a59]" />
@@ -102,12 +124,32 @@ function TripCard({ trip }: { trip: DriverTrip }) {
             {boarded}/{expected} boarded · {stops} stop{stops === 1 ? "" : "s"}
           </span>
         </div>
+      </Link>
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        {trip.status === "SCHEDULED" ? (
+          <Button
+            type="button"
+            className={primaryButtonClass}
+            disabled={start.isPending}
+            onClick={() => start.mutate()}
+          >
+            {start.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Play className="h-3.5 w-3.5" />
+            )}
+            Start trip
+          </Button>
+        ) : null}
+        <Link
+          href={`/driver/trip/${trip.id}`}
+          className="inline-flex items-center gap-1 text-xs font-medium text-[#246a59]"
+        >
+          Open run sheet
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-[#246a59]">
-        Open run sheet
-        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </Link>
+    </div>
   );
 }
 
@@ -185,7 +227,12 @@ export function DriverHome() {
       ) : (
         <div className="space-y-3">
           {trips.map((trip) => (
-            <TripCard key={trip.id} trip={trip} />
+            <TripCard
+              key={trip.id}
+              trip={trip}
+              subdomain={subdomain}
+              onStarted={() => void refetch()}
+            />
           ))}
         </div>
       )}

@@ -44,7 +44,7 @@ export function StudentTransportSection() {
 
   return (
     <div className="space-y-6">
-      <PortalTransportJourney loadToday={fetchMyTransportToday} />
+      <PortalTransportJourney loadToday={fetchMyTransportToday} self />
       <StopRequestsCard
         currentStop={currentStop}
         loadRequests={fetchMyTransportStopRequests}

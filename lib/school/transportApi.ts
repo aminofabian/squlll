@@ -704,6 +704,10 @@ export interface PortalLivePosition {
   distanceM?: number | null;
   etaSeconds?: number | null;
   approaching?: boolean | null;
+  nextPickStudentId?: string | null;
+  nextPickStudentName?: string | null;
+  nextPickRouteStopId?: string | null;
+  nextPickDistanceM?: number | null;
 }
 
 const PORTAL_FIELDS = `
@@ -747,6 +751,7 @@ export async function fetchLiveTripPosition(
     query: `query LiveTripPosition($tripId: ID!) {
       liveTripPosition(tripId: $tripId) {
         tripId lat lng recordedAt updatedAt nextStopId nextStopName distanceM etaSeconds approaching
+        nextPickStudentId nextPickStudentName nextPickRouteStopId nextPickDistanceM
       }
     }`,
     variables: { tripId },

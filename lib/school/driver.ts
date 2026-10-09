@@ -35,7 +35,7 @@ export interface DriverTripStop {
   studentsBoarded: number;
   studentsAbsent: number;
   status: TripStopStatus;
-  routeStop?: { id: string; name: string } | null;
+  routeStop?: { id: string; name: string; lat: number; lng: number } | null;
 }
 
 export interface DriverTrip {
@@ -69,10 +69,49 @@ export interface MarkJourneyEventInput {
   note?: string | null;
 }
 
+/** The school's resolved map style (readable by any signed-in user). */
+export interface DriverMapConfig {
+  enabled: boolean;
+  provider: string;
+  styleUrl?: string | null;
+  attribution?: string | null;
+}
+
+/** The cached live position + progress for a running trip. */
+export interface DriverLivePosition {
+  tripId: string;
+  lat: number;
+  lng: number;
+  speed?: number | null;
+  heading?: number | null;
+  accuracy?: number | null;
+  recordedAt: string;
+  updatedAt: string;
+  nextStopId?: string | null;
+  nextStopName?: string | null;
+  distanceM?: number | null;
+  etaSeconds?: number | null;
+  approaching?: boolean | null;
+  nextPickStudentId?: string | null;
+  nextPickStudentName?: string | null;
+  nextPickRouteStopId?: string | null;
+  nextPickDistanceM?: number | null;
+}
+
+export interface ReportPositionInput {
+  tripId: string;
+  lat: number;
+  lng: number;
+  speed?: number | null;
+  heading?: number | null;
+  accuracy?: number | null;
+  recordedAt?: string;
+}
+
 const TRIP_STOP_FIELDS = `
   id scheduledAt arrivedAt departedAt
   studentsExpected studentsBoarded studentsAbsent status
-  routeStop { id name }
+  routeStop { id name lat lng }
 `;
 
 const TRIP_FIELDS = `
@@ -117,6 +156,34 @@ const MARK_MY_STOP_DEPARTED = `
 const MARK_MY_JOURNEY_EVENT = `
   mutation MarkMyJourneyEvent($input: MarkJourneyEventInput!) {
     markMyJourneyEvent(input: $input) { id type }
+  }
+`;
+
+const START_MY_TRIP = `
+  mutation StartMyTrip($id: ID!) {
+    startMyTrip(id: $id) { ${TRIP_FIELDS} }
+  }
+`;
+
+const END_MY_TRIP = `
+  mutation EndMyTrip($id: ID!) {
+    endMyTrip(id: $id) { ${TRIP_FIELDS} }
+  }
+`;
+
+const LIVE_TRIP_POSITION = `
+  query LiveTripPosition($tripId: ID!) {
+    liveTripPosition(tripId: $tripId) {
+      tripId lat lng speed heading accuracy recordedAt updatedAt
+      nextStopId nextStopName distanceM etaSeconds approaching
+      nextPickStudentId nextPickStudentName nextPickRouteStopId nextPickDistanceM
+    }
+  }
+`;
+
+const REPORT_POSITION = `
+  mutation ReportPosition($input: ReportPositionInput!) {
+    reportPosition(input: $input) { tripId lat lng recordedAt updatedAt }
   }
 `;
 
@@ -165,6 +232,37 @@ export async function fetchMyDriverTripStudents(
   return data.myDriverTripStudents ?? [];
 }
 
+/** The platform map style, resolved server-side so no tile key is bundled. */
+export async function fetchDriverMapConfig(
+  subdomain: string,
+): Promise<DriverMapConfig> {
+  const data = await chatGraphqlFetch<{ transportMapConfig: DriverMapConfig }>(
+    TRANSPORT_MAP_CONFIG,
+    {},
+    subdomain,
+  );
+  return data.transportMapConfig;
+}
+
+/** The cached live position + progress for a trip, or null when nothing is live. */
+export async function fetchLiveTripPosition(
+  subdomain: string,
+  tripId: string,
+): Promise<DriverLivePosition | null> {
+  const data = await chatGraphqlFetch<{
+    liveTripPosition: DriverLivePosition | null;
+  }>(LIVE_TRIP_POSITION, { tripId }, subdomain);
+  return data.liveTripPosition ?? null;
+}
+
+/** Publish the caller's position for one of their running trips. */
+export async function reportPosition(
+  subdomain: string,
+  input: ReportPositionInput,
+): Promise<void> {
+  await chatGraphqlFetch(REPORT_POSITION, { input }, subdomain);
+}
+
 export async function markMyStopArrived(
   subdomain: string,
   tripStopId: string,
@@ -184,4 +282,36 @@ export async function markMyJourneyEvent(
   input: MarkJourneyEventInput,
 ): Promise<void> {
   await chatGraphqlFetch(MARK_MY_JOURNEY_EVENT, { input }, subdomain);
+}
+
+const TRANSPORT_MAP_CONFIG = `
+  query TransportMapConfig {
+    transportMapConfig { enabled provider styleUrl attribution }
+  }
+`;
+
+/** Start one of the caller's scheduled trips (idempotent). */
+export async function startMyTrip(
+  subdomain: string,
+  id: string,
+): Promise<DriverTrip> {
+  const data = await chatGraphqlFetch<{ startMyTrip: DriverTrip }>(
+    START_MY_TRIP,
+    { id },
+    subdomain,
+  );
+  return data.startMyTrip;
+}
+
+/** End one of the caller's running trips (idempotent). */
+export async function endMyTrip(
+  subdomain: string,
+  id: string,
+): Promise<DriverTrip> {
+  const data = await chatGraphqlFetch<{ endMyTrip: DriverTrip }>(
+    END_MY_TRIP,
+    { id },
+    subdomain,
+  );
+  return data.endMyTrip;
 }

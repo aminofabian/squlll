@@ -7,8 +7,11 @@ import {
   ArrowLeft,
   Bus,
   Clock,
+  Flag,
   Loader2,
   MapPin,
+  Navigation,
+  Play,
   RefreshCw,
   UserCheck,
   UserX,
@@ -25,12 +28,25 @@ import {
   outlineButtonClass,
   primaryButtonClass,
 } from "@/components/school/SchoolContentPage";
+import { LiveBusesMap } from "@/components/transport/LiveBusesMap";
 import {
+  useDriverLiveTrip,
+} from "@/hooks/useDriverLiveTrip";
+import {
+  useDriverPositionReporting,
+  type SharingState,
+} from "@/hooks/useDriverPositionReporting";
+import { formatKm } from "@/lib/school/driverLive";
+import type { LiveBus } from "@/lib/school/transportApi";
+import {
+  endMyTrip,
+  fetchDriverMapConfig,
   fetchMyDriverTrip,
   fetchMyDriverTripStudents,
   markMyJourneyEvent,
   markMyStopArrived,
   markMyStopDeparted,
+  startMyTrip,
   type DriverTripStop,
   type DriverTripStudent,
   type TripStatus,
@@ -59,6 +75,14 @@ const STOP_STATUS_CLASS: Record<TripStopStatus, string> = {
     "border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300",
   SKIPPED:
     "border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+};
+
+const SHARING_LABEL: Record<SharingState, string> = {
+  idle: "Location off",
+  starting: "Starting location…",
+  sharing: "Sharing your location",
+  denied: "Location permission denied",
+  unavailable: "Location unavailable",
 };
 
 function humanize(value: string): string {
@@ -92,6 +116,13 @@ export function DriverTripRun() {
     queryKey: ["driverRoster", subdomain, tripId],
     queryFn: () => fetchMyDriverTripStudents(subdomain, tripId),
     enabled: Boolean(subdomain && tripId),
+  });
+
+  const mapConfigQuery = useQuery({
+    queryKey: ["driverMapConfig", subdomain],
+    queryFn: () => fetchDriverMapConfig(subdomain),
+    enabled: Boolean(subdomain),
+    staleTime: 5 * 60 * 1000,
   });
 
   const invalidate = () => {
@@ -147,13 +178,61 @@ export function DriverTripRun() {
     onError,
   });
 
+  const start = useMutation({
+    mutationFn: () => startMyTrip(subdomain, tripId),
+    onSuccess: () => {
+      toast.success("Trip started");
+      invalidate();
+    },
+    onError,
+  });
+
+  const end = useMutation({
+    mutationFn: () => endMyTrip(subdomain, tripId),
+    onSuccess: () => {
+      toast.success("Trip ended");
+      invalidate();
+    },
+    onError,
+  });
+
   const trip = tripQuery.data ?? null;
   const roster = rosterQuery.data ?? [];
+  const pickedCount = roster.filter(
+    (student) =>
+      student.eventType === "BOARDED" ||
+      student.eventType === "PICKED_FROM_SCHOOL",
+  ).length;
 
   const stops: DriverTripStop[] = [...(trip?.stops ?? [])].sort(
     (a, b) =>
       new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
   );
+
+  // The pickup points to plot: every trip stop that carries a coordinate.
+  const mapStops = stops.flatMap((stop) => {
+    const routeStop = stop.routeStop;
+    if (
+      !routeStop ||
+      typeof routeStop.lat !== "number" ||
+      typeof routeStop.lng !== "number"
+    ) {
+      return [];
+    }
+    return [
+      {
+        id: routeStop.id,
+        lat: routeStop.lat,
+        lng: routeStop.lng,
+        name: routeStop.name,
+        badge: `${stop.studentsBoarded}/${stop.studentsExpected}`,
+      },
+    ];
+  });
+  const mapStyleUrl =
+    mapConfigQuery.data?.enabled && mapConfigQuery.data.styleUrl
+      ? mapConfigQuery.data.styleUrl
+      : null;
 
   const studentsByStop = new Map<string, DriverTripStudent[]>();
   for (const student of roster) {
@@ -165,6 +244,32 @@ export function DriverTripRun() {
 
   const busy =
     arrived.isPending || departed.isPending || journey.isPending;
+  const running =
+    trip?.status === "IN_PROGRESS" || trip?.status === "EMERGENCY";
+  const { live } = useDriverLiveTrip(subdomain, tripId, running);
+  const { state: sharing } = useDriverPositionReporting(
+    subdomain,
+    tripId,
+    running,
+  );
+
+  // The driver's own position, drawn as the bus marker while the trip runs.
+  const liveBus: LiveBus[] =
+    live && running
+      ? [
+          {
+            tripId: live.tripId,
+            routeId: trip?.route?.id ?? null,
+            routeName: trip?.route?.name ?? null,
+            vehicleLabel: trip?.vehicle?.label ?? null,
+            lat: live.lat,
+            lng: live.lng,
+            updatedAt: live.updatedAt,
+          },
+        ]
+      : [];
+  const recenterPoint =
+    live && running ? { lat: live.lat, lng: live.lng } : null;
 
   return (
     <SchoolPage
@@ -179,6 +284,35 @@ export function DriverTripRun() {
       }
       actions={
         <div className="flex gap-2">
+          {trip?.status === "SCHEDULED" ? (
+            <Button
+              type="button"
+              className={primaryButtonClass}
+              disabled={start.isPending}
+              onClick={() => start.mutate()}
+            >
+              {start.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Play className="h-3.5 w-3.5" />
+              )}
+              Start trip
+            </Button>
+          ) : trip?.status === "IN_PROGRESS" ? (
+            <Button
+              type="button"
+              className={primaryButtonClass}
+              disabled={end.isPending}
+              onClick={() => end.mutate()}
+            >
+              {end.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Flag className="h-3.5 w-3.5" />
+              )}
+              End trip
+            </Button>
+          ) : null}
           <Button
             asChild
             variant="outline"
@@ -251,6 +385,86 @@ export function DriverTripRun() {
             </span>
           </div>
 
+          {!running ? (
+            <p className="border border-[#246a59]/20 bg-[#246a59]/5 px-4 py-3 text-xs text-[#1a4d42]/80 dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+              {trip.status === "SCHEDULED"
+                ? "Start the trip to record arrivals and board students."
+                : "This trip is finished — the run sheet is read-only."}
+            </p>
+          ) : null}
+
+          {running ? (
+            <SchoolPanel icon={Navigation} title="Live">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-full",
+                      sharing === "sharing" ? "bg-emerald-500" : "bg-slate-400",
+                    )}
+                  />
+                  <span className="text-[#1a4d42]/70 dark:text-white/60">
+                    {SHARING_LABEL[sharing]}
+                  </span>
+                </span>
+                <span className="text-[#1a4d42]/70 dark:text-white/60">
+                  Picked{" "}
+                  <span className="font-medium text-[#0a1f1a] dark:text-white">
+                    {pickedCount}
+                  </span>
+                  /{roster.length}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                {live?.nextPickStudentName ? (
+                  <span className="text-sm text-[#1a4d42]/70 dark:text-white/60">
+                    Next pick{" "}
+                    <span className="font-medium text-[#0a1f1a] dark:text-white">
+                      {live.nextPickStudentName}
+                    </span>
+                    {formatKm(live.nextPickDistanceM)
+                      ? ` · ${formatKm(live.nextPickDistanceM)} away`
+                      : ""}
+                  </span>
+                ) : (
+                  <span className="text-sm text-[#1a4d42]/60 dark:text-white/50">
+                    {live
+                      ? "All students picked up."
+                      : "Waiting for your location…"}
+                  </span>
+                )}
+                {live?.approaching ? (
+                  <Badge
+                    variant="outline"
+                    className="rounded-none border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
+                  >
+                    Arriving
+                  </Badge>
+                ) : null}
+              </div>
+              {sharing === "denied" ? (
+                <p className="mt-2 text-xs text-[#1a4d42]/60 dark:text-white/50">
+                  Allow location access so the school and parents can follow the
+                  bus.
+                </p>
+              ) : null}
+            </SchoolPanel>
+          ) : null}
+
+          {mapStyleUrl && mapStops.length > 0 ? (
+            <SchoolPanel icon={MapPin} title="Pickup map">
+              <LiveBusesMap
+                styleUrl={mapStyleUrl}
+                buses={liveBus}
+                stops={mapStops}
+                selectedTripId={null}
+                onSelect={() => {}}
+                fitToStops
+                recenterTo={recenterPoint}
+              />
+            </SchoolPanel>
+          ) : null}
+
           <SchoolPanel icon={MapPin} title="Stops">
             {stops.length === 0 ? (
               <SchoolEmpty
@@ -298,7 +512,7 @@ export function DriverTripRun() {
                           >
                             {humanize(stop.status)}
                           </Badge>
-                          {stop.status === "PENDING" ? (
+                          {running && stop.status === "PENDING" ? (
                             <Button
                               type="button"
                               size="sm"
@@ -309,7 +523,7 @@ export function DriverTripRun() {
                               Mark arrived
                             </Button>
                           ) : null}
-                          {stop.status === "ARRIVED" ? (
+                          {running && stop.status === "ARRIVED" ? (
                             <Button
                               type="button"
                               size="sm"
@@ -359,7 +573,7 @@ export function DriverTripRun() {
                                   >
                                     {humanize(student.eventType as string)}
                                   </Badge>
-                                ) : (
+                                ) : running ? (
                                   <div className="flex gap-2">
                                     <Button
                                       type="button"
@@ -402,7 +616,7 @@ export function DriverTripRun() {
                                       No-show
                                     </Button>
                                   </div>
-                                )}
+                                ) : null}
                               </li>
                             );
                           })}
@@ -416,8 +630,9 @@ export function DriverTripRun() {
           </SchoolPanel>
 
           <p className="text-xs text-[#1a4d42]/50 dark:text-white/40">
-            Board students as you go — each action saves immediately. Use Refresh
-            to see the latest.
+            {running
+              ? "Board students as you go — each action saves immediately. Use Refresh to see the latest."
+              : "This run sheet becomes editable once the trip is started."}
           </p>
         </>
       )}
