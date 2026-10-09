@@ -361,8 +361,9 @@ const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
 /**
  * Public download for the SQUL mobile app (Android APK).
  *
- * Current build: 2026-10-07 (runtime 0.1.0 — the admin portal + the full UI
- * elevation).
+ * Current build: 2026-10-09 (runtime 0.1.0, mobile commit 64cceed — the school
+ * transport release: driver/parent/student tracking, pickup-point stop
+ * requests, and the Uber-like live map).
  *
  * The fallback points at a **stable** GitHub Release asset (fixed tag
  * `app-android-latest`, re-uploaded with `--clobber` on each build) so the link
