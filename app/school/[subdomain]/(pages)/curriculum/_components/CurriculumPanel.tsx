@@ -12,7 +12,9 @@ import {
   BookOpen,
   GraduationCap,
   Library,
+  Check,
   Loader2,
+  Pencil,
   Plus,
   RefreshCw,
   Trash2,
@@ -49,6 +51,7 @@ import {
   deactivateTenantSubject,
   fetchAvailableSubjects,
   fetchTenantSubjects,
+  updateTenantSubject,
   type CurriculumSubjectType,
   type TenantSubjectView,
 } from "@/lib/school/curriculum";
@@ -224,6 +227,149 @@ function AssignSubjectForm({
   );
 }
 
+function EditSubjectForm({
+  subdomain,
+  curriculumId,
+  subject,
+  onDone,
+  onCancel,
+}: {
+  subdomain: string;
+  curriculumId: string;
+  subject: TenantSubjectView;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [subjectType, setSubjectType] = useState<CurriculumSubjectType>(
+    subject.isCompulsory ? "CORE" : "ELECTIVE",
+  );
+  const [creditHours, setCreditHours] = useState(
+    subject.creditHours != null ? String(subject.creditHours) : "",
+  );
+  const [passingMarks, setPassingMarks] = useState(
+    subject.passingMarks != null ? String(subject.passingMarks) : "",
+  );
+  const [totalMarks, setTotalMarks] = useState(
+    subject.totalMarks != null ? String(subject.totalMarks) : "",
+  );
+  const [isActive, setIsActive] = useState(subject.isActive);
+
+  const updateMutation = useMutation({
+    mutationFn: () =>
+      updateTenantSubject(subdomain, subject.id, {
+        subjectType,
+        isCompulsory: subjectType === "CORE",
+        creditHours: creditHours ? Number(creditHours) : undefined,
+        passingMarks: passingMarks ? Number(passingMarks) : undefined,
+        totalMarks: totalMarks ? Number(totalMarks) : undefined,
+        isActive,
+      }),
+    onSuccess: () => {
+      toast.success("Subject updated");
+      void queryClient.invalidateQueries({
+        queryKey: ["tenantSubjects", subdomain, curriculumId],
+      });
+      onDone();
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Could not update subject",
+      );
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+        Editing {subject.subjectName}
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="space-y-1.5">
+          <Label className={labelClass}>Requirement</Label>
+          <Select
+            value={subjectType}
+            onValueChange={(value) =>
+              setSubjectType(value as CurriculumSubjectType)
+            }
+          >
+            <SelectTrigger className={selectShell}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CORE">Compulsory</SelectItem>
+              <SelectItem value="ELECTIVE">Elective</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>Credit hours</Label>
+          <Input
+            className={fieldShell}
+            inputMode="decimal"
+            value={creditHours}
+            onChange={(event) => setCreditHours(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>Passing marks</Label>
+          <Input
+            className={fieldShell}
+            inputMode="numeric"
+            value={passingMarks}
+            onChange={(event) => setPassingMarks(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>Total marks</Label>
+          <Input
+            className={fieldShell}
+            inputMode="numeric"
+            value={totalMarks}
+            onChange={(event) => setTotalMarks(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>Status</Label>
+          <Select
+            value={isActive ? "active" : "inactive"}
+            onValueChange={(value) => setIsActive(value === "active")}
+          >
+            <SelectTrigger className={selectShell}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          className={primaryButtonClass}
+          disabled={updateMutation.isPending}
+          onClick={() => updateMutation.mutate()}
+        >
+          {updateMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Check className="h-4 w-4" />
+          )}
+          Save changes
+        </Button>
+        <Button
+          variant="outline"
+          className={outlineButtonClass}
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Curriculum overview. Lists the school's curricula (levels) from the config
  * store, shows the grade levels each covers, and the tenant subjects attached
@@ -238,6 +384,7 @@ export function CurriculumPanel() {
   const schoolConfig = useSchoolConfigStore((state) => state.config);
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editing, setEditing] = useState<TenantSubjectView | null>(null);
 
   const levels = schoolConfig?.selectedLevels ?? [];
   const activeLevel =
@@ -387,32 +534,46 @@ export function CurriculumPanel() {
                   {subject.passingMarks ?? "—"} / {subject.totalMarks ?? "—"}
                 </td>
                 <td className="px-3 py-2.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={
-                      removeMutation.isPending &&
-                      removeMutation.variables === subject.id
-                    }
-                    className="h-8 w-8 rounded-none text-[#1a4d42]/50 hover:bg-red-50 hover:text-red-600 dark:text-white/40 dark:hover:bg-red-950/30"
-                    aria-label={`Remove ${subject.subjectName}`}
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          `Remove ${subject.subjectName} from this curriculum?`,
-                        )
-                      ) {
-                        removeMutation.mutate(subject.id);
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-none text-[#1a4d42]/50 hover:bg-[#246a59]/10 hover:text-[#246a59] dark:text-white/40"
+                      aria-label={`Edit ${subject.subjectName}`}
+                      onClick={() => {
+                        setEditing(subject);
+                        setShowAddForm(false);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={
+                        removeMutation.isPending &&
+                        removeMutation.variables === subject.id
                       }
-                    }}
-                  >
-                    {removeMutation.isPending &&
-                    removeMutation.variables === subject.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
+                      className="h-8 w-8 rounded-none text-[#1a4d42]/50 hover:bg-red-50 hover:text-red-600 dark:text-white/40 dark:hover:bg-red-950/30"
+                      aria-label={`Remove ${subject.subjectName}`}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Remove ${subject.subjectName} from this curriculum?`,
+                          )
+                        ) {
+                          removeMutation.mutate(subject.id);
+                        }
+                      }}
+                    >
+                      {removeMutation.isPending &&
+                      removeMutation.variables === subject.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -487,6 +648,7 @@ export function CurriculumPanel() {
                     onClick={() => {
                       setSelectedLevelId(level.id);
                       setShowAddForm(false);
+                      setEditing(null);
                     }}
                     className={cn(
                       "inline-flex items-center gap-2 border px-3 py-1.5 text-xs font-medium transition-colors",
@@ -547,7 +709,10 @@ export function CurriculumPanel() {
                 <Button
                   size="sm"
                   className={primaryButtonClass}
-                  onClick={() => setShowAddForm((open) => !open)}
+                  onClick={() => {
+                    setShowAddForm((open) => !open);
+                    setEditing(null);
+                  }}
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Add subject
@@ -555,7 +720,17 @@ export function CurriculumPanel() {
               ) : null
             }
           >
-            {showAddForm && activeLevelId ? (
+            {editing && activeLevelId ? (
+              <div className="mb-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-[#071411]">
+                <EditSubjectForm
+                  subdomain={subdomain}
+                  curriculumId={activeLevelId}
+                  subject={editing}
+                  onDone={() => setEditing(null)}
+                  onCancel={() => setEditing(null)}
+                />
+              </div>
+            ) : showAddForm && activeLevelId ? (
               <div className="mb-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-[#071411]">
                 <AssignSubjectForm
                   subdomain={subdomain}

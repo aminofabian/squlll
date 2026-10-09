@@ -240,7 +240,7 @@ function StudentReportCardPanel({ subdomain }: { subdomain: string }) {
 
   return (
     <SchoolPanel icon={GraduationCap} title="Student report card">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className={labelClass}>Academic year</Label>
           <Select value={academicYear} onValueChange={setAcademicYear}>
@@ -289,36 +289,53 @@ function StudentReportCardPanel({ subdomain }: { subdomain: string }) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label className={labelClass}>Student</Label>
-          <Select
-            value={studentId}
-            onValueChange={setStudentId}
-            disabled={!gradeId || studentsQuery.isLoading}
-          >
-            <SelectTrigger className={selectShell}>
-              <SelectValue
-                placeholder={
-                  studentsQuery.isLoading ? "Loading…" : "Select student"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {students.length === 0 ? (
-                <SelectItem value="__none__" disabled>
-                  No students
-                </SelectItem>
-              ) : (
-                students.map((student) => (
-                  <SelectItem key={student.id} value={student.id}>
-                    {student.user?.name ?? student.admission_number}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
+
+      {gradeId ? (
+        <div className="mt-4">
+          <p className={labelClass}>Students in this grade</p>
+          <div className="mt-2">
+            {studentsQuery.isLoading ? (
+              <SchoolLoading label="Loading students…" />
+            ) : students.length === 0 ? (
+              <p className="text-sm text-[#1a4d42]/55 dark:text-white/45">
+                No students in this grade.
+              </p>
+            ) : (
+              <div className="flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
+                {students.map((student) => {
+                  const isSelected = student.id === studentId;
+                  return (
+                    <button
+                      key={student.id}
+                      type="button"
+                      onClick={() => setStudentId(student.id)}
+                      className={cn(
+                        "inline-flex items-center gap-2 border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                        isSelected
+                          ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
+                          : "border-[#1a4d42]/15 bg-white text-[#0a1f1a] hover:border-[#246a59]/40 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white",
+                      )}
+                    >
+                      {student.user?.name ?? student.admission_number}
+                      <span
+                        className={cn(
+                          "text-[10px] tabular-nums",
+                          isSelected
+                            ? "text-[#246a59]/70"
+                            : "text-[#1a4d42]/40 dark:text-white/40",
+                        )}
+                      >
+                        {student.admission_number}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-4">
         {!academicYear || !studentId ? (

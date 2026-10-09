@@ -145,3 +145,44 @@ export async function deactivateTenantSubject(
   );
   return data.deactivateTenantSubject;
 }
+
+/** Editable configuration for a tenant subject (name/code are intentionally
+ * omitted so catalog subjects aren't renamed away from their source). */
+export interface UpdateTenantSubjectInput {
+  subjectType?: CurriculumSubjectType;
+  isCompulsory?: boolean;
+  creditHours?: number;
+  passingMarks?: number;
+  totalMarks?: number;
+  isActive?: boolean;
+}
+
+const UPDATE_SUBJECT_MUTATION = `
+  mutation UpdateTenantSubject(
+    $tenantSubjectId: String!
+    $input: UpdateTenantSubjectInput!
+  ) {
+    updateCustomSubject(tenantSubjectId: $tenantSubjectId, input: $input) {
+      id
+      subjectType
+      isCompulsory
+      creditHours
+      passingMarks
+      totalMarks
+      isActive
+    }
+  }
+`;
+
+/** Update a subject's configuration on a curriculum. */
+export async function updateTenantSubject(
+  subdomain: string,
+  tenantSubjectId: string,
+  input: UpdateTenantSubjectInput,
+): Promise<void> {
+  await chatGraphqlFetch<{ updateCustomSubject: { id: string } }>(
+    UPDATE_SUBJECT_MUTATION,
+    { tenantSubjectId, input },
+    subdomain,
+  );
+}
