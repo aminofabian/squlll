@@ -61,6 +61,9 @@ function SchoolLayoutContent({
   const [isMounted, setIsMounted] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
+  // Drivers/conductors must never see the admin shell — they work from the app.
+  const isDriverShell = userRole === 'DRIVER' || userRole === 'CONDUCTOR'
+
   // Public auth / invitation flows — no dashboard chrome
   const signupSegment = params.signup as string | undefined
   const isInvitationPage = Boolean(
@@ -93,21 +96,32 @@ function SchoolLayoutContent({
   const [shouldShowLoading, setShouldShowLoading] = useState(true)
 
   useEffect(() => {
+    // Drivers/conductors work from the app — never the admin shell.
+    if (isDriverShell) {
+      router.replace('/driver');
+      return;
+    }
     if (isSignupPage || isConfigLoading || isConfigured) {
       return;
     }
     router.replace('/setup');
-  }, [isSignupPage, isConfigLoading, isConfigured, router]);
+  }, [isSignupPage, isConfigLoading, isConfigured, isDriverShell, router]);
 
   useEffect(() => {
-    if (isSignupPage || isConfigLoading || !isConfigured || !isMounted) {
+    if (
+      isSignupPage ||
+      isConfigLoading ||
+      !isConfigured ||
+      !isMounted ||
+      isDriverShell
+    ) {
       return;
     }
     const tenantId = getTenantIdFromCookies();
     if (!isSchoolOnboardingComplete(tenantId)) {
       router.replace('/onboarding');
     }
-  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, router]);
+  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, isDriverShell, router]);
 
   useEffect(() => {
     // Only show loading state initially, then let the config loading state take over
@@ -171,6 +185,16 @@ function SchoolLayoutContent({
   }, [subdomain])
 
   // Get initials for avatar
+
+  // Drivers/conductors never see the admin shell; the effect above redirects
+  // them to /driver. Render a bare holding view until the redirect lands.
+  if (isDriverShell) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f3f7f5] text-sm text-slate-600 dark:bg-[#071411] dark:text-slate-300">
+        Redirecting…
+      </div>
+    )
+  }
 
   // If not configured, show full-width layout without sidebar
   if (!isConfigured && !isConfigLoading) {

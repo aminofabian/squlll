@@ -46,6 +46,10 @@ export function getPostLoginPath(
       return '/parent';
     case 'STAFF':
       return '/staff-portal';
+    case 'DRIVER':
+    case 'CONDUCTOR':
+      // Drivers work from the SQUL mobile app; the web has a landing page only.
+      return '/driver';
     default:
       return '/dashboard';
   }
