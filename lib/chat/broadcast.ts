@@ -4,6 +4,7 @@ export interface BroadcastResult {
   success: boolean
   studentsReached: number
   parentsReached: number
+  teachersReached: number
   messageIds: string[]
 }
 
@@ -13,6 +14,7 @@ const BROADCAST_TO_STUDENTS = `
       success
       studentsReached
       parentsReached
+      teachersReached
       messageIds
     }
   }

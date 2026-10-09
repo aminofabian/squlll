@@ -26,6 +26,7 @@ export function SchoolBroadcastSection({
   const [lastReach, setLastReach] = useState<{
     students: number
     parents: number
+    teachers: number
   } | null>(null)
 
   const handleSend = async () => {
@@ -40,6 +41,7 @@ export function SchoolBroadcastSection({
       setLastReach({
         students: result.studentsReached,
         parents: result.parentsReached,
+        teachers: result.teachersReached,
       })
       setContent('')
       const parts: string[] = []
@@ -53,10 +55,15 @@ export function SchoolBroadcastSection({
           `${result.parentsReached} parent${result.parentsReached === 1 ? '' : 's'}`,
         )
       }
+      if (result.teachersReached > 0) {
+        parts.push(
+          `${result.teachersReached} teacher${result.teachersReached === 1 ? '' : 's'}`,
+        )
+      }
       toast.success(
         parts.length > 0
-          ? `Announcement sent to ${parts.join(' and ')}`
-          : 'No students or parents to receive this announcement',
+          ? `Announcement sent to ${parts.join(', ')}`
+          : 'No students, parents or teachers to receive this announcement',
       )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to send announcement')
@@ -81,7 +88,7 @@ export function SchoolBroadcastSection({
             <div>
               <h1 className="text-2xl font-bold">School Announcement</h1>
               <p className="text-sm text-muted-foreground">
-                Broadcast a message to all students and parents
+                Broadcast a message to all students, parents and teachers
               </p>
             </div>
           </div>
@@ -92,13 +99,13 @@ export function SchoolBroadcastSection({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-primary" />
-            Message students &amp; parents
+            Message students, parents &amp; teachers
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
             rows={compact ? 6 : 8}
-            placeholder="Write your announcement here. Students and parents will receive it in their messages inbox and get a live notification."
+            placeholder="Write your announcement here. Students, parents and teachers will receive it in their messages inbox and get a live notification."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             disabled={sending}
@@ -117,7 +124,10 @@ export function SchoolBroadcastSection({
               Last broadcast reached {lastReach.students} student
               {lastReach.students === 1 ? '' : 's'}
               {lastReach.parents > 0
-                ? ` and ${lastReach.parents} parent${lastReach.parents === 1 ? '' : 's'}`
+                ? `, ${lastReach.parents} parent${lastReach.parents === 1 ? '' : 's'}`
+                : ''}
+              {lastReach.teachers > 0
+                ? ` and ${lastReach.teachers} teacher${lastReach.teachers === 1 ? '' : 's'}`
                 : ''}
               .
             </p>
