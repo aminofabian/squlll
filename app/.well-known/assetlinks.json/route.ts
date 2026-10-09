@@ -18,9 +18,8 @@ const ANDROID_PACKAGE = "ke.co.squl.app";
 const SHA256_CERT_FINGERPRINTS = [
   // EAS-managed upload keystore — project `squl`, config "Build Credentials 9KYnSlkcyy".
   "A2:BC:01:29:74:A4:7A:C1:DE:55:67:2A:B7:10:57:CD:DA:F2:2D:98:D1:58:71:09:BA:DB:D7:A7:EE:48:52:29",
-  // TODO(play): append the Google Play app signing key SHA-256 from
-  // Play Console → App integrity → App signing key certificate once the first
-  // AAB is uploaded. Play-signed installs won't verify App Links until then.
+  // Google Play app signing key (Play Console → App signing key certificate).
+  "8A:5E:F0:AD:7F:C7:E7:C8:D2:FF:F4:3A:42:67:8A:B5:20:3E:94:40:4B:A1:BB:C0:7A:C7:92:3A:2F:DA:4D:19",
 ];
 
 export function GET() {
