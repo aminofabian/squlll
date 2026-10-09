@@ -21,7 +21,7 @@ export function StudentMobileHeader() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-9 shrink-0 p-0 text-slate-600 dark:text-slate-300"
+            className="h-9 w-9 shrink-0 rounded-lg p-0 text-muted-foreground hover:text-foreground"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Open menu</span>
@@ -33,7 +33,7 @@ export function StudentMobileHeader() {
       </Sheet>
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+        <h1 className="truncate text-base font-semibold text-foreground">
           {title}
         </h1>
       </div>

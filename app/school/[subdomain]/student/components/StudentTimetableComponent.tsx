@@ -11,7 +11,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useCurrentStudent } from "@/lib/hooks/useCurrentStudent";
 import { useStudentTimetable } from "@/lib/hooks/useStudentTimetable";
@@ -36,19 +35,18 @@ import {
   StudentLessonDetailSheet,
   type StudentLessonSelection,
 } from "./StudentLessonDetailSheet";
+import {
+  EmptyState,
+  Section,
+  StateMessage,
+  StatTile,
+} from "../_ui";
 
 interface StudentTimetableComponentProps {
   onBack: () => void;
   /** `page` = sidebar route; `embedded` = dashboard inline view */
   layout?: "embedded" | "page";
 }
-
-const STAT_ACCENTS = {
-  primary: "bg-primary/10 text-primary dark:bg-primary/20",
-  emerald: "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
-  amber: "bg-amber-500/10 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
-  violet: "bg-violet-500/10 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300",
-} as const;
 
 function PageShell({
   layout,
@@ -60,20 +58,13 @@ function PageShell({
   return (
     <div
       className={cn(
-        "overflow-x-clip",
+        "overflow-x-clip bg-gradient-to-b from-primary/[0.04] via-background to-background",
         layout === "page"
           ? cn(
               "mb-0 w-full min-w-0 max-w-full",
               "min-h-0 max-lg:overflow-hidden lg:min-h-[calc(100dvh-4rem)]",
-              "max-lg:bg-white max-lg:dark:bg-slate-950",
-              "lg:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] lg:from-primary/[0.06] lg:via-slate-50 lg:to-white",
-              "dark:lg:from-primary/10 dark:lg:via-slate-900 dark:lg:to-slate-950",
             )
-          : cn(
-              "min-h-[60vh] w-full min-w-0 max-w-full",
-              "bg-[#f2f2f7] lg:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] lg:from-primary/[0.06] lg:via-slate-50 lg:to-white",
-              "dark:lg:from-primary/10 dark:lg:via-slate-900 dark:lg:to-slate-950",
-            ),
+          : "min-h-[60vh] w-full min-w-0 max-w-full",
       )}
     >
       <div
@@ -171,44 +162,29 @@ const StudentTimetableComponent = ({
       variant="ghost"
       size="sm"
       onClick={onBack}
-      className="shrink-0 p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+      aria-label="Back"
+      className="-ml-2 shrink-0 gap-1.5 px-2 text-muted-foreground hover:text-primary"
     >
-      <ArrowLeft className="h-5 w-5" />
+      <ArrowLeft className="h-4 w-4" />
     </Button>
   );
+
+  const embeddedBackHeader = !isPage ? (
+    <div className="mb-4 border-b border-border pb-4">{backButton}</div>
+  ) : null;
 
   if (core.error) {
     return (
       <PageShell layout={layout}>
-        {!isPage && (
-          <div className="mb-4 border-b border-slate-200/80 pb-4 dark:border-slate-700">
-            {backButton}
-          </div>
-        )}
-        <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-              <div>
-                <h3 className="font-semibold text-red-900 dark:text-red-200">
-                  Error loading timetable
-                </h3>
-                <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                  {core.error}
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 gap-1.5"
-                  onClick={() => refetchTimetable()}
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Try again
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {embeddedBackHeader}
+        <Section padded={false}>
+          <StateMessage
+            variant="error"
+            title="Error loading timetable"
+            description={core.error}
+            onRetry={() => refetchTimetable()}
+          />
+        </Section>
       </PageShell>
     );
   }
@@ -216,38 +192,25 @@ const StudentTimetableComponent = ({
   if (!student || !student.gradeId) {
     return (
       <PageShell layout={layout}>
-        {!isPage && (
-          <div className="mb-4 border-b border-slate-200/80 pb-4 dark:border-slate-700">
-            {backButton}
-          </div>
-        )}
-        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div>
-                <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                  No grade assigned
-                </h3>
-                <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-                  Please contact your administrator to assign a grade to your
-                  account.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {embeddedBackHeader}
+        <Section padded={false}>
+          <EmptyState
+            icon={AlertCircle}
+            title="No grade assigned"
+            description="Please contact your administrator to assign a grade to your account."
+          />
+        </Section>
       </PageShell>
     );
   }
 
   const scheduleGridHeader = (
-    <div className="border-b border-slate-100 px-2 py-1.5 dark:border-slate-700/80">
+    <div className="border-b border-border px-2 py-1.5">
       <NextLessonPreview
         nextLesson={core.nextLesson}
         viewType="student"
         minimal
-        className="border-0 bg-transparent px-0 py-0 shadow-none dark:bg-transparent"
+        className="border-0 bg-transparent px-0 py-0 shadow-none"
       />
     </div>
   );
@@ -255,7 +218,7 @@ const StudentTimetableComponent = ({
   const scheduleGrid = unifiedTimetable ? (
     <section
       className={cn(
-        "w-full min-w-0 max-w-full overflow-hidden rounded border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-slate-800/95",
+        "w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card",
         "lg:shadow-sm",
         "min-h-[320px] lg:min-h-0",
       )}
@@ -276,51 +239,35 @@ const StudentTimetableComponent = ({
       />
     </section>
   ) : (
-    <Card className="border-dashed border-slate-300 dark:border-slate-700">
-      <CardContent className="flex items-start gap-3 p-6">
-        <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
-        <div>
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-            No schedule template yet
-          </h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {student?.streamName
-              ? `No timetable or period template is set up for ${gradeName} · ${student.streamName} this term.`
-              : `No timetable or period template is set up for ${gradeName} this term.`}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <Section padded={false}>
+      <EmptyState
+        icon={Calendar}
+        title="No schedule template yet"
+        description={
+          student?.streamName
+            ? `No timetable or period template is set up for ${gradeName} · ${student.streamName} this term.`
+            : `No timetable or period template is set up for ${gradeName} this term.`
+        }
+      />
+    </Section>
   );
 
   const statsBlock =
     stats && stats.totalLessons > 0 ? (
-      <div className="grid grid-cols-2 gap-2">
-        <StatCard
-          icon={<Calendar className="h-4 w-4" />}
+      <div className="grid grid-cols-2 gap-3">
+        <StatTile
+          icon={Calendar}
           label="Total lessons"
           value={stats.totalLessons}
-          accent="primary"
         />
-        <StatCard
-          icon={<CheckCircle2 className="h-4 w-4" />}
+        <StatTile
+          icon={CheckCircle2}
           label="Completed"
           value={`${stats.completedLessons}/${stats.totalLessons}`}
-          sub={`${stats.completionPercentage}%`}
-          accent="emerald"
+          hint={`${stats.completionPercentage}%`}
         />
-        <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label="Upcoming"
-          value={stats.upcomingLessons}
-          accent="amber"
-        />
-        <StatCard
-          icon={<BookOpen className="h-4 w-4" />}
-          label="Subjects"
-          value={stats.totalSubjects}
-          accent="violet"
-        />
+        <StatTile icon={Clock} label="Upcoming" value={stats.upcomingLessons} />
+        <StatTile icon={BookOpen} label="Subjects" value={stats.totalSubjects} />
       </div>
     ) : null;
 
@@ -355,7 +302,7 @@ const StudentTimetableComponent = ({
       {isPage ? (
         <>
           {/* Mobile — timetable fills viewport between header and tab bar */}
-          <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
+          <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-background lg:hidden">
             {unifiedTimetable ? (
               <StudentMobileSchedule
                 days={unifiedTimetable.days}
@@ -379,7 +326,7 @@ const StudentTimetableComponent = ({
           <div className="hidden lg:block">
             <div className="mb-3 flex items-center justify-end gap-2">
               {activeTerm ? (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-muted-foreground">
                   {activeTerm.name}
                 </span>
               ) : null}
@@ -401,7 +348,7 @@ const StudentTimetableComponent = ({
         </>
       ) : (
         <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-slate-700">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               {backButton}
               <div className="min-w-0 flex-1 lg:max-w-sm">
@@ -411,7 +358,7 @@ const StudentTimetableComponent = ({
                   minimal
                   className="lg:hidden"
                 />
-                <p className="hidden truncate text-sm text-slate-600 dark:text-slate-400 lg:block">
+                <p className="hidden truncate text-sm text-muted-foreground lg:block">
                   {gradeName}
                   {student?.streamName ? ` · ${student.streamName}` : ""}
                   {" · "}
@@ -421,7 +368,7 @@ const StudentTimetableComponent = ({
             </div>
             <div className="flex items-center gap-2">
               {activeTerm ? (
-                <span className="hidden text-xs text-slate-500 sm:inline dark:text-slate-400">
+                <span className="hidden text-xs text-muted-foreground sm:inline">
                   {activeTerm.name}
                 </span>
               ) : null}
@@ -456,40 +403,5 @@ const StudentTimetableComponent = ({
     </PageShell>
   );
 };
-
-function StatCard({
-  icon,
-  label,
-  value,
-  sub,
-  accent = "primary",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent?: keyof typeof STAT_ACCENTS;
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white px-2.5 py-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-800/90">
-      <div className={cn("shrink-0 rounded-md p-1.5", STAT_ACCENTS[accent])}>
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-base font-bold leading-tight text-slate-900 dark:text-slate-100">
-          {value}
-        </p>
-        <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-400">
-          {label}
-        </p>
-        {sub && (
-          <p className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500">
-            {sub}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default StudentTimetableComponent;

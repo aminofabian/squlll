@@ -1,164 +1,136 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
+import { LogOut, Settings, User } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
-import { 
-  LogOut,
-  User,
-  Settings,
-} from "lucide-react"
-import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
-import { useParams } from 'next/navigation';
-import { useSignout } from "@/lib/hooks/useSignout";
+import { DynamicLogo } from "../../app/school/[subdomain]/parent/components/DynamicLogo"
+import { useSignout } from "@/lib/hooks/useSignout"
 import {
   isStudentNavActive,
   STUDENT_SIDEBAR_ITEMS,
-} from "@/lib/student/studentNavConfig";
+} from "@/lib/student/studentNavConfig"
 
 interface SidebarProps {
   className?: string
 }
 
-const navigation = STUDENT_SIDEBAR_ITEMS;
+function NavRow({
+  href,
+  icon: Icon,
+  label,
+  active,
+  onClick,
+  disabled,
+  danger,
+}: {
+  href?: string
+  icon: LucideIcon
+  label: string
+  active?: boolean
+  onClick?: () => void
+  disabled?: boolean
+  danger?: boolean
+}) {
+  const inner = (
+    <>
+      <span
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+          active
+            ? "bg-primary text-white"
+            : danger
+              ? "bg-muted text-muted-foreground group-hover:bg-red-100 group-hover:text-red-600 dark:group-hover:bg-red-950/50"
+              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary",
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      <span
+        className={cn(
+          "truncate text-sm font-medium",
+          active
+            ? "text-primary"
+            : danger
+              ? "text-foreground group-hover:text-red-600"
+              : "text-foreground",
+        )}
+      >
+        {label}
+      </span>
+    </>
+  )
+
+  const classes = cn(
+    "group flex w-full items-center gap-3 rounded-lg border border-transparent px-2.5 py-2 text-left transition-colors",
+    active ? "bg-primary/10" : "hover:bg-muted/60",
+    disabled && "pointer-events-none opacity-50",
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={classes}>
+        {inner}
+      </Link>
+    )
+  }
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={classes}>
+      {inner}
+    </button>
+  )
+}
 
 export function StudentSidebar({ className }: SidebarProps) {
-  const pathname = usePathname();
-  const params = useParams();
-  const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
-  const { signOut, isSigningOut } = useSignout();
+  const pathname = usePathname()
+  const params = useParams()
+  const subdomain =
+    typeof params.subdomain === "string"
+      ? params.subdomain
+      : Array.isArray(params.subdomain)
+        ? params.subdomain[0]
+        : ""
+  const { signOut, isSigningOut } = useSignout()
 
   return (
-    <div className={cn(
-      "flex flex-col h-full bg-white dark:bg-slate-900 shadow-xl",
-      className
-    )}>
-      {/* Header */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700 shadow-sm flex flex-col items-center">
+    <div
+      className={cn(
+        "flex h-full flex-col border-r border-border bg-card",
+        className,
+      )}
+    >
+      {/* Brand */}
+      <div className="flex items-center justify-center border-b border-border px-5 py-5">
         <DynamicLogo subdomain={subdomain} size="md" showText={true} />
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
-        {navigation.map((item, index) => {
-          const Icon = item.icon
-          const isActive = isStudentNavActive(pathname, item.href)
-          
-          return (
-            <motion.div 
-              key={item.href}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <Link href={item.href}>
-                <Button
-                  variant={isActive ? "default" : "outline"}
-                  className={cn(
-                    "w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300",
-                    isActive 
-                      ? "bg-primary text-white hover:text-white shadow-sm" 
-                      : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-                  )}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className={cn(
-                      "flex items-center justify-center h-6 w-6 rounded-full transition-colors",
-                      isActive 
-                        ? "bg-white/20" 
-                        : "bg-muted group-hover:bg-primary/10"
-                    )}>
-                      <Icon className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        isActive 
-                          ? "text-white" 
-                          : "text-muted-foreground group-hover:text-primary"
-                      )} />
-                    </div>
-                    <span className="font-medium">{item.title}</span>
-                  </div>
-                  
-                  {isActive && (
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute bottom-0 left-0 h-0.5 bg-primary/30" 
-                    />
-                  )}
-                </Button>
-              </Link>
-            </motion.div>
-          )
-        })}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+        {STUDENT_SIDEBAR_ITEMS.map((item) => (
+          <NavRow
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={item.title}
+            active={isStudentNavActive(pathname, item.href)}
+          />
+        ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 space-y-3 shadow-sm">
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Link href="/student/profile">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
-                  <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
-                </div>
-                <span className="font-medium">Profile</span>
-              </div>
-            </Button>
-          </Link>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.05 }}
-        >
-          <Link href="/student/settings">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
-                  <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
-                </div>
-                <span className="font-medium">Settings</span>
-              </div>
-            </Button>
-          </Link>
-        </motion.div>
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.1 }}
-        >
-          <Button 
-            variant="outline" 
-            onClick={signOut}
-            disabled={isSigningOut}
-            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 disabled:opacity-50"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-red-100 transition-colors">
-                <LogOut className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-red-600" />
-              </div>
-              <span className="font-medium">
-                {isSigningOut ? 'Signing Out...' : 'Logout'}
-              </span>
-            </div>
-          </Button>
-        </motion.div>
+      {/* Account */}
+      <div className="space-y-0.5 border-t border-border p-3">
+        <NavRow href="/student/profile" icon={User} label="Profile" />
+        <NavRow href="/student/settings" icon={Settings} label="Settings" />
+        <NavRow
+          icon={LogOut}
+          label={isSigningOut ? "Signing out…" : "Logout"}
+          danger
+          disabled={isSigningOut}
+          onClick={signOut}
+        />
       </div>
     </div>
   )
-} 
+}

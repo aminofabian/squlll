@@ -1,21 +1,27 @@
 'use client'
 
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  ClipboardList,
-  User,
-  AlertCircle,
-  RefreshCw,
-  BookOpen,
-} from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
+import { BookOpen, Calendar, Clock, ClipboardList, RefreshCw, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import {
+  EmptyState,
+  PageHeader,
+  Section,
+  StateMessage,
+  StatusPill,
+  StudentPage,
+  type PillTone,
+} from '../_ui'
 import { useStudentExamTimetable } from '@/lib/student/useStudentExamTimetable'
+
+function statusTone(status: string): PillTone {
+  const s = status.toLowerCase()
+  if (s.includes('cancel')) return 'danger'
+  if (s.includes('complet') || s.includes('done') || s.includes('graded')) return 'success'
+  if (s.includes('ongoing') || s.includes('active') || s.includes('progress')) return 'warning'
+  return 'info'
+}
 
 function formatDateLabel(dateKey: string): string {
   const date = new Date(dateKey)
@@ -29,6 +35,7 @@ function formatDateLabel(dateKey: string): string {
 
 export default function StudentExamTimetablePage() {
   const params = useParams()
+  const router = useRouter()
   const subdomain =
     typeof params.subdomain === 'string'
       ? params.subdomain
@@ -39,94 +46,86 @@ export default function StudentExamTimetablePage() {
   const { grouped, tests, loading, error, refetch } =
     useStudentExamTimetable(subdomain)
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      <div className="px-4 py-6 lg:px-8 lg:py-8 max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <Button variant="ghost" size="sm" asChild className="p-2">
-            <Link href={`/school/${subdomain}/student`}>
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Exam Timetable</h1>
-            <p className="text-sm text-muted-foreground">
-              Scheduled tests and exams for your grade
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
+  const refreshButton = (
+    <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={loading}>
+      <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+      Refresh
+    </Button>
+  )
 
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <Card className="border-destructive/20">
-            <CardContent className="p-8 text-center space-y-4">
-              <AlertCircle className="w-10 h-10 text-destructive mx-auto" />
-              <p className="text-muted-foreground">{error}</p>
-              <Button onClick={() => void refetch()}>Try again</Button>
-            </CardContent>
-          </Card>
-        ) : tests.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center space-y-2">
-              <ClipboardList className="w-10 h-10 text-muted-foreground mx-auto" />
-              <p className="font-medium">No scheduled exams</p>
-              <p className="text-sm text-muted-foreground">
-                Your exam timetable will appear here when teachers publish tests.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {grouped.map(({ date, tests: dayTests }) => (
-              <section key={date} className="space-y-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  {formatDateLabel(date)}
-                </div>
-                <div className="space-y-3 pl-2 border-l-2 border-primary/20">
-                  {dayTests.map((test) => (
-                    <Card key={test.id} className="border-primary/20 ml-4">
-                      <CardContent className="p-5 space-y-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h2 className="font-semibold text-lg">{test.title}</h2>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                              <BookOpen className="w-3.5 h-3.5" />
-                              {test.subject.name}
-                            </p>
-                          </div>
-                          <Badge variant="secondary">{test.status}</Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {test.startTime}
-                            {test.endTime ? ` – ${test.endTime}` : ''}
-                            {' · '}
-                            {test.duration} min
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {test.teacher.fullName}
-                          </span>
-                          <span>{test.totalMarks} marks</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+  return (
+    <StudentPage>
+      <PageHeader
+        title="Exam Timetable"
+        subtitle="Scheduled tests and exams for your grade"
+        onBack={() => router.push(`/school/${subdomain}/student`)}
+        actions={refreshButton}
+      />
+
+      {loading ? (
+        <Section padded={false}>
+          <StateMessage variant="loading" title="Loading exam timetable…" />
+        </Section>
+      ) : error ? (
+        <Section padded={false}>
+          <StateMessage
+            variant="error"
+            title="Couldn't load the exam timetable"
+            description={error}
+            onRetry={() => void refetch()}
+          />
+        </Section>
+      ) : tests.length === 0 ? (
+        <Section padded={false}>
+          <EmptyState
+            icon={ClipboardList}
+            title="No scheduled exams"
+            description="Your exam timetable will appear here when teachers publish tests."
+          />
+        </Section>
+      ) : (
+        <div className="space-y-6">
+          {grouped.map(({ date, tests: dayTests }) => (
+            <Section key={date} title={formatDateLabel(date)} icon={Calendar}>
+              <ul className="divide-y divide-border">
+                {dayTests.map((test) => (
+                  <li
+                    key={test.id}
+                    className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="truncate text-sm font-semibold text-foreground">
+                        {test.title}
+                      </h3>
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        {test.subject.name}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-4 w-4" />
+                          {test.startTime}
+                          {test.endTime ? ` – ${test.endTime}` : ''}
+                          {' · '}
+                          {test.duration} min
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <User className="h-4 w-4" />
+                          {test.teacher.fullName}
+                        </span>
+                        <span>{test.totalMarks} marks</span>
+                      </div>
+                    </div>
+                    <StatusPill tone={statusTone(test.status)} className="self-start">
+                      {test.status}
+                    </StatusPill>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          ))}
+        </div>
+      )}
+    </StudentPage>
   )
 }

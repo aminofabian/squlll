@@ -1,6 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import { StudentPage } from '../_ui'
 import { StudentFeesSection } from '../components/StudentFeesSection'
 
 export default function StudentFeesPage() {
@@ -12,5 +13,9 @@ export default function StudentFeesPage() {
         ? params.subdomain[0]
         : ''
 
-  return <StudentFeesSection subdomain={subdomain} layout="page" />
+  return (
+    <StudentPage>
+      <StudentFeesSection subdomain={subdomain} layout="page" />
+    </StudentPage>
+  )
 }

@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation"
 import DownloadNotesComponent from "../components/DownloadNotesComponent"
+import { StudentPage } from "../_ui"
 
 export default function StudentNotesPage() {
   const params = useParams()
@@ -14,13 +15,11 @@ export default function StudentNotesPage() {
         : ""
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      <div className="px-4 py-6 lg:px-8 lg:py-8 max-w-4xl mx-auto">
-        <DownloadNotesComponent
-          subdomain={subdomain}
-          onBack={() => router.push("/student")}
-        />
-      </div>
-    </div>
+    <StudentPage>
+      <DownloadNotesComponent
+        subdomain={subdomain}
+        onBack={() => router.push("/student")}
+      />
+    </StudentPage>
   )
 }

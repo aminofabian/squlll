@@ -1,14 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, DollarSign, RefreshCw } from 'lucide-react'
+import { ArrowRight, RefreshCw, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   formatStudentPaymentStatus,
-  paymentStatusBadgeClass,
   type StudentFeeOverview,
 } from '@/lib/student/studentFees'
+import {
+  Section,
+  StatTile,
+  StateMessage,
+  StatusPill,
+  type PillTone,
+} from '../_ui'
 import { cn } from '@/lib/utils'
 
 interface StudentFeeSummaryCardProps {
@@ -17,6 +22,20 @@ interface StudentFeeSummaryCardProps {
   onRefresh?: () => void
   feesHref?: string
   compact?: boolean
+}
+
+/** Payment status → pill tone. Emerald/amber/red stay reserved for money status. */
+function paymentTone(status: string): PillTone {
+  switch (status) {
+    case 'CLEARED':
+      return 'success'
+    case 'PARTIAL':
+      return 'warning'
+    case 'IN_ARREARS':
+      return 'danger'
+    default:
+      return 'neutral'
+  }
 }
 
 export function StudentFeeSummaryCard({
@@ -31,27 +50,27 @@ export function StudentFeeSummaryCard({
   const status = overview?.paymentStatus
 
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20',
-        compact ? 'p-3' : 'p-4',
-      )}
-    >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-emerald-600" />
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-            Fee balance
-          </h3>
+    <Section
+      icon={Wallet}
+      title="Fee balance"
+      padded={!compact}
+      bodyClassName={compact ? 'p-3' : undefined}
+      actions={
+        <>
           {status ? (
-            <Badge className={cn('text-xs', paymentStatusBadgeClass(status))}>
+            <StatusPill tone={paymentTone(status)}>
               {formatStudentPaymentStatus(status)}
-            </Badge>
+            </StatusPill>
           ) : null}
-        </div>
-        <div className="flex items-center gap-1">
           {onRefresh ? (
-            <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onRefresh}
+              disabled={loading}
+              aria-label="Refresh fee balance"
+            >
               <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
             </Button>
           ) : null}
@@ -63,47 +82,78 @@ export function StudentFeeSummaryCard({
               </Link>
             </Button>
           ) : null}
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {loading && !overview ? (
-        <p className="text-sm text-slate-500">Loading fee balance…</p>
+        <StateMessage
+          variant="loading"
+          title="Loading fee balance…"
+          className="py-6"
+        />
       ) : overview ? (
-        <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                Total billed
-              </p>
-              <p className="text-lg font-semibold tabular-nums">
-                KES {overview.totalBilled.toLocaleString()}
-              </p>
+        <div className="space-y-4">
+          {compact ? (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Billed
+                </p>
+                <p className="mt-0.5 truncate text-sm font-semibold tabular-nums text-foreground">
+                  KES {overview.totalBilled.toLocaleString()}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Paid
+                </p>
+                <p className="mt-0.5 truncate text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  KES {overview.totalPaid.toLocaleString()}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Outstanding
+                </p>
+                <p className="mt-0.5 truncate text-sm font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+                  KES {overview.outstanding.toLocaleString()}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Paid</p>
-              <p className="text-lg font-semibold tabular-nums text-emerald-700">
-                KES {overview.totalPaid.toLocaleString()}
-              </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatTile
+                label="Total billed"
+                value={`KES ${overview.totalBilled.toLocaleString()}`}
+              />
+              <StatTile
+                label="Paid"
+                value={
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    KES {overview.totalPaid.toLocaleString()}
+                  </span>
+                }
+              />
+              <StatTile
+                label="Outstanding"
+                value={
+                  <span className="text-amber-600 dark:text-amber-400">
+                    KES {overview.outstanding.toLocaleString()}
+                  </span>
+                }
+              />
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                Outstanding
-              </p>
-              <p className="text-lg font-semibold tabular-nums text-amber-700">
-                KES {overview.outstanding.toLocaleString()}
-              </p>
-            </div>
-          </div>
+          )}
 
           {overview.creditBalance > 0 ? (
-            <p className="mt-2 text-sm text-emerald-700">
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">
               Credit balance: KES {overview.creditBalance.toLocaleString()}
             </p>
           ) : null}
 
           {!compact && overview.recentPayments.length > 0 ? (
-            <div className="mt-4 border-t border-emerald-200/60 pt-3 dark:border-emerald-900/40">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="border-t border-border pt-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Recent payments
               </p>
               <ul className="space-y-1.5">
@@ -112,10 +162,10 @@ export function StudentFeeSummaryCard({
                     key={payment.id}
                     className="flex items-center justify-between text-sm"
                   >
-                    <span className="text-slate-600">
+                    <span className="truncate text-muted-foreground">
                       {payment.receiptNumber}
                     </span>
-                    <span className="font-medium tabular-nums">
+                    <span className="font-medium tabular-nums text-foreground">
                       KES {Number(payment.amount).toLocaleString()}
                     </span>
                   </li>
@@ -123,8 +173,8 @@ export function StudentFeeSummaryCard({
               </ul>
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
-    </div>
+    </Section>
   )
 }

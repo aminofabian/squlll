@@ -56,7 +56,7 @@ export function StudentMobileSchedule({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden bg-white dark:bg-slate-950",
+        "flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden bg-card",
         className,
       )}
     >
@@ -67,7 +67,7 @@ export function StudentMobileSchedule({
       />
 
       <section
-        className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden bg-white dark:bg-slate-950"
+        className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden bg-card"
         aria-label="Weekly timetable"
       >
         <TeacherMobileWeekTable

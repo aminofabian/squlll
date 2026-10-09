@@ -1,8 +1,7 @@
 'use client'
 
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { MessagesPage } from '@/components/chat/MessagesPage'
+import { PageHeader } from '../_ui'
 
 interface StudentMessagesSectionProps {
   onBack: () => void
@@ -16,14 +15,13 @@ export function StudentMessagesSection({
   preferredParticipantLabel,
 }: StudentMessagesSectionProps) {
   return (
-    <div className="space-y-4">
-      <Button variant="ghost" onClick={onBack} className="gap-2">
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </Button>
+    <div>
+      <PageHeader title="School Messages" onBack={onBack} />
       <MessagesPage
         title="School Messages"
-        className="h-[min(720px,calc(100vh-10rem))]"
+        // MessagesPage draws its own title row; hide it so the portal header is
+        // the single source of truth for the page title.
+        className="h-[min(720px,calc(100vh-16rem))] [&>div:first-child]:hidden"
         preferredParticipantId={preferredParticipantId}
         preferredParticipantLabel={preferredParticipantLabel}
       />

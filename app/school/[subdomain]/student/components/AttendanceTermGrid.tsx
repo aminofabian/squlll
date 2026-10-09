@@ -1,13 +1,29 @@
 "use client";
-import React from "react";
 
-const colorScale = [
-  "#e5e7eb", // 0 - Absent (gray)
-  "#2563eb", // 1 - Present (primary)
-  "#60a5fa", // 2 - Late (lighter primary)
-  "#fbbf24", // 3 - Excused (yellow)
-  "#f3f4f6", // 4 - No School (lightest gray)
-  "#d1fae5", // 5 - Weekend (distinct green)
+import { CalendarDays } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Section, StatusPill } from "../_ui";
+
+// Semantic status colours, shared by the grid and the legend.
+const CELL_STYLE: Record<number, string> = {
+  0: "bg-red-500", // Absent
+  1: "bg-emerald-500", // Present
+  2: "bg-amber-500", // Late
+  3: "bg-blue-500", // Excused
+  4: "bg-muted-foreground/25", // No School
+  5: "bg-muted", // Weekend
+};
+
+const statusNames = ["Absent", "Present", "Late", "Excused", "No School", "Weekend"];
+
+const legendItems: { value: number; label: string }[] = [
+  { value: 1, label: "Present" },
+  { value: 2, label: "Late" },
+  { value: 3, label: "Excused" },
+  { value: 0, label: "Absent" },
+  { value: 4, label: "No School" },
+  { value: 5, label: "Weekend" },
 ];
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -43,10 +59,10 @@ const generateTermAttendance = (startDate = new Date()) => {
 const termData = generateTermAttendance();
 
 function getWeekRange(week: { date: string }[]) {
-  if (!week.length) return '';
+  if (!week.length) return "";
   const start = new Date(week[0].date);
   const end = new Date(week[6].date);
-  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })}–${end.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
 export default function AttendanceTermGrid({
@@ -66,119 +82,88 @@ export default function AttendanceTermGrid({
       else if (d.value === 3) acc.excused++;
       return acc;
     },
-    { present: 0, absent: 0, late: 0, excused: 0, noSchool: 0, weekend: 0 }
+    { present: 0, absent: 0, late: 0, excused: 0, noSchool: 0, weekend: 0 },
   );
   const totalSchoolDays = flat.length - summary.noSchool - summary.weekend;
 
   return (
-    <div className="w-full">
-      <div className="relative w-full max-w-full pb-4">
-        <div className="flex flex-col items-center min-w-0">
-          {/* Week labels */}
-          <div
-            className="grid mb-2"
-            style={{
-              gridTemplateColumns: `48px repeat(${data.length}, 1fr)`,
-              width: '100%',
-              minWidth: 0,
-              gap: '2px',
-            }}
-          >
-            <div></div> {/* Spacer for sticky day labels */}
-            {data.map((week, wi) => (
-              <div key={wi} className="text-xs font-bold text-primary text-center truncate">
-                Week {wi + 1}
-              </div>
-            ))}
-          </div>
-          {/* Attendance grid */}
-          <div
-            className="grid"
-            style={{
-              gridTemplateColumns: `48px repeat(${data.length}, 1fr)`,
-              width: '100%',
-              minWidth: 0,
-              gap: '2px',
-            }}
-          >
-            {/* Day labels sticky on the left */}
-            <div className="flex flex-col justify-between bg-white" style={{ height: 20 * 7, width: 48, borderRight: '2px solid #e5e7eb' }}>
-              {daysOfWeek.map((d) => (
-                <div key={d} className="text-xs text-muted-foreground font-medium" style={{ height: 20, lineHeight: "20px", width: 48, textAlign: 'right', paddingRight: 8 }}>{d[0]}</div>
-              ))}
+    <Section
+      title="Term attendance"
+      description="Rolling 14-week overview"
+      icon={CalendarDays}
+      bodyClassName="space-y-4"
+    >
+      <div className="overflow-x-auto pb-1">
+        <div
+          className="grid min-w-[560px] gap-1"
+          style={{ gridTemplateColumns: `32px repeat(${data.length}, minmax(0, 1fr))` }}
+        >
+          <div />
+          {data.map((_, wi) => (
+            <div
+              key={wi}
+              className="truncate text-center text-[10px] font-medium text-muted-foreground"
+            >
+              W{wi + 1}
             </div>
-            {/* Weeks */}
-            {data.map((week, wi) => (
-              <div
-                key={wi}
-                className="flex flex-col items-center"
-                style={{ border: '2px solid #2563eb', background: wi % 2 === 0 ? '#f8fafc' : '#fff', minWidth: 0, boxShadow: '0 2px 8px 0 rgba(37,99,235,0.07)' }}
-              >
-                {week.map((day, di) => (
-                  <div
-                    key={di}
-                    title={`${day.date}: ${["Absent", "Present", "Late", "Excused", "No School", "Weekend"][day.value]}`}
-                    style={{
-                      width: '100%',
-                      minWidth: 12,
-                      maxWidth: 28,
-                      height: 20,
-                      background: colorScale[day.value],
-                      border: day.isWeekend ? '2px solid #10b981' : '1px solid #e5e7eb',
-                      position: 'relative',
-                      margin: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {day.isWeekend && (
-                      <span style={{
-                        position: 'absolute',
-                        top: 2,
-                        right: 2,
-                        width: 12,
-                        height: 12,
-                        background: '#2563eb',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: 10,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 1px 2px 0 rgba(37,99,235,0.10)',
-                      }}>W</span>
-                    )}
-                  </div>
-                ))}
-                {/* Week range label */}
-                <div className="text-[10px] text-primary/80 mt-1 mb-1 text-center font-medium w-full truncate">
-                  {getWeekRange(week)}
-                </div>
+          ))}
+
+          <div className="flex flex-col justify-between border-r border-border pr-1 text-[10px] text-muted-foreground">
+            {daysOfWeek.map((d) => (
+              <div key={d} className="text-right leading-none">
+                {d[0]}
               </div>
             ))}
           </div>
+
+          {data.map((week, wi) => (
+            <div
+              key={wi}
+              className={cn(
+                "flex flex-col gap-px rounded-lg border border-border p-1",
+                wi % 2 === 0 ? "bg-muted/40" : "bg-transparent",
+              )}
+            >
+              {week.map((day, di) => (
+                <div
+                  key={di}
+                  title={`${day.date}: ${statusNames[day.value]}`}
+                  className={cn(
+                    "h-5 w-full rounded-[3px]",
+                    CELL_STYLE[day.value],
+                    day.isWeekend && "ring-1 ring-inset ring-border",
+                  )}
+                />
+              ))}
+              <div className="mt-1 truncate text-center text-[10px] text-muted-foreground">
+                {getWeekRange(week)}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      {/* Legend and summary */}
-      <div className="flex gap-4 mt-4 text-xs text-muted-foreground flex-wrap">
-        <div className="flex items-center gap-1"><span style={{ width: 16, height: 16, background: colorScale[1], display: 'inline-block', border: '1px solid #e5e7eb' }}></span> Present</div>
-        <div className="flex items-center gap-1"><span style={{ width: 16, height: 16, background: colorScale[2], display: 'inline-block', border: '1px solid #e5e7eb' }}></span> Late</div>
-        <div className="flex items-center gap-1"><span style={{ width: 16, height: 16, background: colorScale[3], display: 'inline-block', border: '1px solid #e5e7eb' }}></span> Excused</div>
-        <div className="flex items-center gap-1"><span style={{ width: 16, height: 16, background: colorScale[0], display: 'inline-block', border: '1px solid #e5e7eb' }}></span> Absent</div>
-        <div className="flex items-center gap-1"><span style={{ width: 16, height: 16, background: colorScale[4], display: 'inline-block', border: '1px solid #e5e7eb' }}></span> No School</div>
-        <div className="flex items-center gap-1"><span style={{ width: 16, height: 16, background: colorScale[5], display: 'inline-block', border: '2px solid #10b981' }}><span style={{ position: 'absolute', fontSize: 10, color: '#047857', fontWeight: 'bold', lineHeight: '10px' }}>W</span></span> Weekend</div>
+
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
+        {legendItems.map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            <span className={cn("h-3 w-3 rounded-[3px]", CELL_STYLE[item.value])} />
+            {item.label}
+          </div>
+        ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-4 text-xs text-primary font-semibold">
-        <div>Total School Days: <span className="text-foreground">{totalSchoolDays}</span></div>
-        <div>Present: <span className="text-blue-600">{summary.present}</span></div>
-        <div>Late: <span className="text-primary">{summary.late}</span></div>
-        <div>Excused: <span className="text-yellow-600">{summary.excused}</span></div>
-        <div>Absent: <span className="text-red-600">{summary.absent}</span></div>
-        <div>No School: <span className="text-muted-foreground">{summary.noSchool}</span></div>
-        <div>Weekend: <span className="text-green-700">{summary.weekend}</span></div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-4 text-xs">
+        <span className="text-muted-foreground">
+          Total school days{" "}
+          <span className="font-semibold text-foreground">{totalSchoolDays}</span>
+        </span>
+        <StatusPill tone="success">Present {summary.present}</StatusPill>
+        <StatusPill tone="warning">Late {summary.late}</StatusPill>
+        <StatusPill tone="info">Excused {summary.excused}</StatusPill>
+        <StatusPill tone="danger">Absent {summary.absent}</StatusPill>
+        <StatusPill tone="neutral">No school {summary.noSchool}</StatusPill>
+        <StatusPill tone="accent">Weekend {summary.weekend}</StatusPill>
       </div>
-    </div>
+    </Section>
   );
-} 
+}

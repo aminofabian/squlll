@@ -78,6 +78,7 @@ const CurrentLessonStatus = ({ selectedGrade = 'Grade 1' }: CurrentLessonStatusP
     return {
       subject: cellData.subject,
       teacher: cellData.teacher || '',
+      // eslint-disable-next-line react-hooks/purity -- placeholder room number until real room data is wired up
       room: `Room ${Math.floor(Math.random() * 20) + 1}`,
       isBreak: cellData.isBreak || false,
       breakType: cellData.breakType || undefined
@@ -146,79 +147,82 @@ const CurrentLessonStatus = ({ selectedGrade = 'Grade 1' }: CurrentLessonStatusP
   const currentStatus = getCurrentLessonStatus();
   const remainingMinutes = getRemainingMinutes();
 
+  const accentBar =
+    currentStatus.status === 'lesson' ? 'border-l-primary'
+    : currentStatus.status === 'break' ? 'border-l-primary/60'
+    : currentStatus.status === 'free' ? 'border-l-muted-foreground/50'
+    : 'border-l-border';
+
+  const statusDot =
+    currentStatus.status === 'lesson' ? 'bg-primary'
+    : currentStatus.status === 'break' ? 'bg-primary/60'
+    : currentStatus.status === 'free' ? 'bg-muted-foreground/50'
+    : 'bg-border';
+
+  const statusTitle =
+    currentStatus.status === 'lesson' ? 'Current Lesson'
+    : currentStatus.status === 'break' ? 'Current Break'
+    : currentStatus.status === 'free' ? 'Free Period'
+    : currentStatus.status === 'weekend' ? 'Weekend'
+    : 'Outside School Hours';
+
   return (
-    <Card className={`bg-white border-l-4 shadow-sm ${
-      currentStatus.status === 'lesson' ? 'border-l-primary' :
-      currentStatus.status === 'break' ? 'border-l-primary/60' :
-      currentStatus.status === 'free' ? 'border-l-gray-400' :
-      'border-l-gray-300'
-    }`}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 animate-pulse ${
-                currentStatus.status === 'lesson' ? 'bg-primary' :
-                currentStatus.status === 'break' ? 'bg-primary/60' :
-                currentStatus.status === 'free' ? 'bg-gray-400' :
-                'bg-gray-300'
-              }`}></div>
-              <h3 className="font-bold text-gray-900 text-lg">
-                {currentStatus.status === 'lesson' ? 'Current Lesson' :
-                 currentStatus.status === 'break' ? 'Current Break' :
-                 currentStatus.status === 'free' ? 'Free Period' :
-                 currentStatus.status === 'weekend' ? 'Weekend' :
-                 'Outside School Hours'}
-              </h3>
+    <Card className={`border-l-4 bg-card shadow-sm ${accentBar}`}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${statusDot}`} />
+              <h3 className="text-sm font-semibold text-foreground">{statusTitle}</h3>
             </div>
-            
+
             {currentStatus.status === 'lesson' && currentStatus.lesson && (
               <>
-                <p className="text-gray-700 font-semibold text-base">
+                <p className="text-sm font-medium text-foreground">
                   {currentStatus.lesson.subject} • {currentStatus.lesson.teacher}
                 </p>
-                <p className="text-sm text-gray-600">
-                  Room {currentStatus.lesson.room} • {remainingMinutes} minutes remaining
+                <p className="text-xs text-muted-foreground">
+                  {currentStatus.lesson.room} • {remainingMinutes} minutes remaining
                 </p>
               </>
             )}
-            
+
             {currentStatus.status === 'break' && currentStatus.lesson && (
               <>
-                <p className="text-gray-700 font-semibold text-base">
-                  {currentStatus.lesson.breakType === 'lunch' ? '🍽️ Lunch Time' :
-                   currentStatus.lesson.breakType === 'recess' ? '🏃 Recess Time' :
-                   '☕ Break Time'}
+                <p className="text-sm font-medium text-foreground">
+                  {currentStatus.lesson.breakType === 'lunch' ? 'Lunch break' :
+                   currentStatus.lesson.breakType === 'recess' ? 'Recess' :
+                   'Break'}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   {remainingMinutes} minutes remaining
                 </p>
               </>
             )}
-            
+
             {currentStatus.status === 'free' && (
-              <p className="text-gray-700 font-semibold text-base">
+              <p className="text-sm font-medium text-foreground">
                 Free period • {remainingMinutes} minutes remaining
               </p>
             )}
-            
+
             {currentStatus.status === 'weekend' && (
-              <p className="text-gray-700 font-semibold text-base">
+              <p className="text-sm font-medium text-foreground">
                 No classes scheduled for today
               </p>
             )}
-            
+
             {currentStatus.status === 'outside' && (
-              <p className="text-gray-700 font-semibold text-base">
+              <p className="text-sm font-medium text-foreground">
                 School is currently closed
               </p>
             )}
           </div>
-          
-          <div className="text-right">
-            <div className="text-3xl font-bold text-gray-900">{formatCurrentTime(currentTime)}</div>
-            <div className="text-sm text-gray-500">Current Time</div>
-            <div className="text-xs text-gray-400 mt-1">
+
+          <div className="shrink-0 text-right">
+            <div className="text-2xl font-semibold tracking-tight text-foreground">{formatCurrentTime(currentTime)}</div>
+            <div className="text-xs text-muted-foreground">Current Time</div>
+            <div className="mt-1 text-xs text-muted-foreground">
               {currentTime.toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -233,4 +237,4 @@ const CurrentLessonStatus = ({ selectedGrade = 'Grade 1' }: CurrentLessonStatusP
   );
 };
 
-export default CurrentLessonStatus; 
+export default CurrentLessonStatus;

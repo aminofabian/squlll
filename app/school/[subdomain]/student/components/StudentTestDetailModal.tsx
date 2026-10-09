@@ -6,12 +6,11 @@ import {
   Clock,
   User,
   FileText,
-  Loader2,
-  AlertCircle,
   BookOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StateMessage, StatusPill, type PillTone } from '../_ui'
 import { useStudentTestDetail } from '@/lib/student/useStudentTestDetail'
 
 interface StudentTestDetailModalProps {
@@ -21,6 +20,14 @@ interface StudentTestDetailModalProps {
   onClose: () => void
   onSubmit?: () => void
   showSubmit?: boolean
+}
+
+function statusTone(status: string): PillTone {
+  const s = status.toLowerCase()
+  if (s.includes('cancel')) return 'danger'
+  if (s.includes('complet') || s.includes('done') || s.includes('graded')) return 'success'
+  if (s.includes('ongoing') || s.includes('active') || s.includes('progress')) return 'warning'
+  return 'info'
 }
 
 export function StudentTestDetailModal({
@@ -40,67 +47,68 @@ export function StudentTestDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-background shadow-xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background px-6 py-4">
-          <h2 className="text-lg font-semibold">Test details</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-background shadow-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-6 py-4">
+          <h2 className="text-base font-semibold text-foreground">Test details</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="space-y-5 p-6">
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <StateMessage variant="loading" title="Loading test…" />
           ) : error ? (
-            <div className="text-center space-y-3 py-8">
-              <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
-              <p className="text-sm text-muted-foreground">{error}</p>
-            </div>
+            <StateMessage
+              variant="error"
+              title="Couldn't load test"
+              description={error}
+            />
           ) : test ? (
             <>
               <div>
-                <h3 className="text-xl font-bold">{test.title}</h3>
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                  <BookOpen className="w-4 h-4" />
+                <h3 className="text-lg font-semibold text-foreground">
+                  {test.title}
+                </h3>
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <BookOpen className="h-4 w-4" />
                   {test.subject.name}
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{test.status}</Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill tone={statusTone(test.status)}>{test.status}</StatusPill>
                 <Badge variant="outline">{test.totalMarks} marks</Badge>
                 <Badge variant="outline">{test.questions.length} questions</Badge>
               </div>
 
               <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="h-4 w-4" />
                   {new Date(test.date).toLocaleDateString()}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="h-4 w-4" />
                   {test.startTime} · {test.duration} min
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
-                  <User className="w-4 h-4" />
+                  <User className="h-4 w-4" />
                   {test.teacher.fullName}
                 </div>
               </div>
 
               {test.instructions ? (
-                <div>
-                  <p className="text-sm font-medium mb-1">Instructions</p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Instructions</p>
+                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                     {test.instructions}
                   </p>
                 </div>
               ) : null}
 
               {(test.resourceUrl || test.referenceMaterials.length > 0) && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Resources</p>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">Resources</p>
                   <div className="space-y-2">
                     {test.resourceUrl ? (
                       <a
@@ -109,7 +117,7 @@ export function StudentTestDetailModal({
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm text-primary hover:underline"
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText className="h-4 w-4" />
                         Main resource
                       </a>
                     ) : null}
@@ -121,7 +129,7 @@ export function StudentTestDetailModal({
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm text-primary hover:underline"
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText className="h-4 w-4" />
                         {material.fileType} file
                       </a>
                     ))}

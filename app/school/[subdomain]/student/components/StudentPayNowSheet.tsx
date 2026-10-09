@@ -215,18 +215,22 @@ export function StudentPayNowSheet({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="sm:max-w-md gap-0 overflow-hidden border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-950">
-        <DialogHeader className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-white px-5 py-4 text-left dark:border-slate-800 dark:from-emerald-950/30 dark:to-slate-950">
-          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-            <Smartphone className="h-4 w-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
-              Lipa na M-Pesa
+      <DialogContent className="gap-0 overflow-hidden rounded-xl border-border bg-card p-0 sm:max-w-md">
+        <DialogHeader className="gap-0 border-b border-border bg-gradient-to-br from-emerald-50 to-card px-5 py-4 text-left dark:from-emerald-950/25 dark:to-card">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Smartphone className="h-[18px] w-[18px]" />
             </span>
+            <div className="min-w-0">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-400">
+                Lipa na M-Pesa
+              </span>
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                Pay school fees
+              </DialogTitle>
+            </div>
           </div>
-          <DialogTitle className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Pay school fees
-          </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
+          <DialogDescription className="mt-2 text-xs text-muted-foreground">
             We send a payment request to your phone — approve it with your M-Pesa
             PIN. No card, no queuing.
           </DialogDescription>
@@ -241,7 +245,7 @@ export function StudentPayNowSheet({
             <>
               {/* Which term */}
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Paying for
                 </p>
                 <div className="space-y-1.5">
@@ -255,23 +259,23 @@ export function StudentPayNowSheet({
                         className={cn(
                           'flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
                           active
-                            ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-600 dark:bg-emerald-950/20'
-                            : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900',
+                            ? 'border-primary/50 bg-primary/10'
+                            : 'border-border hover:border-primary/30 hover:bg-muted',
                         )}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                          <span className="block truncate text-sm font-medium text-foreground">
                             {invoiceLabel(invoice)}
                           </span>
-                          <span className="block truncate text-[11px] text-slate-400">
+                          <span className="block truncate text-xs text-muted-foreground">
                             {invoice.invoiceNumber}
                           </span>
                         </span>
                         <span className="shrink-0 text-right">
-                          <span className="block text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                          <span className="block text-sm font-semibold tabular-nums text-foreground">
                             {kes(invoice.balanceAmount)}
                           </span>
-                          <span className="block text-[10px] uppercase tracking-wide text-slate-400">
+                          <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
                             outstanding
                           </span>
                         </span>
@@ -285,7 +289,7 @@ export function StudentPayNowSheet({
               <div className="space-y-1.5">
                 <label
                   htmlFor="pay-amount"
-                  className="text-[11px] font-semibold uppercase tracking-wide text-slate-500"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
                   Amount (KES)
                 </label>
@@ -300,7 +304,7 @@ export function StudentPayNowSheet({
                       setAmount(e.target.value)
                       setError(null)
                     }}
-                    className="h-9 bg-white dark:bg-slate-900"
+                    className="h-9"
                   />
                   {selectedInvoice ? (
                     <Button
@@ -316,7 +320,7 @@ export function StudentPayNowSheet({
                     </Button>
                   ) : null}
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   Part payments are fine — you can top up the rest later.
                 </p>
               </div>
@@ -325,12 +329,12 @@ export function StudentPayNowSheet({
               <div className="space-y-1.5">
                 <label
                   htmlFor="pay-phone"
-                  className="text-[11px] font-semibold uppercase tracking-wide text-slate-500"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
                   M-Pesa phone
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="pay-phone"
                     inputMode="tel"
@@ -340,10 +344,10 @@ export function StudentPayNowSheet({
                       setPhone(e.target.value)
                       setError(null)
                     }}
-                    className="h-9 bg-white pl-9 dark:bg-slate-900"
+                    className="h-9 pl-9"
                   />
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   Safaricom will prompt this number to enter your PIN.
                 </p>
               </div>
@@ -358,7 +362,7 @@ export function StudentPayNowSheet({
         </div>
 
         {phase !== 'success' && phase !== 'waiting' ? (
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-border bg-muted/50 px-5 py-3 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="ghost"
@@ -370,7 +374,7 @@ export function StudentPayNowSheet({
             <Button
               type="button"
               size="sm"
-              className="h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+              className="gap-1.5"
               disabled={!selectedInvoice}
               onClick={() => void sendRequest()}
             >
@@ -393,22 +397,22 @@ function WaitingPanel({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 py-6 text-center">
-      <div className="relative flex h-14 w-14 items-center justify-center">
-        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/30" />
-        <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </span>
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Check your phone
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </span>
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground">Check your phone</p>
+        <p className="text-xs text-muted-foreground">
+          Enter your M-Pesa PIN on{' '}
+          <strong className="font-medium text-foreground">{intent.phone}</strong> to
+          release{' '}
+          <strong className="font-medium text-foreground">
+            {kes(intent.amount)}
+          </strong>
+          .
         </p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Enter your M-Pesa PIN on <strong>{intent.phone}</strong> to release{' '}
-          <strong>{kes(intent.amount)}</strong>.
-        </p>
       </div>
-      <p className="text-[11px] text-slate-400">
+      <p className="text-xs text-muted-foreground">
         Waiting for confirmation from Safaricom…
       </p>
       <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
@@ -427,34 +431,27 @@ function SuccessPanel({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 py-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-        <CheckCircle2 className="h-7 w-7" />
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Payment received
-        </p>
-        <p className="mt-0.5 text-xs text-slate-500">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <CheckCircle2 className="h-6 w-6" />
+      </span>
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground">Payment received</p>
+        <p className="text-xs text-muted-foreground">
           {kes(intent.amount)} confirmed
           {intent.mpesaReceipt ? (
             <>
               {' '}
               · receipt{' '}
-              <BadgeCheck className="mb-0.5 inline h-3.5 w-3.5 text-emerald-600" />{' '}
+              <BadgeCheck className="mb-0.5 inline h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />{' '}
               <span className="font-mono">{intent.mpesaReceipt}</span>
             </>
           ) : null}
         </p>
       </div>
-      <p className="text-[11px] text-slate-400">
+      <p className="text-xs text-muted-foreground">
         Your balance and receipts below are already up to date.
       </p>
-      <Button
-        type="button"
-        size="sm"
-        className="mt-1 h-9 bg-emerald-600 hover:bg-emerald-700"
-        onClick={onDone}
-      >
+      <Button type="button" size="sm" className="mt-1" onClick={onDone}>
         Done
       </Button>
     </div>

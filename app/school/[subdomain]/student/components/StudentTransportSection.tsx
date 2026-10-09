@@ -43,7 +43,7 @@ export function StudentTransportSection() {
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <PortalTransportJourney loadToday={fetchMyTransportToday} />
       <StopRequestsCard
         currentStop={currentStop}

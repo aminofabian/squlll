@@ -115,18 +115,17 @@ export function StudentLessonDetailSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "gap-0 overflow-hidden rounded-lg border border-slate-200/80 bg-white p-0 shadow-xl",
-          "dark:border-slate-700/80 dark:bg-slate-900",
+          "gap-0 overflow-hidden rounded-xl border border-border bg-card p-0 shadow-xl",
           "max-h-[min(85dvh,640px)] max-w-md overflow-y-auto sm:max-w-md",
         )}
       >
         {lesson && palette ? (
           <>
-            <DialogHeader className="space-y-0 border-b border-slate-100 p-4 text-left dark:border-slate-800">
+            <DialogHeader className="space-y-0 border-b border-border/70 p-4 text-left">
               <div className="flex items-start gap-3 pr-6">
                 <span
                   className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded border border-slate-200/60 text-xs font-bold uppercase tracking-wider",
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border/60 text-xs font-bold uppercase tracking-wider",
                     palette.bg,
                   )}
                   style={{ color: palette.accent }}
@@ -134,7 +133,7 @@ export function StudentLessonDetailSheet({
                   {shortCode}
                 </span>
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <DialogTitle className="break-words text-[17px] font-semibold leading-snug text-slate-900 dark:text-slate-100">
+                  <DialogTitle className="break-words text-base font-semibold leading-snug text-foreground">
                     {lesson.subject.name}
                   </DialogTitle>
                   <DialogDescription asChild>
@@ -169,7 +168,7 @@ export function StudentLessonDetailSheet({
             </div>
 
             {onToggleComplete ? (
-              <div className="border-t border-slate-100 p-4 dark:border-slate-800">
+              <div className="border-t border-border/70 p-4">
                 <Button
                   type="button"
                   variant={isCompleted ? "outline" : "default"}
@@ -206,7 +205,7 @@ function MetaChip({
   icon?: React.ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
       {icon}
       {children}
     </span>
@@ -225,18 +224,18 @@ function DetailRow({
   accent: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 dark:border-slate-700/80 dark:bg-slate-800/50">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
       <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-slate-200/60 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground"
         style={{ color: accent }}
       >
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <p className="mt-0.5 break-words text-sm font-medium text-slate-900 dark:text-slate-100">
+        <p className="mt-0.5 break-words text-sm font-medium text-foreground">
           {value}
         </p>
       </div>

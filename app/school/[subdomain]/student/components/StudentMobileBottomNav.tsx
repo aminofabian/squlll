@@ -42,15 +42,15 @@ export function StudentMobileBottomNav() {
       ) : null}
 
       {moreOpen ? (
-        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 mx-3 mb-2 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 lg:hidden">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 mx-3 mb-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl lg:hidden">
+          <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+            <p className="text-sm font-semibold text-foreground">
               More
             </p>
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -68,7 +68,7 @@ export function StudentMobileBottomNav() {
                     "flex flex-col items-center gap-1.5 rounded-lg px-2 py-3 text-center transition-colors",
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800",
+                      : "text-muted-foreground hover:bg-muted",
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -130,7 +130,7 @@ export function StudentMobileBottomNav() {
               "relative flex min-w-[4.5rem] flex-col items-center gap-0.5 px-2 py-1.5",
               moreOpen || isMoreActive
                 ? "text-primary"
-                : "text-slate-500 dark:text-slate-400",
+                : "text-muted-foreground",
             )}
           >
             <span
@@ -179,7 +179,7 @@ function TabLink({
             "flex h-14 w-14 items-center justify-center rounded-full border shadow-md transition-transform active:scale-95",
             active
               ? "border-primary bg-primary text-white shadow-primary/25"
-              : "border-slate-200/80 bg-white text-primary dark:border-slate-700 dark:bg-slate-900",
+              : "border-border bg-card text-primary",
           )}
         >
           <Icon className="h-6 w-6" />
@@ -187,7 +187,7 @@ function TabLink({
         <span
           className={cn(
             "text-[10px] font-semibold",
-            active ? "text-primary" : "text-slate-500 dark:text-slate-400",
+            active ? "text-primary" : "text-muted-foreground",
           )}
         >
           {item.title}
@@ -201,7 +201,7 @@ function TabLink({
       href={item.href}
       className={cn(
         "relative flex min-w-[4.5rem] flex-col items-center gap-0.5 px-2 py-1.5",
-        active ? "text-primary" : "text-slate-500 dark:text-slate-400",
+        active ? "text-primary" : "text-muted-foreground",
       )}
     >
       <span

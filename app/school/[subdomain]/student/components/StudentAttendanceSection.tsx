@@ -1,19 +1,36 @@
-'use client'
+"use client"
 
-import { ArrowLeft, CalendarCheck, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useStudentAttendanceSummary } from '@/lib/student/useStudentAttendanceSummary'
+import {
+  CalendarCheck,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Percent,
+  RefreshCw,
+  XCircle,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useStudentAttendanceSummary } from "@/lib/student/useStudentAttendanceSummary"
+import {
+  EmptyState,
+  PageHeader,
+  Section,
+  StateMessage,
+  StatTile,
+  StatusPill,
+  type PillTone,
+} from "../_ui"
 
 interface StudentAttendanceSectionProps {
   subdomain: string
   onBack: () => void
 }
 
-const STATUS_STYLE: Record<string, string> = {
-  PRESENT: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  LATE: 'bg-amber-100 text-amber-800 border-amber-200',
-  ABSENT: 'bg-red-100 text-red-800 border-red-200',
-  SUSPENDED: 'bg-slate-100 text-slate-700 border-slate-200',
+const STATUS_TONE: Record<string, PillTone> = {
+  PRESENT: "success",
+  LATE: "warning",
+  ABSENT: "danger",
+  SUSPENDED: "neutral",
 }
 
 export function StudentAttendanceSection({
@@ -29,59 +46,71 @@ export function StudentAttendanceSection({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="ghost" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void refetch()}
-          disabled={loading}
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="My Attendance"
+        subtitle="Your daily attendance record for this term"
+        onBack={onBack}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void refetch()}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        }
+      />
 
-      <div className="rounded-2xl border border-primary/20 bg-card p-6 shadow-lg">
-        <div className="mb-4 flex items-center gap-2">
-          <CalendarCheck className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-bold text-foreground">My Attendance</h2>
-        </div>
+      {error ? (
+        <Section>
+          <StateMessage
+            variant="error"
+            description={error}
+            onRetry={() => void refetch()}
+          />
+        </Section>
+      ) : null}
 
-        {error ? (
-          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
-            {error}
-          </p>
-        ) : null}
+      {summary ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <StatTile
+              label="Rate"
+              value={`${Math.round(summary.percentage)}%`}
+              icon={Percent}
+            />
+            <StatTile
+              label="Present"
+              value={summary.presentDays}
+              icon={CheckCircle2}
+            />
+            <StatTile label="Late" value={summary.lateDays} icon={Clock} />
+            <StatTile label="Absent" value={summary.absentDays} icon={XCircle} />
+            <StatTile
+              label="Total"
+              value={summary.totalDays}
+              icon={CalendarDays}
+            />
+          </div>
 
-        {summary ? (
-          <>
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <Stat label="Rate" value={`${Math.round(summary.percentage)}%`} />
-              <Stat label="Present" value={summary.presentDays} />
-              <Stat label="Late" value={summary.lateDays} />
-              <Stat label="Absent" value={summary.absentDays} />
-              <Stat label="Total" value={summary.totalDays} />
-            </div>
-
+          <Section title="Attendance records" icon={CalendarCheck}>
             {loading && records.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Loading records…
-              </p>
+              <StateMessage variant="loading" title="Loading records…" />
             ) : records.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No attendance records yet.
-              </p>
+              <EmptyState
+                icon={CalendarCheck}
+                title="No attendance records yet"
+                description="Records will appear here once attendance has been marked."
+              />
             ) : (
-              <div className="overflow-hidden rounded-xl border border-primary/20">
-                <div className="grid grid-cols-2 gap-2 border-b border-primary/20 bg-primary/10 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
+              <div className="overflow-hidden rounded-xl border border-border">
+                <div className="grid grid-cols-2 gap-2 border-b border-border bg-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   <span>Date</span>
                   <span className="text-right">Status</span>
                 </div>
-                <div className="divide-y divide-primary/10">
+                <div className="divide-y divide-border">
                   {records.map((row) => (
                     <div
                       key={`${row.date}-${row.status}`}
@@ -89,44 +118,28 @@ export function StudentAttendanceSection({
                     >
                       <span className="font-medium text-foreground">
                         {new Date(row.date).toLocaleDateString(undefined, {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
                         })}
                       </span>
                       <span className="flex justify-end">
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                            STATUS_STYLE[row.status] ??
-                            'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
+                        <StatusPill tone={STATUS_TONE[row.status] ?? "neutral"}>
                           {row.status}
-                        </span>
+                        </StatusPill>
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-          </>
-        ) : loading ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Loading attendance…
-          </p>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
-      <p className="text-lg font-bold text-primary">{value}</p>
-      <p className="text-xs font-medium uppercase text-muted-foreground">
-        {label}
-      </p>
+          </Section>
+        </div>
+      ) : loading ? (
+        <Section>
+          <StateMessage variant="loading" title="Loading attendance…" />
+        </Section>
+      ) : null}
     </div>
   )
 }
