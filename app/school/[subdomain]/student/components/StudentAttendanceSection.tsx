@@ -45,7 +45,7 @@ export function StudentAttendanceSection({
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-primary/20 bg-white p-6 shadow-lg">
+      <div className="rounded-2xl border border-primary/20 bg-card p-6 shadow-lg">
         <div className="mb-4 flex items-center gap-2">
           <CalendarCheck className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-bold text-foreground">My Attendance</h2>
@@ -87,7 +87,7 @@ export function StudentAttendanceSection({
                       key={`${row.date}-${row.status}`}
                       className="grid grid-cols-2 items-center gap-2 px-4 py-3 text-sm"
                     >
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-foreground">
                         {new Date(row.date).toLocaleDateString(undefined, {
                           weekday: 'short',
                           month: 'short',

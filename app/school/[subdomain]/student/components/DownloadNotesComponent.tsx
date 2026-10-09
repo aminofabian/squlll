@@ -1,40 +1,27 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   ArrowLeft,
   Download,
   Search,
   Filter,
-  FileText,
   BookOpen,
-  Calendar,
   User,
-  Eye,
-  Clock,
   Star,
-  BookMarked,
-  FileDown,
   ChevronDown,
   ChevronUp,
-  CheckCircle,
   AlertCircle,
-  Info,
   SortAsc,
   SortDesc,
   Grid,
   List,
-  Book,
-  GraduationCap,
-  FolderOpen,
   File,
   FileImage,
   FileVideo,
   FileAudio,
   FileArchive,
-  FileCode,
   FileSpreadsheet,
-  Presentation,
   FileText as FilePdf,
   FileText as FileWord,
   Presentation as FilePowerpoint
@@ -55,7 +42,6 @@ interface DownloadNotesComponentProps {
 export default function DownloadNotesComponent({ subdomain, onBack }: DownloadNotesComponentProps) {
   const { notes: fetchedNotes, subjects, loading, error, refetch } = useStudentNotes(subdomain);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-  const [filteredNotes, setFilteredNotes] = useState<StudentNoteItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All Subjects");
   const [sortBy, setSortBy] = useState("date");
@@ -127,69 +113,44 @@ export default function DownloadNotesComponent({ subdomain, onBack }: DownloadNo
     }
   };
 
-  // Filter and sort notes
-  useEffect(() => {
-    let filtered = notes;
+  // Filter and sort notes. Derived during render (never in an effect): `notes`
+  // is rebuilt every render, so an effect keyed on it would loop forever.
+  let filteredNotes = notes;
 
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(note =>
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+  if (searchTerm) {
+    filteredNotes = filteredNotes.filter(note =>
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }
+
+  if (selectedSubject !== "All Subjects") {
+    filteredNotes = filteredNotes.filter(note => note.subject === selectedSubject);
+  }
+
+  if (favoritesOnly) {
+    filteredNotes = filteredNotes.filter(note => note.isFavorite);
+  }
+
+  filteredNotes = [...filteredNotes].sort((a, b) => {
+    const dir = sortOrder === "asc" ? 1 : -1;
+
+    switch (sortBy) {
+      case "title":
+        return a.title.toLowerCase().localeCompare(b.title.toLowerCase()) * dir;
+      case "subject":
+        return a.subject.toLowerCase().localeCompare(b.subject.toLowerCase()) * dir;
+      case "downloads":
+        return (a.downloadCount - b.downloadCount) * dir;
+      case "size":
+        return (parseFloat(a.fileSize) - parseFloat(b.fileSize)) * dir;
+      case "date":
+      default:
+        return (new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime()) * dir;
     }
-
-    // Subject filter
-    if (selectedSubject !== "All Subjects") {
-      filtered = filtered.filter(note => note.subject === selectedSubject);
-    }
-
-    // Favorites filter
-    if (favoritesOnly) {
-      filtered = filtered.filter(note => note.isFavorite);
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortBy) {
-        case "date":
-          aValue = new Date(a.uploadDate);
-          bValue = new Date(b.uploadDate);
-          break;
-        case "title":
-          aValue = a.title.toLowerCase();
-          bValue = b.title.toLowerCase();
-          break;
-        case "subject":
-          aValue = a.subject.toLowerCase();
-          bValue = b.subject.toLowerCase();
-          break;
-        case "downloads":
-          aValue = a.downloadCount;
-          bValue = b.downloadCount;
-          break;
-        case "size":
-          aValue = parseFloat(a.fileSize);
-          bValue = parseFloat(b.fileSize);
-          break;
-        default:
-          aValue = new Date(a.uploadDate);
-          bValue = new Date(b.uploadDate);
-      }
-
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredNotes(filtered);
-  }, [notes, searchTerm, selectedSubject, sortBy, sortOrder, favoritesOnly]);
+  });
 
   if (loading) {
     return (
