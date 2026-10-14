@@ -35,9 +35,9 @@ export interface CreateTenantResult {
 }
 
 export async function fetchAllTenants(): Promise<TenantRecord[]> {
-  const data = await superAdminGraphqlRequest<{ getAllTenants: TenantRecord[] }>(
-    TENANTS_QUERY,
-  );
+  const data = await superAdminGraphqlRequest<{
+    getAllTenants: TenantRecord[];
+  }>(TENANTS_QUERY);
   return data.getAllTenants ?? [];
 }
 
@@ -82,6 +82,40 @@ export async function createTenant(
     adminTempPassword: result.adminTempPassword,
     subscriptionId: result.subscriptionId,
   };
+}
+
+const BACKEND_DELETE_CONFIRMATION = "DELETE";
+
+export interface DeleteTenantsResult {
+  deleted: { tenantId: string; name: string; usersDeleted: number }[];
+  failed: { tenantId: string; message: string }[];
+}
+
+/** Permanently deletes schools and all of their data. Irreversible. */
+export async function deleteTenants(
+  tenantIds: string[],
+): Promise<DeleteTenantsResult> {
+  const data = await superAdminGraphqlRequest<{
+    deleteTenants: DeleteTenantsResult;
+  }>(
+    `
+      mutation DeleteTenants($input: DeleteTenantsInput!) {
+        deleteTenants(input: $input) {
+          deleted {
+            tenantId
+            name
+            usersDeleted
+          }
+          failed {
+            tenantId
+            message
+          }
+        }
+      }
+    `,
+    { input: { tenantIds, confirmation: BACKEND_DELETE_CONFIRMATION } },
+  );
+  return data.deleteTenants;
 }
 
 export async function enterTenantPortal(tenantId: string): Promise<{

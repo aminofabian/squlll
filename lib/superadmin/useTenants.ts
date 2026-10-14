@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createTenant,
+  deleteTenants,
   fetchAllTenants,
   type CreateTenantInput,
   type CreateTenantResult,
+  type DeleteTenantsResult,
 } from "./tenantsApi";
 import type { TenantRecord } from "./types";
 
@@ -13,6 +15,7 @@ export function useTenants() {
   const [tenants, setTenants] = useState<TenantRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -52,5 +55,29 @@ export function useTenants() {
     [],
   );
 
-  return { tenants, loading, creating, error, refresh, addTenant };
+  const removeTenants = useCallback(
+    async (tenantIds: string[]): Promise<DeleteTenantsResult> => {
+      setDeleting(true);
+      try {
+        const result = await deleteTenants(tenantIds);
+        const deletedIds = new Set(result.deleted.map((d) => d.tenantId));
+        setTenants((current) => current.filter((t) => !deletedIds.has(t.id)));
+        return result;
+      } finally {
+        setDeleting(false);
+      }
+    },
+    [],
+  );
+
+  return {
+    tenants,
+    loading,
+    creating,
+    deleting,
+    error,
+    refresh,
+    addTenant,
+    removeTenants,
+  };
 }

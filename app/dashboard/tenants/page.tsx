@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CreateSchoolDialog } from "@/components/dashboard/superadmin/CreateSchoolDialog";
 import { DashboardErrorBanner } from "@/components/dashboard/superadmin/DashboardStatCards";
+import { DeleteSchoolsDialog } from "@/components/dashboard/superadmin/DeleteSchoolsDialog";
 import {
   AdminPageHeader,
   AdminPagination,
@@ -15,7 +16,9 @@ import {
 } from "@/components/dashboard/superadmin/AdminPageChrome";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useTenants } from "@/lib/superadmin/useTenants";
+import { useTenantDeletion } from "@/lib/superadmin/useTenantDeletion";
 import { enterTenantPortal } from "@/lib/superadmin/tenantsApi";
 import {
   Building2,
@@ -26,6 +29,7 @@ import {
   Loader2,
   LogIn,
   Plus,
+  Trash2,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -70,7 +74,17 @@ export default function TenantsPage() {
 function TenantsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { tenants, loading, creating, error, refresh, addTenant } = useTenants();
+  const {
+    tenants,
+    loading,
+    creating,
+    deleting,
+    error,
+    refresh,
+    addTenant,
+    removeTenants,
+  } = useTenants();
+  const deletion = useTenantDeletion(removeTenants);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -108,8 +122,22 @@ function TenantsPageContent() {
   }, [tenants, searchTerm]);
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-  const activeCount = tenants.filter((tenant) => tenant.status === "ACTIVE")
-    .length;
+  const selectedTenants = tenants.filter((tenant) =>
+    deletion.selectedIds.has(tenant.id),
+  );
+  const pageIds = paginated.map((tenant) => tenant.id);
+  const pageSelectedCount = pageIds.filter((id) =>
+    deletion.selectedIds.has(id),
+  ).length;
+  const pageCheckboxState =
+    pageSelectedCount === 0
+      ? false
+      : pageSelectedCount === pageIds.length
+        ? true
+        : "indeterminate";
+  const activeCount = tenants.filter(
+    (tenant) => tenant.status === "ACTIVE",
+  ).length;
 
   const stats = useMemo(
     () => [
@@ -195,12 +223,54 @@ function TenantsPageContent() {
 
         {loading && !error ? <AdminTableSkeleton /> : null}
 
+        {!loading && !error && selectedTenants.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200/70 bg-red-50/60 px-4 py-3 dark:border-red-900/60 dark:bg-red-950/30">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {selectedTenants.length} school
+              {selectedTenants.length === 1 ? "" : "s"} selected
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-8"
+                onClick={() =>
+                  deletion.setSelected([...deletion.selectedIds], false)
+                }
+              >
+                Clear
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="h-8 gap-1.5"
+                onClick={() => deletion.requestDelete(selectedTenants)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete selected
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         {!loading && !error ? (
           <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800/60 dark:bg-slate-900/80">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <th className="w-10 px-4 py-3.5">
+                      <Checkbox
+                        aria-label="Select all schools on this page"
+                        checked={pageCheckboxState}
+                        disabled={pageIds.length === 0}
+                        onCheckedChange={(checked) =>
+                          deletion.setSelected(pageIds, checked === true)
+                        }
+                      />
+                    </th>
                     {["School", "Subdomain", "Status", "Created", ""].map(
                       (heading) => (
                         <th
@@ -217,8 +287,21 @@ function TenantsPageContent() {
                   {paginated.map((tenant) => (
                     <tr
                       key={tenant.id}
-                      className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
+                      className={cn(
+                        "transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20",
+                        deletion.selectedIds.has(tenant.id) &&
+                          "bg-red-50/40 dark:bg-red-950/20",
+                      )}
                     >
+                      <td className="w-10 px-4 py-3.5">
+                        <Checkbox
+                          aria-label={`Select ${tenant.name}`}
+                          checked={deletion.selectedIds.has(tenant.id)}
+                          onCheckedChange={(checked) =>
+                            deletion.setSelected([tenant.id], checked === true)
+                          }
+                        />
+                      </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10">
@@ -245,33 +328,46 @@ function TenantsPageContent() {
                       <td className="px-4 py-3.5 text-sm text-slate-500">
                         {new Date(tenant.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3.5 text-right">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={
-                            enteringId === tenant.id ||
-                            tenant.status !== "ACTIVE"
-                          }
-                          className="h-8 gap-1.5"
-                          onClick={() =>
-                            void handleEnterPortal(tenant.id, tenant.name)
-                          }
-                          title={
-                            tenant.status !== "ACTIVE"
-                              ? "School is inactive"
-                              : `Open ${tenant.name} as school admin`
-                          }
-                        >
-                          {enteringId === tenant.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <LogIn className="h-3.5 w-3.5" />
-                          )}
-                          Enter portal
-                          <ExternalLink className="h-3 w-3 opacity-50" />
-                        </Button>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={
+                              enteringId === tenant.id ||
+                              tenant.status !== "ACTIVE"
+                            }
+                            className="h-8 gap-1.5"
+                            onClick={() =>
+                              void handleEnterPortal(tenant.id, tenant.name)
+                            }
+                            title={
+                              tenant.status !== "ACTIVE"
+                                ? "School is inactive"
+                                : `Open ${tenant.name} as school admin`
+                            }
+                          >
+                            {enteringId === tenant.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <LogIn className="h-3.5 w-3.5" />
+                            )}
+                            Enter portal
+                            <ExternalLink className="h-3 w-3 opacity-50" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                            title={`Delete ${tenant.name}`}
+                            aria-label={`Delete ${tenant.name}`}
+                            onClick={() => deletion.requestDelete([tenant])}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -318,6 +414,14 @@ function TenantsPageContent() {
         onOpenChange={setCreateOpen}
         saving={creating}
         onSubmit={addTenant}
+      />
+
+      <DeleteSchoolsDialog
+        key={deletion.pending.map((school) => school.id).join()}
+        schools={deletion.pending}
+        deleting={deleting}
+        onCancel={deletion.cancel}
+        onConfirm={() => void deletion.confirm()}
       />
     </DashboardLayout>
   );
