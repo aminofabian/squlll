@@ -40,6 +40,16 @@ import healthSafety from './data/school-health-safety-security-kenya.json'
 import facilitiesProcurement from './data/school-facilities-procurement-kenya.json'
 import termPlanning from './data/school-calendar-term-planning-kenya.json'
 import digitalTransformation from './data/digital-transformation-schools-kenya.json'
+import featuresAnchor from './data/school-management-system-features.json'
+import featureStudents from './data/student-information-system-kenya.json'
+import featureTeachers from './data/teacher-management-software-kenya.json'
+import featureClasses from './data/class-management-software-kenya.json'
+import featureAttendance from './data/real-time-attendance-tracking-software-kenya.json'
+import featureFees from './data/school-fees-management-software-kenya.json'
+import featureReports from './data/school-reporting-analytics-software-kenya.json'
+import featureAdministration from './data/school-administration-software-kenya.json'
+import featureSchoolBus from './data/school-bus-tracking-software-kenya.json'
+import featureStaff from './data/school-hr-payroll-software-kenya.json'
 
 /**
  * JSON imports are widened by TypeScript (e.g. `level: number`, `status: string`),
@@ -86,6 +96,16 @@ const ALL_ARTICLES: Article[] = [
   facilitiesProcurement,
   termPlanning,
   digitalTransformation,
+  featuresAnchor,
+  featureStudents,
+  featureTeachers,
+  featureClasses,
+  featureAttendance,
+  featureFees,
+  featureReports,
+  featureAdministration,
+  featureSchoolBus,
+  featureStaff,
 ] as unknown as Article[]
 
 function countWords(value: unknown): number {

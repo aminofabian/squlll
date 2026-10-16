@@ -1,0 +1,270 @@
+{
+  "slug": "school-reporting-analytics-software-kenya",
+  "path": "/blog/school-reporting-analytics-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "School Reporting & Analytics Software in Kenya (2026)",
+  "h1": "School Reporting and Analytics Software in Kenya: Better Decisions",
+  "description": "School reporting and analytics software for Kenyan schools — dashboards on enrolment, fees, attendance and academics that drive better decisions.",
+  "primaryKeyword": "school reporting and analytics software Kenya",
+  "secondaryKeywords": [
+    "school dashboard software Kenya",
+    "school data analytics Kenya",
+    "school performance reports Kenya",
+    "board reports school software"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Insights for better decisions",
+  "image": "/screenshots/ai-generated-9041893_1920.jpg",
+  "quickAnswer": "School reporting and analytics software turns the data a Kenyan school already collects into decisions: enrolment trends, fee collection rates, attendance rates and academic performance by class, subject and CBC strand. The point is not more reports — it is reports that are **live**, because they read the same learner record the school uses every day.",
+  "intro": [
+    "**Quick answer:** school reporting and analytics software for Kenya gives heads, bursars and boards live dashboards on the four numbers that run a school — enrolment, fees, attendance and academics — without an analyst or a week in Excel. Because those reports read the same learner record used across the platform, they stay current all term. This guide is one module of [school management system features](/blog/school-management-system-features); here we go deep on reporting.",
+    "Most schools already have the data. What they lack is a way to see it. A register is marked on paper, a Paybill statement is printed at the bank, a mark sheet lives in a folder, and joining the three at the end of term falls to the bursar and the deputy. Reporting software does that joining automatically, so the answer to “how is the term going?” is a glance, not a weekend.",
+    "This guide covers the reports Kenyan heads and boards actually ask for, why live dashboards beat end-of-term spreadsheets, how academic, finance and attendance reporting fit together, and how to share the whole picture with a board that is not sitting in your office. SQUL is used throughout as the worked example — one shared record, live dashboards, and free-term-then-per-term pricing."
+  ],
+  "sections": [
+    {
+      "id": "reports-heads-ask-for",
+      "heading": "The reports heads and boards ask for every term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Reporting is not a single report. It is a small set of questions, asked at the same rhythm every term, by people with different jobs. A principal wants to know if the school is on track; a bursar wants to know who has not paid; a class teacher wants to know which learners are slipping; a board wants to know whether the term’s plan is working. Good software answers all of them from one place."
+        },
+        {
+          "type": "table",
+          "caption": "Report → who uses it → the decision it drives.",
+          "headers": ["Report", "Who uses it", "The decision it drives"],
+          "rows": [
+            ["Enrolment and admissions trend", "Principal, board", "Whether to add a stream, hire a teacher or cap intake"],
+            ["Fee collection rate and arrears", "Bursar, board", "Which families to follow up and how to plan cash flow"],
+            ["Attendance rate by class and learner", "Head, class teacher", "Where to intervene before absence becomes dropout"],
+            ["Academic performance by subject and strand", "Head, teachers", "Which subjects or CBC strands need remedial teaching"],
+            ["Learner progress across terms", "Class teacher, parent", "Whether a learner needs support or extension"],
+            ["Staff, duty and lesson-completion summary", "Deputy, principal", "How to deploy teachers and cover next term"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Notice what these have in common: each one ends in a decision. A report that does not change what somebody does is decoration. When you evaluate reporting software, ask the vendor to show the **decision** behind each screen, not just the chart."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Enrolment reports** show new admissions, transfers out and term-on-term growth, by grade and stream.",
+            "**Fees reports** show collection rate, outstanding balances, and arrears grouped by class or guardian.",
+            "**Attendance reports** show daily and term rates, repeated absence, and learners below a threshold.",
+            "**Academic reports** show performance by learner, class, subject and — for CBC — by strand.",
+            "**Board reports** pull all four into one pack the board can read and question."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "live-vs-excel",
+      "heading": "Live dashboards vs end-of-term Excel",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The traditional Kenyan reporting cycle is a spreadsheet ritual. Registers are collected, mark sheets are typed in, the Paybill statement is copied across, and formulas are stitched together in the last week of term. By the time the workbook is finished, the numbers are already three weeks old and the learners have gone home."
+        },
+        {
+          "type": "paragraph",
+          "text": "A live dashboard is different in one structural way: it does not copy data, it reads it. Because fees, attendance and academics live in the same system, the dashboard updates the moment a payment is reconciled or a register is marked. There is no export step, no formula to break, and no version of the truth that is older than today."
+        },
+        {
+          "type": "mock",
+          "variant": "reports",
+          "caption": "Illustrative view: enrolment, fees, attendance and academics on one live dashboard, drawing on the same learner record."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Always current.** A payment marked at 11am shows in the collection-rate figure the same morning, not next week.",
+            "**No re-typing.** The mark sheet and the register are the same data the dashboard reads, so there is nothing to transcribe.",
+            "**Nothing to reconcile by hand.** The finance report is generated from the same matched payments the bursar already trusts.",
+            "**Questionable in the moment.** A board member can ask “why is Grade 6 attendance down?” and get the answer live, not after an email chain."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "The data underneath is the whole story",
+          "text": "A dashboard can only reflect what the school captures. This is why reporting is described as the **payoff of one shared learner record**: the reason SQUL’s dashboards are live is that the register, the receipt and the mark sheet are the same record, not three exports stitched together."
+        }
+      ]
+    },
+    {
+      "id": "academic-performance",
+      "heading": "Academic performance: by class, subject and strand",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Academic reporting is where Kenyan schools feel the transition to CBC most sharply. Under 8-4-4, the question was a mean score and a grade. Under CBC, the question is broader: how is a learner doing against each **strand**, and what does the evidence from continuous assessment say? Reporting software has to hold both worlds at once, because most schools still run both."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**By learner.** Progress across terms, so a class teacher can see a dip early rather than at report-card time.",
+            "**By class and stream.** A subject-by-subject picture of where a class is strong and where it is falling behind.",
+            "**By subject.** Ranking and averages that highlight a subject needing attention before the exam.",
+            "**By CBC strand.** Coverage and rating per strand, so teaching can be adjusted while the term is still running.",
+            "**By teacher.** An inner view of where lesson delivery and results diverge — kept role-based and private."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Because the same marks that feed the dashboard also produce the report card, academic reporting and [CBC report card software in Kenya](/blog/cbc-report-card-software-kenya) are two views of one pipeline: capture once, report twice."
+        }
+      ]
+    },
+    {
+      "id": "cbc-8-4-4",
+      "heading": "CBC strands and 8-4-4 grades in one reporting view",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A head does not want two systems for two curricula. The strongest school analytics treat grading as configuration: 8-4-4 marks and grades for Form 1–4, CBC rubrics and strand ratings for Grade 1–9, both rolled up into the same class and school dashboards. Teachers capture evidence once; the reporting layer knows how to present it for whichever curriculum the class follows."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Ask for the dual-curriculum view",
+          "text": "In a demo, ask to see a Grade 6 CBC strand report and a Form 3 subject report side by side. If the vendor cannot show both from one dashboard, you will end up running two reporting processes — and reconciling them by hand."
+        }
+      ]
+    },
+    {
+      "id": "finance-attendance",
+      "heading": "Finance and attendance reporting that reconciles",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Two reports cause the most work when they are assembled by hand — fees and attendance — and both become simple when they read live data. The fees report stops being a reconciliation exercise and becomes a view of payments the system has already matched. The attendance report stops being a pile of registers and becomes a running rate per class and per learner."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Fee collection rate** for the term, updated as each M-Pesa payment is reconciled, with no manual matching.",
+            "**Arrears by class, guardian or amount**, so follow-up is targeted rather than blanket.",
+            "**Cash-flow trend** across the term, which feeds directly into budgeting and planning.",
+            "**Attendance rate by class and learner**, with repeated-absence flags that surface before the term ends.",
+            "**Cross-views**, such as attendance against fee status, that are impossible when the two live in separate tools."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "These reports draw on the same modules that do the daily work, so there is no second data-entry pass. The mechanics live in [school fees management software in Kenya](/blog/school-fees-management-software-kenya) and [real-time attendance tracking software in Kenya](/blog/real-time-attendance-tracking-software-kenya); reporting simply reads what they already hold."
+        },
+        {
+          "type": "quote",
+          "text": "The bursar’s month-end ritual — printing the Paybill statement and matching codes by hand — disappears, because the payment was matched the moment it arrived.",
+          "cite": "How reconciliation changes reporting"
+        }
+      ]
+    },
+    {
+      "id": "export-share",
+      "heading": "Exporting and sharing with the board",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A dashboard on a phone is useful to the head, but a board meeting needs a pack. Reporting software should let you turn the live view into a shareable document without retyping a single figure — a termly board report with the same numbers the head is looking at."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Pick the audience", "text": "Choose what a bursar, a class teacher or the board should see; role-based access controls who can view which report." },
+            { "title": "Set the period", "text": "Report by term, by month or across terms so trends are visible, not just snapshots." },
+            { "title": "Export the pack", "text": "Generate a PDF or spreadsheet with charts, tables and commentary ready for circulation." },
+            { "title": "Share securely", "text": "Distribute through role-based access or a protected export, with no sensitive learner data exposed to the wrong people." }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Keep sensitive views role-based",
+          "text": "Board reports should summarise without exposing individual learner records or staff notes. Confirm that role-based access governs who can drill from a school-level figure down to a named learner."
+        },
+        {
+          "type": "paragraph",
+          "text": "For how boards use these packs to govern — budget approval, enrolment planning and oversight — see [school leadership and governance in Kenya](/blog/school-leadership-and-governance-kenya). For the figures behind the pack, [school finance and budgeting in Kenya](/blog/school-finance-and-budgeting-kenya) covers planning with the same data."
+        }
+      ]
+    },
+    {
+      "id": "squl-reporting",
+      "heading": "SQUL’s reporting and analytics module",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL treats reporting as the natural outcome of one shared learner record. Because the [student information system](/blog/student-information-system-kenya), fees and attendance all read the same data, the dashboards are live by construction — not assembled from exports at the end of term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Live dashboards** for enrolment, fee collection, arrears, attendance and academics — current to the moment you open them.",
+            "**Academic reporting by class, subject and CBC strand**, alongside 8-4-4 grades for Form 1–4 and Grade 1–9.",
+            "**Finance and attendance reports that reconcile**, because they read matched M-Pesa payments and same-day registers.",
+            "**Board-ready exports** that turn the live view into a shareable pack, governed by **role-based access**.",
+            "**Multi-campus consolidation**, so a group can see each branch and the whole together.",
+            "**Free term, then per-term pricing**, so you see the reports on your own data before you commit.",
+            "**Live in about two weeks**, so your first term of reporting is already backed by real numbers."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "See your own term in the dashboard",
+          "text": "Start with a free term: capture real grades and registers, reconcile real M-Pesa payments, then open the dashboard and let the reports write themselves. For the module list this belongs to, see [school management system features](/blog/school-management-system-features)."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is school reporting and analytics software?",
+      "answer": "It is the part of a school management system that turns the data a school already collects — enrolment, fees, attendance and academics — into reports and live dashboards. The best versions read a single shared learner record, so the figures are always current rather than assembled at the end of term."
+    },
+    {
+      "question": "Which reports do Kenyan heads and boards need most?",
+      "answer": "Enrolment and admissions trends, fee collection and arrears, attendance by class and learner, academic performance by subject and CBC strand, and a board pack that combines them. Each one should end in a decision, such as which families to follow up or which subject needs remedial teaching."
+    },
+    {
+      "question": "Can it report on both CBC and 8-4-4?",
+      "answer": "It should. Kenyan schools often run both at once — CBC rubrics and strand ratings for Grade 1–9, and marks and grades for Form 1–4 under 8-4-4. Reporting should present both from the same class and school dashboards, with teachers capturing evidence only once."
+    },
+    {
+      "question": "Do I need a data analyst to use school analytics?",
+      "answer": "No. Good reporting software is built for heads and bursars, not analysts: the dashboards are ready-made, and exporting a board pack is a few clicks. The work of joining fees, attendance and academics happens in the system, not in a spreadsheet."
+    },
+    {
+      "question": "How long does it take to get reporting running?",
+      "answer": "With SQUL, most schools are live in about two weeks, because reporting reads data the other modules capture from day one. A free term lets you confirm the dashboards reflect your own learners, payments and registers before you move to per-term pricing."
+    }
+  ],
+  "cta": {
+    "heading": "Turn your school’s data into decisions",
+    "body": "Start your free term with SQUL and see live dashboards on enrolment, fees, attendance and academics — built from one shared learner record, then per-term pricing once you have seen it work.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "CBC report card software in Kenya", "href": "/blog/cbc-report-card-software-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "School leadership and governance in Kenya", "href": "/blog/school-leadership-and-governance-kenya" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" }
+  ]
+}

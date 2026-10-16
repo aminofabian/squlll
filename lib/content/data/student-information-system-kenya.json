@@ -1,0 +1,252 @@
+{
+  "slug": "student-information-system-kenya",
+  "path": "/blog/student-information-system-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "Student Information System in Kenya: Profiles & Progress (2026)",
+  "h1": "Student Information System in Kenya: Profiles, Progress & Communication",
+  "description": "A student information system for Kenyan schools — learner profiles, progress tracking, guardian records and communication, all in one place.",
+  "primaryKeyword": "student information system Kenya",
+  "secondaryKeywords": [
+    "student management software Kenya",
+    "learner profiles software Kenya",
+    "student records system Kenya",
+    "student progress tracking software"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Profiles, progress, & communication",
+  "image": "/screenshots/students.jpg",
+  "intro": [
+    "**Quick answer:** A student information system gives every learner one complete profile — identity, guardians, class, fee plan, progress and communication history — held in a single record that fees, attendance, exams and reporting all read from. The test of a good one is simple: **one learner record, shared across every module**, with no re-typing and no separate spreadsheets. This guide follows that record from admission to report card; the [school management system features](/blog/school-management-system-features) pillar shows how the same record powers every other module.",
+    "In most Kenyan schools the truth about a learner is spread across a paper admission form, an Excel register, a Paybill statement, a class teacher’s mark book and a WhatsApp group with the guardian. Ask a deputy for a full picture of one learner and the answer takes ten minutes and three phone calls. A **student information system** replaces that with a profile you can open and trust.",
+    "This guide is written for the people who own learner records in a Kenyan school — the deputy, the registrar, and the director preparing for a Ministry audit. It looks at why records break, what a learner profile should hold, how communication ties back to it, and who should be allowed to see what."
+  ],
+  "sections": [
+    {
+      "id": "what-it-is",
+      "heading": "What a student information system is (and the five fields it must get right)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A **student information system** is the part of a school management platform that holds the learner. Where a fees module tracks money and an attendance module tracks presence, the student information system is the record those modules point back to. It is created at admission, updated by teachers and the office every day, and read by every report the school produces. In Kenya it has to serve both CBC and 8-4-4, and it has to work for a school of 200 learners as cleanly as one of 2,000."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Identity.** Full name, admission number, date of birth, gender and the documents a Ministry audit asks for.",
+            "**Guardians.** Parent or guardian names, relationships, phone numbers and where messages should go.",
+            "**Class and stream.** The grade or Form the learner sits in, their stream, and their learning areas for CBC or subjects for 8-4-4.",
+            "**Fee plan.** The agreed fee structure, any bursary or sibling discount, and the running balance the bursar reconciles.",
+            "**Progress and notes.** Assessment results, CBC strands or 8-4-4 grades, plus the short notes a class teacher needs to pass on."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Five fields sound trivial until you try to keep them accurate for 800 learners across three terms. The value of a student information system is not the fields themselves — it is that they stay **in one place**, updated once and seen by everyone entitled to see them."
+        }
+      ]
+    },
+    {
+      "id": "why-records-break",
+      "heading": "Why learner records break in Kenyan schools",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Learner records rarely fail all at once. They erode, one shortcut at a time, until nobody can answer a simple question about a learner without making a phone call."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Admission on paper, then in Excel.** The form is filled at the gate, typed into a spreadsheet weeks later, and the two never quite agree.",
+            "**The guardian contact lives in a phone.** The class teacher’s WhatsApp has the number; the office file has an older one.",
+            "**Fees tracked separately.** The bursar’s Paybill statement does not know which learner paid, so balances are rebuilt by hand.",
+            "**Progress in a mark book.** CBC strands and 8-4-4 grades sit in exercise books that walk out of school at term end.",
+            "**Messages sent from memory.** Reminders go to whoever is in the group, not to the guardian attached to that learner."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The cost is not only time. A fee dispute, a missing guardian contact at 8 p.m., or a Ministry audit that arrives with a question you cannot answer fast are all symptoms of a record that was never joined up. The fix is structural: give every learner **one record** and let the other modules read it rather than keep their own copy."
+        }
+      ]
+    },
+    {
+      "id": "what-profile-holds",
+      "heading": "What a learner profile should hold",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A learner profile should be the fullest honest picture of that learner — enough for a teacher, a bursar, the deputy and the head to each get what they need without leaving the record. In practice it holds six things."
+        },
+        {
+          "type": "table",
+          "caption": "What a learner profile holds, and who uses each part.",
+          "headers": ["Area", "What it holds", "Who uses it"],
+          "rows": [
+            ["Identity", "Name, admission number, date of birth, gender, documents", "Office, deputy, head"],
+            ["Guardians", "Names, relationships, phone numbers, preferred channel", "Office, class teacher, bursar"],
+            ["Class & subjects", "Grade or Form, stream, learning areas for CBC or 8-4-4", "Class teacher, deputy"],
+            ["Fee plan", "Fee structure, bursary or discount, balance and payment history", "Bursar, director"],
+            ["Progress", "Continuous assessment, CBC strands or 8-4-4 grades, exam results", "Teachers, head, guardians"],
+            ["Notes", "Attendance patterns, health or learning notes, communication history", "Deputy, head (role-based)"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profile-identity",
+      "heading": "Identity, guardians and contacts",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Identity and guardian details are the fields everything else depends on, because they are what you use to reach a home. Get them wrong at admission and the error follows the learner for years, term after term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Confirm the **guardian phone number** in person at admission, and mark which guardian is the first point of contact.",
+            "Record a **second contact** for emergencies — an aunt, an uncle, a neighbour — because one number is not a plan.",
+            "Attach the guardian to the **learner, not the class**, so the contact follows the learner when the stream changes.",
+            "Note the **preferred channel** — WhatsApp or SMS — so reminders land where they are actually read."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profile-class-progress",
+      "heading": "Class, fee plan and progress",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Class, fee plan and progress are the fields that change termly (grade or Form), monthly (balance) or daily (marks). Because they live in the same record as identity and guardians, a change in any one of them is visible everywhere at once. When a learner moves from Grade 6 to Grade 7, or from Form 2 to Form 3, the promotion updates the class, the subject list, the fee plan and the report template together — rather than in four separate notes kept by four different people."
+        },
+        {
+          "type": "paragraph",
+          "text": "That is why the record and the [class and resource management](/blog/class-management-software-kenya) module work from the same data: a learner’s subjects, stream and teacher assignments are set once. The same is true of how staff are deployed — see [teacher management software in Kenya](/blog/teacher-management-software-kenya) — and of how results become insight, covered in [school reporting and analytics](/blog/school-reporting-analytics-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "communication",
+      "heading": "Communication tied to the record",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The most useful thing about a learner record is that it knows **who to call**. Because the guardian is attached to the learner, a message about that learner can be addressed to the right person automatically, on the channel they prefer, without anyone copying numbers out of a book."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "A learner is absent", "text": "The class teacher marks the register; the record already knows the guardian and their preferred channel." },
+            { "title": "The alert is sent", "text": "An automatic WhatsApp or SMS message goes to that guardian — not to a group, and not to a guessed number." },
+            { "title": "The reply is logged", "text": "The guardian’s response and any follow-up sit on the same profile, so the deputy can see the whole conversation." },
+            { "title": "The pattern is visible", "text": "Repeat absences surface on the record, and the head can act on a trend rather than a single morning." }
+          ]
+        },
+        {
+          "type": "mock",
+          "variant": "reports",
+          "caption": "A learner profile in SQUL — identity, guardians, class, fee plan, progress and communication history in one record."
+        },
+        {
+          "type": "paragraph",
+          "text": "This is the difference between messaging and communication. A WhatsApp group broadcasts; a record-linked message reaches the guardian of *this* learner about *this* learner. For the wider discipline, see [parent engagement in Kenyan schools](/blog/parent-engagement-school-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "data-protection",
+      "heading": "Data protection and who can see what",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A learner profile holds sensitive information — health notes, family circumstances, discipline records. The right answer is not to lock the record away, but to control **who sees which part** of it. A student records system that everyone can read is as risky as one nobody can."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Least privilege by role",
+          "text": "A class teacher should see the learners in their classes; a bursar should see fee information; the deputy and head should see the full record within the school. Nobody should see everything by default. Ask any vendor how permissions are set, and check the school’s obligations under the Data Protection Act in [learner data protection for Kenyan schools](/blog/learner-data-protection-kenya-school-software)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Role-based access is the practical expression of that principle: one record, many views, each limited to what the role requires. It also produces a cleaner audit trail, because you can show who saw or changed a learner’s record and when — exactly what a Ministry or data-protection review wants to see."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "SQUL student profiles: one record, every module",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL treats the learner record as the spine of the whole platform. Everything else — fees, attendance, classes, exams, reporting — reads from it, so a learner is entered once at admission and never typed in again."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One learner record** created at admission and shared by fees, attendance, exams and reporting — no re-typing, no drift.",
+            "**Guardians attached to the learner**, so WhatsApp and SMS messages reach the right home without a group.",
+            "**Automatic M-Pesa reconciliation** that updates the fee balance and receipts against the same record.",
+            "**CBC and 8-4-4 ready**, so continuous assessment, strands and grades sit on the profile and print on term report cards.",
+            "**Role-based access with daily backups** as standard, so each person sees only what their role requires.",
+            "**Live in about two weeks**, with learner and guardian data imported for you during onboarding."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Start with one profile",
+          "text": "Start with a free term, then move to per-term pricing once you have seen real learners, real payments and a real report card running off the same record."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is a student information system?",
+      "answer": "It is the part of a school management platform that holds the learner record — identity, guardians, class, fee plan, progress and communication history — in one place. Other modules such as fees, attendance and reporting read from that record rather than keeping their own copies."
+    },
+    {
+      "question": "What should a learner profile include?",
+      "answer": "At minimum: identity details and admission number, guardian names and contacts, class, stream and subjects, the fee plan and balance, progress and assessment results, and short notes. CBC and 8-4-4 schools should record strands or grades in the same profile."
+    },
+    {
+      "question": "How is this different from a spreadsheet of learners?",
+      "answer": "A spreadsheet has no guardians attached to learners, no fee plan, no progress and no permissions. A student information system links those together, so a change in one field is visible everywhere, and messages reach the correct guardian automatically."
+    },
+    {
+      "question": "Who can see a learner’s record?",
+      "answer": "Access should be role-based. A class teacher sees the learners in their classes; a bursar sees fee information; the deputy and head see the full record within the school. Ask any vendor how permissions work, and check your obligations under the Data Protection Act."
+    },
+    {
+      "question": "Does it work for both CBC and 8-4-4?",
+      "answer": "It should. A good system maps learning areas per grade for CBC — Grade 1 to 9 — and subjects per Form for 8-4-4, Form 1 to 4, and prints report cards in the format each requires."
+    }
+  ],
+  "cta": {
+    "heading": "Give every learner one complete profile",
+    "body": "Start your free term with SQUL — import learners and guardians, attach them to fees, attendance and progress, and message the right parent every time.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "Teacher management software in Kenya", "href": "/blog/teacher-management-software-kenya" },
+    { "title": "School admissions and learner records in Kenya", "href": "/blog/school-admissions-learner-records-kenya" },
+    { "title": "Learner data protection in Kenyan school software", "href": "/blog/learner-data-protection-kenya-school-software" },
+    { "title": "Parent engagement for Kenyan schools", "href": "/blog/parent-engagement-school-kenya" }
+  ]
+}

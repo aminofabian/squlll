@@ -1,0 +1,257 @@
+{
+  "slug": "teacher-management-software-kenya",
+  "path": "/blog/teacher-management-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "Teacher Management Software in Kenya: Classes & Performance",
+  "h1": "Teacher Management Software in Kenya: Classes, Attendance & Performance",
+  "description": "Teacher management software for Kenyan schools — class allocation, attendance, duty rosters, performance and professional records in one place.",
+  "primaryKeyword": "teacher management software Kenya",
+  "secondaryKeywords": [
+    "teacher records software Kenya",
+    "staff deployment school software",
+    "teacher performance Kenya",
+    "duty roster software school"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Classes, attendance, & performance",
+  "image": "/screenshots/teachers.jpg",
+  "intro": [
+    "**Quick answer:** Teacher management software covers four connected jobs — deploying teachers to classes and subjects, tracking teacher attendance and cover, running duty rosters, and recording performance and lesson completion — all reading the same staff and class records. It is one module inside a wider platform, so see [school management system features](/blog/school-management-system-features) for how it fits alongside students, fees and reporting. For a Kenyan school the point is simple: a head or deputy can see who is where, who is covering, and who still owes a lesson record, on one screen instead of a pile of paper.",
+    "A timetable tells you what should happen. Teacher management software tells you what actually did: which teacher was in which class, who was absent, who covered the gap, which duty was done, and how far the scheme of work has moved. In Kenyan schools this is the work that quietly falls to the **deputy principal** and the **DOS** (director of studies) — and in many schools it is still tracked in exercise books, a wall chart and memory.",
+    "This guide follows the teacher module from deployment through to records, with the Kenyan context in view throughout: **CBC** and **8-4-4**, Form 1 to 4 and Grade 1 to 9, three terms, and duty rosters that have to be both fair and visible. SQUL is used as the example — a free term to start, then per-term pricing."
+  ],
+  "sections": [
+    {
+      "id": "deploying-teachers",
+      "heading": "Deploying teachers to classes and subjects fairly",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Deployment is the first job: deciding which teacher takes which class and subject, how many lessons that adds up to, and whether the load is fair. Done in a spreadsheet, this becomes the source of most staffroom disputes, because no one can see the whole picture at once."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Subjects qualified to teach.** Match each subject on the timetable to the teacher's qualification, not just to who happens to be free.",
+            "**Lesson load per teacher.** Count periods per week, so no one quietly carries a double load while a colleague is light.",
+            "**Class teacher roles.** Assign who owns which Form or Grade as class teacher, separately from subject teaching.",
+            "**Streams and electives.** Allocate across streams in Form 1–4 and Grade 1–9 without clashes or double-booking."
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "A worked allocation: who teaches what, and how heavy the load is.",
+          "headers": ["Teacher", "Class / Form", "Subjects", "Lessons / week", "Also holds"],
+          "rows": [
+            ["Mr. Otieno", "Form 3 East", "Mathematics, Physics", "24", "Class teacher"],
+            ["Ms. Wanjiru", "Form 1 West", "English, Literature", "22", "—"],
+            ["Mr. Kiptoo", "Grade 7", "Integrated Science, Maths", "26", "Games master"],
+            ["Ms. Achieng", "Form 4 North", "Biology, Chemistry", "23", "Class teacher, DOS"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Because classes, subjects and teachers are the same records, the allocation feeds straight into the timetable and the class lists. The classes and resources side of this is covered in [class management software in Kenya](/blog/class-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "teacher-attendance",
+      "heading": "Teacher attendance, cover and lesson cover",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Teacher attendance is the second job, and it is different from learner attendance. When a teacher is absent, the question is not only “were they in?” but “who is covering the lesson, and did the class still learn today?”"
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Same record, two different views",
+          "text": "Learner attendance is parent-facing — an absence triggers a message home. Teacher attendance is management-facing — it drives cover, duty and payroll. Both come from the same register, which is why [real-time attendance tracking software in Kenya](/blog/real-time-attendance-tracking-software-kenya) sits right next to this module."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Marked on a phone in seconds** as the teacher signs in, so the register is same-day rather than an end-of-term reconstruction.",
+            "**Cover suggestions from the timetable** — the deputy can see which teachers are free in that period and qualified for the subject.",
+            "**A cover record** so the deputy or DOS can see who covered what, and how often the same person is called on.",
+            "**Feeds the staff record** — absences become visible to the HR and payroll side without being typed in twice."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "duty-rosters",
+      "heading": "Duty rosters that publish instantly",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Duty is where fairness is won or lost. Prep supervision, dining hall, assembly, the gate, sick bay, night prep in boarding schools — someone has to be on each of them, every day. A roster that lives only on the staffroom wall is out of date by break time."
+        },
+        {
+          "type": "mock",
+          "variant": "timetable",
+          "caption": "Illustrative view: this week's duty roster, published to every teacher's phone the moment it changes."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Built from the timetable.** A teacher's free periods are visible, so duty does not collide with their lessons.",
+            "**Published instantly to staff** on their phones, so there is no “I did not see it” at the gate.",
+            "**Rotated fairly**, with a record of who has done which duty and how often.",
+            "**The deputy and DOS can adjust** when someone is away, and everyone sees the change at the same moment."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "performance",
+      "heading": "Recording and reviewing performance and lesson completion",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Deploying teachers and tracking their attendance is only half the picture. The other half is whether the teaching actually happened: whether the lesson was taught, the scheme of work moved, and the learners were assessed. Software turns “where are we in the syllabus?” from a guess into a report."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Mark the lesson taught", "text": "The teacher confirms the lesson happened against the timetable entry, in a tap." },
+            { "title": "Log the topic covered", "text": "The day's topic or strand is recorded against the scheme of work, so coverage is measured rather than remembered." },
+            { "title": "Capture assessment", "text": "Class exercises, CBC strands or 8-4-4 continuous assessment sit against the same class record." },
+            { "title": "Review by class and by teacher", "text": "The DOS or head sees coverage and completion per subject, per class, before exams expose the gap." }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Kept as records rather than surveillance, this gives the DOS something to **coach** with, not just something to police with. Reviewing lesson completion at mid-term becomes a conversation about syllabus coverage while there is still time to fix it — instead of a post-mortem once the results are out."
+        }
+      ]
+    },
+    {
+      "id": "professional-records",
+      "heading": "Professional records and role-based privacy",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Teacher records include both the personal and the sensitive: TSC numbers, qualifications, contracts, appraisal notes. They belong in one place — but that place must not leak. The rule is role-based access: everyone sees what their job needs, and nothing more."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Profile and qualifications.** TSC number, subjects, training and contract kept in one staff record.",
+            "**Appraisal and observation notes.** Visible to the head and to the teacher, not to the whole staffroom.",
+            "**Salary data stays with payroll.** Teachers and deputies should not see salary or fee lines they are not entitled to.",
+            "**Daily backups and a clear audit trail.** Who changed what, and when, kept recoverable."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Privacy is a feature, not an afterthought",
+          "text": "In a crowded staffroom, a single open screen can do real damage. Role-based access and daily backups are not extras — they are the difference between a system staff trust and one they avoid. The pay and staff side is covered in [school HR and payroll software in Kenya](/blog/school-hr-payroll-software-kenya), and the wider people picture in [school staff management in Kenya](/blog/school-staff-management-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "running-a-term",
+      "heading": "Running teachers through a Kenyan term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Kenyan schools run on three terms, and a teacher module has to speak the language of the curriculum in front of it. That means supporting both **CBC** (Grade 1 to 9) and **8-4-4** (Form 1 to 4) in the same system, so a school that is mid-transition is not running two sets of records and two sets of paper."
+        },
+        {
+          "type": "table",
+          "caption": "What the teacher module tracks across a Kenyan term.",
+          "headers": ["Job", "What it answers", "Who uses it"],
+          "rows": [
+            ["Deployment", "Who teaches what, and how heavy is the load?", "Head, deputy, DOS"],
+            ["Attendance & cover", "Who was in, who covered, did the class learn?", "Deputy, DOS"],
+            ["Duty roster", "Who is on duty today, and is it fair?", "Deputy, teachers"],
+            ["Performance", "How far has the syllabus moved?", "DOS, head"],
+            ["Records", "Qualifications, appraisal and privacy", "Head, admin"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The timetable is the spine of all of it — see [school timetable software in Kenya](/blog/school-timetable-software-kenya). Across terms, the module builds a record you can look back on: not just what the timetable said, but what was actually taught, who carried the load, and where cover was needed. That history is what makes the next term's deployment fairer than the last."
+        }
+      ]
+    },
+    {
+      "id": "squl-teacher-module",
+      "heading": "SQUL's teacher module",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL handles teacher management as part of one platform rather than a bolt-on: the same timetable that assigns a teacher to a class also records their attendance, duties and lesson completion — and reads the same staff record as HR and payroll."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Timetables and duty rosters publish instantly to staff** — the moment the deputy changes them.",
+            "**Same-day attendance with parent alerts** — the teacher register and the learner register feed each other.",
+            "**Role-based access and daily backups** — appraisal notes, salary lines and personal data stay with the people entitled to them.",
+            "**CBC and 8-4-4 ready** — Grade 1–9 strands and Form 1–4 continuous assessment in one system.",
+            "**WhatsApp and SMS parent messaging** — so cover changes and absences reach home, not just the staffroom.",
+            "**Automatic M-Pesa reconciliation** on the fees side, so the same platform a head uses for teachers also runs the school's money.",
+            "**Free term, then per-term pricing** — and live in about two weeks, with your staff and timetables imported."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Deploy, attend, review — then decide",
+          "text": "Start your free term with SQUL, load your real staff and timetable, and see a full term of deployment, cover and lesson completion before you commit. To weigh the wider field, see [best school management software in Kenya](/blog/best-school-management-software-kenya)."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is teacher management software?",
+      "answer": "It is the module that manages teachers rather than learners: deploying them to classes and subjects, tracking their attendance and cover, running duty rosters, and recording performance and lesson completion — all against the same staff and class records used elsewhere in the system."
+    },
+    {
+      "question": "How does it help decide who covers a lesson?",
+      "answer": "It reads the timetable to show the deputy which teachers are free in that period and qualified for the subject, then records who covered. The judgement stays with the deputy; the software supplies the timetable and keeps the record so cover can be reviewed fairly at the end of term."
+    },
+    {
+      "question": "Does it track learner attendance too, or only teachers?",
+      "answer": "It can do both from the same register. Learner attendance is parent-facing and can trigger WhatsApp or SMS alerts, while teacher attendance is management-facing and feeds cover, duty and payroll — without anyone re-typing the data."
+    },
+    {
+      "question": "Can it handle both CBC and 8-4-4?",
+      "answer": "Yes. A teacher module should support Grade 1 to 9 CBC strands and Form 1 to 4 8-4-4 assessment in the same system, so a school that is mid-transition does not run two sets of records and two sets of paper."
+    },
+    {
+      "question": "Is teacher performance data private?",
+      "answer": "It should be role-based: the head and the teacher see appraisals and lesson-completion records, while salary and personal data stay with the people entitled to see them. Role-based access and daily backups are standard with SQUL."
+    }
+  ],
+  "cta": {
+    "heading": "Deploy and track teachers without the paper",
+    "body": "Start your free term with SQUL — load your real staff, timetables and duty rosters, and see a full term of deployment, cover and lesson completion before you pay.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "Managing teachers and staff in Kenyan schools", "href": "/blog/school-staff-management-kenya" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" },
+    { "title": "Class management software in Kenya", "href": "/blog/class-management-software-kenya" },
+    { "title": "Real-time attendance tracking software in Kenya", "href": "/blog/real-time-attendance-tracking-software-kenya" }
+  ]
+}

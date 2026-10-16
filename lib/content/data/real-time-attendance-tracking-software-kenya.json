@@ -1,0 +1,213 @@
+{
+  "slug": "real-time-attendance-tracking-software-kenya",
+  "path": "/blog/real-time-attendance-tracking-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "Real-Time Attendance Tracking Software in Kenya (2026)",
+  "h1": "Real-Time Attendance Tracking Software for Kenyan Schools",
+  "description": "Real-time attendance tracking software for Kenyan schools — same-day registers, absence alerts and attendance reports parents and boards can trust.",
+  "primaryKeyword": "real-time attendance tracking software Kenya",
+  "secondaryKeywords": [
+    "school attendance software Kenya",
+    "digital class register Kenya",
+    "attendance reports school Kenya",
+    "student attendance system Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Real-time tracking, & reports",
+  "image": "/screenshots/class2.jpg",
+  "intro": [
+    "**Quick answer:** real-time attendance tracking software lets a teacher mark a register once — on a phone or laptop — and have that mark appear instantly in the head's dashboard, in the parent's notification and in term reports. For Kenyan schools the point of \"real-time\" is that nothing waits for a paper register to be collected and retyped. This is one module of the wider [school management system features](/blog/school-management-system-features) an all-in-one system should include.",
+    "If you came looking for the parent-alert angle specifically, our [attendance and parent alerts guide](/blog/student-attendance-tracking-parent-sms) covers that side in depth; this page is about the tracking and reporting capability itself."
+  ],
+  "sections": [
+    {
+      "id": "what-real-time-means",
+      "heading": "What \"real-time\" attendance tracking means",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "\"Real-time\" is not a marketing word here — it is the difference between marking attendance and *using* it. When a register is digital and instant, one tap does four things at once:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Updates the learner's attendance record for the term.",
+            "Refreshes the head's and deputy's dashboard immediately.",
+            "Triggers a parent notification for an absence, if you enable it.",
+            "Feeds eligibility and term reports without a separate step."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "why-paper-fails",
+      "heading": "Why paper registers fail",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Paper is not the problem by itself — latency is. A paper register is marked at 8am but only becomes data when someone collects it, totals it at the end of the week, and types it into a book or spreadsheet. By then the chance to act has passed."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Latency.** Absences are known days later, when nothing can be done about them.",
+            "**Lost registers.** A missing book means a missing attendance history for the term.",
+            "**No roll-up.** Totals are manual, slow and easy to get wrong.",
+            "**No alerts.** Parents find out from the learner, not the school."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marking-in-seconds",
+      "heading": "Marking attendance in seconds",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A good register respects the class teacher's time. The class list is already there — from the class module — and marking is a tap per learner, with present as the default so most of the register is done in one action."
+        },
+        {
+          "type": "mock",
+          "variant": "attendance",
+          "caption": "Illustrative view: marking a class register with present, absent and late states."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Open the class register", "text": "Pick the class and session — the list of learners loads automatically." },
+            { "title": "Mark the exceptions", "text": "Default everyone to present, then mark the few absent or late." },
+            { "title": "Save once", "text": "The record, dashboard and any parent alerts update immediately." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "what-happens-on-save",
+      "heading": "What happens the moment you save",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is where real-time earns its name. Saving a register is the trigger for the downstream work that used to be manual:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Parent notification.** Absence alerts go out on WhatsApp or SMS to the right guardian.",
+            "**Dashboards.** The head and deputy see today's attendance by class at a glance.",
+            "**Reports.** Term attendance totals per learner update automatically.",
+            "**Early warning.** Repeated absences surface so pastoral care can step in."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Attendance and welfare",
+          "text": "Attendance patterns are often the first sign of a welfare issue. For the human side, see [student discipline and welfare in Kenya](/blog/student-discipline-and-welfare-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "reports",
+      "heading": "Attendance reports that stand up",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Because the data is captured once, the reports are consistent at every level — learner, class and term — and ready for parents, the board and Ministry checks."
+        },
+        {
+          "type": "table",
+          "headers": ["Report", "Who uses it", "Why it matters"],
+          "rows": [
+            ["Daily class attendance", "Class teacher, deputy", "Spot problems the same day"],
+            ["Term attendance per learner", "Head, parents", "Feed report cards and fairness"],
+            ["Attendance by class/stream", "Head, board", "Compare and act on trends"],
+            ["Absence alerts log", "Admin", "Proof parents were informed"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "what-to-check",
+      "heading": "What to check in attendance software",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Is it same-day and instant?** If you still total in Excel, it is not real-time.",
+            "**Does it alert parents automatically?** And can you switch alerts on and off per school?",
+            "**Does it work on a phone?** Teachers will not carry laptops to class.",
+            "**Does it roll up into reports?** Without manual retyping.",
+            "**Does it link to the learner profile?** So attendance sits beside fees and grades."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL gives you **same-day attendance with automatic parent notifications**: mark once on phone or desktop, and it is instantly in the dashboards, reports and parent messages — because it shares the same learner record as the rest of the system."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Tap-to-mark registers with present, absent and late states.",
+            "WhatsApp and SMS absence alerts to the right guardian.",
+            "Attendance built into term report cards automatically.",
+            "Part of one system — no separate attendance app to reconcile."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is real-time attendance tracking?",
+      "answer": "It means attendance is marked digitally and becomes usable immediately — the head's dashboard, the parent notification and term reports all update the moment the register is saved, instead of waiting for paper to be collected and retyped."
+    },
+    {
+      "question": "How is it different from parent SMS alerts?",
+      "answer": "Parent alerts are one output of attendance tracking. Real-time tracking is the capture-and-report capability underneath: same-day registers, dashboards and term totals. The alert angle is covered in our attendance and parent alerts guide."
+    },
+    {
+      "question": "Do teachers need training to mark attendance?",
+      "answer": "Very little. Because the class list loads from the class module and present is the default, marking a register is a few taps. Most teachers are comfortable after one short session."
+    },
+    {
+      "question": "Can attendance feed report cards?",
+      "answer": "Yes. In an all-in-one system attendance rolls up per learner and term automatically, so report cards and eligibility checks use the same data without retyping."
+    },
+    {
+      "question": "Does it work for boarding schools with evening prep?",
+      "answer": "It can. Attendance sessions can be configured for more than one daily period, which suits boarding routines with morning, afternoon and evening registers."
+    }
+  ],
+  "cta": {
+    "heading": "Mark once, and it is everywhere",
+    "body": "Start your free term with SQUL and take same-day registers with automatic parent alerts — no paper, no retyping, no waiting.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "Class, subject and resource management software for Kenyan schools", "href": "/blog/class-management-software-kenya" },
+    { "title": "Student information system in Kenya", "href": "/blog/student-information-system-kenya" },
+    { "title": "School reporting and analytics software in Kenya", "href": "/blog/school-reporting-analytics-software-kenya" },
+    { "title": "Student attendance tracking with parent SMS", "href": "/blog/student-attendance-tracking-parent-sms" }
+  ]
+}

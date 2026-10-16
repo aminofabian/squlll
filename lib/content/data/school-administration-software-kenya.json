@@ -1,0 +1,280 @@
+{
+  "slug": "school-administration-software-kenya",
+  "path": "/blog/school-administration-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "School Administration Software in Kenya: Admissions & Records",
+  "h1": "School Administration Software in Kenya: Admissions, Records & Compliance",
+  "description": "School administration software in Kenya — admissions, learner records, staff files, compliance and daily operations in one secure system.",
+  "primaryKeyword": "school administration software Kenya",
+  "secondaryKeywords": [
+    "school admissions software Kenya",
+    "school records management Kenya",
+    "school compliance software Kenya",
+    "school admin system Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Admissions, records, & compliance",
+  "image": "/screenshots/class2.jpg",
+  "intro": [
+    "**Quick answer:** School administration software covers the front door and the filing cabinet of a Kenyan school — admissions and enrolment, learner and staff records, document storage, and the compliance returns and registers that Ministry of Education and county education office inspections ask for. It is the administrative spine of a wider [school management system features](/blog/school-management-system-features) set: one login for the office, one learner record underneath everything.",
+    "This guide follows administration the way a head, a deputy and a bursar experience it. A parent walks in to register a child, and everything that follows — the record, the fee plan, class allocation, the term report and the end-of-term returns — should flow from that one moment instead of being rebuilt each time someone needs it.",
+    "We cover admissions without duplicate files, records that stay complete and searchable, compliance returns generated from live data, and the role-based access and audit trails a school needs to hold sensitive files responsibly. SQUL is used as the worked example throughout. If you are comparing the wider field of vendors first, start with the [best school management software in Kenya](/blog/best-school-management-software-kenya)."
+  ],
+  "sections": [
+    {
+      "id": "what-it-covers",
+      "heading": "What school administration software covers",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Administration is rarely one job. In most Kenyan schools it is split across a head, a deputy, a bursar and a secretary, each holding part of the picture in a book, a folder or their own spreadsheet. **School administration software is what joins those parts together** so the office works from one set of records rather than five versions of the truth."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Admissions and enrolment.** Enquiries, applications, placement, class and stream allocation, and the creation of the learner record.",
+            "**Learner records.** Identity, guardians, medical notes, transfers and a document set that stays complete from admission to leaving.",
+            "**Staff files.** Contracts, qualifications, TSC details and the records the office is expected to hold for every employee.",
+            "**Compliance and returns.** Registers, enrolment returns and the documents an inspection or a county education office visit will request.",
+            "**Daily operations.** Correspondence, notices, visitors and the small paper trails that keep a term running without chaos."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Those five jobs are all about records that must stay accurate over years. That is why administration is the front door and the filing cabinet of the school — the place a learner enters once and every other module returns to for facts."
+        }
+      ]
+    },
+    {
+      "id": "admissions-enrolment",
+      "heading": "Admissions and enrolment without duplicate files",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Admissions is where most school records go wrong. An enquiry lands on a scrap of paper, the fee plan lives in the bursar's book, and the class list is re-typed into Excel. By the time the learner reports, the school is keeping the same child in three places. Good admissions software collapses that into one flow."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Capture the enquiry once", "text": "Parent details, the child's name and the class sought are recorded the moment the enquiry arrives — no scrap paper, no message lost in a WhatsApp thread." },
+            { "title": "Place the learner and make an offer", "text": "The head or deputy places the learner against available places, and the offer, fee plan and required documents are recorded against the same application." },
+            { "title": "Admission creates the learner record", "text": "When the learner is admitted, one record is created and becomes the single source read by fees, attendance, academics and reporting." },
+            { "title": "Set class, stream and fee plan", "text": "Class, stream and the fee plan are attached at admission, so the first invoice and the first register are correct on day one." },
+            { "title": "Attach the documents", "text": "Birth certificate, transfer letter, previous reports and immunisation records live on the record rather than in a cabinet nobody can find." }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The point to hold on to is that admission is not a separate form-filling exercise — it is the moment the learner record is born. This flow is described in more detail in [school admissions and learner records in Kenya](/blog/school-admissions-learner-records-kenya), and it is the reason a properly built system never asks the office to type the same child twice."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "One record, not three",
+          "text": "The commonest administration failure is a paper admission form, a fees book and an Excel register that never quite agree. When admission creates one learner record, fees, attendance and reports all read the same name, class and guardian details."
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "heading": "Records that are complete and searchable",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Once a learner is in, the office's real job is to keep the record whole. Records management is not about storing more paper — it is about being able to produce the right record quickly, and trusting that what you produce is current."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Complete.** Guardians and their contacts, medical notes, transfers in and out, and every report card the school has issued, in one place.",
+            "**Searchable.** Find a learner by name, admission number, class or guardian in seconds, rather than opening three files to answer one question.",
+            "**Consistent.** The detail the bursar uses for a fee query is the same detail the class teacher sees and the head signs off.",
+            "**Auditable.** A correction to a sensitive field is attributable to a user and a time, not an anonymous tippex change."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The learner side of this is covered in [student information system in Kenya](/blog/student-information-system-kenya). Administration is the discipline of keeping that shared record complete across the years a learner is with you — through transfers, medical events, fee changes and every term report in between."
+        }
+      ]
+    },
+    {
+      "id": "records-searchable",
+      "heading": "Finding a record in seconds, not a term",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Try a simple test on a paper office: ask for the file of a learner who left two years ago. In a digital system that is a search box and a few keystrokes; in a paper office it is a walk to a store and a hope. Searchable records turn a transfer request or a duplicate-report query from a morning's work into a moment's work."
+        }
+      ]
+    },
+    {
+      "id": "compliance-returns",
+      "heading": "Compliance and Ministry returns from live data",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Compliance is where administration meets the outside world. Through the year the school owes figures and documents to the Ministry of Education, the county education office, its own board and sometimes auditors. The difference between a calm inspection and a frantic one is rarely effort — it is whether those returns already exist."
+        },
+        {
+          "type": "paragraph",
+          "text": "When returns are generated from live data, the numbers match what the school actually did: enrolment is the count of real learner records, attendance the sum of real registers, and fees the total of reconciled payments."
+        },
+        {
+          "type": "table",
+          "caption": "Commonly requested records and where they should come from.",
+          "headers": ["Return or record", "Who asks for it", "Where it should come from"],
+          "rows": [
+            ["Enrolment and class lists", "Ministry of Education, county education office", "Live learner records, not a term-end re-type"],
+            ["Attendance registers", "Head, board, inspectors", "The same system that marks attendance daily"],
+            ["Fee collection summaries", "Board, bursar, auditors", "Reconciled M-Pesa and cash postings"],
+            ["Staff and TSC records", "County office, auditors", "Staff files held in the same system"],
+            ["Transfer letters and reports", "Receiving schools, parents", "Generated from the learner record"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Returns from live data, not a term-end project",
+          "text": "If producing an enrolment return means re-typing names from a register into Excel, the school carries that mismatch all term. When the return comes from live records, the numbers cannot drift from what the school actually did."
+        },
+        {
+          "type": "mock",
+          "variant": "reports",
+          "caption": "An administration dashboard reading enrolment, records and returns from the same live data."
+        },
+        {
+          "type": "paragraph",
+          "text": "The registration and compliance cluster goes deeper in [school compliance and registration in Kenya](/blog/school-compliance-registration-kenya), including what a new school must file and what an inspection expects to see."
+        }
+      ]
+    },
+    {
+      "id": "access-audit",
+      "heading": "Role-based access and audit trails for sensitive records",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A school holds some of the most sensitive records there are: a child's identity, a family's circumstances, guardian contacts and staff contracts. Software is only an improvement if it protects them better than the cupboard did."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Role-based access.** The bursar sees fees, the class teacher sees their learners, the head sees the school — and no one sees more than their role requires.",
+            "**Audit trails.** Changes to a learner or staff record are logged against a user and a time, so a correction can always be explained.",
+            "**Daily backups.** Records survive a stolen laptop, a power cut or water damage in the office, because the live copy is not the only copy.",
+            "**Data protection by design.** Handling of learner data aligns with the **Data Protection Act 2019**, rather than being bolted on after a complaint."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "This matters legally as well as ethically. Under the Data Protection Act 2019, a school is a data controller for the learner information it holds, with duties on how that data is collected, stored and shared. See [learner data protection in Kenya school software](/blog/learner-data-protection-kenya-school-software) for what that means in practice."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A shared spreadsheet is not access control",
+          "text": "Sharing one file of learner and guardian data around the staff room is an easy habit and a real risk. Role-based access means the people who need a record can reach it, and everyone else cannot."
+        }
+      ]
+    },
+    {
+      "id": "daily-operations",
+      "heading": "The day-to-day office: the administrative backbone",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Admissions, records and returns are the headline jobs, but the office runs on smaller daily movements too, and they are just as easy to lose when they live in different places. The administrative backbone is what holds them together through a term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Correspondence and notices.** Letters to parents, circulars and staff memos issued from the same place parents are messaged, so nothing is duplicated.",
+            "**Fees and receipts.** The administrative view of balances connects straight to the [fees module and automatic M-Pesa reconciliation](/blog/school-fees-management-software-kenya).",
+            "**Staff files and payroll.** Contracts, leave and payroll inputs sit with the [school HR and payroll system](/blog/school-hr-payroll-software-kenya) instead of a separate cupboard.",
+            "**Visitors and stores.** Light records that keep a term auditable without extra software."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "None of this is glamorous, and that is the point. A school that can answer a parent, produce a board figure and hand a file to an auditor in one afternoon is running on a backbone."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "The SQUL administration module",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "In SQUL, administration is not a bolt-on. It is the module where a learner is created and the place the head returns to for records, returns and access — sharing data with every other part of the platform."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Admissions create the single learner record** shared across fees, attendance, academics and reporting, so there are no duplicate files.",
+            "**Compliance returns are generated from live data** — enrolment, class lists and registers printed from what the school already recorded.",
+            "**Role-based access and daily backups** as standard, so sensitive files are seen only by the right people and survive an accident.",
+            "**Automatic M-Pesa reconciliation** feeds clean, reconciled fee summaries straight into the administrative view for the bursar and the board.",
+            "**Free term, then per-term pricing** — run the office on SQUL for a term before you commit to it.",
+            "**Live in about two weeks** — import learners, set roles and start using the administration module before the next term's reporting day."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Run the office on your own data",
+          "text": "Start with a free term, then move to per-term pricing once you have registered real learners, produced a real return and handed the office a record it can actually search."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is school administration software in Kenya?",
+      "answer": "It is the module of a school management system that runs the office: admissions and enrolment, learner and staff records, document storage, and the compliance returns and registers the Ministry of Education and county education office ask for. Its defining feature is that admissions create one learner record shared with every other module."
+    },
+    {
+      "question": "Does it replace paper admission forms and files?",
+      "answer": "It replaces the duplicate filing rather than the process. Enquiries and applications are captured once, admission creates the learner record, and documents attach to that record instead of a cabinet. The office stops keeping the same child in a form, a fees book and an Excel register."
+    },
+    {
+      "question": "Can compliance returns really be produced from live data?",
+      "answer": "Yes — when enrolment, attendance and fee figures come from the same records the school works on daily, a return becomes a report you print rather than a project you start. The numbers match what the school actually did, which is exactly what an inspection or the county education office wants to see."
+    },
+    {
+      "question": "How is learner data protected?",
+      "answer": "Through role-based access, audit trails and daily backups, with handling aligned to the Data Protection Act 2019. A school is a data controller for the learner information it holds, so access should be limited to the people whose role requires it and every change should be attributable."
+    },
+    {
+      "question": "How long does it take to get the office onto SQUL?",
+      "answer": "About two weeks: import learners and staff, set up roles and train the office. SQUL starts with a free term, then moves to per-term pricing once you have run a real term on your own data."
+    }
+  ],
+  "cta": {
+    "heading": "Run the office from one place",
+    "body": "Start your free term with SQUL — admissions, learner records, staff files and compliance returns in one secure system, live in about two weeks.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "School admissions and learner records in Kenya", "href": "/blog/school-admissions-learner-records-kenya" },
+    { "title": "School compliance and registration in Kenya", "href": "/blog/school-compliance-registration-kenya" },
+    { "title": "Learner data protection in Kenya school software", "href": "/blog/learner-data-protection-kenya-school-software" },
+    { "title": "Student information system in Kenya", "href": "/blog/student-information-system-kenya" }
+  ]
+}

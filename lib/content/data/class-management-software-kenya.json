@@ -1,0 +1,263 @@
+{
+  "slug": "class-management-software-kenya",
+  "path": "/blog/class-management-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "Class & Resource Management Software for Kenyan Schools",
+  "h1": "Class, Subject and Resource Management Software for Kenyan Schools",
+  "description": "Class, subject and resource management software for Kenyan schools — timetables, subjects, teaching resources and room allocation, together.",
+  "primaryKeyword": "class management software Kenya",
+  "secondaryKeywords": [
+    "school subject management software",
+    "teaching resources software Kenya",
+    "room allocation software school",
+    "class list software Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Timetables, subjects, & resources",
+  "image": "/screenshots/class.jpg",
+  "intro": [
+    "**Quick answer:** class management software in Kenya is where you build the academic structure of the school — classes and streams, the class list of learners, the subjects each grade takes, which teacher handles what, and which rooms and teaching resources are used when. Set that structure up correctly once and everything downstream reads from it: timetables, exams, attendance and report cards stop being re-typed every term. It is one module of the wider [school management system features](/blog/school-management-system-features) that an all-in-one platform should include.",
+    "Kenyan schools run on structure. They open three terms a year, teach both **CBC** (Grade 1–9) and **8-4-4** structures (Form 1–4) during the transition, split large cohorts into **streams**, and lean on the **head of department** and **deputy** to keep subjects and rooms straight. When that structure lives only in exercise books and memory, every new term begins with the same arguments about who teaches what and which class owns which room.",
+    "This guide is about the *structure*, not timetable building — we treat the class as the unit everything hangs off, then link out to the [school timetable software](/blog/school-timetable-software-kenya) guide for scheduling depth. If your interest is the people side, [teacher management software in Kenya](/blog/teacher-management-software-kenya) covers deployment, duty and cover."
+  ],
+  "sections": [
+    {
+      "id": "classes-streams",
+      "heading": "Classes, streams and class lists that stay current",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The class is the unit everything else attaches to. A class record is more than a name: it is the container that holds the learners, the stream they sit in, the subjects the class takes, the class teacher, and the room the class normally uses. Build it once and the rest of the school has a single place to look."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Identity that stays stable.** A class keeps the same name and code all term, even as learners join or transfer.",
+            "**Streams that stay distinct.** Form 2 East and Form 2 West are separate records, each with its own list, subjects and room.",
+            "**A class teacher attached.** One teacher owns the register, the class list and day-to-day follow-up.",
+            "**Capacity you can see.** The head can tell at a glance whether a stream is over-full before admissions adds another learner."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A simple naming convention pays off later. “Form 2 East”, “Grade 7 Blue” and “Grade 4” tell the timetable and the reports exactly which cohort is which, and make it obvious when a class is missing from a list. Avoid names that have to change mid-year, such as “the big class” or “the new stream”."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Why streams matter",
+          "text": "When a cohort is split into streams, exams, timetables and report cards all follow the stream — not just the year group. Keep streams as real records rather than a note in a margin, and the documents come out right the first time."
+        }
+      ]
+    },
+    {
+      "id": "class-lists",
+      "heading": "Class lists that stay current all term",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Class lists go stale fastest when they live on paper. In an all-in-one system the class list is generated from the learner records, so a new admission, a transfer in, or a change of stream updates every list it belongs to. That single list then feeds the register in [real-time attendance tracking software](/blog/real-time-attendance-tracking-software-kenya), the exam seating plan and the report card."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Generated from learner records, never re-typed by hand.",
+            "Updated the moment a learner joins, transfers or changes stream.",
+            "Reused by attendance, exams and reports — no second copy to keep in sync."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subjects-per-grade",
+      "heading": "Subjects per grade: CBC and 8-4-4 structures",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Subjects are where Kenyan schools feel the curriculum transition most. A single school may run CBC learning areas for Grade 1–9 and 8-4-4 subjects for Form 1–4 in the same term, and each structure layers subjects differently. The system has to hold both without forcing everyone into one mould — and without letting a teacher's subject load drift."
+        },
+        {
+          "type": "table",
+          "caption": "How subject structures differ across the levels a Kenyan school runs.",
+          "headers": ["Level", "Curriculum", "How subjects are structured"],
+          "rows": [
+            ["Grade 1–6 (Primary)", "CBC", "Core learning areas with classroom-based continuous assessment"],
+            ["Grade 7–9 (Junior School)", "CBC", "Learning areas by strand, with pre-technical and optional subjects"],
+            ["Form 1–4 (Secondary)", "8-4-4 during transition", "Compulsory subjects plus electives — sciences, arts and technicals"],
+            ["Streams within a level", "Either", "Each stream keeps its own subject set, teacher list and class list"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Getting this right is also the foundation of the wider [CBC implementation](/blog/cbc-implementation-school-kenya) work. When subjects, strands and teachers are recorded per grade, assessment and reporting stop being a scramble at the end of term."
+        }
+      ]
+    },
+    {
+      "id": "rooms-resources",
+      "heading": "Rooms and resources without double-booking",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A timetable tells you *when* a class is taught; resource management tells you *where* and *with what*. The two only work together when rooms and resources are real records rather than assumptions. Double-booking is almost always a data problem: two people looking at two different lists."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Rooms as records.** Each classroom, lab and hall is an entity with a capacity and an owner.",
+            "**Special rooms protected.** Science labs, computer labs and the library are limited, so their use is tracked.",
+            "**Teaching resources attached.** Textbooks, projectors and apparatus are linked to a class or subject.",
+            "**Clash warnings.** The system flags a room or kit booked twice before it ever reaches the timetable."
+          ]
+        },
+        {
+          "type": "table",
+          "headers": ["Resource", "Example", "How clashes are avoided"],
+          "rows": [
+            ["Classrooms", "Form 2 East", "A room cannot be booked for two classes in the same period"],
+            ["Science labs", "Chemistry lab", "Practical sessions are locked to the periods they need"],
+            ["Special rooms", "Library, computer lab", "Shared use is shown on one calendar for everyone"],
+            ["Teaching resources", "Textbooks, projector, apparatus", "Attached to a class or subject so it is not double-booked"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Under-provisioned rooms",
+          "text": "If two streams need the same chemistry lab in the same period, no software can invent a second lab. What good room allocation does is surface the clash early — during setup, not on the first day of term — so the head of department can stagger the sessions."
+        }
+      ]
+    },
+    {
+      "id": "feeds-timetable-exams",
+      "heading": "How the structure feeds the timetable, exams and report cards",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Once classes, subjects, teachers and rooms exist, the timetable is assembled from them rather than invented. This is the payoff: the hard thinking is done once, and every later document inherits it."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Build the structure", "text": "Classes and streams, subjects per grade, teachers and rooms." },
+            { "title": "Assemble the timetable", "text": "Place each class–subject pair into a period, with a room and a teacher." },
+            { "title": "Publish and reuse", "text": "The same classes then drive the register, the exam schedule and the report card." }
+          ]
+        },
+        {
+          "type": "mock",
+          "variant": "timetable",
+          "caption": "Illustrative view: a published class week built from the classes, subjects and rooms already set up."
+        },
+        {
+          "type": "paragraph",
+          "text": "Timetable building is a skill of its own, and we cover it in depth in [school timetable software in Kenya](/blog/school-timetable-software-kenya). The point here is upstream: a timetable is only as good as the structure beneath it. The same structure then feeds exam planning and, through [school reporting and analytics software](/blog/school-reporting-analytics-software-kenya), the term report card."
+        }
+      ]
+    },
+    {
+      "id": "setting-up",
+      "heading": "Setting it up once, correctly",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Most class-management pain is really setup pain. Half an hour spent on structure at the start of the year saves a term of corrections. A sensible order:"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Import or create classes** for every year group and stream, with clear names and codes.",
+            "**Attach subjects per grade** for CBC and 8-4-4, matching the curriculum each class follows.",
+            "**Assign the class teacher and subject teachers**, so every subject has an accountable owner.",
+            "**List rooms and resources**, including the special rooms that clash most often.",
+            "**Check the class lists** against the admission register before the term begins."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Once this is done, the structure rarely changes — a new stream here, a new subject there — so the effort is front-loaded and then mostly behind you for the rest of the year."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Do it before the timetable",
+          "text": "Set up classes, subjects and rooms *before* you build the timetable, not after. Rebuilding a timetable because a stream was missing is far more painful than adding the stream first."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL treats the class as the unit everything hangs off. Build classes and streams, attach subjects per grade for both curricula, assign teachers and rooms, and keep teaching resources in one place — then let the timetable, exams and report cards read from that same structure instead of being re-typed each term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**CBC and 8-4-4 subject structures** side by side, so a school mid-transition runs both without workarounds.",
+            "**Classes feed the timetable, exams and report cards** from one record — nothing is entered twice.",
+            "**Timetables and duty rosters publish instantly** to staff once the structure is in place.",
+            "**Role-based access**, so a class teacher, a head of department and the deputy each see exactly what they need.",
+            "**Live in about two weeks**, with your classes, subjects and rooms imported and staff trained."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Start with a free term",
+          "text": "Set up your classes, subjects and rooms once, correctly — then teach a real term with SQUL as a **free term** before moving to per-term pricing."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is class management software in Kenya?",
+      "answer": "It is the part of a school management system where you define the academic structure: classes and streams, class lists, the subjects each grade takes for CBC and 8-4-4, which teachers take what, and which rooms and teaching resources are used. That structure then feeds timetables, exams, attendance and report cards."
+    },
+    {
+      "question": "Can one school run CBC and 8-4-4 subjects at the same time?",
+      "answer": "Yes. A school mid-transition may run CBC learning areas for Grade 1–9 and 8-4-4 subjects for Form 1–4 in the same term. Good subject management holds both structures side by side, mapped per grade, without forcing one to look like the other."
+    },
+    {
+      "question": "How does room allocation avoid double-booking?",
+      "answer": "By making every room and resource a real record and checking it against the timetable. The system flags when a classroom, lab or shared kit is booked twice, so clashes are resolved during setup rather than discovered on the first day of term."
+    },
+    {
+      "question": "Do class lists update automatically?",
+      "answer": "In an all-in-one system, yes. Class lists are generated from learner records, so a new admission, a transfer or a change of stream updates the list — and everything that reads it, including attendance, exams and report cards."
+    },
+    {
+      "question": "Is class management the same as timetabling?",
+      "answer": "No. Class management is the structure underneath — classes, subjects, teachers, rooms and resources. Timetabling places that structure into periods. We cover the scheduling side in our school timetable software guide."
+    }
+  ],
+  "cta": {
+    "heading": "Set up your structure once, correctly",
+    "body": "Start your free term with SQUL — build classes and streams, map subjects for CBC and 8-4-4, allocate rooms and resources, and let the timetable, exams and report cards follow.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" },
+    { "title": "CBC implementation in Kenyan schools", "href": "/blog/cbc-implementation-school-kenya" },
+    { "title": "Teacher management software in Kenya", "href": "/blog/teacher-management-software-kenya" },
+    { "title": "School reporting and analytics software in Kenya", "href": "/blog/school-reporting-analytics-software-kenya" }
+  ]
+}

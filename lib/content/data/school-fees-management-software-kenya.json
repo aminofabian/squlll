@@ -1,0 +1,211 @@
+{
+  "slug": "school-fees-management-software-kenya",
+  "path": "/blog/school-fees-management-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "School Fees Management Software in Kenya: Payments & Balances",
+  "h1": "School Fees Management Software in Kenya: Payments, Balances & Receipts",
+  "description": "School fees management software in Kenya — M-Pesa payments, live balances, receipts and arrears reports reconciled automatically per learner.",
+  "primaryKeyword": "school fees management software Kenya",
+  "secondaryKeywords": [
+    "school fees system Kenya",
+    "fee balances software Kenya",
+    "school receipts software",
+    "fee management module school"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Payments, balances, & receipts",
+  "image": "/screenshots/students-3518726_1920.jpg",
+  "intro": [
+    "**Quick answer:** school fees management software keeps a live balance for every learner, matches each payment — M-Pesa Paybill or till, cash or bank — to the right student, issues receipts automatically, and produces arrears reports for the head and board. For a Kenyan school, the module is only as good as its **automatic M-Pesa reconciliation**. This page is the feature tour; it is one module of the [school management system features](/blog/school-management-system-features) that make up an all-in-one system.",
+    "Fees are the job Kenyan schools feel first and most. The module you choose decides whether the bursar spends the first two weeks of term matching Paybill codes by hand, or watches payments reconcile themselves as they land."
+  ],
+  "sections": [
+    {
+      "id": "what-it-does",
+      "heading": "What a fees management module does",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A fees module sits between the fee structure the board sets and the money that actually arrives. It should do four jobs well: hold the fee structure per class, record every payment against the right learner, keep a live balance, and report collections and arrears."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Fee structure per class or learner** — what is due this term, per learner, no retyping.",
+            "**Payment capture** — M-Pesa, cash and bank landing in one place, matched to the right student.",
+            "**Live balance and receipts** — updated the moment a payment is recorded.",
+            "**Arrears and collection reports** — accurate at any moment, not just at term end."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "structure-to-balance",
+      "heading": "From fee structure to live balance per learner",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The module starts from the fee structure the board approves. Attach it to each class and the system knows what every learner owes. As payments arrive, the balance falls — visible on the learner's profile and in the head's dashboard. (For how to set that structure in the first place, see [how to set school fees in Kenya](/blog/school-fee-structure-kenya).)"
+        }
+      ]
+    },
+    {
+      "id": "payments-land",
+      "heading": "Payments landing in one place",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Payments arrive through several channels, and the module has to cope with all of them without the bursar becoming a data-entry clerk. The one that matters most in Kenya is M-Pesa."
+        },
+        {
+          "type": "mock",
+          "variant": "fees",
+          "caption": "Illustrative view: payments matched to learners, with a live balance for each."
+        },
+        {
+          "type": "table",
+          "headers": ["Channel", "Without a fees module", "With SQUL"],
+          "rows": [
+            ["M-Pesa Paybill / till", "Codes typed and matched by hand each evening", "Matched to the right learner automatically (Daraja)"],
+            ["Cash at the office", "Paper receipt book, retyped later", "Recorded once, receipt issued immediately"],
+            ["Bank transfer", "Reconciled at month end", "Posted against the learner's balance"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For the detail of how automatic reconciliation works end to end, see [M-Pesa integration in school management software](/blog/mpesa-integration-school-management-software-kenya). This page is about the module; that guide goes deeper on the mechanics."
+        }
+      ]
+    },
+    {
+      "id": "receipts-parents",
+      "heading": "Receipts parents actually receive",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A receipt that sits in a file at the office does not stop the queue at the gate. When a payment is matched, the module should send the parent a receipt and new balance on the channel they read — usually WhatsApp, backed by SMS."
+        },
+        {
+          "type": "mock",
+          "variant": "whatsapp",
+          "caption": "Illustrative view: a payment receipt and updated balance sent to a guardian."
+        },
+        {
+          "type": "paragraph",
+          "text": "Because reminders and receipts go out to the correct defaulters, the collections work mostly takes care of itself. For the messaging angle in depth, see [school fee reminders over SMS and WhatsApp](/blog/school-fee-reminder-sms-whatsapp-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "arrears-reports",
+      "heading": "Arrears and collection reports for the head and board",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Because every balance is live, the reports are trustworthy at any moment: arrears by class, collection rate against target, and a per-learner ageing view. The board gets a clean picture instead of a bursar's best estimate."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Arrears by class, stream and learner.",
+            "Collection rate for the term against the fee structure.",
+            "Exportable summaries for the board and the auditor."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "If you have a specific arrears problem, [how to reduce school fee arrears in Kenya](/blog/how-to-reduce-school-fee-arrears-kenya) goes deeper than a feature tour can."
+        }
+      ]
+    },
+    {
+      "id": "what-to-check",
+      "heading": "What to check before you trust a fees module",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Is reconciliation automatic?** If matching is manual, the module has not solved the problem.",
+            "**Does it handle cash and bank as well as M-Pesa?** Most Kenyan schools still receive both.",
+            "**Are receipts automatic and parent-facing?** Not a printed slip in a drawer.",
+            "**Are balances live or batched?** \"Updated nightly\" is not live.",
+            "**Does the bursar see only what they should?** Role-based access matters for finance data."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Compare the module across systems",
+          "text": "The [best school management software in Kenya](/blog/best-school-management-software-kenya) guide rates each vendor's fees and M-Pesa handling side by side."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL's fees module is built around **automatic M-Pesa (Daraja) reconciliation**: Paybill and till payments match to the right learner, the balance and receipt update the same day, and the arrears reports are always current."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Live balance per learner, visible on the profile and dashboards.",
+            "Cash and bank recorded alongside M-Pesa in one ledger.",
+            "Receipts and reminders to parents on WhatsApp and SMS.",
+            "Role-based access and daily backups for finance data."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is school fees management software?",
+      "answer": "It is the module that holds your fee structure, records every payment against the right learner, keeps a live balance, issues receipts, and reports collections and arrears. In Kenya the key capability is automatic M-Pesa reconciliation so payments are not matched by hand."
+    },
+    {
+      "question": "Does it work with M-Pesa Paybill and till?",
+      "answer": "It should. A good fees module matches both Paybill and till (Buy Goods) payments to the correct learner automatically via Safaricom Daraja, then updates the balance and receipt. If matching is manual, the module has not removed the real work."
+    },
+    {
+      "question": "Can it still handle cash and bank payments?",
+      "answer": "Yes, and it must, because many Kenyan schools still receive cash and bank transfers. The module should record those in the same ledger as M-Pesa so the balance and reports stay complete."
+    },
+    {
+      "question": "How fast are receipts sent to parents?",
+      "answer": "With SQUL, when a payment is matched the parent receives a receipt and updated balance on WhatsApp and SMS the same day, so they do not queue at the office to confirm."
+    },
+    {
+      "question": "Will it show arrears by class?",
+      "answer": "It should. Because balances are live, the module can produce arrears by class, stream and learner, plus a collection rate for the term, exportable for the board and auditor."
+    }
+  ],
+  "cta": {
+    "heading": "Watch every payment land on the right learner",
+    "body": "Start your free term with SQUL and reconcile M-Pesa Paybill and till payments automatically, with live balances and receipts from day one.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "M-Pesa integration in school management software in Kenya", "href": "/blog/mpesa-integration-school-management-software-kenya" },
+    { "title": "School reporting and analytics software in Kenya", "href": "/blog/school-reporting-analytics-software-kenya" },
+    { "title": "Student information system in Kenya", "href": "/blog/student-information-system-kenya" },
+    { "title": "School management system price in Kenya", "href": "/blog/school-management-system-price-in-kenya" }
+  ]
+}

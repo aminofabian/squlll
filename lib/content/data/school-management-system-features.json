@@ -1,0 +1,472 @@
+{
+  "slug": "school-management-system-features",
+  "path": "/blog/school-management-system-features",
+  "kind": "pillar",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "School Management System Features: Everything in One Place (2026)",
+  "h1": "School Management System Features: Everything Your School Needs in One Place",
+  "description": "Every school management system feature in one place — students, teachers, classes, attendance, fees, reports, administration, transport and staff.",
+  "primaryKeyword": "school management system features",
+  "secondaryKeywords": [
+    "all-in-one school management system",
+    "school management software modules",
+    "school management system features Kenya",
+    "complete school management system Kenya"
+  ],
+  "intent": "Commercial investigation",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Everything in one place",
+  "image": "/screenshots/ai-generated-9041893_1920.jpg",
+  "quickAnswer": "An all-in-one school management system should cover nine things: students, teachers, classes, attendance, fees, reporting, administration, school transport and staff. The test of \"all-in-one\" is not a long feature list — it is whether one learner record is shared across every module, with no bolt-ons and no re-typing. Every feature below is a guide in this cluster.",
+  "intro": [
+    "A school is nine jobs happening at once: keeping learner records, deploying teachers, running classes and timetables, marking attendance, collecting fees, reporting performance, handling admissions and compliance, running the school bus, and managing staff. **A good school management system does all nine in one place** — and this guide walks through each one, module by module.",
+    "Most \"features\" pages are a flat bullet list. This one shows how the modules connect: attendance feeds parent alerts, the fees module feeds arrears reports, classes feed timetables and exams, and every module reads the same learner record. By the end you will have a checklist you can take to any demo — and a clear picture of what **school management system features** a Kenyan school actually needs.",
+    "SQUL is used throughout as the example: one platform, nine modules, built for Kenyan schools with automatic M-Pesa reconciliation, WhatsApp and SMS parent messaging, and CBC and 8-4-4 reporting. For the wider field of vendors, see the [best school management software in Kenya](/blog/best-school-management-software-kenya)."
+  ],
+  "sections": [
+    {
+      "id": "what-all-in-one-means",
+      "heading": "What \"all-in-one\" really means (and how to spot a pretend one)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "\"All-in-one\" is the most overused phrase in school software. The real test is not how many features a vendor lists — it is whether those features **share the same data**. If you mark attendance in one app and record fees in another, you do not have an all-in-one system; you have two systems and a spreadsheet in between."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One learner record.** A learner is created once at admission and read by fees, attendance, academics and reporting. No re-typing the name into four tools.",
+            "**One login, role-based.** A bursar sees fees, a teacher sees their classes, the head sees everything they are entitled to.",
+            "**No per-feature bolt-ons.** Attendance, fees and reporting are part of the system, not paid add-ons that break the moment you switch them on.",
+            "**Live, not batched.** A payment, a register or a grade updates the reports immediately — you do not wait for a term-end export."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "one-vs-patchwork",
+      "heading": "One system vs a patchwork of apps and spreadsheets",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The status quo in many Kenyan schools is a patchwork: an Excel register for learners, a Paybill statement for fees, a WhatsApp group for parents, a paper book for attendance, and a folder of report cards at the end of term. Each tool works alone, and the work of joining them falls on the bursar and the deputy. An all-in-one system removes that joining work by making the data shared from the start."
+        }
+      ]
+    },
+    {
+      "id": "the-nine-modules",
+      "heading": "The nine modules every Kenyan school ends up needing",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "These are the nine capabilities behind the feature overview above. Each one is covered in its own guide in this cluster — tap through to go deep on any module."
+        },
+        {
+          "type": "table",
+          "caption": "The nine modules of an all-in-one school management system.",
+          "headers": ["Module", "What it covers", "Guide"],
+          "rows": [
+            ["Students", "Profiles, progress & communication", "[Student information system](/blog/student-information-system-kenya)"],
+            ["Teachers", "Classes, attendance & performance", "[Teacher management](/blog/teacher-management-software-kenya)"],
+            ["Classes", "Timetables, subjects & resources", "[Class & resource management](/blog/class-management-software-kenya)"],
+            ["Attendance", "Real-time tracking & reports", "[Attendance tracking](/blog/real-time-attendance-tracking-software-kenya)"],
+            ["Fees", "Payments, balances & receipts", "[Fees management](/blog/school-fees-management-software-kenya)"],
+            ["Reports", "Insights for better decisions", "[Reporting & analytics](/blog/school-reporting-analytics-software-kenya)"],
+            ["Administration", "Admissions, records & compliance", "[School administration](/blog/school-administration-software-kenya)"],
+            ["School Bus", "Routes, tracking & safety", "[School bus tracking](/blog/school-bus-tracking-software-kenya)"],
+            ["Staff", "HR, shifts & payroll", "[HR & payroll](/blog/school-hr-payroll-software-kenya)"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-students",
+      "heading": "Students — profiles, progress and communication",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Everything starts with the learner record. One profile per learner holds identity details, guardians and their contacts, class and stream, fee plan, academic progress and communication history. It is created at admission and read by every other module."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Guardian contacts attached to the learner, so messages always reach the right parent.",
+            "Progress and grades in the same record you contact parents about.",
+            "Role-based access so sensitive notes are not visible to everyone."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [student information system in Kenya](/blog/student-information-system-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-teachers",
+      "heading": "Teachers — classes, attendance and performance",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The teacher module handles deployment and duty: which teacher takes which class and subject, teacher attendance and cover, duty rosters, and a record of lesson completion and performance."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Fair, visible allocation of classes and subjects.",
+            "Duty rosters and cover published instantly to staff.",
+            "Performance and lesson-completion records kept private and role-based."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [teacher management software in Kenya](/blog/teacher-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-classes",
+      "heading": "Classes — timetables, subjects and resources",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The class is the unit everything hangs off: build classes and streams, attach subjects per grade for CBC and 8-4-4, assign teachers and rooms, and keep teaching resources in one place without double-booking."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Classes and streams with class lists that stay current.",
+            "Subjects mapped per grade for both curricula.",
+            "Rooms and resources allocated without clashes."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [class, subject and resource management](/blog/class-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-attendance",
+      "heading": "Attendance — real-time tracking and reports",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Attendance should be marked once and be everywhere: instantly in the head's dashboard, in the parent notification, and in term reports. No more waiting for a roll-up from paper registers."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Same-day registers on phone or desktop.",
+            "Automatic parent alerts for absence.",
+            "Attendance reports per learner, class and term."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [real-time attendance tracking software](/blog/real-time-attendance-tracking-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-fees",
+      "heading": "Fees — payments, balances and receipts",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is the module Kenyan schools feel first. A payment — M-Pesa Paybill or till, cash or bank — lands, matches to the right learner, and updates the balance and receipt the same day. Arrears reports for the head and board are always current."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Automatic M-Pesa (Daraja) reconciliation instead of hand-typed codes.",
+            "Live balance per learner and receipts parents actually receive.",
+            "Arrears and collection reports for the head and board."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [school fees management software in Kenya](/blog/school-fees-management-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-reports",
+      "heading": "Reports — insights for better decisions",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Reporting is the payoff of shared data. Because attendance, fees and academics live together, dashboards are current — enrolment trends, collection rates, attendance rates and performance by class and subject, without a week in Excel."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Live dashboards, not end-of-term spreadsheets.",
+            "Academic performance by class, subject and strand.",
+            "Finance and attendance reporting that reconciles to the modules."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [school reporting and analytics software](/blog/school-reporting-analytics-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-administration",
+      "heading": "Administration — admissions, records and compliance",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The office runs on administration: admitting learners without duplicate files, keeping records complete and searchable, and producing the registers and returns that inspections ask for — from live data, not a last-minute scramble."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Admissions and enrolment in a clean flow.",
+            "Complete, searchable learner and staff records.",
+            "Compliance returns generated from live data."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [school administration software in Kenya](/blog/school-administration-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-school-bus",
+      "heading": "School Bus — routes, tracking and safety",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Transport is safety you can show. Routes and stops are mapped, boarding and alighting is recorded per learner, and parents can be told when the bus is near — with a live map and trip history for the school."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Routes, stops and schedules planned in the system.",
+            "Boarding and alighting records per learner.",
+            "Parent notifications and trip history for safety."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [school bus tracking software in Kenya](/blog/school-bus-tracking-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "module-staff",
+      "heading": "Staff — HR, shifts and payroll",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Staff administration connects roster to pay: staff records and contracts, shifts and duty rosters, leave and cover, then a payroll run that produces payslips — accurate, private and audit-ready."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Staff records and contracts in one place.",
+            "Shifts, duty rosters, leave and cover.",
+            "Payroll runs and payslips without the paperwork."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Full guide: [school HR and payroll software in Kenya](/blog/school-hr-payroll-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "how-modules-connect",
+      "heading": "How the modules connect",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The value of all-in-one is in the seams. Here is what flows between modules when they share one record:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Admission creates the learner", "text": "The administration module creates the profile that students, fees, attendance and reporting all read." },
+            { "title": "Classes and teachers define the day", "text": "Classes, subjects and teachers produce the timetable; the class list drives the attendance register." },
+            { "title": "Attendance triggers communication", "text": "An absence marked in the register becomes an automatic WhatsApp or SMS alert to the right guardian." },
+            { "title": "Fees update the picture", "text": "A reconciled payment updates the balance, the receipt and the arrears report at the same moment." },
+            { "title": "Reports read it all", "text": "Dashboards for the head and board pull enrolment, fees, attendance and academics from the same source." }
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "Where the time actually goes.",
+          "headers": ["Capability", "Patchwork of tools", "Basic system", "SQUL (one system)"],
+          "rows": [
+            ["Learner record", "Typed in several places", "Core only", "One record, all modules"],
+            ["Fee reconciliation", "Manual, by hand", "Often manual", "Automatic (M-Pesa/Daraja)"],
+            ["Parent messaging", "WhatsApp groups", "SMS only", "WhatsApp and SMS"],
+            ["Attendance to reports", "Manual roll-up", "Partial", "Live"],
+            ["Number of logins", "Several", "One", "One, role-based"],
+            ["Bolt-on features", "Many", "Some", "None — included"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "schools-use-first",
+      "heading": "The features Kenyan schools use first (and why)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A school does not switch on nine modules at once. In practice, three modules carry the first term because they remove the most pain:"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Fees** — automatic M-Pesa reconciliation ends the evening ritual of matching Paybill codes by hand, and produces arrears reports the board trusts.",
+            "**Attendance** — same-day registers with parent alerts fix the \"we did not know\" problem and feed reports automatically.",
+            "**School bus** — for schools that transport learners, tracking routes, boarding and parent notifications turns safety into something you can show."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Reporting, administration, classes, teachers and staff follow as the school grows into the system."
+        }
+      ]
+    },
+    {
+      "id": "demo-checklist",
+      "heading": "Features checklist to take to any demo",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Ask every vendor these nine questions — one per module. A yes or a demo for each is what \"all-in-one\" should mean."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Students:** can we see one profile with guardians, class, fees and progress together?",
+            "**Teachers:** can we allocate classes and subjects and see lesson completion?",
+            "**Classes:** can we map subjects per grade for both CBC and 8-4-4?",
+            "**Attendance:** is it same-day, and does it alert parents automatically?",
+            "**Fees:** are M-Pesa Paybill and till payments matched to the right learner automatically?",
+            "**Reports:** are dashboards live, or an end-of-term export?",
+            "**Administration:** can compliance returns be produced from live data?",
+            "**School bus:** can we track routes, boarding and notify parents?",
+            "**Staff:** do rosters feed the payroll run?"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For how these features compare across vendors, see the [best school management software in Kenya](/blog/best-school-management-software-kenya). If your question is about running the school rather than the software, start with [how to manage a school in Kenya](/blog/how-to-manage-a-school-in-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "not-behind-paywall",
+      "heading": "What an all-in-one system should never hide behind a paywall",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Some \"free\" and low-tier systems put the features schools need most behind a paywall — usually reconciliation, messaging or reporting. Watch for these three in particular:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Fee reconciliation.** Without automatic matching, you are still doing the work by hand — which was the whole reason to buy.",
+            "**Parent communication.** If messaging is billed as credits with no clear rate, your term costs are unpredictable.",
+            "**Reporting.** A system that cannot report on its own data is a data-entry tool, not a management system."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Compare the total, not the tier",
+          "text": "A cheap core with three paid bolt-ons usually costs more per term than an all-in-one system — and works less well because the modules do not share data."
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "How SQUL's modules fit together",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is built as one platform with the nine modules above, sharing a single learner record. Nothing on the list is a bolt-on."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Automatic M-Pesa (Daraja) reconciliation** — Paybill and till payments matched to the right learner, balances and receipts updating same day.",
+            "**WhatsApp and SMS in one place** — fee reminders, absence alerts and exam notices on the channel parents read.",
+            "**CBC and 8-4-4 ready** — rubrics, strands, continuous assessment and print-ready term report cards.",
+            "**Timetables and duty rosters** that publish instantly to staff.",
+            "**Same-day attendance** with automatic parent notifications.",
+            "**Multi-campus** consolidation and **role-based access with daily backups** as standard.",
+            "**Live in about two weeks** — import learners, train staff, and start collecting fees before reporting day."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "See it on your own data",
+          "text": "Start with a free term, then move to per-term pricing once you have seen the modules work with your real learners and payments."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What features should a school management system have?",
+      "answer": "At minimum: a single learner record (students), teacher deployment, classes and subjects, real-time attendance, fees with automatic M-Pesa reconciliation, reporting and dashboards, administration and compliance, school transport, and staff HR and payroll. The test of a good system is that these modules share one learner record rather than duplicating data."
+    },
+    {
+      "question": "What does an all-in-one school management system mean?",
+      "answer": "It means one platform where the modules share the same data and the same login. If attendance, fees and reporting live in separate tools, you have a patchwork — not an all-in-one system — and someone still has to join the data by hand."
+    },
+    {
+      "question": "Which school management features do Kenyan schools use first?",
+      "answer": "Most start with fees (automatic M-Pesa reconciliation), then attendance (same-day registers with parent alerts), then school transport for schools that run buses. Reporting, administration, classes, teachers and staff follow as the school grows into the system."
+    },
+    {
+      "question": "Are these features included in one price?",
+      "answer": "With SQUL, yes — the modules are part of one platform, not paid bolt-ons. With other vendors, check whether reconciliation, messaging and reporting are included or billed separately, because those are exactly the features schools need most. See the pricing guide for how to compare quotes."
+    },
+    {
+      "question": "Do the modules work on a phone?",
+      "answer": "They should. Teachers mark attendance and parents receive messages on phones, and heads should be able to see dashboards from a phone. Confirm mobile use for each module in a demo, especially attendance and messaging."
+    }
+  ],
+  "cta": {
+    "heading": "See every module working on your own data",
+    "body": "Start your free term with SQUL — reconcile M-Pesa, message parents on WhatsApp and SMS, mark attendance and print CBC report cards, all in one system.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "Student information system in Kenya", "href": "/blog/student-information-system-kenya" },
+    { "title": "School fees management software in Kenya", "href": "/blog/school-fees-management-software-kenya" },
+    { "title": "Real-time attendance tracking software in Kenya", "href": "/blog/real-time-attendance-tracking-software-kenya" },
+    { "title": "School bus tracking software in Kenya", "href": "/blog/school-bus-tracking-software-kenya" },
+    { "title": "Top 10 best school management software in Kenya", "href": "/blog/best-school-management-software-kenya" }
+  ]
+}

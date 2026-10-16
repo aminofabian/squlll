@@ -18,6 +18,7 @@ foundations). Everything below is implemented unless marked **follow-up**.
 | Structured data | `frontend/app/school/[subdomain]/page.tsx` | schema.org `School` JSON-LD: name, url, logo, image, description, email, telephone, slogan, foundingDate, and — when the profile is filled in — `PostalAddress`, `GeoCoordinates`, and `keywords` (from school type). Emitted only for schools that have published a homepage. |
 | Page indexing | `frontend/app/school/[subdomain]/layout.tsx` | `robots` meta is `index,follow` for published schools and `noindex,nofollow` for un-published ones (the default/placeholder template), applied to the homepage and its sub-pages. |
 | Sitemap | `frontend/app/sitemap.ts` | Host-aware. A tenant host gets `/`, `/admissions`, `/apply`. The apex keeps the marketing + blog sitemap. |
+| Blog sitemap | `frontend/app/blog/sitemap.ts` | Platform only — served at `/blog/sitemap.xml`. Lists the `/blog` index plus every published guide, regenerated from `lib/content/data/*.json` via `getAllArticles()`. Advertised in `robots.txt` beside the platform sitemap. |
 | robots.txt | `frontend/app/robots.ts` | Host-aware. Tenant hosts get `Allow: /` with the admin/portal routes disallowed and `Sitemap: https://<host>/sitemap.xml`. |
 | Directory hub | `frontend/app/schools/page.tsx` | `ItemList` JSON-LD linking every **published** school site; canonical `/schools`. Un-published schools are filtered out so the hub never links to noindex pages. |
 
@@ -91,6 +92,9 @@ the sitemaps so Google crawls and ranks them.
    by DNS TXT. A Domain property covers the apex **and every `*.squl.co.ke`
    subdomain**, so all school sites are covered by one verification.
 2. Submit `https://squl.co.ke/sitemap.xml`.
+3. Submit the dedicated content feed `https://squl.co.ke/blog/sitemap.xml` (see §1)
+   so the blog can be monitored on its own. It is generated from the same article
+   data as the platform sitemap, so new guides appear with no sitemap edits.
 
 ### 3.2 Custom domains
 Each school on its own domain (`school.ac.ke`) is a *different* host and needs its
@@ -150,6 +154,9 @@ npm run build
 curl -s https://<sub>.squl.co.ke/ | grep -E 'application/ld\+json|<title>|canonical'
 curl -s https://<sub>.squl.co.ke/robots.txt
 curl -s https://<sub>.squl.co.ke/sitemap.xml
+
+# 3. Check the platform blog feed (apex only)
+curl -s https://www.squl.co.ke/blog/sitemap.xml
 ```
 
 Paste a school URL into Google's **Rich Results Test** to confirm the `School`

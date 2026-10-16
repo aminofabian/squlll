@@ -1,0 +1,197 @@
+{
+  "slug": "school-bus-tracking-software-kenya",
+  "path": "/blog/school-bus-tracking-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "School Bus Tracking Software in Kenya: Routes & Safety (2026)",
+  "h1": "School Bus Tracking Software in Kenya: Routes, Tracking & Safety",
+  "description": "School bus tracking software in Kenya — routes, live GPS, boarding records and parent notifications so every trip is safe and accounted for.",
+  "primaryKeyword": "school bus tracking software Kenya",
+  "secondaryKeywords": [
+    "school transport management software Kenya",
+    "school bus routes software",
+    "GPS school bus Kenya",
+    "learner transport safety Kenya"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "BoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "Routes, tracking, & safety",
+  "image": "/screenshots/students-3518726_1920.jpg",
+  "intro": [
+    "**Quick answer:** school bus tracking software maps your routes and stops, records who boards and alights, shows the bus live on a map, and can tell parents when the bus is near. For Kenyan schools the value is simple — **every trip accounted for**, and parents reassured without phone calls to the office. It is one module of the [school management system features](/blog/school-management-system-features) an all-in-one system should include.",
+    "Transport is the part of a school where a small gap — a learner left behind, a parent who did not know the route — becomes a serious problem. Tracking is how you close that gap and show your work."
+  ],
+  "sections": [
+    {
+      "id": "what-it-covers",
+      "heading": "What school bus tracking covers",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "School transport software is more than a moving dot on a map. It ties routes, learners and communication together so the school always knows who is on which bus, and parents know where their child is."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Routes and stops** — planned, named and mapped.",
+            "**Boarding and alighting** — recorded per learner, per trip.",
+            "**Live location and history** — where the bus is now, and where it went.",
+            "**Parent notifications** — the bus is near, your child boarded, we have arrived."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "routes",
+      "heading": "Routes, stops and schedules mapped out",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Everything begins with a clean route structure: named routes, ordered stops and pickup/drop-off times, with the learners assigned to each stop. Because learner records are shared, the transport list and the class list never drift apart."
+        },
+        {
+          "type": "mock",
+          "variant": "timetable",
+          "caption": "Illustrative view: routes, stops and pickup times laid out for the term."
+        }
+      ]
+    },
+    {
+      "id": "boarding",
+      "heading": "Boarding and alighting records per learner",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The most important question in school transport is also the simplest: is my child on the bus? Recording boarding and alighting per learner, per trip, answers it — and creates a record if anything is ever questioned."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Learner boards", "text": "The driver or attendant marks the learner on the route list, on a phone." },
+            { "title": "Parent is notified", "text": "An optional WhatsApp or SMS message tells the guardian their child is aboard." },
+            { "title": "Learner alights safely", "text": "The record is closed, completing the trip history for that learner." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "live-gps",
+      "heading": "Live GPS and trip history",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Live tracking lets the transport manager and the office see every bus on a map, and trip history lets them review any journey after the fact — speed, stops and duration. That history is what turns a complaint into a fact-based conversation."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Connectivity reality",
+          "text": "Kenyan roads and networks vary. A practical system keeps recording boarding events and queues location data locally, then syncs when the connection returns — so a dead spot does not lose a trip."
+        }
+      ]
+    },
+    {
+      "id": "parent-reassurance",
+      "heading": "Parent notifications and safety assurance",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The payoff parents feel is quiet: they know the bus is coming, they know their child boarded, and they know the school has a record. That removes the anxious calls to the office and builds trust in a way a paper register cannot."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Bus-is-near alerts reduce waiting at the gate.",
+            "Boarding confirmations reassure without a phone call.",
+            "A visible record if a trip is ever questioned."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Transport safety sits inside the wider question of school safety and security — see [health, safety and security in Kenyan schools](/blog/school-health-safety-security-kenya) for the full picture."
+        }
+      ]
+    },
+    {
+      "id": "what-to-check",
+      "heading": "What to look for in school transport software",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "**Boarding records, not just GPS.** A dot on a map does not tell you who is aboard.",
+            "**Parent notifications that actually send.** On WhatsApp or SMS, to the right guardian.",
+            "**Offline tolerance.** The system must cope with patchy network on the route.",
+            "**Shared learner records.** Transport should not be a separate database.",
+            "**Trip history.** So you can review any journey after the fact."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "squl",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL's school bus module makes every trip visible and accountable: routes and stops, per-learner boarding records, live location and trip history, and parent notifications on the same WhatsApp and SMS channels used for fees and attendance."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Route planning with stops, times and assigned learners.",
+            "Boarding and alighting recorded on a driver's phone.",
+            "Parent messages for boarding and bus-near alerts.",
+            "Part of one system, so transport data sits with the learner record."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does school bus tracking software do?",
+      "answer": "It maps your routes and stops, records which learners board and alight on each trip, shows the bus live on a map with trip history, and can notify parents when the bus is near or a child has boarded."
+    },
+    {
+      "question": "Do parents need an app?",
+      "answer": "Not necessarily. Messages can be sent over WhatsApp and SMS, which parents already use, so notifications reach them without installing anything. Confirm the channel with your vendor."
+    },
+    {
+      "question": "What happens when there is no network on the route?",
+      "answer": "A practical system records boarding events and queues location data locally, then syncs when the connection returns — so a dead spot on the route does not lose a trip record."
+    },
+    {
+      "question": "Is GPS enough on its own?",
+      "answer": "No. A moving dot does not tell you who is aboard. The value comes from combining live location with per-learner boarding records and parent notifications, so every trip is accounted for person by person."
+    },
+    {
+      "question": "Does transport data link to learner records?",
+      "answer": "In an all-in-one system, yes. Routes, stops and boarding records should reference the same learner profile used for fees, attendance and reporting, so the data never drifts out of sync."
+    }
+  ],
+  "cta": {
+    "heading": "Account for every trip and every learner",
+    "body": "Start your free term with SQUL and give your school bus routes, boarding records and parent notifications in the same system as everything else.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "Student information system in Kenya", "href": "/blog/student-information-system-kenya" },
+    { "title": "School administration software in Kenya", "href": "/blog/school-administration-software-kenya" },
+    { "title": "Real-time attendance tracking software in Kenya", "href": "/blog/real-time-attendance-tracking-software-kenya" },
+    { "title": "Health, safety and security in Kenyan schools", "href": "/blog/school-health-safety-security-kenya" }
+  ]
+}

@@ -94,9 +94,9 @@ export default function BlogIndexPage() {
             Guides for Kenyan schools
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
-            Two libraries in one place: how to <strong className="font-semibold text-white">run a school</strong> in
-            Kenya, and how to <strong className="font-semibold text-white">choose and use school software</strong> —
-            written for heads, bursars, directors and teachers.
+            Three libraries in one place: how to <strong className="font-semibold text-white">run a school</strong> in
+            Kenya, how to <strong className="font-semibold text-white">choose and use school software</strong>, and a
+            feature-by-feature tour of what an <strong className="font-semibold text-white">all-in-one system</strong> does.
           </p>
         </div>
       </div>

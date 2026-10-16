@@ -1,0 +1,295 @@
+{
+  "slug": "school-hr-payroll-software-kenya",
+  "path": "/blog/school-hr-payroll-software-kenya",
+  "kind": "cluster",
+  "topic": "SQUL features",
+  "status": "published",
+  "title": "School HR & Payroll Software in Kenya: Staff & Pay (2026)",
+  "h1": "School HR and Payroll Software in Kenya: Staff, Shifts & Pay",
+  "description": "School HR and payroll software in Kenya — staff records, shifts and duty rosters, leave, contracts and payroll, managed in one place.",
+  "primaryKeyword": "school HR and payroll software Kenya",
+  "secondaryKeywords": [
+    "school payroll software Kenya",
+    "school staff records software",
+    "school shift and duty management",
+    "school leave management software"
+  ],
+  "intent": "Commercial",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-16",
+  "kicker": "HR, shifts, & payroll",
+  "image": "/screenshots/teachers.jpg",
+  "quickAnswer": "School HR and payroll software keeps everything about a school's people in one place: staff records and contracts, shifts and duty rosters, leave and cover, and the payroll run that turns them into payslips. Its whole point is the chain **roster → attendance → payroll** — pay that traces back to real work, and records that are always audit-ready.",
+  "intro": [
+    "**Quick answer:** School HR and payroll software keeps everything about your people in one place — staff records and contracts, shifts and duty rosters, leave and cover, and the payroll run that turns all of it into payslips. It exists to connect **roster → attendance → payroll**, so pay is defensible and records are always audit-ready. It is one module of the complete [school management system features](/blog/school-management-system-features) set, and this guide is about the module itself.",
+    "This page is about the HR and payroll *feature* — the software that holds staff data, publishes duty rosters, records leave and runs pay. If your question is about the *human* side of running a team — recruiting, deploying, appraising and developing people — that lives in [managing teachers and staff in a Kenyan school](/blog/school-staff-management-kenya). The two sit side by side: one owns people, this one owns the records and the pay.",
+    "It applies to public and private schools, to TSC and Board of Management staff, and to teaching and non-teaching teams alike — bursars, cooks, drivers, grounds and security staff. Every Kenyan school already does this work; the only question is whether it happens in one system or in a stack of exercise books and spreadsheets."
+  ],
+  "sections": [
+    {
+      "id": "what-hr-payroll-covers",
+      "heading": "What school HR and payroll software covers",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "School HR and payroll software is the module that looks after a school's people. In a Kenyan school it does five jobs that usually live in five different spreadsheets — or, more often, in the bursar's head and the deputy's filing cabinet: staff records, contracts, shifts and duty rosters, leave and cover, and the payroll run that ties them together."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Staff records.** One profile per person: personal details, role, qualifications, TSC or BOM status, deployment history and documents, all in one searchable place.",
+            "**Contracts.** Start dates, renewal dates, terms and pay terms, so a contract question is a lookup and not a hunt through drawers.",
+            "**Shifts and duty rosters.** Timetables, daily duties, boarding and overnight cover, published to the right staff the moment they change.",
+            "**Leave and cover.** Applications, balances and approvals, with cover arranged before a lesson or a duty goes uncovered.",
+            "**Payroll.** Worked days, allowances and deductions turned into a payslip per person, on time — every month and every term."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "One record, two modules",
+          "text": "The same staff record powers the teaching side too — classes, deployment and lesson completion in [teacher management software in Kenya](/blog/teacher-management-software-kenya). Key a teacher's details in once and every module reads them, so nobody re-types a name into a roster and again into a payslip."
+        }
+      ]
+    },
+    {
+      "id": "staff-records-contracts",
+      "heading": "Staff records and contracts in one place",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Almost every HR problem at a school starts the same way: nobody can find the paper. The contract is in a drawer, the certificate is in a file, the deployment history is in the deputy's memory, and the pay terms are in a note the bursar wrote two terms ago. Moving staff records into the system turns each of those into a lookup."
+        },
+        {
+          "type": "paragraph",
+          "text": "A staff record should be created once — at hiring — and then read by everything that needs it: rostering, leave and payroll. When it is, a question from the TSC, a Board of Management meeting or an auditor is answered in minutes rather than days, and the answer is the same no matter who is asked."
+        },
+        {
+          "type": "paragraph",
+          "text": "Contracts are the part schools feel most. A term-contract teacher whose renewal date nobody tracked, a support-staff contract that quietly lapsed, a pay rate that changed in January but not on the payslip — these are the small oversights that grow into disputes. A system that stores the contract against the person and surfaces renewal dates ahead of time turns a source of surprises into a routine calendar item."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "TSC and Board of Management, one register",
+          "text": "Public schools mix TSC-employed teachers with Board of Management staff, on different terms and different pay routes. Keep both in one register, tagged by employer and terms, so reporting is clear and nobody is paid from the wrong budget line by accident."
+        }
+      ]
+    },
+    {
+      "id": "staff-record-contents",
+      "heading": "What a complete staff record holds",
+      "level": 3,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A useful staff record is more than a name and a phone number. It is the single place a director, head or bursar looks when a question about a person comes up."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Identity and contacts** — national ID, phone number and next of kin.",
+            "**Role and terms** — job title, teaching or non-teaching, TSC or BOM, permanent or contract.",
+            "**Contract** — start date, renewal date, notice period and pay terms.",
+            "**Qualifications and documents** — certificates and letters stored against the record, not in a separate folder.",
+            "**Deployment history** — which classes, subjects and duties, term by term.",
+            "**Pay profile** — gross pay, allowances, statutory deductions and any loan or salary advance."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shifts-rosters-leave",
+      "heading": "Shifts, duty rosters, leave and cover",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The fastest way to end an argument about who was supposed to be where is to publish the roster. HR software keeps shifts and duties in the same place as the people who fill them, and connects that day-to-day reality to the records that decide pay."
+        },
+        {
+          "type": "table",
+          "caption": "Where rosters and leave feed the payroll run.",
+          "headers": ["Type", "What it records", "What it feeds"],
+          "rows": [
+            ["Shift / duty roster", "Who works which day and which duty", "Days worked"],
+            ["Attendance", "Present, absent or on duty", "Days worked, and any unpaid absence"],
+            ["Leave", "Approved leave and who is covering", "Paid leave vs unpaid days"],
+            ["Cover and relief", "Extra classes or duties taken", "Allowances"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Digital rosters beat notice boards because everyone sees the *current* version, not last term's. Publishing is instant, so a change on Monday morning is visible to every affected member of staff before the first bell — including boarding and overnight duties, where cover is hardest to arrange late."
+        },
+        {
+          "type": "paragraph",
+          "text": "Shifts are not only a teaching concern. Cooks, drivers, security and grounds staff often work in rotation, and their worked days are exactly what payroll needs. Keeping non-teaching shifts in the same roster system as lessons means a whole school — not just the classrooms — is covered by one schedule."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Leave without the guesswork",
+          "text": "When leave lives in the same system as the roster, approving it immediately shows the gap and who is covering. No more discovering on a Friday afternoon that the weekend boarding duty has nobody assigned to it."
+        }
+      ]
+    },
+    {
+      "id": "payroll",
+      "heading": "Running payroll accurately and on time",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Payroll is where HR and finance meet, and where mistakes are most expensive — in money, in time and in trust. The goal is simple: the right person is paid the right amount, on time, and every deduction on the payslip can be explained."
+        },
+        {
+          "type": "paragraph",
+          "text": "The reliable way to get there is to let the system trace pay back to work, instead of re-typing a register into a spreadsheet at month-end. That chain — **roster → attendance → payroll** — is what makes a pay run defensible."
+        },
+        {
+          "type": "paragraph",
+          "text": "It also removes the month-end scramble. When worked days, allowances and deductions already sit in the system, the bursar reviews and confirms rather than transcribes. The run that used to take a week of evenings becomes an afternoon — and the numbers reconcile to the rosters and registers that produced them."
+        },
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Roster the term", "text": "Publish shifts, duties and the timetable so every staff member knows their days before the term starts." },
+            { "title": "Mark attendance and leave", "text": "Daily attendance and approved leave confirm who actually worked, and which absences were paid or unpaid." },
+            { "title": "Run payroll", "text": "Worked days, allowances and deductions are pulled into the payroll run — no re-typing from a paper register." },
+            { "title": "Issue payslips", "text": "Each staff member gets a payslip, and the bursar gets a payroll summary for the board and the budget." }
+          ]
+        },
+        {
+          "type": "mock",
+          "variant": "reports",
+          "caption": "Payroll summary: gross pay, statutory deductions and net pay across teaching and support staff — one run, one report."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Defensible pay",
+          "text": "Because every payslip traces back to a roster and an attendance record, a query about a deduction is answered with evidence, not an apology. That is the difference between payroll that can be questioned and payroll that can be trusted."
+        }
+      ]
+    },
+    {
+      "id": "privacy-audit",
+      "heading": "Privacy, role-based access and audit trails",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Pay data is the most sensitive information a school holds. It belongs in the system — where it can be found, used and backed up — but only in front of the people entitled to see it."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Role-based access.** A bursar sees pay; a teacher sees their own payslip; the head sees exactly what their role allows and nothing more.",
+            "**Audit trails.** Every change to a pay record, a roster or a leave balance is logged — who changed what, and when.",
+            "**Daily backups.** Staff and pay data is backed up every day, so a lost laptop is never a lost payroll.",
+            "**Documents controlled.** Contracts, certificates and ID copies sit behind the same access rules as the rest of the record."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Treat staff data as personal data",
+          "text": "Under Kenya's Data Protection Act, staff records are personal data. Access them only for a lawful purpose, keep them accurate, and store them securely. A salary spreadsheet emailed around the office fails all three tests at once, however convenient it feels."
+        }
+      ]
+    },
+    {
+      "id": "what-to-check",
+      "heading": "What to check in school HR/payroll software",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Use this as a demo checklist. Ask each vendor to *show* each item with your staff data, not describe it — the gaps appear in the demo, not in the proposal."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Can we keep TSC and BOM staff in one register, tagged by employer and terms?",
+            "Do duty rosters publish instantly, and does everyone always see the current version?",
+            "Does leave connect to the roster, showing who is covering before it is approved?",
+            "Does the payroll run pull worked days from the roster and attendance, rather than from a typed list?",
+            "Can each staff member get a payslip, and can the bursar produce a payroll summary for the board?",
+            "Is access role-based, with an audit trail and daily backups for sensitive pay data?"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Payroll does not sit alone. It draws on and feeds the wider [school administration software in Kenya](/blog/school-administration-software-kenya) and the school's [finance and budgeting in Kenya](/blog/school-finance-and-budgeting-kenya), and it reports on staffing cost alongside [school reporting and analytics](/blog/school-reporting-analytics-software-kenya)."
+        }
+      ]
+    },
+    {
+      "id": "squl-staff-module",
+      "heading": "Where SQUL fits: the staff module",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL's staff module is the HR, shifts and payroll half of one platform. Because it shares the same records as teaching and administration, the roster you publish is the roster payroll runs on — no export, no re-typing, no spreadsheet in between."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Roster → attendance → payroll.** Duty rosters and attendance feed the payroll run directly, so pay traces back to work.",
+            "**Duty rosters publish instantly.** A change reaches every affected staff member without a photocopy or a WhatsApp message.",
+            "**Role-based access and daily backups.** Sensitive pay data stays behind the right permissions and is backed up every day.",
+            "**Free term, then per-term pricing.** Test with your real staff, real rosters and a real payroll run before you pay a shilling.",
+            "**Live in about two weeks.** Import staff records, publish rosters and run your first payroll within the first weeks of a term."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Start with a free term",
+          "text": "See the staff module working on your own school's people — publish a duty roster, approve leave and run a payroll before you commit to per-term pricing. No invented figures, no lock-in before you have seen it work."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does school HR and payroll software do?",
+      "answer": "It keeps staff records and contracts, publishes shifts and duty rosters, records leave and cover, and runs the payroll that produces payslips. The value is that these jobs share one record, so a roster feeds attendance, and attendance feeds pay, instead of each living in a separate spreadsheet."
+    },
+    {
+      "question": "How does a duty roster connect to payroll?",
+      "answer": "Through the chain roster → attendance → payroll. The roster sets who was supposed to work, attendance confirms who did, and the payroll run pulls worked days, allowances and deductions from that record. Pay then traces back to real work, which makes every payslip defensible."
+    },
+    {
+      "question": "Can it manage TSC and Board of Management staff together?",
+      "answer": "Yes. Both can sit in one register, tagged by employer and terms. That keeps reporting clear and makes sure each person is paid from the correct budget line, even though TSC and BOM staff are on different terms and pay routes."
+    },
+    {
+      "question": "Is staff and pay data secure?",
+      "answer": "It should be. Look for role-based access, an audit trail of changes, and daily backups for sensitive pay data. Under Kenya's Data Protection Act, staff records are personal data, so access should be limited to a lawful purpose and stored securely."
+    },
+    {
+      "question": "How long does it take to set up?",
+      "answer": "With SQUL, schools are typically live in about two weeks — importing staff records, publishing rosters and running a first payroll. You start with a free term, then move to per-term pricing once you have seen it work with your own staff."
+    }
+  ],
+  "cta": {
+    "heading": "Pay and manage staff without the paperwork",
+    "body": "Start your free term with SQUL — keep staff records, publish duty rosters and run payroll that traces back to real work, all in one system.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "School management system features: everything in one place", "href": "/blog/school-management-system-features" },
+    { "title": "Managing teachers and staff in a Kenyan school", "href": "/blog/school-staff-management-kenya" },
+    { "title": "School finance and budgeting in Kenya", "href": "/blog/school-finance-and-budgeting-kenya" },
+    { "title": "Teacher management software in Kenya", "href": "/blog/teacher-management-software-kenya" },
+    { "title": "School reporting and analytics software in Kenya", "href": "/blog/school-reporting-analytics-software-kenya" }
+  ]
+}
