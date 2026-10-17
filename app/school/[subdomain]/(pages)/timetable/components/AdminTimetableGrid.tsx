@@ -45,6 +45,7 @@ const TIME_RAIL_MIN = "min-h-[52px]";
 const TD_PAD = "p-1";
 const CARD_RADIUS = "rounded-md";
 const DOUBLE_ROW_SPAN = 2;
+const TRIPLE_ROW_SPAN = 3;
 
 // Resizable column widths (desktop). Widths are persisted per school.
 const TIME_COL_DEFAULT_W = 120;
@@ -461,6 +462,20 @@ interface LessonEntry {
   subjectCode?: string;
   /** Whole-school slot with no lesson scheduled yet */
   isEmpty?: boolean;
+}
+
+/** A double followed by the same lesson in the next free period is a triple. */
+function sameLessonRun(a: LessonEntry, b: LessonEntry): boolean {
+  const aSubject = a.subject.id ?? a.subject.name;
+  const bSubject = b.subject.id ?? b.subject.name;
+  const aTeacher = a.teacher.id ?? a.teacher.fullName ?? a.teacher.name;
+  const bTeacher = b.teacher.id ?? b.teacher.fullName ?? b.teacher.name;
+  return (
+    aSubject === bSubject &&
+    aTeacher === bTeacher &&
+    (a.gradeId ?? "") === (b.gradeId ?? "") &&
+    (a.streamId ?? null) === (b.streamId ?? null)
+  );
 }
 
 interface BreakEntry {
@@ -1124,6 +1139,33 @@ export function AdminTimetableGrid({
                             return null;
                           }
 
+                          const prevPrevEntry =
+                            periodIndex >= 2
+                              ? getEntryFor(
+                                  dayOfWeek,
+                                  periodNumbers[periodIndex - 2],
+                                )
+                              : null;
+                          const coveredByTripleAbove =
+                            !schoolCombined &&
+                            !!entry &&
+                            !!prevPrevEntry?.isDoublePeriod &&
+                            !prevEntry &&
+                            sameLessonRun(entry, prevPrevEntry) &&
+                            !breakBlocksDoubleSpan(
+                              getBreaksAfterPeriod,
+                              dayOfWeek,
+                              periodNumbers[periodIndex - 2],
+                            ) &&
+                            !breakBlocksDoubleSpan(
+                              getBreaksAfterPeriod,
+                              dayOfWeek,
+                              periodNumbers[periodIndex - 1],
+                            );
+                          if (coveredByTripleAbove) {
+                            return null;
+                          }
+
                           let displayEntry: LessonEntry | null = entry;
                           let isDoubleContinuation = false;
 
@@ -1155,15 +1197,39 @@ export function AdminTimetableGrid({
                               period,
                             );
 
+                          const thirdPeriodNumber =
+                            periodIndex + 2 < periodNumbers.length
+                              ? periodNumbers[periodIndex + 2]
+                              : null;
+                          const thirdEntry =
+                            thirdPeriodNumber != null
+                              ? getEntryFor(dayOfWeek, thirdPeriodNumber)
+                              : null;
+                          const isTripleStart =
+                            !!isDoubleStart &&
+                            spansBothPeriods &&
+                            !schoolCombined &&
+                            !!thirdPeriodNumber &&
+                            !!thirdEntry &&
+                            !!displayEntry &&
+                            sameLessonRun(displayEntry, thirdEntry) &&
+                            !breakBlocksDoubleSpan(
+                              getBreaksAfterPeriod,
+                              dayOfWeek,
+                              period + 1,
+                            );
+                          const spanRows = isTripleStart
+                            ? TRIPLE_ROW_SPAN
+                            : spansBothPeriods
+                              ? DOUBLE_ROW_SPAN
+                              : 1;
                           const doubleBlocked =
                             !!isDoubleStart &&
-                            (!!nextEntry ||
-                              nextPeriodNumber == null ||
-                              breakBlocksDoubleSpan(
-                                getBreaksAfterPeriod,
-                                dayOfWeek,
-                                period,
-                              ));
+                            !isTripleStart &&
+                            (nextPeriodNumber == null ||
+                              (!!nextEntry &&
+                                !!displayEntry &&
+                                !sameLessonRun(displayEntry, nextEntry)));
                           const hasConflict =
                             !!doubleBlocked ||
                             !!(
@@ -1177,14 +1243,15 @@ export function AdminTimetableGrid({
                               (highlightSubjectId &&
                                 displayEntry.subject.id !== highlightSubjectId))
                           );
-                          const doubleMinutes = isDoubleStart
-                            ? minutesBetween(
-                                daySlot?.startTime,
-                                nextPeriodNumber != null
-                                  ? getSlotFor(dayIndex, nextPeriodNumber)?.endTime
-                                  : undefined,
-                              )
-                            : null;
+                          const spanEndPeriod =
+                            period + Math.max(spanRows - 1, 0);
+                          const lessonMinutes =
+                            spanRows > 1
+                              ? minutesBetween(
+                                  daySlot?.startTime,
+                                  getSlotFor(dayIndex, spanEndPeriod)?.endTime,
+                                )
+                              : null;
 
                           const isActiveLesson = !!(
                             displayEntry &&
@@ -1229,7 +1296,7 @@ export function AdminTimetableGrid({
                           return (
                             <td
                               key={dayIndex}
-                              rowSpan={spansBothPeriods ? DOUBLE_ROW_SPAN : undefined}
+                              rowSpan={spanRows > 1 ? spanRows : undefined}
                               onDragOver={(event) => {
                                 if (!draggedLessonId || !daySlot?.id || !onMoveLesson) {
                                   return;
@@ -1258,6 +1325,7 @@ export function AdminTimetableGrid({
                               {displayEntry ? (
                                 <AdminLessonCell
                                   spansBothPeriods={spansBothPeriods}
+                                  isTripleStart={isTripleStart}
                                   entry={displayEntry}
                                   accent={accentFor(
                                     displayEntry.subject.id ?? displayEntry.id,
@@ -1284,7 +1352,7 @@ export function AdminTimetableGrid({
                                   onDragStart={handleDragStart(displayEntry.id)}
                                   onDragEnd={clearDrag}
                                   dropHint={!!onMoveLesson}
-                                  doubleMinutes={doubleMinutes}
+                                  lessonMinutes={lessonMinutes}
                                   inARow={!!runLessonIds?.has(displayEntry.id)}
                                 />
                               ) : (
@@ -1808,6 +1876,7 @@ function AdminLessonCell({
   isFaded,
   isDoubleStart,
   isDoubleContinuation,
+  isTripleStart,
   connectsDoubleBelow,
   spansBothPeriods,
   showFullSubjectName = true,
@@ -1817,10 +1886,10 @@ function AdminLessonCell({
   onDragStart,
   onDragEnd,
   dropHint,
-  doubleMinutes,
+  lessonMinutes,
   inARow,
 }: {
-  doubleMinutes?: number | null;
+  lessonMinutes?: number | null;
   inARow?: boolean;
   entry: LessonEntry;
   accent: SubjectAccentStyle;
@@ -1831,6 +1900,7 @@ function AdminLessonCell({
   isFaded?: boolean;
   isDoubleStart?: boolean;
   isDoubleContinuation?: boolean;
+  isTripleStart?: boolean;
   connectsDoubleBelow?: boolean;
   /** One block stretched across both periods of a double. */
   spansBothPeriods?: boolean;
@@ -1853,13 +1923,15 @@ function AdminLessonCell({
     });
   }, [isActive]);
 
-  const tooltipExtra = isDoubleContinuation
-    ? "Double period · 2nd half"
-    : spansBothPeriods
-      ? "Double period · two lessons back to back"
-      : isDoubleStart
-        ? "Double period"
-        : undefined;
+  const tooltipExtra = isTripleStart
+    ? "Triple period · three lessons back to back"
+    : isDoubleContinuation
+      ? "Double period · 2nd half"
+      : spansBothPeriods
+        ? "Double period · two lessons back to back"
+        : isDoubleStart
+          ? "Double period"
+          : undefined;
 
   return (
     <div
@@ -1939,8 +2011,9 @@ function AdminLessonCell({
         doubleLabel={doublePillLabel({
           isDoubleStart,
           isDoubleContinuation,
+          isTripleStart,
           spansBothPeriods,
-          doubleMinutes,
+          lessonMinutes,
         })}
       />
     </div>
@@ -1950,18 +2023,23 @@ function AdminLessonCell({
 function doublePillLabel({
   isDoubleStart,
   isDoubleContinuation,
+  isTripleStart,
   spansBothPeriods,
-  doubleMinutes,
+  lessonMinutes,
 }: {
   isDoubleStart?: boolean;
   isDoubleContinuation?: boolean;
+  isTripleStart?: boolean;
   spansBothPeriods?: boolean;
-  doubleMinutes?: number | null;
+  lessonMinutes?: number | null;
 }): string | null {
+  if (isTripleStart) {
+    return lessonMinutes ? `Triple · ${lessonMinutes} min` : "Triple";
+  }
   if (isDoubleContinuation) return "Double · 2nd half";
   if (!isDoubleStart) return null;
   if (!spansBothPeriods) return "Double · 1st half";
-  return doubleMinutes ? `Double · ${doubleMinutes} min` : "Double";
+  return lessonMinutes ? `Double · ${lessonMinutes} min` : "Double";
 }
 
 function LessonCardBadges({

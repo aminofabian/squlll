@@ -57,3 +57,43 @@ export async function swapTimetableEntries(
     { entryAId, entryBId },
   );
 }
+
+export interface FixClashesResult {
+  fixedCount: number;
+  unresolvedCount: number;
+  moves: Array<{
+    entryId: string;
+    subjectName: string;
+    teacherName: string;
+    dayOfWeek: number;
+    fromPeriod: number;
+    toPeriod: number;
+  }>;
+  warnings: string[];
+}
+
+export async function fixTimetableClashes(input: {
+  termId: string;
+  gradeLevelId?: string;
+  streamId?: string;
+}): Promise<FixClashesResult> {
+  const data = await graphql<{ fixTimetableClashes: FixClashesResult }>(
+    `mutation FixTimetableClashes($input: FixTimetableClashesInput!) {
+      fixTimetableClashes(input: $input) {
+        fixedCount
+        unresolvedCount
+        warnings
+        moves {
+          entryId
+          subjectName
+          teacherName
+          dayOfWeek
+          fromPeriod
+          toPeriod
+        }
+      }
+    }`,
+    { input },
+  );
+  return data.fixTimetableClashes;
+}

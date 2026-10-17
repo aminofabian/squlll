@@ -80,6 +80,7 @@ import { getTimeSlotForDayAndPeriod } from "./utils/timetableSlots";
 import {
   moveTimetableEntry,
   swapTimetableEntries,
+  fixTimetableClashes,
 } from "./utils/timetableDragApi";
 import {
   isSameGrade,
@@ -138,6 +139,8 @@ import {
   Eye,
   EyeOff,
   Sparkles,
+  Wrench,
+  Loader2,
   Users,
   Printer,
   Copy,
@@ -825,6 +828,7 @@ export default function SmartTimetableNew() {
   const [showFullSubjectName, setShowFullSubjectName] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
   const [lessonSaving, setLessonSaving] = useState(false);
+  const [fixingClashes, setFixingClashes] = useState(false);
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
   const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
@@ -1768,6 +1772,52 @@ export default function SmartTimetableNew() {
     [reloadTimetableData, toast],
   );
 
+  const handleFixClashes = useCallback(async () => {
+    const termId = termIdForAllocations;
+    if (!termId || fixingClashes) return;
+    setFixingClashes(true);
+    try {
+      const result = await fixTimetableClashes({
+        termId,
+        gradeLevelId: selectedGradeId ?? undefined,
+        streamId: selectedStreamId ?? undefined,
+      });
+      if (result.fixedCount > 0) {
+        toast({
+          title: `Fixed ${result.fixedCount} clash${result.fixedCount === 1 ? "" : "es"}`,
+          description:
+            result.unresolvedCount > 0
+              ? `${result.unresolvedCount} could not be placed safely. ${result.warnings[0] ?? ""}`
+              : "Only the conflicting lessons were moved.",
+        });
+      } else {
+        toast({
+          title: "No clashes could be fixed automatically",
+          description:
+            result.warnings[0] ??
+            "There were no free slots that would resolve the remaining conflicts.",
+          variant: "destructive",
+        });
+      }
+      await reloadTimetableData();
+    } catch (err) {
+      toast({
+        title: "Could not fix clashes",
+        description: sanitizeTimetableUserMessage(err),
+        variant: "destructive",
+      });
+    } finally {
+      setFixingClashes(false);
+    }
+  }, [
+    fixingClashes,
+    reloadTimetableData,
+    selectedGradeId,
+    selectedStreamId,
+    termIdForAllocations,
+    toast,
+  ]);
+
   const handleEditLesson = useCallback(
     (entry: {
       id: string;
@@ -2207,6 +2257,16 @@ export default function SmartTimetableNew() {
             </DropdownMenuItem>
           </>
         ) : null}
+        {conflictCount > 0 ? (
+          <DropdownMenuItem
+            onClick={() => void handleFixClashes()}
+            className={ttMenu.item}
+            disabled={fixingClashes}
+          >
+            <Wrench />
+            Fix clashes automatically
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem
           onClick={() => setBulkBreaksOpen(true)}
           className={ttMenu.item}
@@ -2553,6 +2613,25 @@ export default function SmartTimetableNew() {
                   </Button>
                 </ToolbarHint>
               )}
+
+              {hasScheduleStructure && conflictCount > 0 ? (
+                <ToolbarHint text="Move only the conflicting lessons into free slots. Chosen class first; other classes are left alone.">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden h-8 gap-1.5 border-[#246a59]/30 bg-[#e8f2ef]/60 text-xs font-medium text-[#0a1f1a] hover:bg-[#e8f2ef] lg:inline-flex dark:border-[#7eb8a8]/30 dark:bg-[#123a31] dark:text-[#d8eee8]"
+                    onClick={() => void handleFixClashes()}
+                    disabled={fixingClashes}
+                  >
+                    {fixingClashes ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wrench className="h-3.5 w-3.5" />
+                    )}
+                    {fixingClashes ? "Fixing…" : "Fix clashes"}
+                  </Button>
+                </ToolbarHint>
+              ) : null}
 
               {isLastLesson ? (
                 <ToolbarHint text="Open the last missing lesson in its free slot, ready to save.">
