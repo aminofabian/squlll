@@ -510,6 +510,18 @@ interface AdminTimetableGridProps {
   columnWidthStorageKey?: string;
   getCombinedEntriesFor?: (dayOfWeek: number, period: number) => LessonEntry[];
   onCombinedLessonClick?: (entry: LessonEntry) => void;
+  /**
+   * Class-view drag/drop. Omit targetEntryId for an empty slot (move), or pass
+   * the occupied lesson id to swap the two lessons.
+   */
+  onMoveLesson?: (
+    entryId: string,
+    target: {
+      dayOfWeek: number;
+      timeSlotId: string;
+      targetEntryId?: string;
+    },
+  ) => void | Promise<void>;
 }
 
 // ─── Component ─────────────────────────────────────────────────
@@ -546,8 +558,37 @@ export function AdminTimetableGrid({
   columnWidthStorageKey,
   getCombinedEntriesFor,
   onCombinedLessonClick,
+  onMoveLesson,
 }: AdminTimetableGridProps) {
   const cleanName = getCleanBreakName || ((name: string) => name);
+  const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const handleDragStart = (entryId: string) => (event: React.DragEvent) => {
+    setDraggedLessonId(entryId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/timetable-lesson", entryId);
+    event.dataTransfer.setData("text/plain", entryId);
+  };
+  const clearDrag = () => {
+    setDraggedLessonId(null);
+    setDropTarget(null);
+  };
+  const handleCellDrop = (
+    event: React.DragEvent,
+    dayOfWeek: number,
+    timeSlotId: string,
+    targetEntryId?: string,
+  ) => {
+    event.preventDefault();
+    const entryId =
+      event.dataTransfer.getData("text/timetable-lesson") ||
+      event.dataTransfer.getData("text/plain") ||
+      draggedLessonId;
+    clearDrag();
+    if (!entryId || !timeSlotId || !onMoveLesson) return;
+    if (targetEntryId && targetEntryId === entryId) return;
+    void onMoveLesson(entryId, { dayOfWeek, timeSlotId, targetEntryId });
+  };
   const [mobileDayIndex, setMobileDayIndex] = useState(0);
   const isMobile = useIsMobile();
   const accentFor = resolveAccent ?? getSubjectAccent;
@@ -1139,10 +1180,29 @@ export function AdminTimetableGrid({
                             <td
                               key={dayIndex}
                               rowSpan={spansBothPeriods ? DOUBLE_ROW_SPAN : undefined}
+                              onDragOver={(event) => {
+                                if (!draggedLessonId || !daySlot?.id || !onMoveLesson) {
+                                  return;
+                                }
+                                event.preventDefault();
+                                event.dataTransfer.dropEffect = "move";
+                                setDropTarget(`${dayOfWeek}:${period}`);
+                              }}
+                              onDragLeave={() => setDropTarget(null)}
+                              onDrop={(event) =>
+                                handleCellDrop(
+                                  event,
+                                  dayOfWeek,
+                                  daySlot?.id ?? "",
+                                  displayEntry?.id,
+                                )
+                              }
                               className={cn(
-                                "h-px bg-white align-top dark:bg-zinc-900/40",
+                                "h-px bg-white align-top transition-colors dark:bg-zinc-900/40",
                                 TD_PAD,
                                 doubleBlockTdPadding(false, isDoubleContinuation),
+                                dropTarget === `${dayOfWeek}:${period}` &&
+                                  "bg-[#246a59]/10 ring-2 ring-inset ring-[#246a59]/60",
                               )}
                             >
                               {displayEntry ? (
@@ -1164,6 +1224,15 @@ export function AdminTimetableGrid({
                                   showFullSubjectName
                                   onEdit={onEditLesson}
                                   onDelete={onDeleteLesson}
+                                  draggable={
+                                    !!onMoveLesson &&
+                                    !displayEntry.isDoublePeriod &&
+                                    !isDoubleContinuation
+                                  }
+                                  isDragging={draggedLessonId === displayEntry.id}
+                                  onDragStart={handleDragStart(displayEntry.id)}
+                                  onDragEnd={clearDrag}
+                                  dropHint={!!onMoveLesson}
                                 />
                               ) : (
                                 <button
@@ -1710,6 +1779,11 @@ function AdminLessonCell({
   spansBothPeriods,
   showFullSubjectName = true,
   onEdit,
+  draggable,
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  dropHint,
 }: {
   entry: LessonEntry;
   accent: SubjectAccentStyle;
@@ -1725,6 +1799,11 @@ function AdminLessonCell({
   showFullSubjectName?: boolean;
   onEdit?: (lesson: LessonEntry) => void;
   onDelete?: (lesson: LessonEntry) => void;
+  draggable?: boolean;
+  isDragging?: boolean;
+  onDragStart?: (event: React.DragEvent) => void;
+  onDragEnd?: () => void;
+  dropHint?: boolean;
 }) {
   const cellRef = useRef<HTMLDivElement>(null);
 
@@ -1748,7 +1827,9 @@ function AdminLessonCell({
     <div
       ref={cellRef}
       className={cn(
-        "group/lesson relative flex cursor-pointer items-start gap-0.5 rounded-none border px-2",
+        "group/lesson relative flex items-start gap-0.5 rounded-none border px-2",
+        draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+        isDragging && "opacity-40 ring-2 ring-[#246a59]/40",
         LESSON_CELL_MIN,
         spansBothPeriods && "h-full border-l-[3px]",
         (isDoubleStart || isDoubleContinuation) && "pr-6",
@@ -1778,11 +1859,15 @@ function AdminLessonCell({
       }
       role="button"
       tabIndex={0}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      data-timetable-lesson={entry.id}
       aria-current={isActive ? "true" : undefined}
       title={
         isActive
           ? `Editing · ${lessonTooltip(entry, tooltipExtra)}`
-          : lessonTooltip(entry, tooltipExtra)
+          : `${dropHint ? "Drag to move · drop on another lesson to swap · " : ""}${lessonTooltip(entry, tooltipExtra)}`
       }
       onClick={() => onEdit?.(entry)}
       onKeyDown={(e) => {

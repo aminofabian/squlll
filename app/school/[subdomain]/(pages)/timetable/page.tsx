@@ -69,12 +69,19 @@ import {
 } from "./utils/timetableSummaryText";
 import { getTimeSlotForDayAndPeriod } from "./utils/timetableSlots";
 import {
+  moveTimetableEntry,
+  swapTimetableEntries,
+} from "./utils/timetableDragApi";
+import {
   isSameGrade,
   resolveSchoolConfigGradeId,
   resolveStreamEntityIdForSidebar,
   tenantStreamIdsForGrade,
 } from "./utils/resolveGradeForSchoolConfig";
-import { formatBreakTypeLabel } from "@/lib/utils/timetable-user-messages";
+import {
+  formatBreakTypeLabel,
+  sanitizeTimetableUserMessage,
+} from "@/lib/utils/timetable-user-messages";
 import { LessonEditDialog } from "./components/LessonEditDialog";
 import { TimeslotEditDialog } from "./components/TimeslotEditDialog";
 import { BreakEditDialog } from "./components/BreakEditDialog";
@@ -1615,6 +1622,39 @@ export default function SmartTimetableNew() {
       });
     },
     [selectedGradeId, toast, openClassSidebar, openLessonEditor],
+  );
+
+  const handleMoveLesson = useCallback(
+    async (
+      entryId: string,
+      target: {
+        dayOfWeek: number;
+        timeSlotId: string;
+        targetEntryId?: string;
+      },
+    ) => {
+      if (!target.timeSlotId) return;
+      setLessonSaving(true);
+      try {
+        if (target.targetEntryId) {
+          await swapTimetableEntries(entryId, target.targetEntryId);
+          toast({ title: "Lessons swapped", description: "Both lessons now sit in each other's slots." });
+        } else {
+          await moveTimetableEntry(entryId, target.timeSlotId);
+          toast({ title: "Lesson moved", description: "The lesson was moved to the new slot." });
+        }
+        await reloadTimetableData();
+      } catch (err) {
+        toast({
+          title: "Could not move lesson",
+          description: sanitizeTimetableUserMessage(err),
+          variant: "destructive",
+        });
+      } finally {
+        setLessonSaving(false);
+      }
+    },
+    [reloadTimetableData, toast],
   );
 
   const handleEditLesson = useCallback(
@@ -3180,6 +3220,7 @@ export default function SmartTimetableNew() {
                         onEditLesson={handleEditLesson}
                         onDeleteLesson={setDeleteEntryConfirm}
                         onAddLesson={handleAddLesson}
+                        onMoveLesson={handleMoveLesson}
                         onEditBreak={setEditingBreak}
                         onAddBreak={handleAddBreak}
                         onMoveBreak={handleMoveBreak}

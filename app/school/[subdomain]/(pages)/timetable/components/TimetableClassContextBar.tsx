@@ -76,6 +76,9 @@ export function TimetableClassContextBar({
           ) : null}
         </p>
         <TimetableLastUpdated isoTimestamp={lastUpdatedIso} />
+        <p className={cn(tt.text.micro, tt.ink.faint, "mt-1")}>
+          Drag a lesson to move it · drop it on another lesson to swap
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-5 sm:gap-6">
