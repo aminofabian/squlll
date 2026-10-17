@@ -120,6 +120,17 @@ const SIGNUP_MUTATION = `
   }
 `;
 
+interface SignupMutationResult {
+  errors?: Array<{ message?: string }>;
+  data?: {
+    createUser?: {
+      user: { id: string; email: string; schoolUrl: string };
+      tenant?: { id: string; name: string; subdomain: string };
+      subdomainUrl?: string;
+    };
+  };
+}
+
 // ─── Component ─────────────────────────────────────────────────
 
 export default function SignupPage() {
@@ -222,7 +233,7 @@ export default function SignupPage() {
         const text = await response.text();
         if (!text) throw new Error("No response from server.");
 
-        let result: any;
+        let result: SignupMutationResult;
         try {
           result = JSON.parse(text.trim().replace(/^\uFEFF/, ""));
         } catch {
@@ -237,6 +248,11 @@ export default function SignupPage() {
           ) {
             throw new Error(
               "An account with this email already exists. Please sign in instead.",
+            );
+          }
+          if (msg.toLowerCase().includes("phone")) {
+            throw new Error(
+              "Please enter a valid phone number, e.g. 712 345 678.",
             );
           }
           if (

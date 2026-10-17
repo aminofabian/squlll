@@ -572,7 +572,7 @@ function ContactCell({ user }: { user: AdminUserListItem }) {
   const whatsappHref = phoneToWhatsAppHref(user.phoneNumber);
 
   return (
-    <div className="group/contact min-w-0 max-w-[220px]">
+    <div className="min-w-0 max-w-[220px]">
       <p className="truncate text-sm text-slate-600 dark:text-slate-400">
         {user.email}
       </p>
@@ -591,7 +591,7 @@ function ContactCell({ user }: { user: AdminUserListItem }) {
               {formatPhoneDisplay(user.phoneNumber)}
             </span>
           )}
-          <span className="flex flex-shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover/contact:opacity-100">
+          <span className="flex flex-shrink-0 items-center gap-0.5">
             {whatsappHref ? (
               <a
                 href={whatsappHref}
