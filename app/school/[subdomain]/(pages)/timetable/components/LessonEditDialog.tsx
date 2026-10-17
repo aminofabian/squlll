@@ -39,12 +39,14 @@ import {
   resolveTenantStreamIdForApi,
   subjectsForTimetableGrade,
 } from "../utils/resolveGradeForSchoolConfig";
-import { subjectsForSelectedTeacher } from "../utils/subjectsForSelectedTeacher";
+import { subjectsForTeacherInClass } from "../utils/subjectsForTeacherInClass";
+import type { TeacherLessonAllocation } from "@/lib/types/timetable-allocation";
 import {
   getBusyTeacherIds,
   getOccupiedPeriodNumbers,
   validateScheduleConflict,
 } from "../utils/computeTimetableConflicts";
+import { breakSplitsDouble } from "../utils/breakSplitsDouble";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
 import { X, AlertCircle } from "lucide-react";
@@ -101,7 +103,11 @@ interface LessonEditDialogProps {
   ) => void;
   /** Tell the page a save is in flight so the grid can block more edits. */
   onSavingChange?: (saving: boolean) => void;
+  /** This term's lesson allocations: which teacher takes which subject in which class. */
+  allocations?: TeacherLessonAllocation[];
 }
+
+const NO_ALLOCATIONS: TeacherLessonAllocation[] = [];
 
 function useIsLgDown() {
   const [isLgDown, setIsLgDown] = useState(false);
@@ -122,6 +128,7 @@ export function LessonEditDialog({
   onClose,
   onRequestDelete,
   onSavingChange,
+  allocations = NO_ALLOCATIONS,
 }: LessonEditDialogProps) {
   const {
     subjects,
@@ -139,6 +146,7 @@ export function LessonEditDialog({
     selectedGradeId,
     selectedStreamId,
     selectedTermId,
+    breaks,
   } = useTimetableStore();
   const { selectedTerm } = useSelectedTerm();
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
@@ -1191,11 +1199,23 @@ Check the browser console for detailed input information.`;
     };
   }, [lesson, moveDay, movePeriod, timeSlots, entries]);
 
+  const startPeriodForDouble = effectiveScheduling.periods[0];
+  const doubleNotAllowedHere =
+    startPeriodForDouble !== undefined &&
+    breakSplitsDouble(breaks, effectiveScheduling.day, startPeriodForDouble);
+
   const doublePeriodIssue = useMemo(() => {
     if (!lesson || !formData.isDoublePeriod) return null;
     const day = effectiveScheduling.day;
     const nextPeriod = effectiveScheduling.periods[1];
     if (!nextPeriod) return null;
+    if (doubleNotAllowedHere) {
+      return {
+        title: "A break comes after this period",
+        description:
+          "A double lesson would be split by the break. Untick “Two periods in a row” or pick a period with no break after it.",
+      };
+    }
     const nextSlot = getTimeSlotForDayAndPeriod(timeSlots, day, nextPeriod);
     if (!nextSlot) {
       return {
@@ -1215,7 +1235,7 @@ Check the browser console for detailed input information.`;
       title: "Next period is taken",
       description: "Clear the following period before using a double lesson.",
     };
-  }, [lesson, formData.isDoublePeriod, effectiveScheduling, entries, timeSlots]);
+  }, [lesson, formData.isDoublePeriod, effectiveScheduling, entries, timeSlots, doubleNotAllowedHere]);
 
   if (!lesson) return null;
 
@@ -1259,10 +1279,22 @@ Check the browser console for detailed input information.`;
     schoolConfigGetters,
   );
 
+  const classScope = { gradeId: lesson.gradeId, streamId: selectedStreamId, grades };
+  const subjectsTaughtBy = (teacher: (typeof activeTeachers)[number] | undefined) =>
+    subjectsForTeacherInClass(teacher, subjectsForClass, allocations, classScope);
+
+  const selectedTeacherSubjects = subjectsTaughtBy(selectedTeacher);
+  const currentSubject = subjectsForClass.find((s) => s.id === formData.subjectId);
+  const subjectOptions = !selectedTeacher
+    ? subjectsForClass
+    : currentSubject && !selectedTeacherSubjects.some((s) => s.id === currentSubject.id)
+      ? [...selectedTeacherSubjects, currentSubject]
+      : selectedTeacherSubjects;
+
   // Subject-first: once a subject is chosen, only offer teachers who teach it.
   const teachersForSubject = formData.subjectId
     ? gradeQualifiedTeachers.filter((teacher) =>
-        subjectsForSelectedTeacher(teacher, subjectsForClass).some(
+        subjectsTaughtBy(teacher).some(
           (s) => s.id === formData.subjectId,
         ),
       )
@@ -1286,7 +1318,7 @@ Check the browser console for detailed input information.`;
   const handleTeacherChange = (teacherId: string) => {
     setSaveError(null);
     const teacher = activeTeachers.find((t) => t.id === teacherId);
-    const teacherSubjects = subjectsForSelectedTeacher(teacher, subjectsForClass);
+    const teacherSubjects = subjectsTaughtBy(teacher);
     const keepCurrentSubject = teacherSubjects.some(
       (s) => s.id === formData.subjectId,
     );
@@ -1303,9 +1335,7 @@ Check the browser console for detailed input information.`;
     setSaveError(null);
     const teacherStillTeaches =
       !selectedTeacher ||
-      subjectsForSelectedTeacher(selectedTeacher, subjectsForClass).some(
-        (s) => s.id === subjectId,
-      );
+      subjectsTaughtBy(selectedTeacher).some((s) => s.id === subjectId);
     setFormData({
       ...formData,
       subjectId,
@@ -1319,10 +1349,7 @@ Check the browser console for detailed input information.`;
   const applySuggestion = () => {
     if (!suggestedTeacher) return;
     setSaveError(null);
-    const teacherSubjects = subjectsForSelectedTeacher(
-      suggestedTeacher,
-      subjectsForClass,
-    );
+    const teacherSubjects = subjectsTaughtBy(suggestedTeacher);
     const subjectId =
       formData.subjectId &&
       teacherSubjects.some((s) => s.id === formData.subjectId)
@@ -1547,10 +1574,10 @@ Check the browser console for detailed input information.`;
             id="subject"
             value={formData.subjectId || undefined}
             onValueChange={handleSubjectChange}
-            subjects={subjectsForClass}
-            disabled={subjectsForClass.length === 0}
+            subjects={subjectOptions}
+            disabled={subjectOptions.length === 0}
             placeholder="Select subject"
-            emptyLabel="No subjects for this class"
+            emptyLabel={selectedTeacher ? `${selectedTeacher.name} has no subjects in this class` : "No subjects for this class"}
           />
           {formData.subjectId &&
           availableTeachers.length === 0 &&
@@ -1564,8 +1591,7 @@ Check the browser console for detailed input information.`;
           ) : null}
           {formData.teacherId &&
           selectedTeacher &&
-          subjectsForSelectedTeacher(selectedTeacher, subjectsForClass).length ===
-            0 ? (
+          selectedTeacherSubjects.length === 0 ? (
             <p className={cn(tt.text.caption, tt.ink.muted)}>
               {selectedTeacher.name} has no subjects for this class.{" "}
               {subdomain ? (
@@ -1621,10 +1647,11 @@ Check the browser console for detailed input information.`;
           </datalist>
         </FormSection>
 
-        <label className="flex cursor-pointer items-start gap-2">
+        <label className={cn("flex items-start gap-2", doubleNotAllowedHere ? "cursor-not-allowed" : "cursor-pointer")}>
           <Checkbox
             id="doublePeriod"
             checked={formData.isDoublePeriod}
+            disabled={doubleNotAllowedHere && !formData.isDoublePeriod}
             onCheckedChange={(checked) =>
               setFormData({
                 ...formData,
@@ -1638,7 +1665,9 @@ Check the browser console for detailed input information.`;
               Two periods in a row
             </span>
             <span className={cn("mt-0.5 block", tt.text.micro, tt.ink.faint)}>
-              Uses this period and the next.
+              {doubleNotAllowedHere
+                ? "Not here: a break comes straight after this period."
+                : "Uses this period and the next."}
             </span>
           </span>
         </label>

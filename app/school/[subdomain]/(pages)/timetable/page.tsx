@@ -48,6 +48,7 @@ import { TimetableWeekProgress } from "./components/TimetableWeekProgress";
 import { useClassStepperKeys } from "./hooks/useClassStepperKeys";
 import { useClassWeekInsights } from "./hooks/useClassWeekInsights";
 import { useTimetableExport } from "./hooks/useTimetableExport";
+import { breakSplitsDouble } from "./utils/breakSplitsDouble";
 import { TimetableExportDialog } from "./components/TimetableExportDialog";
 import type { PrintSource } from "./utils/printableTimetable";
 import { getClassNeighbours, type ClassStop } from "./utils/classSequence";
@@ -1747,6 +1748,21 @@ export default function SmartTimetableNew() {
       },
     ) => {
       if (!target.timeSlotId) return;
+      const moving = useTimetableStore.getState().entries.find((e) => e.id === entryId);
+      const targetPeriod = timeSlots.find((ts) => ts.id === target.timeSlotId)?.periodNumber;
+      if (
+        !target.targetEntryId &&
+        moving?.isDoublePeriod &&
+        targetPeriod !== undefined &&
+        breakSplitsDouble(breaks, target.dayOfWeek, targetPeriod)
+      ) {
+        toast({
+          title: "A break would split this double",
+          description: "Drop the double lesson on a period with no break straight after it.",
+          variant: "destructive",
+        });
+        return;
+      }
       setLessonSaving(true);
       try {
         if (target.targetEntryId) {
@@ -1769,7 +1785,7 @@ export default function SmartTimetableNew() {
         setLessonSaving(false);
       }
     },
-    [reloadTimetableData, toast],
+    [reloadTimetableData, toast, timeSlots, breaks],
   );
 
   const handleFixClashes = useCallback(async () => {
@@ -3804,6 +3820,7 @@ export default function SmartTimetableNew() {
             onClose={closeLessonEditor}
             onRequestDelete={(l) => setDeleteEntryConfirm(l)}
             onSavingChange={setLessonSaving}
+            allocations={allocations}
           />
 
           <TimetableShareDrawer
