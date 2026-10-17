@@ -1163,7 +1163,7 @@ export function TimetableSetupWizard({
             ? "Your timetable is ready"
             : `${created} class timetables are ready`,
         description:
-          "Next: tell us who teaches what, then auto-fill the timetable — or fill the grid by hand.",
+          "Next: tell SQUL who teaches what and let it build the timetable — or fill the grid by hand.",
       });
 
       await onComplete();

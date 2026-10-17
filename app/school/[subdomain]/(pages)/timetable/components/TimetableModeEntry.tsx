@@ -182,24 +182,24 @@ export function TimetableModeEntry({
                 <Wand2 className="h-4 w-4 text-[#246a59]/50 transition group-hover:text-[#246a59]" />
               </div>
               <p className={cn(tt.text.title, tt.ink.strong)}>
-                Auto-fill
+                Let SQUL build it
               </p>
               <p className={cn(tt.caption, "mt-1.5")}>
-                Tell us who teaches what, set workload limits, then generate a
-                balanced draft you can refine on the grid.
+                Tell SQUL who teaches what and it builds a balanced week for
+                you to fine-tune on the grid.
               </p>
               <ul className={cn(tt.text.small, tt.ink.base, "mt-4 space-y-1.5")}>
                 <li className="flex items-center gap-2">
                   <span className="h-1 w-1 bg-[#246a59]" />
-                  Allocations → rules → generate
+                  Weekly lessons, teacher limits, build
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="h-1 w-1 bg-[#246a59]" />
-                  Review clashes & quotas after
+                  No teacher booked twice
                 </li>
               </ul>
               <span className={cn(tt.text.small, "mt-5 inline-flex items-center gap-1.5 font-semibold text-[#246a59] transition group-hover:gap-2.5 dark:text-[#7eb8a8]")}>
-                Set up & auto-fill
+                Build it for me
                 <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </button>
@@ -207,7 +207,7 @@ export function TimetableModeEntry({
 
           <div className={cn(tt.border.hair, "mt-5 flex items-center justify-between gap-3 border-t pt-4")}>
             <p className={cn(tt.text.caption, tt.ink.faint)}>
-              Tip: you can reopen auto-fill anytime from the ⋮ menu.
+              Tip: “Build my timetable” is always in the toolbar and the ⋮ menu.
             </p>
             <button
               type="button"

@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
+import { AUTO_BUILD_COPY } from "../utils/autoBuildCopy";
 import { TimetableLastUpdated } from "./TimetableLastUpdated";
 import {
   getTimetableReadiness,
@@ -332,7 +333,7 @@ export function TimetableHealthPanel({
             onClick={onAutoGenerate}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Auto-fill timetable
+            {AUTO_BUILD_COPY.action}
           </Button>
         ) : null}
 

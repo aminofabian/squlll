@@ -41,6 +41,10 @@ import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { TimetableJourney } from "./components/TimetableJourney";
+import { TimetableAutoBuildBanner } from "./components/TimetableAutoBuildBanner";
+import { usePersistentDismissal } from "./hooks/usePersistentDismissal";
+import { AUTO_BUILD_COPY } from "./utils/autoBuildCopy";
+import { getAutoBuildOffer } from "./utils/getAutoBuildOffer";
 import { TimetableSubjectInsights } from "./components/TimetableSubjectInsights";
 import {
   TimetableGridSkeleton,
@@ -1054,11 +1058,21 @@ export default function SmartTimetableNew() {
 
   const { getCombinedEntriesFor } = useSchoolCombinedEntries();
   const termOverview = useTimetableTermOverview();
-  // Auto-fill is the fast path while the week is still mostly empty — nudge
-  // toward it with a small attention dot on the toolbar button.
-  const autoFillNudge =
-    termOverview.totalSlots > 0 &&
-    termOverview.totalFilled / termOverview.totalSlots < 0.25;
+  const autoBuildOffer = getAutoBuildOffer({
+    totalSlots: termOverview.totalSlots,
+    filledSlots: termOverview.totalFilled,
+  });
+  const autoFillNudge = autoBuildOffer !== null;
+  const autoBuildBanner = usePersistentDismissal(
+    `timetable-auto-build-banner-hidden-${subdomain}-${selectedTermId ?? ""}`,
+  );
+  const startBuildingByHand = () => {
+    setCreationMode("manual");
+    setModeEntryDismissed(true);
+    if (!selectedGradeId && grades.length > 0) {
+      setSelectedGrade(grades[0].id);
+    }
+  };
   const schoolLessonCount = useMemo(
     () => termOverview.byGrade.reduce((sum, g) => sum + g.lessonCount, 0),
     [termOverview.byGrade],
@@ -2010,7 +2024,7 @@ export default function SmartTimetableNew() {
             className={ttMenu.item}
           >
             <Sparkles />
-            Auto-fill from weekly lessons
+            {AUTO_BUILD_COPY.menu}
           </DropdownMenuItem>
         ) : null}
         {hasScheduleStructure && schoolLessonCount > 0 ? (
@@ -2020,7 +2034,7 @@ export default function SmartTimetableNew() {
               className={ttMenu.item}
             >
               <Shuffle />
-              Re-shuffle · fill gaps
+              {AUTO_BUILD_COPY.rebuildFillGaps}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
@@ -2029,7 +2043,7 @@ export default function SmartTimetableNew() {
               className={ttMenu.item}
             >
               <Shuffle />
-              Re-shuffle · keep hand-placed
+              {AUTO_BUILD_COPY.rebuildKeepManual}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
@@ -2038,7 +2052,7 @@ export default function SmartTimetableNew() {
               className={ttMenu.item}
             >
               <Shuffle />
-              Re-shuffle · rebuild everything
+              {AUTO_BUILD_COPY.rebuildEverything}
             </DropdownMenuItem>
           </>
         ) : null}
@@ -2363,7 +2377,7 @@ export default function SmartTimetableNew() {
               )}
 
               {hasScheduleStructure && (
-                <ToolbarHint text="Click here to automatically generate a timetable — it places every lesson for you, then you can fine-tune by hand.">
+                <ToolbarHint text={AUTO_BUILD_COPY.toolbarHint}>
                   <Button
                     size="sm"
                     className={cn(
@@ -2387,7 +2401,7 @@ export default function SmartTimetableNew() {
                       </span>
                     ) : null}
                     <Sparkles className="h-3.5 w-3.5" />
-                    Auto-fill timetable
+                    {AUTO_BUILD_COPY.action}
                   </Button>
                 </ToolbarHint>
               )}
@@ -2400,7 +2414,7 @@ export default function SmartTimetableNew() {
                       className="hidden h-8 gap-1.5 border-slate-200 bg-white text-xs text-slate-600 hover:text-slate-800 lg:inline-flex dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                     >
                       <Shuffle className="h-3.5 w-3.5" />
-                      Re-shuffle
+                      {AUTO_BUILD_COPY.rebuild}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className={ttMenu.content}>
@@ -2408,7 +2422,7 @@ export default function SmartTimetableNew() {
                       className={ttMenu.item}
                       onClick={() => openAutoGenerate(2, { replace: false })}
                     >
-                      Fill gaps only
+                      {AUTO_BUILD_COPY.rebuildFillGaps}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className={ttMenu.item}
@@ -2419,7 +2433,7 @@ export default function SmartTimetableNew() {
                         })
                       }
                     >
-                      Rebuild · keep hand-placed
+                      {AUTO_BUILD_COPY.rebuildKeepManual}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className={ttMenu.item}
@@ -2430,7 +2444,7 @@ export default function SmartTimetableNew() {
                         })
                       }
                     >
-                      Rebuild everything
+                      {AUTO_BUILD_COPY.rebuildEverything}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -2623,7 +2637,7 @@ export default function SmartTimetableNew() {
                         className={ttMenu.item}
                       >
                         <Sparkles />
-                        Auto-fill from weekly lessons
+                        {AUTO_BUILD_COPY.menu}
                       </DropdownMenuItem>
                     )}
                     {hasScheduleStructure && (
@@ -2888,17 +2902,34 @@ export default function SmartTimetableNew() {
                     onGenerate={() =>
                       openAutoGenerate()
                     }
-                    onFillManually={() => {
-                      setCreationMode("manual");
-                      setModeEntryDismissed(true);
-                      if (!selectedGradeId && grades.length > 0) {
-                        setSelectedGrade(grades[0].id);
-                      }
-                    }}
+                    onFillManually={startBuildingByHand}
                     onReviewIssues={handleHighlightProblems}
                     onPublish={() => openShareDrawer()}
                     onHide={() => setJourneyHidden(true)}
                     storageKey={`timetable-journey-skipped-${subdomain}-${termIdForShare ?? ""}`}
+                  />
+                </div>
+              )}
+
+            {autoBuildOffer &&
+              hasScheduleStructure &&
+              !autoBuildBanner.dismissed &&
+              !showTimetableWizard &&
+              !isPageLoading &&
+              !autoGenerateOpen &&
+              !editingLesson &&
+              !shareDrawerOpen && (
+                <div data-timetable-no-print className="shrink-0 px-3 pt-3 lg:px-4">
+                  <TimetableAutoBuildBanner
+                    offer={autoBuildOffer}
+                    filledSlots={termOverview.totalFilled}
+                    totalSlots={termOverview.totalSlots}
+                    onBuild={() => openAutoGenerate(0, { replace: false })}
+                    onBuildByHand={() => {
+                      startBuildingByHand();
+                      autoBuildBanner.dismiss();
+                    }}
+                    onDismiss={autoBuildBanner.dismiss}
                   />
                 </div>
               )}

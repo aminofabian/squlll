@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AlertCircle, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
+import { AUTO_BUILD_COPY } from "../utils/autoBuildCopy";
 
 type TimetableMobileActionStripProps = {
   onAddLessons?: () => void;
@@ -67,7 +68,7 @@ export function TimetableMobileActionStrip({
             )}
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-            Auto-fill timetable
+            {AUTO_BUILD_COPY.actionShort}
           </button>
           <div
             className="w-px shrink-0 bg-[#e8f2ef] dark:bg-white/10"

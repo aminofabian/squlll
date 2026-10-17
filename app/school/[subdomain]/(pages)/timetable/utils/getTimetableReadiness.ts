@@ -105,7 +105,7 @@ export function getTimetableReadiness(
       break;
     case "not-started":
       nextStep =
-        "No lessons on the grid yet. Auto-fill the timetable, or add lessons by hand.";
+        "No lessons on the grid yet. Let SQUL build the timetable, or add lessons by hand.";
       break;
     case "clashes":
       nextStep = `${plural(clashCount, "clash", "clashes")} must be fixed before sharing.`;

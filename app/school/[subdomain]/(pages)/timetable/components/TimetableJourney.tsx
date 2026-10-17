@@ -219,17 +219,17 @@ export function TimetableJourney({
     },
     {
       id: "create",
-      label: "Create",
-      title: "Create the timetable",
+      label: "Build",
+      title: "Let SQUL build the timetable",
       description:
-        "We place every lesson for you — no teacher in two classes at once, and double lessons kept side by side. You can move anything afterwards.",
+        "SQUL places every lesson for you — no teacher in two classes at once, and double lessons kept side by side. You can move anything afterwards.",
       icon: Sparkles,
       done: lessonCount > 0,
       doneHint:
         lessonCount > 0
           ? `${lessonCount} lesson${lessonCount === 1 ? "" : "s"} placed`
           : undefined,
-      actionLabel: "Create my timetable",
+      actionLabel: "Build my timetable",
       onAction: onGenerate,
       secondaryLabel: "I'll fill it in myself",
       onSecondary: onFillManually,
