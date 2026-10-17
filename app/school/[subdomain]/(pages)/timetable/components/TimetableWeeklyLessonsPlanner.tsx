@@ -53,6 +53,7 @@ import {
   suggestWeeklyLessons,
 } from "../utils/suggestedWeeklyLessons";
 import { abbreviateGradeShort } from "@/lib/utils/grade-display";
+import { lessonsAfterDoubleChange } from "../utils/doubleLessonCount";
 
 interface PlannerRow {
   key: string;
@@ -118,6 +119,8 @@ function streamNameFor(grade: Grade | undefined, streamId?: string | null) {
     )?.name ?? null
   );
 }
+
+const MAX_DOUBLES_PER_SUBJECT = 20;
 
 /** Compact −/+ number control; friendlier than a bare number box on touch. */
 function Stepper({
@@ -911,7 +914,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
       <div className="hidden items-center gap-1.5 px-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.75rem_4.75rem_8.5rem_1.25rem]">
         <span className={tt.eyebrow}>Subject</span>
         <span className={cn(tt.eyebrow, "text-center")}>Lessons</span>
-        <span className={cn(tt.eyebrow, "text-center")} title="Double periods — two of this subject back-to-back">Doubles</span>
+        <span className={cn(tt.eyebrow, "text-center")} title="Each double adds two lessons, taught back to back">Doubles</span>
         <span className={tt.eyebrow}>Teacher</span>
         <span />
       </div>
@@ -926,7 +929,6 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             activeGrade?.name,
           );
           const needsTeacher = row.lessonsPerWeek > 0 && !row.teacherId;
-          const maxDoubles = Math.floor(row.lessonsPerWeek / 2);
 
           return (
             <li
@@ -974,14 +976,18 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               </div>
 
               <div className="flex items-center justify-between gap-1.5 sm:justify-center">
-                <span className={cn(tt.eyebrow, "sm:hidden")} title="Double periods — two of this subject back-to-back">Doubles</span>
+                <span className={cn(tt.eyebrow, "sm:hidden")} title="Each double adds two lessons, taught back to back">Doubles</span>
                 <Stepper
                   ariaLabel={`${row.subjectName} double lessons`}
                   value={row.doubleLessons}
-                  max={maxDoubles}
-                  muted={maxDoubles === 0}
-                  disabled={maxDoubles === 0}
-                  onChange={(n) => patchRow(row.key, { doubleLessons: n })}
+                  max={MAX_DOUBLES_PER_SUBJECT}
+                  onChange={(n) =>
+                    patchRow(row.key, lessonsAfterDoubleChange(
+                      row.lessonsPerWeek,
+                      row.doubleLessons,
+                      n,
+                    ))
+                  }
                 />
               </div>
 
