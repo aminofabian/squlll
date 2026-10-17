@@ -47,6 +47,9 @@ import { TimetableClassWeekPanel } from "./components/TimetableClassWeekPanel";
 import { TimetableWeekProgress } from "./components/TimetableWeekProgress";
 import { useClassStepperKeys } from "./hooks/useClassStepperKeys";
 import { useClassWeekInsights } from "./hooks/useClassWeekInsights";
+import { useTimetableExport } from "./hooks/useTimetableExport";
+import { TimetableExportDialog } from "./components/TimetableExportDialog";
+import type { PrintSource } from "./utils/printableTimetable";
 import { getClassNeighbours, type ClassStop } from "./utils/classSequence";
 import { usePersistentDismissal } from "./hooks/usePersistentDismissal";
 import { AUTO_BUILD_COPY } from "./utils/autoBuildCopy";
@@ -1412,6 +1415,58 @@ export default function SmartTimetableNew() {
     setSelectedStream,
   ]);
 
+  const classPrintTitle = [classDisplayLabel, currentStream?.name].filter(Boolean).join(" · ");
+
+  const getClassPrintSource = useCallback((): PrintSource | null => {
+    if (!selectedGradeId || periodNumbers.length === 0) return null;
+    const subtitle = [
+      selectedTerm?.name,
+      activeAcademicYear?.name,
+      `${days.length} days`,
+      `${periodNumbers.length} lessons a day`,
+    ].filter(Boolean).join(" · ");
+    return {
+      title: classPrintTitle,
+      subtitle,
+      dayLabels: days,
+      periodNumbers,
+      slotFor: getSlotFor,
+      lessonFor: (dayOfWeek, period) => {
+        const entry = getEntryFor(dayOfWeek, period);
+        if (!entry) return null;
+        return {
+          subjectId: entry.subject.id ?? entry.id,
+          subject: entry.subject.name,
+          teacher: entry.teacher.fullName?.trim() || entry.teacher.name?.trim() || "",
+          room: entry.roomNumber,
+          isDouble: entry.isDoublePeriod,
+        };
+      },
+      breaksAfter: (period) =>
+        getBreaksAfterPeriod(period).map((b) => ({ ...b, name: getCleanBreakName(b.name) })),
+      accentFor: getSubjectAccentForGrid,
+    };
+  }, [
+    selectedGradeId,
+    periodNumbers,
+    selectedTerm?.name,
+    activeAcademicYear?.name,
+    days,
+    classPrintTitle,
+    getSlotFor,
+    getEntryFor,
+    getBreaksAfterPeriod,
+    getCleanBreakName,
+    getSubjectAccentForGrid,
+  ]);
+
+  const showExportError = useCallback(
+    (message: string) => toast({ title: "Download failed", description: message, variant: "destructive" }),
+    [toast],
+  );
+  const classExport = useTimetableExport({ getSource: getClassPrintSource, onError: showExportError });
+  const openClassExport = classExport.setOpen;
+
   const handlePrintClassTimetable = useCallback(() => {
     if (!selectedGradeId) {
       toast({
@@ -1420,8 +1475,8 @@ export default function SmartTimetableNew() {
       });
       return;
     }
-    window.print();
-  }, [selectedGradeId, toast]);
+    openClassExport(true);
+  }, [selectedGradeId, toast, openClassExport]);
 
   const handleCopyClassSummary = useCallback(async () => {
     if (!selectedGradeId) return;
@@ -2223,7 +2278,7 @@ export default function SmartTimetableNew() {
               className={ttMenu.item}
             >
               <Printer />
-              Print
+              Print or download PDF (A4)
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportClassCsv} className={ttMenu.item}>
               <Download />
@@ -2246,6 +2301,14 @@ export default function SmartTimetableNew() {
     >
       <TimetablePrintStyles />
       <TimetableSurfaceStyles />
+      <TimetableExportDialog
+        open={classExport.open}
+        classLabel={classPrintTitle}
+        downloading={classExport.downloading}
+        onOpenChange={classExport.setOpen}
+        onPrint={classExport.print}
+        onDownload={classExport.download}
+      />
       {showTimetableWizard && (
         <div className="fixed inset-0 z-[60] overflow-auto">
           <TimetableSetupWizard
@@ -2372,10 +2435,23 @@ export default function SmartTimetableNew() {
                   </h1>
                   <RealtimeLiveIndicator />
                   {selectedGradeId ? (
-                    <TimetableClassStepper
-                      neighbours={classNeighbours}
-                      onGo={goToClass}
-                    />
+                    <>
+                      <TimetableClassStepper
+                        neighbours={classNeighbours}
+                        onGo={goToClass}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1.5 rounded-lg px-2.5 text-[12.5px]"
+                        onClick={handlePrintClassTimetable}
+                        aria-label="Print or download this timetable as an A4 PDF"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                        Print / PDF
+                      </Button>
+                    </>
                   ) : null}
                 </div>
                 <p
@@ -2813,7 +2889,7 @@ export default function SmartTimetableNew() {
                         <DropdownMenuLabel className={ttMenu.label}>Class</DropdownMenuLabel>
                         <DropdownMenuItem onClick={handlePrintClassTimetable} className={ttMenu.item}>
                           <Printer />
-                          Print
+                          Print or download PDF (A4)
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleExportClassCsv} className={ttMenu.item}>
                           <Download />
