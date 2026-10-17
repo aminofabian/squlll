@@ -1777,16 +1777,23 @@ function AdminLessonCell({
         }
       }}
     >
-      <p
-        className={cn(
-          T_CELL,
-          "min-w-0 flex-1 py-px font-medium leading-tight",
-          showFullSubjectName ? "whitespace-normal break-words" : "truncate",
-        )}
-        style={{ color: hasConflict ? undefined : accent.text }}
-      >
-        {entry.subject.name}
-      </p>
+      <div className="min-w-0 flex-1 py-px">
+        <p
+          className={cn(
+            T_CELL,
+            "min-w-0 font-medium leading-tight",
+            showFullSubjectName ? "whitespace-normal break-words" : "truncate",
+          )}
+          style={{ color: hasConflict ? undefined : accent.text }}
+        >
+          {entry.subject.name}
+        </p>
+        {entry.teacher.fullName?.trim() || entry.teacher.name?.trim() ? (
+          <p className={cn(T_CELL, "truncate leading-tight opacity-70")}>
+            {entry.teacher.fullName?.trim() || entry.teacher.name?.trim()}
+          </p>
+        ) : null}
+      </div>
       {isDoubleStart ? (
         <span className="absolute right-0.5 top-0.5 rounded-none bg-violet-100/90 px-1 py-0.5 text-[8px] font-semibold leading-none text-violet-700 ring-1 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60">
           2×

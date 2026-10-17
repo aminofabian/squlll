@@ -23,6 +23,10 @@ const ParentsPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [selectedChild, setSelectedChild] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
+  // Parent identity comes from a client-side session/data query. Do not render
+  // it during hydration; server markup and the first client render must match.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   const {
     portalChildren,
@@ -100,7 +104,7 @@ const ParentsPortal = () => {
         setActiveTab={setActiveTab}
         subdomain={subdomain}
         notifications={notifications}
-        parentName={dashboard.parentName}
+        parentName={mounted ? dashboard.parentName : undefined}
       />
 
       <div className="min-w-0 flex-1 overflow-y-auto">
@@ -120,7 +124,7 @@ const ParentsPortal = () => {
                 recentGrades={dashboard.recentGrades}
                 upcomingEvents={[]}
                 notifications={notifications}
-                parentName={dashboard.parentName}
+                parentName={mounted ? dashboard.parentName : undefined}
                 averageGpa={dashboard.averageGpa}
                 dashboardLoading={dashboard.loading}
                 consolidatedFees={consolidatedFees}

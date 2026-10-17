@@ -89,7 +89,9 @@ export function AdminMobileClassBar({
         ) : null}
         {onClassPickerClick ? (
           <span className="mt-1 block text-[12px] font-medium text-[#0073ea]">
-            Choose a class
+            {classLabel.toLowerCase() === 'all classes'
+              ? 'Choose a class'
+              : 'Change class'}
           </span>
         ) : null}
       </span>
@@ -149,7 +151,7 @@ export function AdminMobileClassBar({
                 "flex w-full items-start gap-3 rounded-xl px-1 py-1 text-left",
                 "transition-colors active:bg-slate-50 dark:active:bg-slate-800/50",
               )}
-              aria-label={`Choose a class, currently ${classLabel}`}
+              aria-label={`${classLabel.toLowerCase() === "all classes" ? "Choose a class" : "Change class"}, currently ${classLabel}`}
             >
               {pickerBody}
             </button>

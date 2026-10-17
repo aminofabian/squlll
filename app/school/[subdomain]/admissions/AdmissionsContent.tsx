@@ -226,7 +226,7 @@ export default function AdmissionsContent({
                     : 'border-[var(--school-ink)]/15 text-[var(--school-ink)]',
                 )}
               >
-                <Link href="/contact">Talk to admissions</Link>
+                <Link href="/apply">Talk to admissions</Link>
               </Button>
             </div>
           </div>

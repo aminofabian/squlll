@@ -88,7 +88,7 @@ describe("getTimetableReadiness", () => {
       "Published",
     );
     expect(getTimetableReadiness({ ...base, publishState: "stale" }).nextStep).toContain(
-      "publish again",
+      "share again",
     );
   });
 });

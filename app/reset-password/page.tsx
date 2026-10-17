@@ -263,10 +263,10 @@ function ResetPasswordForm() {
             </div>
             <div className="w-px h-4 bg-slate-300 dark:bg-slate-600"></div>
             <Link 
-              href="/docs" 
+              href="/privacy" 
               className="text-xs font-mono text-custom-blue hover:text-custom-blue/80 uppercase tracking-wide"
             >
-              System Docs
+              Privacy
             </Link>
           </div>
         </div>

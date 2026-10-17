@@ -306,7 +306,14 @@ export async function fetchPublicFeePlans(subdomain: string): Promise<{
     []) as GraphQLFeeStructure[]
 
   // Fallback for signed-in staff on local/dev when public tenant lookup is empty.
-  if (!structures.length) {
+  // Never call the authenticated query on a public page: anonymous visitors
+  // would produce avoidable 401s before the public result is used.
+  const hasSession =
+    typeof document !== 'undefined' &&
+    document.cookie
+      .split(';')
+      .some((cookie) => cookie.trim().startsWith('accessToken='))
+  if (!structures.length && hasSession) {
     const authJson = await graphqlRequest(AUTH_FEE_STRUCTURES_QUERY, undefined, subdomain)
     if (authJson.data?.feeStructures?.length) {
       structures = authJson.data.feeStructures as GraphQLFeeStructure[]

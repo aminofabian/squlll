@@ -301,8 +301,8 @@ export function TimetableShareDrawer({
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-2">
         <p className={cn(tt.text.caption, tt.ink.muted)}>
-          Share so staff can see the week. You can still edit afterwards —
-          share again if you make big changes.
+          Staff see the published week. After sharing, further edits are live
+          immediately — share again if you want to notify them.
         </p>
 
         <div className="flex flex-wrap items-center gap-2 border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.02]">
@@ -325,7 +325,7 @@ export function TimetableShareDrawer({
             )}
           >
             {hasChangesSinceShare
-              ? `Edited since ${formatSharedDate(sharedAt)} — publish again so staff refresh.`
+              ? `Edited since ${formatSharedDate(sharedAt)} — share again to notify staff.`
               : `Published ${formatSharedDate(sharedAt)}`}
           </div>
         ) : null}
@@ -347,7 +347,7 @@ export function TimetableShareDrawer({
             />
             <CheckRow
               ok={hasLessons}
-              label="Lessons on the grid"
+              label="Some lessons on the grid"
               detail={`${overview.gradesWithLessons} of ${overview.gradeCount} classes have at least one lesson`}
             />
             <CheckRow
@@ -465,7 +465,7 @@ export function TimetableShareDrawer({
     return (
       <aside
         data-timetable-no-print
-        className="hidden min-h-0 w-[22rem] shrink-0 flex-col border-l border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17] lg:flex"
+        className="relative z-50 hidden min-h-0 w-[22rem] shrink-0 flex-col border-l border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17] lg:flex"
       >
         {panel}
       </aside>

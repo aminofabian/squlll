@@ -55,6 +55,12 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     let client: Socket | null = null
 
     const setup = async () => {
+      const hasSession =
+        typeof document !== 'undefined' &&
+        document.cookie
+          .split(';')
+          .some((cookie) => cookie.trim().startsWith('accessToken='))
+      if (!hasSession) return
       const token = await fetchAccessToken()
       if (!active || !token) return
 

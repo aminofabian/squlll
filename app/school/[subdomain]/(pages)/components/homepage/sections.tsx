@@ -3453,7 +3453,7 @@ export function HomepagePrograms({
                   soft ? 'rounded-xl' : 'rounded-none',
                 )}
               >
-                <Link href="/contact">Talk to admissions</Link>
+                <Link href="/apply">Talk to admissions</Link>
               </Button>
             </div>
           </Reveal>

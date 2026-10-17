@@ -62,7 +62,7 @@ export function DashboardLayout({
           <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-40 border-r border-border bg-card">
             {_sidebar}
           </aside>
-          <div className="flex-1 lg:pl-64">
+          <div className="min-w-0 flex-1 lg:pl-64">
             <div className="flex">
               {_searchFilter && (
                 <div
@@ -153,7 +153,7 @@ export function DashboardLayout({
         <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-30 top-0.5">
           <Sidebar />
         </aside>
-        <div className="flex-1 lg:pl-64">
+        <div className="min-w-0 flex-1 lg:pl-64">
           <main
             className={cn(
               "p-4 md:p-8 lg:p-10",

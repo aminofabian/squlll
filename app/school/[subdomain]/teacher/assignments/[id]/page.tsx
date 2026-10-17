@@ -8,7 +8,6 @@ import {
   Clock,
   Users,
   FileText,
-  Edit,
   Trash2,
   Download,
   Eye,
@@ -410,13 +409,6 @@ export default function AssignmentDetailPage() {
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Preview as A4
-              </Button>
-              <Button
-                variant="outline"
-                className="border-primary/20 hover:bg-primary/5"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
               </Button>
               <Button
                 variant="outline"

@@ -151,6 +151,16 @@ export function resolveGradeForSchoolConfig(
   return getGradeById(configGradeId) ?? (gradeId ? getGradeById(gradeId) : undefined);
 }
 
+function dedupeSubjectsByName<T extends { name: string }>(list: T[]): T[] {
+  const seen = new Set<string>();
+  return list.filter((subject) => {
+    const key = subject.name.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function subjectsForTimetableGrade(
   gradeId: string | undefined,
   grades: Grade[],
@@ -166,7 +176,7 @@ export function subjectsForTimetableGrade(
 
   const gradeInfo = resolveGradeForSchoolConfig(gradeId, grades, getters);
   if (!gradeInfo) {
-    return backendSubjects;
+    return dedupeSubjectsByName(backendSubjects);
   }
 
   const levelSubjects = getters.getSubjectsByLevelId(gradeInfo.levelId);
@@ -186,5 +196,8 @@ export function subjectsForTimetableGrade(
     );
   });
 
-  return filtered.length > 0 ? filtered : backendSubjects;
+  // Tenant subject lists often contain the same subject more than once
+  // (different curriculum rows). Showing duplicates in the lesson picker is
+  // confusing and lets users create inconsistent entries.
+  return dedupeSubjectsByName(filtered.length > 0 ? filtered : backendSubjects);
 }

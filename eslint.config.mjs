@@ -4,8 +4,8 @@ import nextConfig from 'eslint-config-next'
 export default [
   ...nextConfig,
   {
-    name: 'squl/custom',
-    files: ['**/*.{js,mjs,ts,tsx}'],
+    name: 'squl/custom-typescript',
+    files: ['**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
@@ -15,6 +15,12 @@ export default [
           varsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    name: 'squl/custom-javascript',
+    files: ['**/*.{js,mjs,jsx,tsx}'],
+    rules: {
       'react/no-unescaped-entities': 'error',
     },
   },

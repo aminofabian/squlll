@@ -148,12 +148,16 @@ export async function proxy(request: NextRequest) {
     )
     const roles =
       cookieRoles.length > 0 ? cookieRoles : tokenRole ? [tokenRole] : []
-    if (roles.length > 0 && !roles.some((r) => canAccessAdminShell(r))) {
-      const firstSegment = url.pathname.split('/').filter(Boolean)[0] ?? ''
-      if (ADMIN_ROUTE_SEGMENTS.has(firstSegment)) {
+    const firstSegment = url.pathname.split('/').filter(Boolean)[0] ?? ''
+    if (ADMIN_ROUTE_SEGMENTS.has(firstSegment)) {
+      if (roles.length === 0) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('next', `${url.pathname}${url.search}`)
+        return NextResponse.redirect(loginUrl)
+      }
+      if (!roles.some((r) => canAccessAdminShell(r))) {
         const portal = getPostLoginPath(roles[0], true)
-        const target = portal === '/dashboard' ? '/login' : portal
-        return NextResponse.redirect(new URL(target, request.url))
+        return NextResponse.redirect(new URL(portal, request.url))
       }
     }
 

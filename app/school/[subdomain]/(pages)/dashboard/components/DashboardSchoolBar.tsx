@@ -63,7 +63,7 @@ function StatCell({
         </Link>
       ) : label === "Attendance" && hasStudents && attendanceRate == null ? (
         <Link
-          href="/attendance"
+          href="/attendances"
           className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400"
         >
           Mark →

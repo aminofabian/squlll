@@ -118,7 +118,7 @@ export function getTimetableReadiness(
         publishState === "published"
           ? "Published. Teachers can see this timetable."
           : publishState === "stale"
-            ? "Edited since publishing — publish again so staff see the changes."
+            ? "Edited since sharing — share again to notify staff."
             : "Every slot is filled with no clashes. Ready to publish.";
       break;
     case "in-progress":

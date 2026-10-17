@@ -126,6 +126,7 @@ import {
   Mail,
   RefreshCw,
   SlidersHorizontal,
+  Shuffle,
 } from "lucide-react";
 import {
   Popover,
@@ -625,10 +626,22 @@ export default function SmartTimetableNew() {
     !timetableError &&
     (isGridLoading || isLoadingTimetable || isRetrying || slotsStillPending);
 
+  /**
+   * Switching class reloads its slots. Show a skeleton during that window —
+   * otherwise the page briefly (and incorrectly) says “No lesson times yet”
+   * for a class that does have a timetable.
+   */
+  const classSlotsLoading =
+    Boolean(selectedGradeId) &&
+    !hasScheduleSlots &&
+    !timetableError &&
+    (isLoadingTimetable || isGridLoading || isRetrying);
+
   /** Empty “set up lesson times” inside the grid after load settles with no template */
   const showEmptyScheduleState =
     hasScheduleStructure &&
     !showGridSkeleton &&
+    !classSlotsLoading &&
     !hasScheduleSlots &&
     !timetableError &&
     !hasAnyLessons;
@@ -849,6 +862,8 @@ export default function SmartTimetableNew() {
   const [creationMode, setCreationMode] = useState<TimetableCreationMode>(null);
   const [autoGenerateOpen, setAutoGenerateOpen] = useState(false);
   const [autoGenerateStep, setAutoGenerateStep] = useState(0);
+  const [autoGenerateReplace, setAutoGenerateReplace] = useState(false);
+  const [autoGenerateKeepManual, setAutoGenerateKeepManual] = useState(true);
   const [modeEntryDismissed, setModeEntryDismissed] = useState(false);
   const [journeyHidden, setJourneyHidden] = useState(false);
   const [inspectorTab, setInspectorTab] =
@@ -863,8 +878,13 @@ export default function SmartTimetableNew() {
   }, [editingLesson, shareDrawerOpen]);
 
   const openAutoGenerate = useCallback(
-    (step = 0) => {
+    (
+      step = 0,
+      options?: { replace?: boolean; keepManual?: boolean },
+    ) => {
       setAutoGenerateStep(step);
+      setAutoGenerateReplace(options?.replace ?? false);
+      setAutoGenerateKeepManual(options?.keepManual ?? true);
       setCreationMode("automatic");
       setInspectorTab(null);
       if (!editingLesson && !autoGenerateOpen && !shareDrawerOpen) {
@@ -956,6 +976,7 @@ export default function SmartTimetableNew() {
     upsertRules,
     runPreflight,
     generate: generateTimetable,
+    restore: restoreTimetable,
   } = useTeacherLessonAllocations(termIdForAllocations);
 
   const availableSlotsPerClass = useMemo(
@@ -1992,6 +2013,35 @@ export default function SmartTimetableNew() {
             Auto-fill from weekly lessons
           </DropdownMenuItem>
         ) : null}
+        {hasScheduleStructure && schoolLessonCount > 0 ? (
+          <>
+            <DropdownMenuItem
+              onClick={() => openAutoGenerate(2, { replace: false })}
+              className={ttMenu.item}
+            >
+              <Shuffle />
+              Re-shuffle · fill gaps
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                openAutoGenerate(2, { replace: true, keepManual: true })
+              }
+              className={ttMenu.item}
+            >
+              <Shuffle />
+              Re-shuffle · keep hand-placed
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                openAutoGenerate(2, { replace: true, keepManual: false })
+              }
+              className={ttMenu.item}
+            >
+              <Shuffle />
+              Re-shuffle · rebuild everything
+            </DropdownMenuItem>
+          </>
+        ) : null}
         <DropdownMenuItem
           onClick={() => setBulkBreaksOpen(true)}
           className={ttMenu.item}
@@ -2341,6 +2391,50 @@ export default function SmartTimetableNew() {
                   </Button>
                 </ToolbarHint>
               )}
+              {hasScheduleStructure && (schoolLessonCount) > 0 ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hidden h-8 gap-1.5 border-slate-200 bg-white text-xs text-slate-600 hover:text-slate-800 lg:inline-flex dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      <Shuffle className="h-3.5 w-3.5" />
+                      Re-shuffle
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className={ttMenu.content}>
+                    <DropdownMenuItem
+                      className={ttMenu.item}
+                      onClick={() => openAutoGenerate(2, { replace: false })}
+                    >
+                      Fill gaps only
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className={ttMenu.item}
+                      onClick={() =>
+                        openAutoGenerate(2, {
+                          replace: true,
+                          keepManual: true,
+                        })
+                      }
+                    >
+                      Rebuild · keep hand-placed
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className={ttMenu.item}
+                      onClick={() =>
+                        openAutoGenerate(2, {
+                          replace: true,
+                          keepManual: false,
+                        })
+                      }
+                    >
+                      Rebuild everything
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
               {selectedGradeId && hasScheduleStructure && (
                 <ToolbarHint text="Add several lessons to this class by hand — teacher, subject, and times.">
                   <Button
@@ -2654,7 +2748,7 @@ export default function SmartTimetableNew() {
 
         {showAdminMobilePanel && (
           <div className="fixed inset-x-0 top-[4.3125rem] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-0 flex flex-col overflow-hidden lg:hidden">
-            {showGridSkeleton ? (
+            {showGridSkeleton || classSlotsLoading ? (
               <div className="flex flex-1 flex-col overflow-hidden bg-white p-2 dark:bg-slate-950">
                 <TimetableGridSkeleton
                   combined={false}
@@ -3271,6 +3365,9 @@ export default function SmartTimetableNew() {
             onUpsertRules={upsertRules}
             onRunPreflight={runPreflight}
             existingLessonCount={schoolLessonCount}
+            scopeStreamId={selectedStreamId ?? undefined}
+            initialReplaceExisting={autoGenerateReplace}
+            initialKeepManual={autoGenerateKeepManual}
             onSetUpSchoolDay={() => {
               closeAutoGenerate();
               setShowTimetableWizard(true);
@@ -3280,19 +3377,22 @@ export default function SmartTimetableNew() {
               if (result?.entries?.length) {
                 const slots = useTimetableStore.getState().timeSlots;
                 for (const row of result.entries) {
-                  if (!row.gradeLevelId) continue;
+                  if (!row.gradeLevelId || !row.id) continue;
                   const slot = slots.find(
                     (s) => s.id === row.dayTemplatePeriodId,
                   );
+                  // Do not guess Monday. If the shared-bell slot is not in
+                  // this class's loaded slots, let the reload hydrate it.
+                  if (!slot) continue;
                   useTimetableStore.getState().upsertEntry({
                     id: row.id,
                     subjectId: row.subjectId,
                     teacherId: row.teacherId,
-                    timeSlotId: slot?.id ?? row.dayTemplatePeriodId,
-                    periodNumber: slot?.periodNumber,
+                    timeSlotId: slot.id,
+                    periodNumber: slot.periodNumber,
                     gradeId: row.gradeLevelId,
                     streamId: row.streamId ?? null,
-                    dayOfWeek: slot?.dayOfWeek ?? 1,
+                    dayOfWeek: slot.dayOfWeek ?? 0,
                     isDoublePeriod: row.isDoublePeriod ?? false,
                   });
                 }
@@ -3314,6 +3414,30 @@ export default function SmartTimetableNew() {
                     : "Review the grid, then share with teachers."
                   : "Subjects without a teacher, or lessons that could not fit, stay empty for later.",
               });
+              const snapshot = result?.replacedEntries ?? [];
+              if (snapshot.length > 0) {
+                const scope = {
+                  gradeLevelId: selectedGradeId ?? undefined,
+                  streamId: selectedStreamId ?? undefined,
+                };
+                toast({
+                  title: "Timetable re-shuffled",
+                  description: "You can undo this run if it is not right.",
+                  action: (
+                    <ToastAction
+                      altText="Undo timetable re-shuffle"
+                      onClick={() => {
+                        void restoreTimetable(snapshot, scope).then(() => {
+                          void reloadTimetableData();
+                        });
+                      }}
+                    >
+                      Undo
+                    </ToastAction>
+                  ),
+                });
+              }
+
             }}
           />
 

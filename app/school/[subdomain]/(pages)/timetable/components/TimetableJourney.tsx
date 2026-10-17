@@ -191,11 +191,13 @@ export function TimetableJourney({
       description:
         "Specify how many lessons each subject has every week and assign a teacher. Use the suggested counts, adjust where needed, then copy them to your other classes.",
       icon: ClipboardList,
-      done: weeklyLessonRows > 0,
+      done: weeklyLessonRows > 0 || lessonCount > 0,
       doneHint:
         weeklyLessonRows > 0
           ? `${weeklyLessonRows} teaching assignment${weeklyLessonRows === 1 ? "" : "s"}`
-          : undefined,
+          : lessonCount > 0
+            ? "Lessons added manually"
+            : undefined,
       actionLabel: "Set weekly lessons",
       onAction: onSetWeeklyLessons,
     },

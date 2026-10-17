@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Award,
   Bell,
@@ -116,6 +116,20 @@ export function DesktopDashboard({
   const displayGpa = averageGpa ?? activeChild?.currentGPA ?? 0;
   const unreadCount = notifications.filter((n) => !n.read).length;
   const firstName = parentName.split(/\s+/)[0] || parentName;
+  const [todayLabel, setTodayLabel] = useState("");
+
+  // Render the date after mount only. The server and client can otherwise
+  // disagree around midnight or when their locale/timezone differs, which
+  // triggers a React hydration error on the parent dashboard.
+  useEffect(() => {
+    setTodayLabel(
+      new Date().toLocaleDateString("en-KE", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      }),
+    );
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -133,11 +147,7 @@ export function DesktopDashboard({
           </div>
           <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
             <Sparkles className="h-3.5 w-3.5" />
-            {new Date().toLocaleDateString("en-KE", {
-              weekday: "long",
-              month: "short",
-              day: "numeric",
-            })}
+            {todayLabel || "Today"}
           </div>
         </div>
       </header>

@@ -6,27 +6,20 @@
  * Redirects to the appropriate login page based on the current URL
  */
 export function redirectToLogin(): void {
-  if (typeof window === 'undefined') return;
-  
-  const currentUrl = window.location.href;
-  const currentHost = window.location.host;
-  
-  // Check if we're on a subdomain (school-specific page)
-  const isSubdomain = currentHost.includes('.') && 
-    !currentHost.startsWith('www.') && 
-    (currentHost.includes('localhost') || currentHost.includes('squl.co.ke'));
-  
-  if (isSubdomain) {
-    // Extract subdomain for school-specific login
-    const subdomain = currentHost.split('.')[0];
-    const baseUrl = currentHost.includes('localhost') ? 'localhost:3000' : 'squl.co.ke';
-    const protocol = currentHost.includes('localhost') ? 'http://' : 'https://';
-    
-    window.location.href = `${protocol}${subdomain}.${baseUrl}/login`;
-  } else {
-    // Default admin login
-    window.location.href = 'http://amino.localhost:3000/login';
-  }
+  if (typeof window === 'undefined') return
+
+  const { origin, pathname, search, host } = window.location
+  const isSubdomain =
+    host.includes('.') &&
+    !host.startsWith('www.') &&
+    (host.includes('localhost') || host.includes('squl.co.ke'))
+
+  // Preserve the real host and port. Hard-coding :3000 broke local auth
+  // redirects on :3002 and sent users to an unreachable page.
+  const isSuperadminArea = !isSubdomain && pathname.startsWith('/dashboard')
+  const loginPath = isSuperadminArea ? '/superadmin/login' : '/login'
+  const next = encodeURIComponent(`${pathname}${search}`)
+  window.location.href = `${origin}${loginPath}?next=${next}`
 }
 
 /**

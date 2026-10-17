@@ -100,8 +100,8 @@ export default function PlatformPaymentsPage() {
         title: "Custody updated",
         description:
           provider === "DARAJA"
-            ? "Schools can now enter till/paybill only"
-            : "Till/paybill Express rail is OFF",
+            ? "Schools can now add their bank paybill and account number"
+            : "The M-Pesa rail is OFF",
       });
     } catch (e) {
       toast({
@@ -118,7 +118,7 @@ export default function PlatformPaymentsPage() {
         <AdminPageHeader
           icon={CreditCard}
           title="M-Pesa payments"
-          description="One Lipa Na M-Pesa Express Go Live for all schools — they only enter till or HO paybill"
+          description="One M-Pesa connection for every school — each school adds its own bank paybill and account number"
           loading={loading}
           onRefresh={refresh}
         />
@@ -155,7 +155,7 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
             <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <h2 className="flex items-center text-sm font-semibold text-slate-800 dark:text-slate-200">
                 <ShieldCheck className="mr-2 h-4 w-4" />
-                Platform Daraja (Go Live)
+                M-Pesa API connection
               </h2>
               <p className="mt-1 text-xs text-slate-500">
                 Consumer key/secret and passkey stay on SQUL. Schools never see
@@ -247,7 +247,7 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
 
                   <div className="space-y-2">
                     <Label>
-                      Lipa Na M-Pesa passkey
+                      M-Pesa passkey
                       {daraja.hasPasskey ? " (saved · leave blank to keep)" : ""}
                     </Label>
                     <Input
@@ -259,7 +259,7 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
                     />
                     <p className="text-[11px] text-slate-500">
                       Not the sandbox bfb279f9… key on production. OAuth can pass
-                      while STK password is wrong — use Test connection.
+                      while the M-Pesa password is wrong — use Test connection.
                     </p>
                   </div>
 
@@ -274,7 +274,7 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
                           Saving…
                         </>
                       ) : (
-                        "Save Daraja"
+                        "Save connection"
                       )}
                     </Button>
                     <Button
@@ -313,7 +313,7 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
                 M-Pesa rail (school bank paybill)
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                When ON, parents get an M-Pesa request and the money goes to the school bank paybill (for example NCBA 880100) and account number. STK uses the platform shortcode; no B2B.
+                When ON, parents get an M-Pesa request and the money goes to the school bank paybill (for example NCBA 880100) and account number. The request uses the platform connection; no B2B.
               </p>
             </div>
             <div className="space-y-4 p-5">
@@ -333,14 +333,14 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="OFF">OFF</SelectItem>
-                        <SelectItem value="DARAJA">DARAJA (Express)</SelectItem>
+                        <SelectItem value="DARAJA">ON (M-Pesa)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-950">
-                    Hard constraint: each school till must sit under SQUL’s M-Pesa
-                    Head Office (Org portal onboarding). Foreign shortcodes and
-                    bank paybills are out of scope for this rail.
+                  <p className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-950">
+                    Each school adds its own bank paybill (for example NCBA
+                    880100) and fee account number. The provider must accept the
+                    paybill before M-Pesa requests can be sent.
                   </p>
                 </>
               )}

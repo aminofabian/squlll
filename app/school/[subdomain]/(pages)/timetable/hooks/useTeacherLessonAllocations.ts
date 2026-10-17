@@ -5,6 +5,8 @@ import type {
   TeacherLessonAllocation,
   TeacherWorkloadRules,
   GenerateTimetableResult,
+  GenerateTimetableOptions,
+  GeneratedEntrySnapshot,
   TimetablePreflightResult,
 } from "@/lib/types/timetable-allocation";
 
@@ -208,30 +210,71 @@ export function useTeacherLessonAllocations(termId: string | null | undefined) {
   }, [termId]);
 
   const generate = useCallback(
-    async (replaceExisting = true): Promise<GenerateTimetableResult> => {
+    async (
+      options: GenerateTimetableOptions = {},
+    ): Promise<GenerateTimetableResult> => {
       if (!termId) throw new Error("Select a term first");
+      const entryFields = `
+        id subjectId teacherId dayTemplatePeriodId streamId gradeLevelId
+        isDoublePeriod termId source isLocked
+      `;
       const data = await gql<{ generateTimetable: GenerateTimetableResult }>(
         `mutation Generate($input: GenerateTimetableInput!) {
           generateTimetable(input: $input) {
-            createdCount unresolvedCount warnings
-            entries {
-              id
-              subjectId
-              teacherId
-              dayTemplatePeriodId
-              streamId
-              gradeLevelId
-              isDoublePeriod
-              termId
-              tenantId
-            }
+            createdCount unresolvedCount keptManualCount warnings
+            entries { ${entryFields} }
+            replacedEntries { ${entryFields} }
           }
         }`,
-        { input: { termId, replaceExisting } },
+        {
+          input: {
+            termId,
+            replaceExisting: options.replaceExisting ?? true,
+            keepManual: options.keepManual ?? true,
+            gradeLevelId: options.gradeLevelId,
+            streamId: options.streamId,
+            seed: options.seed,
+          },
+        },
       );
       return data.generateTimetable;
     },
     [termId],
+  );
+
+  const restore = useCallback(
+    async (
+      entries: GeneratedEntrySnapshot[],
+      scope: { gradeLevelId?: string; streamId?: string } = {},
+    ): Promise<void> => {
+      if (!termId) throw new Error("Select a term first");
+      await gql(
+        `mutation RestoreTimetableEntries($input: RestoreTimetableEntriesInput!) {
+          restoreTimetableEntries(input: $input) {
+            createdCount
+          }
+        }`,
+        {
+          input: {
+            termId,
+            gradeLevelId: scope.gradeLevelId,
+            streamId: scope.streamId,
+            entries: entries.map((entry) => ({
+              dayTemplatePeriodId: entry.dayTemplatePeriodId,
+              gradeLevelId: entry.gradeLevelId,
+              streamId: entry.streamId,
+              subjectId: entry.subjectId,
+              teacherId: entry.teacherId,
+              isDoublePeriod: entry.isDoublePeriod ?? false,
+              source: entry.source,
+              isLocked: entry.isLocked ?? false,
+            })),
+          },
+        },
+      );
+      await reload();
+    },
+    [termId, reload],
   );
 
   return {
@@ -246,5 +289,6 @@ export function useTeacherLessonAllocations(termId: string | null | undefined) {
     upsertRules,
     runPreflight,
     generate,
+    restore,
   };
 }

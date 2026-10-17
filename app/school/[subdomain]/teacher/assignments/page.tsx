@@ -11,9 +11,6 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  Edit,
-  Trash2,
-  Plus,
   Search,
   ArrowUpDown,
 } from "lucide-react";
@@ -237,15 +234,6 @@ export default function AssignmentsPage() {
               </div>
             </div>
 
-            <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-              onClick={() => {
-                router.push(`/school/${subdomain}/teacher`);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Assignment
-            </Button>
           </div>
         </div>
       </div>
@@ -524,34 +512,6 @@ export default function AssignmentsPage() {
                                 title="View Assignment"
                               >
                                 <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hover:bg-primary/10"
-                                onClick={() => {
-                                  toast.info("Edit is not yet available", {
-                                    description:
-                                      "Assignment editing will be available soon.",
-                                  });
-                                }}
-                                title="Edit Assignment"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hover:bg-red-100 hover:text-red-600"
-                                onClick={() => {
-                                  toast.error("Delete is not yet available", {
-                                    description:
-                                      "Assignment deletion will be available soon.",
-                                  });
-                                }}
-                                title="Delete Assignment"
-                              >
-                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </TableCell>

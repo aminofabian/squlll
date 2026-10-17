@@ -53,16 +53,30 @@ export interface GenerateTimetableResult {
   createdCount: number;
   unresolvedCount: number;
   warnings: string[];
-  entries?: Array<{
-    id: string;
-    subjectId: string;
-    teacherId: string;
-    dayTemplatePeriodId: string;
-    streamId?: string | null;
-    gradeLevelId?: string;
-    isDoublePeriod?: boolean;
-    termId?: string;
-  }>;
+  entries?: Array<GeneratedEntrySnapshot>;
+  replacedEntries?: Array<GeneratedEntrySnapshot>;
+  keptManualCount?: number;
+}
+
+export interface GeneratedEntrySnapshot {
+  id?: string;
+  subjectId: string;
+  teacherId: string;
+  dayTemplatePeriodId: string;
+  streamId?: string | null;
+  gradeLevelId?: string;
+  isDoublePeriod?: boolean;
+  termId?: string;
+  source?: string;
+  isLocked?: boolean;
+}
+
+export interface GenerateTimetableOptions {
+  replaceExisting?: boolean;
+  keepManual?: boolean;
+  gradeLevelId?: string;
+  streamId?: string;
+  seed?: number;
 }
 
 export type TimetableCreationMode = "manual" | "automatic" | null;

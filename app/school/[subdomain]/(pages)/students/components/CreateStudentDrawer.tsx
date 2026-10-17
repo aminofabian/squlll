@@ -224,11 +224,6 @@ export function CreateStudentDrawer({
     form.setValue('stream', '')
   }, [watchedGrade, availableStreams, form])
 
-  const identityComplete = watchedName.trim().length >= 2 && watchedAdmission.trim().length >= 1
-  const placementComplete = Boolean(watchedGrade) && (!requiresStream || Boolean(watchedStream))
-  const contactComplete = phoneSchema.safeParse(watchedPhone).success
-  const canSubmit = identityComplete && placementComplete && contactComplete
-
   const createStudentMutation = useMutation({
     mutationFn: (data: StudentFormData) => {
       const studentEmail = data.student_email?.trim() || emailFromName(data.name)
@@ -523,7 +518,7 @@ export function CreateStudentDrawer({
               <Button
                 type="submit"
                 form="enroll-student-form"
-                disabled={createStudentMutation.isPending || !canSubmit}
+                disabled={createStudentMutation.isPending}
                 className="h-10 flex-1 gap-2 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59] disabled:opacity-50"
               >
                 {createStudentMutation.isPending ? (

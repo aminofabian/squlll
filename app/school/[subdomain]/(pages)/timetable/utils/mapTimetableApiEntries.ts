@@ -21,6 +21,7 @@ type ApiTimetableEntryRow = {
     id?: string;
     periodNumber?: number;
     dayTemplateId?: string;
+    dayTemplate?: { dayOfWeek?: number } | null;
   };
   room?: { name?: string | null } | null;
 };
@@ -44,31 +45,45 @@ export function mapApiTimetableEntries(
 
     const dayOfWeekFromMap = periodDayMap?.get(periodId);
     const periodNumber = row.period?.periodNumber;
+    // The entry's own day template is authoritative. This matters for schools
+    // with one week template per class: an entry can reference a period id
+    // that is not in the currently loaded class/week slot map.
+    const dayFromEntry = row.period?.dayTemplate?.dayOfWeek;
+    const knownDay = dayFromEntry ?? dayOfWeekFromMap;
+
     // Shared-bell: entry may reference another grade's period id. Remap onto
-    // the slots currently shown for this class via day + period number.
+    // the slots currently shown for this class via day + period number. Never
+    // pick a same-numbered slot from an arbitrary day — that is what sent
+    // every unmatched lesson to Monday.
+    const exactSlot = timeSlots.find((ts) => ts.id === periodId);
     const slot =
-      timeSlots.find((ts) => ts.id === periodId) ??
-      (periodNumber != null && dayOfWeekFromMap != null
+      exactSlot ??
+      (periodNumber != null && knownDay != null
+        ? timeSlots.find(
+            (ts) =>
+              ts.periodNumber === periodNumber && ts.dayOfWeek === knownDay,
+          )
+        : undefined) ??
+      (periodNumber != null && knownDay != null
         ? timeSlots.find(
             (ts) =>
               ts.periodNumber === periodNumber &&
-              ts.dayOfWeek === dayOfWeekFromMap,
+              ts.dayTemplateId === row.period?.dayTemplateId,
           )
-        : undefined) ??
-      (periodNumber != null
-        ? timeSlots.find((ts) => ts.periodNumber === periodNumber)
         : undefined);
 
     const canonicalGradeId = resolveCanonicalGradeId(entryGradeLevelId, grades);
     const entryStreamId = row.streamId ?? null;
-    const dayOfWeek =
-      dayOfWeekFromMap ??
-      slot?.dayOfWeek ??
-      (row.period?.dayTemplateId
-        ? timeSlots.find((ts) => ts.dayTemplateId === row.period?.dayTemplateId)
-            ?.dayOfWeek
-        : undefined) ??
-      1;
+    const dayOfWeek = knownDay ?? exactSlot?.dayOfWeek;
+
+    if (dayOfWeek == null) {
+      console.warn(
+        "Skipping timetable entry with no known day",
+        row.id,
+        row.period?.dayTemplateId,
+      );
+      continue;
+    }
 
     const entry: TimetableEntry = {
       id: row.id,
@@ -121,6 +136,9 @@ export const GET_TIMETABLE_ENTRIES_QUERY = `
         id
         periodNumber
         dayTemplateId
+        dayTemplate {
+          dayOfWeek
+        }
       }
       room {
         name

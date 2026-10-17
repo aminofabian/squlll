@@ -9,9 +9,7 @@ import {
   useState,
 } from "react";
 import {
-  Check,
   Copy,
-  Loader2,
   Minus,
   Plus,
   Sparkles,
@@ -94,6 +92,8 @@ interface TimetableWeeklyLessonsPlannerProps {
   onDeleteAllocation: (id: string) => Promise<void>;
   /** Jump to the school-day setup when there are no periods to plan into. */
   onSetUpSchoolDay?: () => void;
+  /** True while lesson counts differ from what is stored. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /**
@@ -102,8 +102,11 @@ interface TimetableWeeklyLessonsPlannerProps {
  * when the planner unmounts.
  */
 export interface TimetableWeeklyLessonsPlannerHandle {
-  /** Persists every class's unsaved lesson-count edits. */
-  save: () => Promise<void>;
+  /**
+   * Persists every class's unsaved lesson-count edits.
+   * Resolves true when at least one class has lessons stored.
+   */
+  save: () => Promise<boolean>;
   /** True while any class has unsaved lesson-count edits. */
   hasUnsavedChanges: () => boolean;
 }
@@ -199,6 +202,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     onUpdateAllocation,
     onDeleteAllocation,
     onSetUpSchoolDay,
+    onDirtyChange,
   }: TimetableWeeklyLessonsPlannerProps,
   ref,
 ) {
@@ -255,7 +259,6 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     Record<string, Record<string, { lessonsPerWeek: number; doubleLessons: number }>>
   >({});
   const [hideEmpty, setHideEmpty] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [copyTargets, setCopyTargets] = useState<string[]>([]);
   const [copyOpen, setCopyOpen] = useState(false);
   const [confirmClearGradeFor, setConfirmClearGradeFor] = useState<string | null>(
@@ -374,6 +377,10 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
   const activeGrade = grades.find((g) => g.id === activeGradeId);
   const rows = activeGradeId ? rowsFor(activeGradeId) : [];
   const dirtyGrades = Object.keys(drafts);
+
+  useEffect(() => {
+    onDirtyChange?.(dirtyGrades.length > 0);
+  }, [dirtyGrades.length, onDirtyChange]);
 
   const setRows = (gradeId: string, next: PlannerRow[]) =>
     setDrafts((prev) => ({ ...prev, [gradeId]: next }));
@@ -559,8 +566,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
   };
 
   const handleSave = useCallback(async () => {
-    if (!dirtyGrades.length) return;
-    setSaving(true);
+    if (!dirtyGrades.length) return allocations.length > 0;
     let created = 0;
     let updated = 0;
     let removed = 0;
@@ -648,7 +654,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
         removed ? `${removed} removed` : null,
       ].filter(Boolean);
       const waiting = skipped
-        ? `${skipped} ${skipped === 1 ? "subject still needs" : "subjects still need"} a teacher — your numbers are kept, so just pick teachers and save again.`
+        ? `${skipped} ${skipped === 1 ? "subject still needs" : "subjects still need"} a teacher — your numbers are kept. Pick a teacher, then continue.`
         : null;
 
       toast({
@@ -658,14 +664,14 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
         description:
           waiting ?? "Your weekly lessons are stored for this term.",
       });
+      return allocations.length - removed + created > 0;
     } catch (error) {
       toast({
         title: "We couldn't save everything",
         description: sanitizeTimetableUserMessage(error),
         variant: "destructive",
       });
-    } finally {
-      setSaving(false);
+      return false;
     }
   }, [
     dirtyGrades,
@@ -1152,28 +1158,6 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            className={cn("h-7", tt.text.caption, tt.numeral, tt.accentBtn)}
-            disabled={!dirtyGrades.length || saving}
-            onClick={() => void handleSave()}
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <Check className="mr-1 h-3 w-3" />
-                Save
-                {dirtyGrades.length > 1 ? ` (${dirtyGrades.length})` : ""}
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </div>
   );

@@ -242,11 +242,11 @@ const StudentTimetableComponent = ({
     <Section padded={false}>
       <EmptyState
         icon={Calendar}
-        title="No schedule template yet"
+        title="No timetable published yet"
         description={
           student?.streamName
-            ? `No timetable or period template is set up for ${gradeName} · ${student.streamName} this term.`
-            : `No timetable or period template is set up for ${gradeName} this term.`
+            ? `Your school has not published a timetable for ${gradeName} · ${student.streamName} this term yet. Check back later.`
+            : `Your school has not published a timetable for ${gradeName} this term yet. Check back later.`
         }
       />
     </Section>

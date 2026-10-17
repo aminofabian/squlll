@@ -3,10 +3,8 @@ import { useDomainRealtime } from '@/lib/realtime/useDomainRealtime';
 import {
   minimalGradeTimetableToGraphQL,
   pickGradeTimetable,
-  schoolBlocksToMinimalTimetables,
   hasTimetableTemplate,
   type MinimalGradeTimetable,
-  type SchoolTimetableByGrade,
   type StudentTimetableGraphQL,
 } from '@/lib/timetable/minimalTimetableAdapter';
 
@@ -52,52 +50,7 @@ const MINIMAL_TIMETABLE_QUERY = `
   }
 `;
 
-const SCHOOL_TIMETABLE_QUERY = `
-  query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
-    getSchoolTimetable(input: $input) {
-      timetableByGrade {
-        gradeLevel {
-          id
-          name
-          shortName
-        }
-        stream {
-          id
-          name
-        }
-        days {
-          dayTemplate {
-            dayOfWeek
-          }
-          slots {
-            type
-            id
-            periodNumber
-            startTime
-            endTime
-            name
-            breakType
-            afterPeriod
-            durationMinutes
-            icon
-            entry {
-              id
-              subject {
-                name
-              }
-              teacher {
-                name
-              }
-              room {
-                name
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+
 
 async function fetchMinimalTimetable(
   termId: string,
@@ -131,37 +84,6 @@ async function fetchMinimalTimetable(
   return data.data?.getMinimalTimetable?.timetables ?? [];
 }
 
-async function fetchSchoolTimetableBlocks(
-  termId: string,
-  gradeId: string,
-  tenantStreamId?: string | null,
-): Promise<SchoolTimetableByGrade[]> {
-  const response = await fetch('/api/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({
-      query: SCHOOL_TIMETABLE_QUERY,
-      variables: {
-        input: {
-          termId,
-          gradeLevelId: gradeId,
-          ...(tenantStreamId ? { streamId: tenantStreamId } : {}),
-        },
-      },
-    }),
-  });
-
-  const data = await response.json();
-
-  if (data.errors) {
-    throw new Error(data.errors[0]?.message || 'GraphQL error');
-  }
-
-  return data.data?.getSchoolTimetable?.timetableByGrade ?? [];
-}
 
 async function resolveStudentGradeTimetable(
   termId: string,
@@ -187,25 +109,6 @@ async function resolveStudentGradeTimetable(
     },
     async () => {
       const timetables = await fetchMinimalTimetable(termId, gradeId);
-      return pickGradeTimetable(timetables, gradeId, withGradeFallback);
-    },
-    async () => {
-      const blocks = await fetchSchoolTimetableBlocks(
-        termId,
-        gradeId,
-        tenantStreamId,
-      );
-      const timetables = schoolBlocksToMinimalTimetables(blocks);
-      return pickGradeTimetable(timetables, gradeId, streamOpts);
-    },
-    async () => {
-      const blocks = await fetchSchoolTimetableBlocks(termId, gradeId);
-      const timetables = schoolBlocksToMinimalTimetables(blocks);
-      return pickGradeTimetable(timetables, gradeId, streamOpts);
-    },
-    async () => {
-      const blocks = await fetchSchoolTimetableBlocks(termId, gradeId);
-      const timetables = schoolBlocksToMinimalTimetables(blocks);
       return pickGradeTimetable(timetables, gradeId, withGradeFallback);
     },
   ];

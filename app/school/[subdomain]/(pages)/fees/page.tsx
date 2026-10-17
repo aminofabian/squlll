@@ -1996,19 +1996,6 @@ export default function FeesPage() {
             >
               Close
             </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                toast({
-                  title: "PDF download coming soon",
-                  description:
-                    "You can share payment details from the student record for now.",
-                })
-              }
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
