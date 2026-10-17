@@ -57,6 +57,9 @@ export interface AdminUserListItem {
   isGlobalAdmin: boolean;
   globalRole: string;
   createdAt: string;
+  phoneNumber?: string | null;
+  lastLoginAt?: string | null;
+  loginCount?: number;
   memberships: MembershipInfo[];
 }
 

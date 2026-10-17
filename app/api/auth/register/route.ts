@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { normalizeKenyanPhone } from '@/lib/auth/phone'
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { email, password, name, schoolName } = body
+    const { email, password, name, schoolName, phoneNumber } = body
+
+    const normalizedPhone = normalizeKenyanPhone(String(phoneNumber ?? ''))
+
+    if (!normalizedPhone) {
+      return NextResponse.json(
+        { error: 'Please provide a valid phone number.' },
+        { status: 400 },
+      )
+    }
 
     // GraphQL mutation
     const mutation = `
@@ -44,6 +54,7 @@ export async function POST(request: Request) {
             email,
             password,
             name,
+            phoneNumber: normalizedPhone,
             schoolName
           }
         }

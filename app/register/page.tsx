@@ -12,14 +12,25 @@ import {
   ArrowLeft,
   Check,
   Circle,
+  Phone,
 } from "lucide-react";
 import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
+import {
+  formatKenyanPhone,
+  normalizeKenyanPhone,
+} from "@/lib/auth/phone";
 
 // ─── Schema ────────────────────────────────────────────────────
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
+  phoneNumber: z
+    .string()
+    .trim()
+    .refine((value) => normalizeKenyanPhone(value) !== null, {
+      message: "Enter a valid mobile number, e.g. 712 345 678",
+    }),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -58,7 +69,7 @@ const STEPS: Step[] = [
     id: "personal",
     title: "Your Details",
     description: "Create your account",
-    fields: ["name", "email", "password"],
+    fields: ["name", "email", "phoneNumber", "password"],
   },
   {
     id: "school",
@@ -124,6 +135,7 @@ export default function SignupPage() {
     defaultValues: {
       name: "",
       email: "",
+      phoneNumber: "",
       password: "",
       schoolName: "",
       schoolUrl: "",
@@ -193,6 +205,7 @@ export default function SignupPage() {
                 email: data.email,
                 password: data.password,
                 name: data.name,
+                phoneNumber: normalizeKenyanPhone(data.phoneNumber),
                 schoolName: data.schoolName,
               },
             },
@@ -456,6 +469,7 @@ export default function SignupPage() {
                 icon={<MailIcon />}
                 disabled={isSubmitting}
               />
+              <PhoneField form={form} disabled={isSubmitting} />
               <div>
                 <Field
                   form={form}
@@ -561,6 +575,10 @@ export default function SignupPage() {
               </h3>
               <ReviewRow label="Full Name" value={form.watch("name")} />
               <ReviewRow label="Email" value={form.watch("email")} />
+              <ReviewRow
+                label="Phone"
+                value={formatKenyanPhone(form.watch("phoneNumber"))}
+              />
               <ReviewRow label="Password" value="••••••••" />
               <hr className="border-emerald-900/10" />
               <ReviewRow label="School Name" value={form.watch("schoolName")} />
@@ -705,6 +723,61 @@ function Field({
         />
       </div>
       {error && <p className="mt-1.5 text-xs text-red-600">{error.message}</p>}
+    </div>
+  );
+}
+
+// ─── Phone Field ──────────────────────────────────────────────
+
+function PhoneField({
+  form,
+  disabled,
+}: {
+  form: ReturnType<typeof useForm<SignupFormValues>>;
+  disabled?: boolean;
+}) {
+  const { error } = form.getFieldState("phoneNumber");
+
+  return (
+    <div>
+      <label className="mb-1.5 flex items-center justify-between font-ui text-sm font-medium text-slate-700">
+        <span>Phone Number</span>
+        <span className="text-[11px] font-normal text-slate-400">
+          for urgent school updates
+        </span>
+      </label>
+      <div
+        className={cn(
+          "flex overflow-hidden rounded-lg border bg-[#f6faf8] transition-all focus-within:ring-2",
+          error
+            ? "border-red-300 focus-within:border-red-400 focus-within:ring-red-500/20"
+            : "border-emerald-900/15 focus-within:border-[#1d5547]/40 focus-within:ring-[#1d5547]/20",
+          disabled && "opacity-50",
+        )}
+      >
+        <span className="flex items-center gap-1.5 border-r border-emerald-900/10 pl-3 pr-2.5 text-sm font-semibold text-slate-600">
+          <Phone className="h-3.5 w-3.5 text-[#1d5547]/70" aria-hidden />
+          +254
+        </span>
+        <input
+          {...form.register("phoneNumber")}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel-national"
+          placeholder="712 345 678"
+          maxLength={16}
+          disabled={disabled}
+          className="h-11 flex-1 border-0 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0 disabled:cursor-not-allowed"
+        />
+      </div>
+      {error ? (
+        <p className="mt-1.5 text-xs text-red-600">{error.message}</p>
+      ) : (
+        <p className="mt-1.5 text-xs text-slate-500">
+          Kenyan mobile number. We&apos;ll only call or text about your school
+          account.
+        </p>
+      )}
     </div>
   );
 }

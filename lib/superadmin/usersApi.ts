@@ -13,6 +13,9 @@ const USERS_QUERY = `
       isGlobalAdmin
       globalRole
       createdAt
+      phoneNumber
+      lastLoginAt
+      loginCount
       memberships {
         id
         role
