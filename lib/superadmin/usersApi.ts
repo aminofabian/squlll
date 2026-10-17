@@ -110,6 +110,7 @@ export async function createTenantUser(input: {
   tenantId: string;
   email: string;
   name: string;
+  phoneNumber?: string;
   role: string;
 }) {
   await superAdminGraphqlRequest(

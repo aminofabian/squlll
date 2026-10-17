@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import {
   BadgeCheck,
   Building2,
@@ -146,8 +147,9 @@ export function UserInsightSheet({
                     <div className="mt-1 flex items-start gap-2 rounded-xl border border-dashed border-amber-300/70 bg-amber-50/60 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/50 dark:bg-amber-950/20 dark:text-amber-400">
                       <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
                       <span>
-                        No phone captured yet. Ask the school admin to add one
-                        from their profile.
+                        No phone captured during onboarding. Add one next time
+                        you create a user, or ask this person to update their
+                        profile.
                       </span>
                     </div>
                   )}
@@ -280,7 +282,7 @@ function MiniStat({
   helper,
   accent,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
   helper: string;
@@ -310,7 +312,7 @@ function TimelineRow({
   complete,
   last,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   detail: string;
   sub: string;

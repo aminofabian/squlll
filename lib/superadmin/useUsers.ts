@@ -79,6 +79,7 @@ export function useUsers() {
       tenantId: string;
       email: string;
       name: string;
+      phoneNumber?: string;
       role: string;
     }) => {
       setActionLoading("create");

@@ -18,6 +18,12 @@ import {
   subscriptionStatusBadgeVariant,
 } from "@/lib/superadmin/subscriptions";
 import { useTenantDetail } from "@/lib/superadmin/useTenantDetail";
+import {
+  LOGIN_FRESHNESS_STYLES,
+  formatPhoneDisplay,
+  formatRelativeLogin,
+  loginFreshness,
+} from "@/lib/superadmin/userActivity";
 import { enterTenantPortal } from "@/lib/superadmin/tenantsApi";
 import {
   ArrowLeft,
@@ -340,6 +346,7 @@ export default function TenantDetailPage() {
                       const membership = user.memberships.find(
                         (item) => item.tenantId === tenantId,
                       );
+                      const freshness = loginFreshness(user.lastLoginAt);
                       return (
                         <div
                           key={user.id}
@@ -351,6 +358,21 @@ export default function TenantDetailPage() {
                             </p>
                             <p className="truncate text-xs text-slate-400">
                               {user.email}
+                            </p>
+                            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-slate-400">
+                              <span>
+                                {user.phoneNumber
+                                  ? formatPhoneDisplay(user.phoneNumber)
+                                  : "No phone"}
+                              </span>
+                              <span className="text-slate-300">·</span>
+                              <span
+                                className={
+                                  LOGIN_FRESHNESS_STYLES[freshness].text
+                                }
+                              >
+                                {formatRelativeLogin(user.lastLoginAt)}
+                              </span>
                             </p>
                           </div>
                           <div className="flex flex-shrink-0 items-center gap-2">

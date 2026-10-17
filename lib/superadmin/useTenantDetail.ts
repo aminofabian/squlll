@@ -45,6 +45,7 @@ export function useTenantDetail(tenantId: string) {
     async (input: {
       email: string;
       name: string;
+      phoneNumber?: string;
       role: string;
     }) => {
       setCreatingUser(true);
@@ -54,6 +55,7 @@ export function useTenantDetail(tenantId: string) {
           tenantId,
           email: input.email,
           name: input.name,
+          phoneNumber: input.phoneNumber,
           role: input.role,
         });
         await refresh();

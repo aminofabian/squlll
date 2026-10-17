@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { fetchAllTenants } from "@/lib/superadmin/tenantsApi";
 import type { TenantRecord } from "@/lib/superadmin/types";
+import { normalizeKenyanPhone } from "@/lib/auth/phone";
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ interface CreateUserDialogProps {
     tenantId: string;
     email: string;
     name: string;
+    phoneNumber?: string;
     role: string;
   }) => Promise<void>;
 }
@@ -49,6 +51,7 @@ export function CreateUserDialog({
     tenantId: "",
     email: "",
     name: "",
+    phoneNumber: "",
     role: "SCHOOL_ADMIN",
   });
   const [error, setError] = useState("");
@@ -61,6 +64,7 @@ export function CreateUserDialog({
       tenantId: defaultTenantId ?? "",
       email: "",
       name: "",
+      phoneNumber: "",
       role: "SCHOOL_ADMIN",
     });
 
@@ -83,11 +87,21 @@ export function CreateUserDialog({
       return;
     }
 
+    const trimmedPhone = form.phoneNumber.trim();
+    const phoneNumber = trimmedPhone
+      ? normalizeKenyanPhone(trimmedPhone)
+      : undefined;
+    if (trimmedPhone && !phoneNumber) {
+      setError("Enter a valid Kenyan mobile number, e.g. 712 345 678");
+      return;
+    }
+
     try {
       await onSubmit({
         tenantId: form.tenantId,
         email: form.email.trim(),
         name: form.name.trim(),
+        phoneNumber: phoneNumber ?? undefined,
         role: form.role,
       });
       onOpenChange(false);
@@ -158,6 +172,31 @@ export function CreateUserDialog({
                 setForm((current) => ({ ...current, email: event.target.value }))
               }
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>
+              Phone{" "}
+              <span className="text-xs font-normal text-slate-400">
+                (optional)
+              </span>
+            </Label>
+            <Input
+              type="tel"
+              inputMode="tel"
+              placeholder="712 345 678"
+              className="rounded-xl"
+              value={form.phoneNumber}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  phoneNumber: event.target.value,
+                }))
+              }
+            />
+            <p className="text-xs text-slate-400">
+              Shown in the user directory for call/WhatsApp follow-up.
+            </p>
           </div>
 
           <div className="space-y-2">

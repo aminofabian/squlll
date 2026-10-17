@@ -176,7 +176,7 @@ export const LOGIN_FRESHNESS_STYLES: Record<
   live: {
     dot: "bg-emerald-500",
     text: "text-emerald-700 dark:text-emerald-400",
-    label: "Online now",
+    label: "Signed in <15m",
   },
   today: {
     dot: "bg-emerald-500",
