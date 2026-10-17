@@ -195,19 +195,34 @@ export function useTeacherLessonAllocations(termId: string | null | undefined) {
     [reload],
   );
 
-  const runPreflight = useCallback(async (): Promise<TimetablePreflightResult | null> => {
-    if (!termId) return null;
-    const data = await gql<{ timetableGenerationPreflight: TimetablePreflightResult }>(
-      `query Preflight($termId: String!) {
-        timetableGenerationPreflight(termId: $termId) {
-          ok totalAllocatedLessons totalAvailableSlots
-          issues { code severity message teacherId gradeLevelId }
-        }
-      }`,
-      { termId },
-    );
-    return data.timetableGenerationPreflight;
-  }, [termId]);
+  const runPreflight = useCallback(
+    async (
+      options: { gradeLevelId?: string; streamId?: string } = {},
+    ): Promise<TimetablePreflightResult | null> => {
+      if (!termId) return null;
+      const data = await gql<{
+        timetableGenerationPreflight: TimetablePreflightResult;
+      }>(
+        `query Preflight($termId: String!, $gradeLevelId: String, $streamId: String) {
+          timetableGenerationPreflight(
+            termId: $termId
+            gradeLevelId: $gradeLevelId
+            streamId: $streamId
+          ) {
+            ok totalAllocatedLessons totalAvailableSlots
+            issues { code severity message teacherId gradeLevelId }
+          }
+        }`,
+        {
+          termId,
+          gradeLevelId: options.gradeLevelId ?? null,
+          streamId: options.streamId ?? null,
+        },
+      );
+      return data.timetableGenerationPreflight;
+    },
+    [termId],
+  );
 
   const generate = useCallback(
     async (

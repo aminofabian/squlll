@@ -59,6 +59,14 @@ export function computeLocalPreflight(params: {
         message: `Allocation sum (${sum}) does not match total lessons/week (${rule.totalLessonsPerWeek}).`,
       });
     }
+    if (availableSlotsPerClass > 0 && sum > availableSlotsPerClass) {
+      issues.push({
+        code: "TEACHER_OVERCAPACITY",
+        severity: "warning",
+        teacherId,
+        message: `This teacher is assigned ${sum} lessons but only ${availableSlotsPerClass} week slots are available. We'll fill what fits and leave the rest empty — no clashes.`,
+      });
+    }
     if (rule?.maxLessonsPerDay != null && sum > rule.maxLessonsPerDay * schoolDays) {
       issues.push({
         code: "MAX_DAY_OVERFLOW",

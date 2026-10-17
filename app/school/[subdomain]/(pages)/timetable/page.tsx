@@ -889,6 +889,9 @@ export default function SmartTimetableNew() {
   const [autoGenerateStep, setAutoGenerateStep] = useState(0);
   const [autoGenerateReplace, setAutoGenerateReplace] = useState(false);
   const [autoGenerateKeepManual, setAutoGenerateKeepManual] = useState(true);
+  const [autoGenerateScope, setAutoGenerateScope] = useState<"class" | "school">(
+    "class",
+  );
   const [modeEntryDismissed, setModeEntryDismissed] = useState(false);
   const [journeyHidden, setJourneyHidden] = useState(false);
   const [inspectorTab, setInspectorTab] =
@@ -905,11 +908,18 @@ export default function SmartTimetableNew() {
   const openAutoGenerate = useCallback(
     (
       step = 0,
-      options?: { replace?: boolean; keepManual?: boolean },
+      options?: {
+        replace?: boolean;
+        keepManual?: boolean;
+        scope?: "class" | "school";
+      },
     ) => {
       setAutoGenerateStep(step);
       setAutoGenerateReplace(options?.replace ?? false);
       setAutoGenerateKeepManual(options?.keepManual ?? true);
+      setAutoGenerateScope(
+        options?.scope ?? (selectedGradeId ? "class" : "school"),
+      );
       setCreationMode("automatic");
       setInspectorTab(null);
       if (!editingLesson && !autoGenerateOpen && !shareDrawerOpen) {
@@ -920,7 +930,13 @@ export default function SmartTimetableNew() {
       setIsSidebarMinimized(true);
       setAutoGenerateOpen(true);
     },
-    [isSidebarMinimized, editingLesson, autoGenerateOpen, shareDrawerOpen],
+    [
+      isSidebarMinimized,
+      editingLesson,
+      autoGenerateOpen,
+      shareDrawerOpen,
+      selectedGradeId,
+    ],
   );
 
   const closeLessonEditor = useCallback(() => {
@@ -2244,6 +2260,15 @@ export default function SmartTimetableNew() {
             {AUTO_BUILD_COPY.menu}
           </DropdownMenuItem>
         ) : null}
+        {hasScheduleStructure ? (
+          <DropdownMenuItem
+            onClick={() => openAutoGenerate(2, { scope: "school" })}
+            className={ttMenu.item}
+          >
+            <LayoutGrid />
+            Build whole-school timetable
+          </DropdownMenuItem>
+        ) : null}
         {hasScheduleStructure && schoolLessonCount > 0 ? (
           <>
             <DropdownMenuItem
@@ -2909,6 +2934,17 @@ export default function SmartTimetableNew() {
                       <Sparkles />
                       Guided setup
                     </DropdownMenuItem>
+                    {hasScheduleStructure ? (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          openAutoGenerate(2, { scope: "school" })
+                        }
+                        className={ttMenu.item}
+                      >
+                        <LayoutGrid />
+                        Build whole-school timetable
+                      </DropdownMenuItem>
+                    ) : null}
                     {hasScheduleStructure && (
                       <DropdownMenuItem
                         onClick={() => openAutoGenerate()}
@@ -3728,6 +3764,7 @@ export default function SmartTimetableNew() {
             scopeStreamId={selectedStreamId ?? undefined}
             initialReplaceExisting={autoGenerateReplace}
             initialKeepManual={autoGenerateKeepManual}
+            initialScope={autoGenerateScope}
             onSetUpSchoolDay={() => {
               closeAutoGenerate();
               setShowTimetableWizard(true);
