@@ -42,6 +42,7 @@ const DOUBLE_ROW_H = "min-h-[72px]";
 const TIME_COL_W = "max-md:w-[108px]";
 const TIME_RAIL_MIN = "min-h-[36px]";
 const TD_PAD = "p-0.5";
+const DOUBLE_ROW_SPAN = 2;
 
 // Resizable column widths (desktop). Widths are persisted per school.
 const TIME_COL_DEFAULT_W = 120;
@@ -1017,7 +1018,7 @@ export function AdminTimetableGrid({
                             periodNumbers={periodNumbers}
                             getBreaksAfterPeriod={getBreaksAfterPeriod}
                             getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                            isDoubleBlockRow={rowHasDoubleBlock}
+                            isDoubleBlockRow={schoolCombined && rowHasDoubleBlock}
                             isDoubleContinuation={rowIsDoubleContinuation}
                             onEdit={onEditTimeslot}
                             onAddBreak={schoolCombined ? undefined : onAddBreak}
@@ -1045,15 +1046,19 @@ export function AdminTimetableGrid({
                               prevPeriodNumber,
                             );
 
+                          const coveredByDoubleAbove =
+                            !schoolCombined &&
+                            !entry &&
+                            !!prevEntry?.isDoublePeriod;
+
+                          if (coveredByDoubleAbove && !breakAfterPrev) {
+                            return null;
+                          }
+
                           let displayEntry: LessonEntry | null = entry;
                           let isDoubleContinuation = false;
 
-                          if (
-                            !schoolCombined &&
-                            !entry &&
-                            prevEntry?.isDoublePeriod &&
-                            !breakAfterPrev
-                          ) {
+                          if (coveredByDoubleAbove && prevEntry) {
                             displayEntry = {
                               ...prevEntry,
                               isDoubleContinuation: true,
@@ -1066,9 +1071,15 @@ export function AdminTimetableGrid({
                             !isDoubleContinuation &&
                             !displayEntry?.isDoubleContinuation;
 
-                          const connectsDoubleBelow =
+                          const nextEntry =
+                            nextPeriodNumber != null
+                              ? getEntryFor(dayOfWeek, nextPeriodNumber)
+                              : null;
+                          const spansBothPeriods =
+                            !schoolCombined &&
                             isDoubleStart &&
                             nextPeriodNumber != null &&
+                            !nextEntry &&
                             !breakBlocksDoubleSpan(
                               getBreaksAfterPeriod,
                               dayOfWeek,
@@ -1127,17 +1138,16 @@ export function AdminTimetableGrid({
                           return (
                             <td
                               key={dayIndex}
+                              rowSpan={spansBothPeriods ? DOUBLE_ROW_SPAN : undefined}
                               className={cn(
                                 "h-px bg-white align-top dark:bg-zinc-900/40",
                                 TD_PAD,
-                                doubleBlockTdPadding(
-                                  connectsDoubleBelow,
-                                  isDoubleContinuation,
-                                ),
+                                doubleBlockTdPadding(false, isDoubleContinuation),
                               )}
                             >
                               {displayEntry ? (
                                 <AdminLessonCell
+                                  spansBothPeriods={spansBothPeriods}
                                   entry={displayEntry}
                                   accent={accentFor(
                                     displayEntry.subject.id ?? displayEntry.id,
@@ -1151,7 +1161,6 @@ export function AdminTimetableGrid({
                                   }
                                   isDoubleStart={isDoubleStart}
                                   isDoubleContinuation={isDoubleContinuation}
-                                  connectsDoubleBelow={connectsDoubleBelow}
                                   showFullSubjectName
                                   onEdit={onEditLesson}
                                   onDelete={onDeleteLesson}
@@ -1698,6 +1707,7 @@ function AdminLessonCell({
   isDoubleStart,
   isDoubleContinuation,
   connectsDoubleBelow,
+  spansBothPeriods,
   showFullSubjectName = true,
   onEdit,
 }: {
@@ -1710,6 +1720,8 @@ function AdminLessonCell({
   isDoubleStart?: boolean;
   isDoubleContinuation?: boolean;
   connectsDoubleBelow?: boolean;
+  /** One block stretched across both periods of a double. */
+  spansBothPeriods?: boolean;
   showFullSubjectName?: boolean;
   onEdit?: (lesson: LessonEntry) => void;
   onDelete?: (lesson: LessonEntry) => void;
@@ -1726,9 +1738,11 @@ function AdminLessonCell({
 
   const tooltipExtra = isDoubleContinuation
     ? "Double period · 2nd half"
-    : isDoubleStart
-      ? "Double period"
-      : undefined;
+    : spansBothPeriods
+      ? "Double period · two lessons back to back"
+      : isDoubleStart
+        ? "Double period"
+        : undefined;
 
   return (
     <div
@@ -1736,6 +1750,7 @@ function AdminLessonCell({
       className={cn(
         "group/lesson relative flex cursor-pointer items-start gap-0.5 rounded-none border px-2",
         LESSON_CELL_MIN,
+        spansBothPeriods && "h-full border-l-[3px]",
         (isDoubleStart || isDoubleContinuation) && "pr-6",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
         isFaded && !isActive
@@ -1796,7 +1811,7 @@ function AdminLessonCell({
       </div>
       {isDoubleStart ? (
         <span className="absolute right-0.5 top-0.5 rounded-none bg-violet-100/90 px-1 py-0.5 text-[8px] font-semibold leading-none text-violet-700 ring-1 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60">
-          2×
+          {spansBothPeriods ? "Double" : "2×"}
         </span>
       ) : null}
       {isDoubleContinuation ? (
