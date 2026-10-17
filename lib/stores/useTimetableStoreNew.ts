@@ -31,6 +31,7 @@ import {
   mapApiTimetableEntries,
 } from "@/app/school/[subdomain]/(pages)/timetable/utils/mapTimetableApiEntries";
 import { computeTimetableConflicts } from "@/app/school/[subdomain]/(pages)/timetable/utils/computeTimetableConflicts";
+import { MAX_PERIODS_PER_DAY } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlotStats";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -187,6 +188,14 @@ let entryCounter = 1000;
 let breakCounter = 100;
 const generateId = () => `entry-${++entryCounter}`;
 const generateBreakId = () => `break-${++breakCounter}`;
+
+function countDistinctSchoolDays(values: Array<number | undefined>): number {
+  const days = new Set<number>();
+  for (const value of values) {
+    if (typeof value === "number" && value >= 1 && value <= 7) days.add(value);
+  }
+  return days.size;
+}
 
 /** Day templates may belong to a term directly or via their week template. */
 function dayTemplateBelongsToTerm(template: any, termId: string): boolean {
@@ -1189,18 +1198,17 @@ export const useTimetableStore = create<TimetableStore>()(
           // If all fetches failed (allSlots is empty), keep whatever is
           // already in the store so the grid doesn't flip back to the wizard.
           if (allSlots.length > 0) {
-            const lessonPeriodsPerDay = Math.max(
-              0,
-              ...allSlots.map((s) => s.periodNumber || 0),
-            );
+            const periodNumbers = [
+              ...new Set(allSlots.map((s) => s.periodNumber)),
+            ]
+              .filter((n) => typeof n === "number" && n >= 1)
+              .sort((a, b) => a - b);
             set((state) => ({
               timeSlots: allSlots,
-              periodNumbers: [
-                ...new Set(allSlots.map((s) => s.periodNumber)),
-              ].sort((a, b) => a - b),
+              periodNumbers,
               lessonPeriodsPerDay: Math.max(
                 state.lessonPeriodsPerDay ?? 0,
-                lessonPeriodsPerDay,
+                periodNumbers.length,
               ),
               lastUpdated: new Date().toISOString(),
             }));
@@ -2569,28 +2577,33 @@ export const useTimetableStore = create<TimetableStore>()(
           const slotsForDayCount =
             gradeScopedSlots.length > 0 ? gradeScopedSlots : schoolWideSlots;
 
-          const inferredDaysFromSlots = (() => {
-            let maxDay = 0;
-            for (const slot of slotsForDayCount) {
-              if (
-                typeof slot.dayOfWeek === "number" &&
-                slot.dayOfWeek >= 1 &&
-                slot.dayOfWeek <= 7
-              ) {
-                maxDay = Math.max(maxDay, slot.dayOfWeek);
-              }
-            }
-            return maxDay > 0 ? maxDay : null;
-          })();
+          const scheduleDays = (timetableData.schedule ?? []).map(
+            (day: { dayTemplate?: { dayOfWeek?: number } }) =>
+              day?.dayTemplate?.dayOfWeek,
+          );
+          const templatePeriodCount = Math.max(
+            0,
+            ...(timetableData.schedule ?? []).map(
+              (day: { dayTemplate?: { periodCount?: number } }) =>
+                typeof day?.dayTemplate?.periodCount === "number"
+                  ? day.dayTemplate.periodCount
+                  : 0,
+            ),
+          );
+          const distinctDays = Math.max(
+            countDistinctSchoolDays(
+              slotsForDayCount.map((slot) => slot.dayOfWeek),
+            ),
+            countDistinctSchoolDays(scheduleDays),
+            typeof timetableData.daysPerWeek === "number" &&
+              timetableData.daysPerWeek >= 1 &&
+              timetableData.daysPerWeek <= 7
+              ? timetableData.daysPerWeek
+              : 0,
+          );
 
           // totalDays is the number of day templates in the term — not school days per week.
-          const resolvedDaysPerWeek =
-            inferredDaysFromSlots ??
-            (typeof timetableData.daysPerWeek === "number" &&
-            timetableData.daysPerWeek >= 1
-              ? timetableData.daysPerWeek
-              : null) ??
-            5;
+          const resolvedDaysPerWeek = distinctDays > 0 ? distinctDays : 5;
 
           const existingSlots = get().timeSlots;
           const resolvedSlots =
@@ -2605,16 +2618,19 @@ export const useTimetableStore = create<TimetableStore>()(
           const mergedPeriodNumbers = [
             ...new Set([...slotPeriodNumbers, ...resolvedPeriodNumbers]),
           ].sort((a, b) => a - b);
+          const countedPeriods =
+            mergedPeriodNumbers.length > 0 &&
+            mergedPeriodNumbers.length <= MAX_PERIODS_PER_DAY
+              ? mergedPeriodNumbers.length
+              : 0;
+          const countedTemplate =
+            templatePeriodCount >= 1 &&
+            templatePeriodCount <= MAX_PERIODS_PER_DAY
+              ? templatePeriodCount
+              : 0;
           const mergedLessonPeriodsPerDay = Math.max(
-            mergedPeriodNumbers.length > 0
-              ? Math.max(...mergedPeriodNumbers)
-              : 0,
-            resolvedSlots.length > 0
-              ? Math.max(...resolvedSlots.map((s) => s.periodNumber || 0), 0)
-              : 0,
-            resolvedPeriodNumbers.length > 0
-              ? Math.max(...resolvedPeriodNumbers)
-              : 0,
+            countedPeriods,
+            countedTemplate,
           );
 
           const slotUpdate =
@@ -2661,7 +2677,10 @@ export const useTimetableStore = create<TimetableStore>()(
                 : {
                     lessonPeriodsPerDay: Math.max(
                       state.lessonPeriodsPerDay ?? 0,
-                      resolvedPeriodNumbers.length,
+                      resolvedPeriodNumbers.length > 0 &&
+                        resolvedPeriodNumbers.length <= MAX_PERIODS_PER_DAY
+                        ? resolvedPeriodNumbers.length
+                        : 0,
                     ),
                   }),
               lastUpdated: new Date().toISOString(),

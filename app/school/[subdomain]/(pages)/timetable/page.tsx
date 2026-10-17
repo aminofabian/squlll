@@ -155,6 +155,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTimetableWeekDays } from "./hooks/useTimetableWeekDays";
+import { classWeeklySlotCount } from "./utils/timetableSlotStats";
 import { TimetableSetupWizard } from "./components/TimetableSetupWizard";
 import {
   isTimetableWizardComplete,
@@ -957,15 +958,16 @@ export default function SmartTimetableNew() {
     generate: generateTimetable,
   } = useTeacherLessonAllocations(termIdForAllocations);
 
-  const availableSlotsPerClass = useMemo(() => {
-    const days = daysPerWeekFromStore || 5;
-    const periods =
-      lessonPeriodsPerDay ||
-      periodNumbers.length ||
-      timeSlots.filter((s) => !s.dayOfWeek || s.dayOfWeek === 1).length ||
-      0;
-    return days * periods;
-  }, [daysPerWeekFromStore, lessonPeriodsPerDay, periodNumbers.length, timeSlots]);
+  const availableSlotsPerClass = useMemo(
+    () =>
+      classWeeklySlotCount({
+        timeSlots,
+        periodNumbers,
+        lessonPeriodsPerDay,
+        daysPerWeek,
+      }),
+    [timeSlots, periodNumbers, lessonPeriodsPerDay, daysPerWeek],
+  );
 
   /** Grade names keyed by both id forms, since allocations store the tenant id. */
   const gradeNamesById = useMemo(() => {
@@ -3251,7 +3253,7 @@ export default function SmartTimetableNew() {
             subjects={subjects}
             grades={grades}
             availableSlotsPerClass={availableSlotsPerClass}
-            schoolDays={daysPerWeekFromStore || 5}
+            schoolDays={daysPerWeek}
             periodNumbers={
               periodNumbers.length > 0
                 ? periodNumbers

@@ -53,6 +53,60 @@ export function slotsPerClassWeek(
   return periodsPerDay * daysPerWeek;
 }
 
+/** Longer than this is a week total that leaked into "periods per day". */
+export const MAX_PERIODS_PER_DAY = 16;
+
+function sanePeriodsPerDay(value: number | undefined): number {
+  if (typeof value !== "number" || value < 1 || value > MAX_PERIODS_PER_DAY) {
+    return 0;
+  }
+  return Math.floor(value);
+}
+
+function uniqueSlotPeriods(
+  timeSlots: Array<{ periodNumber?: number }> | undefined,
+): number {
+  const periods = new Set<number>();
+  for (const slot of timeSlots ?? []) {
+    if (typeof slot.periodNumber === "number" && slot.periodNumber >= 1) {
+      periods.add(slot.periodNumber);
+    }
+  }
+  return periods.size;
+}
+
+/**
+ * Slots one class can sit in this week: lessons per day × school days.
+ * Ten lessons a day from Monday to Friday is 50, not 10.
+ */
+export function classWeeklySlotCount(options: {
+  timeSlots?: Array<{ periodNumber?: number }>;
+  periodNumbers?: number[];
+  lessonPeriodsPerDay?: number;
+  daysPerWeek: number;
+  templatePeriodCounts?: number[];
+}): number {
+  const fromSlots = uniqueSlotPeriods(options.timeSlots);
+  const listed = dedupePeriodNumbers([options.periodNumbers]);
+  const fromList =
+    listed.length > 0 && listed.length <= MAX_PERIODS_PER_DAY
+      ? listed.length
+      : 0;
+  const fromTemplates = Math.max(
+    0,
+    ...(options.templatePeriodCounts ?? []).map((count) =>
+      sanePeriodsPerDay(count),
+    ),
+  );
+  const periodsPerDay = Math.max(
+    fromSlots,
+    fromList,
+    sanePeriodsPerDay(options.lessonPeriodsPerDay),
+    fromTemplates,
+  );
+  return slotsPerClassWeek(periodsPerDay, options.daysPerWeek);
+}
+
 export function entryOccupancyKey(
   entry: TimetableEntry,
   grades: Grade[],
