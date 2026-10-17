@@ -25,7 +25,7 @@ exports.HOMEPAGE_TEMPLATES = [
     {
         id: 'campus-dawn',
         name: 'Campus Dawn',
-        tagline: 'Ledger clarity, forest ink, full-bleed campus',
+        tagline: 'Forest ink, brass rules, full-bleed campus',
         mood: 'Institutional',
     },
     {
@@ -90,12 +90,12 @@ function createDefaultHomepageConfig(schoolName = 'Our School') {
     return {
         templateId: 'campus-dawn',
         theme: {
-            primary: '#246a59',
-            primaryDark: '#1a4c40',
-            primaryLight: '#2d8570',
-            accent: '#a7f3d0',
-            ink: '#0a1f1a',
-            paper: '#f3f7f5',
+            primary: '#1f5a4a',
+            primaryDark: '#143f33',
+            primaryLight: '#2c7561',
+            accent: '#c8a96a',
+            ink: '#0c1f1a',
+            paper: '#f5f2e9',
             radiusMode: 'sharp',
         },
         seo: { addressCountry: 'Kenya' },
@@ -124,7 +124,7 @@ function createDefaultHomepageConfig(schoolName = 'Our School') {
                 slots: {
                     backgroundImage: '/schooll.png',
                     overlayStrength: 0.55,
-                    eyebrow: 'Inspiring excellence every day',
+                    eyebrow: 'Learning · Character · Community',
                     headline: schoolName,
                     subcopy: 'A place where curious minds grow into confident learners — through rigorous academics, character, and community.',
                     primaryCta: { label: 'Apply now', href: '/apply' },
@@ -594,12 +594,12 @@ function getSection(config, type) {
 /** Recommended brand palette per look — applied when switching templates. */
 exports.HOMEPAGE_TEMPLATE_THEMES = {
     'campus-dawn': {
-        primary: '#246a59',
-        primaryDark: '#1a4c40',
-        primaryLight: '#2d8570',
-        accent: '#a7f3d0',
-        ink: '#0a1f1a',
-        paper: '#f3f7f5',
+        primary: '#1f5a4a',
+        primaryDark: '#143f33',
+        primaryLight: '#2c7561',
+        accent: '#c8a96a',
+        ink: '#0c1f1a',
+        paper: '#f5f2e9',
         radiusMode: 'sharp',
     },
     'assembly-hall': {

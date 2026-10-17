@@ -82,7 +82,7 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
         const isPrimary = action.variant === "primary";
 
         const className = cn(
-          "group flex w-full items-center gap-2 border border-transparent px-2 py-1.5 text-left transition-colors",
+          "group flex w-full items-center gap-2.5 border border-transparent px-2.5 py-2.5 text-left transition-colors",
           "hover:border-[#1a4d42]/12 hover:bg-[#f3f7f5] dark:hover:bg-white/[0.04]",
           isPrimary &&
             "border-[#246a59]/20 bg-[#246a59]/[0.06] hover:border-[#246a59]/35 hover:bg-[#246a59]/10",
@@ -94,7 +94,7 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
           <>
             <span
               className={cn(
-                "flex h-7 w-7 shrink-0 items-center justify-center border",
+                "flex h-8 w-8 shrink-0 items-center justify-center border",
                 isPrimary
                   ? "border-[#246a59] bg-[#0a1f1a] text-white"
                   : action.variant === "payments"
@@ -102,13 +102,20 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
                     : "border-[#1a4d42]/15 bg-[#f3f7f5] text-[#246a59] dark:border-white/15 dark:bg-[#071411]",
               )}
             >
-              <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+              <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[12px] font-medium text-[#0a1f1a] dark:text-white">
-                {action.label}
+              <span className="flex items-center gap-1.5">
+                <span className="block truncate text-[12.5px] font-medium text-[#0a1f1a] dark:text-white">
+                  {action.label}
+                </span>
+                {isPrimary ? (
+                  <span className="shrink-0 border border-[#246a59]/20 bg-white/70 px-1 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#246a59] dark:border-emerald-300/20 dark:bg-transparent dark:text-emerald-300">
+                    Suggested
+                  </span>
+                ) : null}
               </span>
-              <span className="block truncate text-[10px] text-[#1a4d42]/50 dark:text-white/40">
+              <span className="mt-0.5 block truncate text-[10.5px] text-[#1a4d42]/50 dark:text-white/40">
                 {action.description}
               </span>
             </span>

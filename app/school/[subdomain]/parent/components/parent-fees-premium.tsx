@@ -249,7 +249,7 @@ export function FeesStatementHero({
   onRecordPayment?: () => void
   onAdvancePayment?: () => void
   refreshing?: boolean
-  /** M-Pesa Express (STK) is configured for this school — pay straight to the till. */
+  /** M-Pesa is configured for this school — pay straight to the school M-Pesa account. */
   stkAvailable?: boolean
 }) {
   if (!overview && !loading) return null
@@ -894,7 +894,7 @@ export function FeesRecordsEmpty({
       <p className="mt-2 text-xs font-medium text-slate-700">No payments yet</p>
       <p className={cn('mt-1 text-[10px]', feesMuted)}>
         {stkAvailable
-          ? 'Pay with M-Pesa Express and your receipt appears here automatically.'
+          ? 'Pay with M-Pesa and your receipt appears here automatically.'
           : 'After you pay via M-Pesa or bank, record it here so finance can confirm.'}
       </p>
       {onRecordPayment ? (
@@ -925,12 +925,12 @@ export function FeesStatusNote({
         {
           icon: Smartphone,
           tone: 'text-emerald-600',
-          text: 'Tap Pay fees, then approve the M-Pesa prompt on your phone.',
+          text: 'Tap Pay fees, then approve the M-Pesa request on your phone.',
         },
         {
           icon: Banknote,
           tone: 'text-slate-500',
-          text: 'Money goes straight to the school till or paybill — no code to type.',
+          text: 'A request goes to your phone. Enter your M-Pesa PIN and the money goes straight to the school bank account.',
         },
         {
           icon: Receipt,

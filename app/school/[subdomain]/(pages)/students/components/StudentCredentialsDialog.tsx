@@ -13,11 +13,14 @@ import {
   AlertCircle,
   Check,
   Copy,
+  ExternalLink,
   Info,
   KeyRound,
   Loader2,
   Mail,
+  MessageSquare,
   RefreshCw,
+  Send,
   User,
 } from "lucide-react";
 import type { StudentCredentials } from "@/lib/hooks/useStudentCredentials";
@@ -32,6 +35,10 @@ interface StudentCredentialsDialogProps {
   onRetry: () => void;
   copiedField: string | null;
   onCopy: (text: string, field: string) => void;
+  phone?: string;
+  portalUrl: string;
+  onSend: (channel: "SMS" | "EMAIL") => void;
+  sendingChannel: "SMS" | "EMAIL" | null;
 }
 
 function CredentialRow({
@@ -102,6 +109,10 @@ export function StudentCredentialsDialog({
   onRetry,
   copiedField,
   onCopy,
+  phone,
+  portalUrl,
+  onSend,
+  sendingChannel,
 }: StudentCredentialsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,6 +179,14 @@ export function StudentCredentialsDialog({
                 icon={KeyRound}
                 highlight
               />
+              <CredentialRow
+                label="Portal"
+                value={portalUrl}
+                field="portal"
+                copiedField={copiedField}
+                onCopy={onCopy}
+                icon={ExternalLink}
+              />
               <p className="flex items-start gap-1.5 text-[10px] text-slate-400">
                 <Info className="mt-0.5 h-3 w-3 shrink-0" />
                 Default password is the admission number. Share credentials only
@@ -176,6 +195,51 @@ export function StudentCredentialsDialog({
             </>
           ) : null}
         </div>
+
+        {credentials ? (
+          <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              <Send className="h-3 w-3" />
+              Send login details
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={() => onSend("SMS")}
+                disabled={!phone || sendingChannel !== null}
+              >
+                {sendingChannel === "SMS" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <MessageSquare className="h-3.5 w-3.5" />
+                )}
+                Send SMS
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={() => onSend("EMAIL")}
+                disabled={!credentials.email || sendingChannel !== null}
+              >
+                {sendingChannel === "EMAIL" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Mail className="h-3.5 w-3.5" />
+                )}
+                Send email
+              </Button>
+            </div>
+            <p className="mt-2 text-[10px] text-slate-400">
+              Sends the email, password and portal link in one message.
+              {phone ? ` SMS to ${phone}.` : " No phone on file."}
+            </p>
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

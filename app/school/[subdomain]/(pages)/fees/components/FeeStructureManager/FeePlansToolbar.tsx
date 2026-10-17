@@ -155,11 +155,11 @@ export function FeePlansToolbar({
       >
         {hasFilters ? (
           <>
-            {filteredCount} of {totalCount} structures
+            {filteredCount} of {totalCount} fee plans
             {searchQuery.trim() ? " matching search" : ""}
           </>
         ) : (
-          <>{totalCount} structures · grouped by school year</>
+          <>{totalCount} fee plans · grouped by school year</>
         )}
       </p>
     </div>

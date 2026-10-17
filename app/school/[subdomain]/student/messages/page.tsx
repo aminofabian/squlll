@@ -8,7 +8,7 @@ export default function StudentMessagesPage() {
     <StudentPage wide>
       <PageHeader
         title="Messages"
-        subtitle="Chat with your teachers, admin and support staff."
+        subtitle="Chat with your teachers and school admin."
       />
       <MessagesPage
         title="Messages"

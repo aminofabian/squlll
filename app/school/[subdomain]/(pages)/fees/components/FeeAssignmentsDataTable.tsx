@@ -658,17 +658,17 @@ function EmptyState({ variant }: { variant: EmptyVariant }) {
           No class links yet
         </p>
         <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500">
-          Link fee structures to grades from{" "}
-          <Link
-            href={feesPlansHref()}
-            scroll={false}
-            className="font-semibold hover:underline"
-            style={{ color: FEES_BRAND.primary }}
-          >
-            Fee structures
-          </Link>
-          . Each link defines which classes are billed for a term or period.
+          Create a fee plan, then link it to the classes it applies to. Each
+          link defines which classes are billed for a term.
         </p>
+        <Link
+          href={feesPlansHref()}
+          scroll={false}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+          style={{ backgroundColor: FEES_BRAND.primary }}
+        >
+          Open fee plans
+        </Link>
       </div>
     );
   }

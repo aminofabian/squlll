@@ -25,7 +25,7 @@ export function FeeAssignmentsSummary({ stats }: FeeAssignmentsSummaryProps) {
           <p className="mt-0.5 text-xs text-slate-600">
             Across{" "}
             <span className="font-medium text-slate-800">
-              {stats.plans} fee structure{stats.plans === 1 ? "" : "s"}
+              {stats.plans} fee plan{stats.plans === 1 ? "" : "s"}
             </span>
             {" · "}
             <span className="font-medium text-slate-800">
@@ -36,7 +36,7 @@ export function FeeAssignmentsSummary({ stats }: FeeAssignmentsSummaryProps) {
             <span className="font-medium text-slate-800">
               {stats.students}
             </span>{" "}
-            student{stats.students === 1 ? "" : "s"} on fee lines
+            student{stats.students === 1 ? "" : "s"} billed
           </p>
         </div>
         <Link
@@ -46,7 +46,7 @@ export function FeeAssignmentsSummary({ stats }: FeeAssignmentsSummaryProps) {
           style={{ color: FEES_BRAND.primary }}
         >
           <Link2 className="h-3.5 w-3.5" />
-          Fee structures
+          Fee plans
         </Link>
       </div>
 
@@ -93,7 +93,7 @@ export function FeeAssignmentsSummary({ stats }: FeeAssignmentsSummaryProps) {
               className="font-semibold underline-offset-2 hover:underline"
               style={{ color: FEES_BRAND.primaryDark }}
             >
-              Fee structures
+              Fee plans
             </Link>{" "}
             before billing.
           </p>

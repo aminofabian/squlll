@@ -73,7 +73,7 @@ export function FeeAssignmentsToolbar({
       )}
     >
       <p className="mb-2 text-xs leading-relaxed text-slate-600">
-        Each row is a fee structure linked to classes for a billing period. Expand a
+        Each row is a fee plan linked to classes for a billing period. Expand a
         row to see enrolled students and line items.
       </p>
 
@@ -127,7 +127,7 @@ export function FeeAssignmentsToolbar({
           <Input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search structure or class…"
+            placeholder="Search plan or class…"
             className="h-8 border-slate-200 bg-slate-50/80 pl-8 text-xs"
             aria-label="Search class links"
           />

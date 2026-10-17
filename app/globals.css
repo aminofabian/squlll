@@ -357,3 +357,25 @@
 .dashboard-feed-enter {
   animation: dashboard-feed-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Fees flow: every corner is intentionally square. */
+body.fees-square-mode main,
+body.fees-square-mode main *,
+body.fees-square-mode [role="dialog"],
+body.fees-square-mode [role="dialog"] *,
+body.fees-square-mode [role="toolbar"],
+body.fees-square-mode [role="toolbar"] *,
+body.fees-square-mode [data-radix-popper-content-wrapper],
+body.fees-square-mode [data-radix-popper-content-wrapper] *,
+body.fees-square-mode [data-sonner-toast],
+body.fees-square-mode [data-sonner-toast] * {
+  border-radius: 0 !important;
+}
+
+/* Shared drawer geometry: every drawer uses the same square language. */
+[data-slot="sheet-content"],
+[data-slot="sheet-content"] *,
+[data-slot="drawer-content"],
+[data-slot="drawer-content"] * {
+  border-radius: 0 !important;
+}

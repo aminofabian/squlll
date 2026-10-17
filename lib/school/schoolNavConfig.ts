@@ -48,6 +48,7 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
       { title: "Students", shortLabel: "Students", href: "/students", icon: Users2 },
       { title: "Classes", shortLabel: "Classes", href: "/classes", icon: Building2 },
       { title: "Teachers", shortLabel: "Teachers", href: "/teachers", icon: GraduationCap },
+      { title: "Messages", shortLabel: "Chat", href: "/communication", icon: MessageCircle },
     ],
   },
   {
@@ -75,6 +76,7 @@ export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
   { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Students", href: "/students", icon: Users2 },
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
+  { title: "Messages", href: "/communication", icon: MessageCircle },
   { title: "Timetable", href: "/timetable", icon: Clock },
   { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
   { title: "Exams", href: "/exams", icon: FileCheck },
@@ -93,7 +95,6 @@ export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
   { title: "Analytics", href: "/analytics", icon: PieChart },
   { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
   { title: "Enrollment", href: "/enrollment", icon: Medal },
-  { title: "Communication", href: "/communication", icon: MessageCircle },
   { title: "Reminders", href: "/reminders", icon: BellRing },
   { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },
   { title: "Website", href: "/website", icon: Globe },
@@ -141,8 +142,7 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
       { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
       { title: "Enrollment", href: "/enrollment", icon: Medal },
       { title: "Transport", href: "/transport", icon: Bus },
-      { title: "Communication", href: "/communication", icon: MessageCircle },
-      { title: "Reminders", href: "/reminders", icon: BellRing },
+          { title: "Reminders", href: "/reminders", icon: BellRing },
       { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },
       { title: "Website", href: "/website", icon: Globe },
       { title: "Custom domain", href: "/domains", icon: Link2 },
@@ -181,6 +181,7 @@ export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
   { title: "Students", href: "/students", icon: Users2 },
   { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
+  { title: "Messages", href: "/communication", icon: MessageCircle },
   { title: "Timetable", href: "/timetable", icon: Clock },
 ];
 

@@ -18,6 +18,10 @@ interface DashboardAnimatedMetricProps {
   accent?: "default" | "live" | "success" | "warm";
   loading?: boolean;
   emptyCta?: MetricEmptyCta;
+  /** Short line under the value when there is no empty-state link. */
+  hint?: string;
+  /** Small glyph beside the metric label. */
+  icon?: LucideIcon;
   className?: string;
   children?: React.ReactNode;
 }
@@ -58,6 +62,8 @@ export function DashboardAnimatedMetric({
   accent = "default",
   loading,
   emptyCta,
+  hint,
+  icon: Icon,
   className,
   children,
 }: DashboardAnimatedMetricProps) {
@@ -85,34 +91,44 @@ export function DashboardAnimatedMetric({
   return (
     <div
       className={cn(
-        "relative px-3 py-2.5 transition-[background-color] duration-500 sm:px-4",
+        "relative flex min-h-[84px] flex-col justify-start px-3 py-3 transition-[background-color] duration-500 sm:px-4",
         pulse && "bg-[#246a59]/[0.05]",
         className,
       )}
     >
-      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/50 dark:text-white/40">
-        {label}
+      <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1a4d42]/45 dark:text-white/40">
+        {Icon ? (
+          <Icon className="h-3.5 w-3.5 shrink-0 text-[#246a59]/70 dark:text-emerald-300/70" strokeWidth={1.75} />
+        ) : null}
+        <span className="truncate">{label}</span>
       </p>
       {loading ? (
-        <div className="mt-1.5 h-6 w-12 animate-pulse bg-[#1a4d42]/10 dark:bg-white/10" />
+        <div className="mt-2 h-7 w-14 animate-pulse bg-[#1a4d42]/10 dark:bg-white/10" />
       ) : children ? (
-        <div className="mt-1">{children}</div>
-      ) : showEmptyCta ? (
-        <MetricEmptyCtaLink {...emptyCta} />
+        <div className="mt-1.5">{children}</div>
       ) : (
-        <p
-          className={cn(
-            "mt-1 font-display text-[1.35rem] tabular-nums tracking-tight leading-none sm:text-[1.5rem]",
-            accentValue[accent],
-          )}
-        >
-          {display}
-          {suffix ? (
-            <span className="ml-0.5 text-sm font-medium text-[#1a4d42]/40">
-              {suffix}
-            </span>
+        <>
+          <p
+            className={cn(
+              "mt-1.5 font-display text-[1.55rem] leading-none tracking-tight tabular-nums sm:text-[1.7rem]",
+              accentValue[accent],
+            )}
+          >
+            {display}
+            {suffix ? (
+              <span className="ml-0.5 text-sm font-medium text-[#1a4d42]/40">
+                {suffix}
+              </span>
+            ) : null}
+          </p>
+          {showEmptyCta ? (
+            <MetricEmptyCtaLink {...emptyCta} />
+          ) : hint ? (
+            <p className="mt-1 truncate text-[10px] text-[#1a4d42]/45 dark:text-white/40">
+              {hint}
+            </p>
           ) : null}
-        </p>
+        </>
       )}
     </div>
   );

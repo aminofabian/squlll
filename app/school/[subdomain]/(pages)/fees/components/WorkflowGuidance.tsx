@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle, Sparkles, Target, Zap, Receipt } from "lucide-react";
+import { CheckCircle2, Sparkles, Target, Zap, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEES_BRAND } from "../lib/fees-ui";
 
@@ -21,7 +21,7 @@ interface WorkflowGuidanceProps {
 const defaultSteps: WorkflowStep[] = [
   {
     id: "1",
-    title: "Fee structure",
+    title: "Fee plan",
     description: "Charges per class & term",
     completed: false,
     icon: <Sparkles className="h-4 w-4" />,
@@ -29,7 +29,7 @@ const defaultSteps: WorkflowStep[] = [
   {
     id: "2",
     title: "Assign classes",
-    description: "Link structure to grades",
+    description: "Link plan to classes",
     completed: false,
     icon: <Target className="h-4 w-4" />,
   },

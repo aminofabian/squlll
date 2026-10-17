@@ -117,10 +117,10 @@ export function FeePlanDetailHeader({
               href={feesPlansHref()}
               scroll={false}
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-none text-[#246a59] hover:bg-[#f3f7f5] active:bg-[#e8f2ef] md:h-auto md:w-auto md:gap-1 md:px-1.5 md:py-1 md:text-xs md:text-[#1a4d42]/55 md:hover:text-[#246a59]"
-              aria-label="Back to structures"
+              aria-label="Back to fee plans"
             >
               <ArrowLeft className="h-5 w-5 md:h-3.5 md:w-3.5" />
-              <span className="hidden md:inline">Structures</span>
+              <span className="hidden md:inline">Fee plans</span>
             </Link>
 
             <div className="min-w-0 flex-1">
@@ -210,7 +210,7 @@ export function FeePlanDetailHeader({
                     )}
                     onClick={onEdit}
                     disabled={isDeleting}
-                    aria-label="Edit structure"
+                    aria-label="Edit fee plan"
                   >
                     <Edit className="h-3.5 w-3.5 shrink-0" />
                   </Button>
@@ -236,7 +236,7 @@ export function FeePlanDetailHeader({
                       {!showPrimaryEdit && !showSecondaryEdit && canModifyPlan ? (
                         <DropdownMenuItem onClick={onEdit}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit structure
+                          Edit fee plan
                         </DropdownMenuItem>
                       ) : null}
                       {!showPrimaryLink && canModifyPlan ? (

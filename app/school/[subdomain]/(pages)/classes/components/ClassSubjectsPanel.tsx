@@ -28,6 +28,8 @@ interface ClassSubjectsPanelProps {
   level: Level;
   selectedGradeId: string;
   onAddSubject?: () => void;
+  /** Hide the staffing callout until the class has students and a class teacher. */
+  showStaffingWarning?: boolean;
 }
 
 function formatKes(amount: number) {
@@ -42,6 +44,7 @@ export function ClassSubjectsPanel({
   level,
   selectedGradeId,
   onAddSubject,
+  showStaffingWarning = true,
 }: ClassSubjectsPanelProps) {
   const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(
     null,
@@ -106,7 +109,7 @@ export function ClassSubjectsPanel({
           ) : null}
         </div>
 
-        {unassigned > 0 && !isLoading ? (
+        {unassigned > 0 && !isLoading && showStaffingWarning ? (
           <div className="border-b-2 border-amber-400/80 bg-amber-100 px-4 py-4 dark:border-amber-600 dark:bg-amber-950/50 sm:px-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>

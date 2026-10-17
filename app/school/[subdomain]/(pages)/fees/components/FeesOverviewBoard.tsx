@@ -227,7 +227,7 @@ export function FeesOverviewBoard({
     {
       key: "mpesa",
       label: "M-Pesa till",
-      sub: "Till / paybill Express",
+      sub: "M-Pesa payments",
       onClick: () => {
         if (typeof window !== "undefined") {
           window.location.href = "/dashboard?payments=open";

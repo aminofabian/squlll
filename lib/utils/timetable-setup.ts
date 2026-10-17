@@ -197,6 +197,8 @@ export type DayTimelineRow =
   | { kind: 'period'; period: number; start: string; end: string }
   | {
       kind: 'break'
+      /** Draft id, so the wizard can map a timeline row back to its break. */
+      id?: string
       label: string
       afterPeriod: number
       durationMinutes: number
@@ -221,6 +223,7 @@ export function buildDayTimelinePreview(
     const mins = parsePositiveInt(b.durationMinutes) ?? 15
     rows.push({
       kind: 'break',
+      id: b.id,
       label: b.label.trim() || defaultLabelForBreakType(b.type),
       afterPeriod: 0,
       durationMinutes: mins,
@@ -234,6 +237,7 @@ export function buildDayTimelinePreview(
       const mins = parsePositiveInt(b.durationMinutes) ?? 15
       rows.push({
         kind: 'break',
+        id: b.id,
         label: b.label.trim() || defaultLabelForBreakType(b.type),
         afterPeriod: p.period,
         durationMinutes: mins,

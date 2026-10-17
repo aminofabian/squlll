@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StudentRow } from "./StudentsTable";
 import {
   studentsDirectoryMeta,
-  studentsGhostButton,
   studentsSearchClearBtn,
   studentsSearchInput,
   studentsSidebarItem,
@@ -20,8 +18,6 @@ interface StudentsDirectorySidebarProps {
   onSearchChange: (term: string) => void;
   selectedStudentId: string | null;
   onStudentSelect: (studentId: string) => void;
-  displayedStudentsCount: number;
-  onLoadMore: () => void;
   isLoading?: boolean;
 }
 
@@ -58,8 +54,6 @@ export function StudentsDirectorySidebar({
   onSearchChange,
   selectedStudentId,
   onStudentSelect,
-  displayedStudentsCount,
-  onLoadMore,
   isLoading = false,
 }: StudentsDirectorySidebarProps) {
   const filtered = useMemo(() => {
@@ -73,7 +67,6 @@ export function StudentsDirectorySidebar({
     );
   }, [students, searchTerm]);
 
-  const visible = filtered.slice(0, displayedStudentsCount);
   const activeCount = students.filter((s) => s.status === "active").length;
 
   return (
@@ -130,7 +123,7 @@ export function StudentsDirectorySidebar({
             </p>
           </div>
         ) : (
-          visible.map((student) => {
+          filtered.map((student) => {
             const isSelected = student.id === selectedStudentId;
             return (
               <button
@@ -178,19 +171,7 @@ export function StudentsDirectorySidebar({
         )}
       </div>
 
-      {filtered.length > displayedStudentsCount ? (
-        <div className="mt-2 shrink-0 border-t border-[#1a4d42]/10 pt-2 dark:border-white/10">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLoadMore}
-            className={studentsGhostButton}
-          >
-            Show more (
-            {Math.min(10, filtered.length - displayedStudentsCount)})
-          </Button>
-        </div>
-      ) : null}
+
     </div>
   );
 }

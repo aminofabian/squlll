@@ -180,7 +180,7 @@ export function FeePlanDetailView({
 
   useEffect(() => {
     const prev = document.title;
-    document.title = `${structure.structureName} · Fee structures`;
+    document.title = `${structure.structureName} · Fee plans`;
     return () => {
       document.title = prev;
     };

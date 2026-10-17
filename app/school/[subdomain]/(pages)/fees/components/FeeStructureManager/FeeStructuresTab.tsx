@@ -182,7 +182,7 @@ export const FeeStructuresTab = ({
             <span className="text-2xl">⚠️</span>
           </div>
           <div className="flex-1">
-            <h3 className="text-red-800 font-bold text-lg mb-2">Error Loading Fee Structures</h3>
+            <h3 className="text-red-800 font-bold text-lg mb-2">Could not load fee plans</h3>
             <p className="text-red-600 text-sm mb-4">{error}</p>
             <div className="flex gap-3">
               <Button
@@ -205,7 +205,7 @@ export const FeeStructuresTab = ({
     return (
       <div className="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-white to-primary/5 border-2 border-primary/10">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <span className="text-base font-medium text-slate-700">Processing fee structures...</span>
+        <span className="text-base font-medium text-slate-700">Loading fee plans…</span>
       </div>
     )
   }
@@ -215,7 +215,7 @@ export const FeeStructuresTab = ({
     if (selectedPlanSlug && !activePlan && hasFetched) {
       return (
         <div className="space-y-3 rounded-none border border-dashed border-[#1a4d42]/15 bg-[#f8fbfa] p-8 text-center">
-          <p className="text-sm font-medium text-[#0a1f1a]">Fee structure not found</p>
+          <p className="text-sm font-medium text-[#0a1f1a]">Fee plan not found</p>
           <p className="mt-1 text-xs text-[#1a4d42]/50">
             It may have been deleted or renamed.
           </p>
@@ -226,7 +226,7 @@ export const FeeStructuresTab = ({
             className="mt-3 rounded-none border-[#1a4d42]/15"
             onClick={onBackToPlanList}
           >
-            Back to all structures
+            Back to all fee plans
           </Button>
         </div>
       );
@@ -368,10 +368,6 @@ export const FeeStructuresTab = ({
     <FeeStructureEmptyState
       onCreateNew={onCreateNew}
       onGuidedSetup={onGuidedSetup}
-      onViewSample={() => {
-        // Could implement a sample structure view
-        console.log('Show sample structure')
-      }}
     />
   )
 }

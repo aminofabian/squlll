@@ -63,7 +63,7 @@ export function FeesAmountTable({
                 className,
             )}
         >
-            <table className="w-full table-fixed text-sm">{children}</table>
+            <table className="w-full min-w-[560px] table-fixed text-sm">{children}</table>
         </div>
     )
 }

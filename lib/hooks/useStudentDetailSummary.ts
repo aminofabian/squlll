@@ -5,7 +5,7 @@ interface UseStudentDetailSummaryResult {
   studentDetail: StudentDetailSummary | null;
   loading: boolean;
   error: string | null;
-  refetch: () => void;
+  refetch: (silent?: boolean) => void;
 }
 
 export function useStudentDetailSummary(studentId: string): UseStudentDetailSummaryResult {
@@ -13,22 +13,17 @@ export function useStudentDetailSummary(studentId: string): UseStudentDetailSumm
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStudentDetail = async () => {
+  const fetchStudentDetail = async (silent = false) => {
     if (!studentId) return;
-    
-    setLoading(true);
+
+    if (!silent) {
+      setLoading(true);
+      setStudentDetail(null);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     setError(null);
 
     try {
-      // Add cache-busting timestamp to force fresh data
-      const cacheBuster = Date.now()
-      console.log(`🔄 FORCE REFETCH: Student detail with cache buster: ${cacheBuster}`)
-      
-      // Clear any existing data to force UI refresh
-      setStudentDetail(null)
-      
-      // Add extra delay to ensure server-side data is fully committed
-      await new Promise(resolve => setTimeout(resolve, 100))
       
       const response = await fetch('/api/graphql', {
         method: 'POST',

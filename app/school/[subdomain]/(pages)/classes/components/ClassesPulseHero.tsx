@@ -1,18 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  BookOpen,
-  GraduationCap,
-  Layers,
-  Radio,
-  UserCheck,
-  Users,
-} from "lucide-react";
+import { ArrowRight, GraduationCap, Radio, UserCheck, Users } from "lucide-react";
 import type { SchoolConfiguration } from "@/lib/types/school-config";
 import { useGetTeachers } from "@/lib/hooks/useTeachers";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { classesDotGrid, classesInkPanel } from "./classes-ui";
 
 interface ClassesPulseHeroProps {
@@ -20,6 +14,8 @@ interface ClassesPulseHeroProps {
   isLoading?: boolean;
   studentCount?: number | null;
   studentsLoading?: boolean;
+  onEnrolStudents?: () => void;
+  onAddTeachers?: () => void;
 }
 
 function StatTile({
@@ -34,14 +30,14 @@ function StatTile({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-none border border-white/10 bg-white/[0.05] px-2.5 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.08]">
+    <div className="rounded-none border border-white/10 bg-white/[0.05] px-3 py-2.5 transition-colors hover:border-white/20 hover:bg-white/[0.08]">
       <div className="flex items-center gap-1.5 text-white/45">
         <Icon className="h-3 w-3" />
         <span className="text-[9px] font-semibold uppercase tracking-[0.14em]">
           {label}
         </span>
       </div>
-      <p className="mt-1.5 text-lg font-semibold leading-none tabular-nums text-white">
+      <p className="mt-1.5 text-xl font-semibold leading-none tabular-nums text-white">
         {loading ? "—" : value}
       </p>
     </div>
@@ -53,39 +49,58 @@ export function ClassesPulseHero({
   isLoading,
   studentCount,
   studentsLoading,
+  onEnrolStudents,
+  onAddTeachers,
 }: ClassesPulseHeroProps) {
   const { connected } = useRealtime();
   const { teachers, isLoading: teachersLoading } = useGetTeachers();
 
   const stats = useMemo(() => {
     if (!config?.selectedLevels) {
-      return { levels: 0, grades: 0, streams: 0, subjects: 0 };
+      return { levels: 0, grades: 0, subjects: 0, classes: 0 };
     }
     const levels = config.selectedLevels;
     const grades = levels.reduce(
-      (sum, l) => sum + (l.gradeLevels?.length ?? 0),
+      (sum, level) => sum + (level.gradeLevels?.length ?? 0),
       0,
     );
     const streams = levels.reduce(
-      (sum, l) =>
+      (sum, level) =>
         sum +
-        (l.gradeLevels?.reduce(
-          (g, grade) => g + (grade.streams?.length ?? 0),
+        (level.gradeLevels?.reduce(
+          (gradeSum, grade) => gradeSum + (grade.streams?.length ?? 0),
           0,
         ) ?? 0),
       0,
     );
     const subjectIds = new Set<string>();
-    levels.forEach((l) => l.subjects?.forEach((s) => subjectIds.add(s.id)));
+    levels.forEach((level) =>
+      level.subjects?.forEach((subject) => subjectIds.add(subject.id)),
+    );
     return {
       levels: levels.length,
       grades,
-      streams,
       subjects: subjectIds.size,
+      classes: streams || grades,
     };
   }, [config?.selectedLevels]);
 
-  const loading = isLoading || teachersLoading || studentsLoading;
+  const needsStudents = !studentsLoading && (studentCount ?? 0) === 0;
+  const needsTeachers = !teachersLoading && teachers.length === 0;
+
+  const action = needsStudents
+    ? {
+        label: "Enrol students",
+        helper: "Start by adding learners to your classes.",
+        onClick: onEnrolStudents,
+      }
+    : needsTeachers
+      ? {
+          label: "Add teachers",
+          helper: "Add staff, then assign a class teacher.",
+          onClick: onAddTeachers,
+        }
+      : null;
 
   return (
     <section className={classesInkPanel} aria-label="Campus overview">
@@ -97,8 +112,8 @@ export function ClassesPulseHero({
       <div className="pointer-events-none absolute -bottom-24 left-10 h-48 w-48 rounded-full bg-[#1a4d42]/40 blur-3xl" />
 
       <div className="relative p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0 max-w-xl">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">
                 Campus pulse
@@ -126,49 +141,51 @@ export function ClassesPulseHero({
             </div>
 
             <h2 className="mt-2 font-display text-xl font-normal tracking-tight text-white sm:text-2xl">
-              Grades, streams &amp; subjects
+              Classes at a glance
             </h2>
-            <p className="mt-1 max-w-md text-xs leading-relaxed text-white/55">
+            <p className="mt-1 text-xs leading-relaxed text-white/55">
               {stats.levels} level{stats.levels === 1 ? "" : "s"} ·{" "}
               {stats.grades} grade{stats.grades === 1 ? "" : "s"} ·{" "}
-              {stats.streams} stream
-              {stats.streams === 1 ? "" : "s"} · open any class below to manage
-              its roster, teachers and subjects.
+              {stats.subjects} subject{stats.subjects === 1 ? "" : "s"}. Open a
+              class to manage its roster, teacher and subjects.
             </p>
+
+            {action && action.onClick ? (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 rounded-none bg-white px-3 text-xs font-semibold text-[#0a1f1a] shadow-none hover:bg-[#e8f2ef]"
+                  onClick={action.onClick}
+                >
+                  {action.label}
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+                <span className="text-[11px] text-white/45">
+                  {action.helper}
+                </span>
+              </div>
+            ) : null}
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:grid-cols-3 lg:grid-cols-5">
-            {studentCount != null ? (
-              <StatTile
-                icon={Users}
-                label="Students"
-                value={studentCount}
-                loading={loading}
-              />
-            ) : null}
+          <div className="grid w-full grid-cols-3 gap-2 lg:w-auto lg:min-w-[19rem]">
+            <StatTile
+              icon={GraduationCap}
+              label="Classes"
+              value={stats.classes}
+              loading={isLoading}
+            />
+            <StatTile
+              icon={Users}
+              label="Students"
+              value={studentCount ?? 0}
+              loading={studentsLoading}
+            />
             <StatTile
               icon={UserCheck}
               label="Teachers"
               value={teachers.length}
-              loading={loading}
-            />
-            <StatTile
-              icon={GraduationCap}
-              label="Grades"
-              value={stats.grades}
-              loading={loading}
-            />
-            <StatTile
-              icon={Layers}
-              label="Streams"
-              value={stats.streams}
-              loading={loading}
-            />
-            <StatTile
-              icon={BookOpen}
-              label="Subjects"
-              value={stats.subjects}
-              loading={loading}
+              loading={teachersLoading}
             />
           </div>
         </div>

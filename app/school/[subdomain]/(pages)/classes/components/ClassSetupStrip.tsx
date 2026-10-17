@@ -14,6 +14,8 @@ interface ClassSetupStripProps {
   steps: ClassSetupStep[];
   className?: string;
   onStepClick?: (stepId: string) => void;
+  /** Stack the steps for a narrow sidebar. */
+  orientation?: "horizontal" | "vertical";
 }
 
 const ICONS = {
@@ -26,6 +28,7 @@ export function ClassSetupStrip({
   steps,
   className,
   onStepClick,
+  orientation = "horizontal",
 }: ClassSetupStripProps) {
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length && steps.length > 0;
@@ -50,7 +53,12 @@ export function ClassSetupStrip({
           {doneCount}/{steps.length}
         </span>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-2",
+          orientation === "horizontal" && "sm:grid-cols-3",
+        )}
+      >
         {steps.map((step) => {
           const Icon =
             ICONS[step.id as keyof typeof ICONS] ?? Circle;
@@ -83,7 +91,7 @@ export function ClassSetupStrip({
             </>
           );
           const stepClass = cn(
-            "flex min-w-0 flex-1 items-center gap-2 rounded-none px-2 py-1.5 text-left sm:min-w-[7rem]",
+            "flex w-full min-w-0 items-center gap-2 rounded-none px-2 py-1.5 text-left",
             step.done
               ? "bg-emerald-50/80 dark:bg-emerald-950/25"
               : "bg-[#f8fbfa] dark:bg-[#071411]",

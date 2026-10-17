@@ -16,6 +16,8 @@ import { DashboardSetupBanner } from "./components/DashboardSetupBanner";
 import { DashboardPulseHero } from "./components/DashboardPulseHero";
 import { DashboardPendingApplications } from "./components/DashboardPendingApplications";
 import { DashboardActivityFeed } from "./components/DashboardActivityFeed";
+import { DashboardTermCard } from "./components/DashboardTermCard";
+import { DashboardWebsiteCard } from "./components/DashboardWebsiteCard";
 import { DashboardQuickActions } from "./components/DashboardQuickActions";
 import { DashboardGradeSheet } from "./components/DashboardGradeSheet";
 import { DashboardPageSkeleton } from "./components/DashboardSkeleton";
@@ -52,11 +54,10 @@ export default function SchoolDashboard() {
     error: statsError,
     refetch: refetchStats,
   } = useTenantStatistics();
-  const { isLoading: studentsQueryLoading } = useStudents();
-  const { students, isLoading: studentsStoreLoading } = useStudentsStore();
+  useStudents();
+  const { students } = useStudentsStore();
   const { config: schoolConfig } = useSchoolConfigStore();
 
-  const studentsLoading = studentsQueryLoading || studentsStoreLoading;
   const studentCount = tenantStats?.studentCount ?? students.length;
 
   const selectedGradeInfo = useMemo(() => {
@@ -207,11 +208,12 @@ export default function SchoolDashboard() {
           />
 
           <div className="flex-1">
-            <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-4 lg:p-5">
+            <div className="mx-auto max-w-7xl space-y-4 p-4 sm:p-5 lg:p-6">
               {!selectedGrade ? (
                 <>
                   <DashboardPulseHero
                     subdomain={subdomain}
+                    schoolName={config?.tenant?.schoolName}
                     studentCount={studentCount}
                     teacherCount={tenantStats?.teacherCount}
                     streamCount={tenantStats?.streamCount}
@@ -236,22 +238,27 @@ export default function SchoolDashboard() {
                     </div>
                   ) : null}
 
-                  <div className="grid gap-3 lg:grid-cols-12">
-                    <div className="lg:col-span-5">
+                  <div className="grid gap-4 xl:grid-cols-12">
+                    <div className="space-y-4 xl:col-span-7">
                       <DashboardActivityFeed />
+                      <DashboardTermCard />
+                      <DashboardWebsiteCard
+                        subdomain={subdomain}
+                        schoolName={config?.tenant?.schoolName}
+                      />
                     </div>
-                    <div className="lg:col-span-3">
+                    <div className="space-y-4 xl:col-span-5">
                       <DashboardSection
-                        title="Quick tasks"
-                        bodyClassName="p-1.5"
+                        title="Quick actions"
+                        description="Common school tasks"
+                        bodyClassName="p-2"
                       >
                         <DashboardQuickActions subdomain={subdomain} />
                       </DashboardSection>
-                    </div>
-                    <div className="lg:col-span-4">
                       <DashboardSection
                         title="School snapshot"
-                        bodyClassName="p-3"
+                        description="Year, fees and enrollment"
+                        bodyClassName="p-3.5"
                       >
                         <DashboardSchoolSnapshot
                           config={schoolConfig}

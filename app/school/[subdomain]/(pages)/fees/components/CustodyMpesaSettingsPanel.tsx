@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,10 +18,10 @@ import {
   useMpesaCustody,
   type CustodyDestinationType,
 } from '../hooks/useMpesaCustody'
+import { useTenantFeeLetterSettings } from '../hooks/useTenantFeeLetterSettings'
 
 /**
- * School Payments settings — till or HO paybill only.
- * No Daraja API keys. Platform owns Express; school owns PartyB.
+ * School M-Pesa settings — the number parents pay into.
  */
 export function CustodyMpesaSettingsPanel({
   compact = false,
@@ -28,6 +29,13 @@ export function CustodyMpesaSettingsPanel({
   compact?: boolean
 }) {
   const { toast } = useToast()
+  const params = useParams()
+  const subdomain =
+    typeof params?.subdomain === 'string' ? params.subdomain : 'school'
+  const { details } = useTenantFeeLetterSettings(subdomain)
+  const assignedBank = details?.paymentModes?.bankAccounts?.find(
+    (account) => account.branch && account.accountNumber,
+  )
   const {
     availability,
     destination,
@@ -39,7 +47,7 @@ export function CustodyMpesaSettingsPanel({
     pollIntent,
   } = useMpesaCustody()
 
-  const [type, setType] = useState<CustodyDestinationType>('till')
+  const [type, setType] = useState<CustodyDestinationType>('paybill')
   const [tillNumber, setTillNumber] = useState('')
   const [businessNumber, setBusinessNumber] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
@@ -80,23 +88,28 @@ export function CustodyMpesaSettingsPanel({
   if (!railOn) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-        <p className="font-medium">Till / paybill Express is not available yet</p>
+        <p className="font-medium">M-Pesa payments are not switched on yet</p>
         <p className="mt-1 text-amber-800">
           {availability?.reason ??
-            'Platform custody rail is off. Ask SQUL ops to enable Daraja custody on the super-admin Payments page.'}
+            'Ask SQUL support to switch on M-Pesa payments for your school.'}
         </p>
       </div>
     )
   }
 
+  const effectiveTillNumber = tillNumber
+  const effectiveBusinessNumber = businessNumber || assignedBank?.branch || ''
+  const effectiveAccountNumber = accountNumber || assignedBank?.accountNumber || ''
+  const effectiveLabel = label || assignedBank?.bankName || undefined
+
   const buildInput = () =>
     type === 'till'
-      ? { type: 'till' as const, tillNumber, label: label || undefined }
+      ? { type: 'till' as const, tillNumber: effectiveTillNumber, label: effectiveLabel }
       : {
           type: 'paybill' as const,
-          businessNumber,
-          accountNumber,
-          label: label || undefined,
+          businessNumber: effectiveBusinessNumber,
+          accountNumber: effectiveAccountNumber,
+          label: effectiveLabel,
         }
 
   const handleSave = async () => {
@@ -105,7 +118,7 @@ export function CustodyMpesaSettingsPanel({
       toast({
         title: 'Saved',
         description:
-          'Till / paybill saved. Money from STK lands directly on this PartyB (no B2B).',
+          'Bank paybill saved. Parent payments go straight to the school bank account.',
       })
     } catch (e) {
       toast({
@@ -120,7 +133,7 @@ export function CustodyMpesaSettingsPanel({
     if (!testPhone.trim()) {
       toast({
         title: 'Phone required',
-        description: 'Enter the Safaricom number that should receive the KES 1 prompt',
+        description: 'Enter the Safaricom number that should receive the KES 1 request',
         variant: 'destructive',
       })
       return
@@ -142,8 +155,8 @@ export function CustodyMpesaSettingsPanel({
         resultCode: intent.resultCode,
       })
       toast({
-        title: 'STK sent — enter PIN on phone',
-        description: `KES 1 → till ${intent.partyB}. This test does not create a fee payment in SQUL; check M-Pesa till statement for the credit.`,
+        title: 'Payment request sent — enter the M-Pesa PIN',
+        description: `KES 1 to the school bank account. This test does not update student fees; check the M-Pesa statement for the credit.`,
       })
 
       // Poll Daraja query via API until SUCCESS/FAILED or ~90s
@@ -164,7 +177,7 @@ export function CustodyMpesaSettingsPanel({
             title:
               next.status === 'SUCCESS'
                 ? 'Confirmed — KES 1 paid'
-                : 'STK ended without success',
+                : 'The payment request was not completed',
             description:
               next.status === 'SUCCESS'
                 ? `Receipt ${next.mpesaReceipt ?? '—'}. Money is on till ${next.partyB} (not a SQUL fee payment).`
@@ -190,30 +203,24 @@ export function CustodyMpesaSettingsPanel({
       {!compact ? (
         <div>
           <h2 className="text-base font-semibold text-slate-900">
-            Till / paybill — M-Pesa Express
+            School M-Pesa bank account
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            SQUL holds one Lipa Na M-Pesa Go Live. You only enter your Buy Goods
-            till or Head Office paybill. Customers get a PIN prompt; money credits
-            your till directly (PartyB). No API keys. No B2B forward.
+            Add the school bank paybill and account number parents pay into. When you request a payment, the parent enters their M-Pesa PIN and the money goes straight to the school bank account.
           </p>
           <p className="mt-2 text-xs text-slate-500">
-            Your till must sit under SQUL’s M-Pesa Head Office. Bank shared
-            paybills (e.g. NCBA 880100) cannot use this rail.
+            The M-Pesa number must belong to the school. Bank details for fee letters are added separately.
           </p>
         </div>
       ) : (
         <p className="text-[12px] leading-relaxed text-[#1a4d42]/65 dark:text-white/55">
-          Enter your Buy Goods till under SQUL’s Head Office. Parents get a PIN
-          prompt; money credits your till directly — no API keys.
+          Add the school bank paybill and account number. Parents get a request on their phone and pay with their M-Pesa PIN.
         </p>
       )}
 
       {!stkReady ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-950">
-          You can save your till now. STK prompts stay disabled until SQUL
-          finishes platform Daraja setup
-          {availability?.reason ? ` (${availability.reason})` : ''}.
+          You can save the bank paybill now. Payment requests stay disabled until M-Pesa is switched on for the school.
         </div>
       ) : null}
 
@@ -221,8 +228,18 @@ export function CustodyMpesaSettingsPanel({
         <p className="text-sm text-red-600">{error}</p>
       ) : null}
 
+      {assignedBank ? (
+        <div className="border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] leading-relaxed text-[#1a4d42]/75">
+          Using the bank account assigned under Bank:{' '}
+          <span className="font-semibold text-[#0a1f1a]">
+            {assignedBank.bankName}
+          </span>{' '}
+          · Paybill {assignedBank.branch} · Account {assignedBank.accountNumber}
+        </div>
+      ) : null}
+
       <div className="space-y-2">
-        <Label>Destination type</Label>
+        <Label>Where should parents pay?</Label>
         <Select
           value={type}
           onValueChange={(v) => setType(v as CustodyDestinationType)}
@@ -231,8 +248,8 @@ export function CustodyMpesaSettingsPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="till">Buy Goods till</SelectItem>
-            <SelectItem value="paybill">Paybill (same Head Office)</SelectItem>
+            <SelectItem value="till">M-Pesa till (not a bank account)</SelectItem>
+            <SelectItem value="paybill">Bank paybill</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -243,7 +260,7 @@ export function CustodyMpesaSettingsPanel({
           <Input
             id="till"
             inputMode="numeric"
-            value={tillNumber}
+            value={effectiveTillNumber}
             onChange={(e) => setTillNumber(e.target.value)}
             placeholder="e.g. 3502582"
           />
@@ -255,18 +272,18 @@ export function CustodyMpesaSettingsPanel({
             <Input
               id="paybill"
               inputMode="numeric"
-              value={businessNumber}
+              value={effectiveBusinessNumber}
               onChange={(e) => setBusinessNumber(e.target.value)}
-              placeholder="5–7 digits under SQUL HO"
+              placeholder="e.g. 880100"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="account">Account number</Label>
             <Input
               id="account"
-              value={accountNumber}
+              value={effectiveAccountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="Shown on the STK prompt (max 12)"
+              placeholder="Shown on the payment request (max 12)"
             />
           </div>
         </>
@@ -276,7 +293,7 @@ export function CustodyMpesaSettingsPanel({
         <Label htmlFor="label">Label (optional)</Label>
         <Input
           id="label"
-          value={label}
+          value={effectiveLabel ?? ''}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="School fees till"
         />
@@ -299,8 +316,8 @@ export function CustodyMpesaSettingsPanel({
         <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
           <p className="text-sm font-medium text-slate-900">Test connection (KES 1)</p>
           <p className="text-xs text-slate-500">
-            Sends a real Express prompt. After you enter PIN, KES 1 lands on your
-            till (PartyB) — it will not appear as a fee payment in SQUL. Confirm
+            Sends a real M-Pesa request. After you enter the PIN, KES 1 lands in the school bank
+            school bank account — it will not appear as a fee payment in SQUL. Confirm
             on the M-Pesa till / Till Number statement.
           </p>
           <div className="space-y-2">
@@ -325,7 +342,7 @@ export function CustodyMpesaSettingsPanel({
                 Waiting for PIN / result…
               </>
             ) : (
-              'Send KES 1 test prompt'
+              'Send KES 1 test request'
             )}
           </Button>
 
@@ -344,7 +361,7 @@ export function CustodyMpesaSettingsPanel({
                 {testIntent.resultCode ? ` · code ${testIntent.resultCode}` : ''}
               </p>
               <p className="mt-0.5">
-                PartyB till {testIntent.partyB} · {testIntent.phone}
+                Bank paybill {testIntent.partyB} · {testIntent.phone}
               </p>
               {testIntent.mpesaReceipt ? (
                 <p className="mt-0.5 font-mono">Receipt {testIntent.mpesaReceipt}</p>
@@ -356,7 +373,7 @@ export function CustodyMpesaSettingsPanel({
                 <p className="mt-1 opacity-70">
                   Enter PIN on the phone. If this stays PENDING, Safaricom may not
                   reach API_PUBLIC_BASE_URL/api/webhooks/daraja/stk — we still poll
-                  Daraja query in the background.
+                  M-Pesa confirmation in the background.
                 </p>
               ) : null}
             </div>

@@ -1,13 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
   GraduationCap,
-  KeyRound,
-  Mail,
-  Phone,
   Wallet,
   Users,
   Loader2,
@@ -22,6 +18,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useStudentParents } from "@/lib/hooks/useStudentParents";
 import { LinkParentDrawer } from "./LinkParentDrawer";
+import { StudentLoginCard } from "./StudentLoginCard";
+import { StudentContactCard } from "./StudentContactCard";
+import type { StudentCredentials } from "@/lib/hooks/useStudentCredentials";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -34,8 +33,15 @@ function formatCurrency(amount: number) {
 interface StudentProfileOverviewProps {
   student: StudentDetailSummary;
   missingStream: boolean;
+  credentials: StudentCredentials | null;
+  credentialsLoading: boolean;
+  portalUrl: string;
+  onViewCredentials: () => void;
+  onSendCredentials: (channel: "SMS" | "EMAIL") => void;
+  sendingChannel: "SMS" | "EMAIL" | null;
   onTabSelect: (tab: string) => void;
   onAssignClass: () => void;
+  onProfileSaved: () => void;
 }
 
 function OverviewCard({
@@ -66,8 +72,15 @@ function OverviewCard({
 export function StudentProfileOverview({
   student,
   missingStream,
+  credentials,
+  credentialsLoading,
+  portalUrl,
+  onViewCredentials,
+  onSendCredentials,
+  sendingChannel,
   onTabSelect,
   onAssignClass,
+  onProfileSaved,
 }: StudentProfileOverviewProps) {
   const balance = Math.max(0, student.feeSummary.balance);
   const grossFees = student.feeSummary.totalPaid + balance;
@@ -92,6 +105,17 @@ export function StudentProfileOverview({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      <StudentLoginCard
+        student={student}
+        credentials={credentials}
+        credentialsLoading={credentialsLoading}
+        portalUrl={portalUrl}
+        onView={onViewCredentials}
+        onManageAccess={() => onTabSelect("access")}
+        onSend={onSendCredentials}
+        sendingChannel={sendingChannel}
+      />
+
       <OverviewCard
         title="Fees at a glance"
         icon={Wallet}
@@ -140,9 +164,9 @@ export function StudentProfileOverview({
             type="button"
             size="sm"
             className={cn(studentsEnrollLink, "mt-3 h-8")}
-            asChild
+            onClick={() => onTabSelect("money")}
           >
-            <Link href="/fees?section=balances">Record payment in Fees</Link>
+            Record payment
           </Button>
         ) : null}
       </OverviewCard>
@@ -203,77 +227,19 @@ export function StudentProfileOverview({
         ) : null}
       </OverviewCard>
 
-      <OverviewCard title="Contact" icon={Mail}>
-        <ul className="space-y-2.5 text-sm">
-          <li className="flex items-start gap-2">
-            <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#1a4d42]/40" />
-            {student.email ? (
-              <a
-                href={`mailto:${student.email}`}
-                className="break-all text-[#246a59] hover:underline"
-              >
-                {student.email}
-              </a>
-            ) : (
-              <span className="text-[#1a4d42]/40">No email</span>
-            )}
-          </li>
-          <li className="flex items-start gap-2">
-            <Phone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#1a4d42]/40" />
-            {student.phone ? (
-              <a
-                href={`tel:${student.phone}`}
-                className="text-[#0a1f1a] hover:underline dark:text-white"
-              >
-                {student.phone}
-              </a>
-            ) : (
-              <span className="text-[#1a4d42]/40">No phone</span>
-            )}
-          </li>
-        </ul>
+      <div className="flex flex-col gap-2">
+        <StudentContactCard student={student} onSaved={onProfileSaved} />
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className={cn(studentsGhostButton, "mt-3 h-7 w-auto px-0 text-[#246a59]")}
+          className={cn(studentsGhostButton, "h-7 w-auto self-start px-0 text-[#246a59]")}
           onClick={() => onTabSelect("person")}
         >
           Full personal details
           <ArrowRight className="ml-1 h-3 w-3" />
         </Button>
-      </OverviewCard>
-
-      <OverviewCard
-        title="Portal access"
-        icon={KeyRound}
-        action={
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn(studentsGhostButton, "h-7 w-auto gap-1 text-[#246a59]")}
-            onClick={() => onTabSelect("access")}
-          >
-            Manage
-            <ArrowRight className="h-3 w-3" />
-          </Button>
-        }
-      >
-        <p className="text-sm text-[#1a4d42]/65 dark:text-white/70">
-          {student.userId
-            ? "Student account is linked — they can sign in to the student portal when active."
-            : "No login account yet. Set up credentials so this student can access the portal."}
-        </p>
-        <p className="mt-2 text-xs text-[#1a4d42]/45">
-          Registered{" "}
-          {new Date(student.createdAt).toLocaleDateString("en-KE", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
-      </OverviewCard>
+      </div>
 
       <OverviewCard
         title="Parents & guardians"

@@ -7,6 +7,16 @@ function normalizeGradeName(gradeName: string): string {
   return gradeName.toLowerCase().trim();
 }
 
+/** PP1/PP2/PP3 in their common spellings (PP1, Pre-Primary 2, pre primary 3). */
+function prePrimaryNumber(gradeName: string): 1 | 2 | 3 | null {
+  const lower = normalizeGradeName(gradeName);
+  const pp = lower.match(/\bpp\s*([123])\b/);
+  if (pp) return Number(pp[1]) as 1 | 2 | 3;
+  const pre = lower.match(/\bpre[\s-]*primary\s*([123])\b/);
+  if (pre) return Number(pre[1]) as 1 | 2 | 3;
+  return null;
+}
+
 /** Short label for sidebar chips, e.g. G4, G7, PP1 */
 export function abbreviateGradeShort(gradeName: string): string {
   const lower = normalizeGradeName(gradeName);
@@ -21,9 +31,8 @@ export function abbreviateGradeShort(gradeName: string): string {
   ) {
     return "PG";
   }
-  if (lower.includes("pp1") || lower.includes("pre-primary 1")) return "PP1";
-  if (lower.includes("pp2") || lower.includes("pre-primary 2")) return "PP2";
-  if (lower.includes("pp3") || lower.includes("pre-primary 3")) return "PP3";
+  const pp = prePrimaryNumber(gradeName);
+  if (pp) return `PP${pp}`;
   if (lower.includes("early childhood")) return "EC";
   if (lower.includes("kindergarten")) return "KG";
   if (lower.includes("nursery")) return "NS";
@@ -59,9 +68,8 @@ export function getGradeSortOrder(gradeName: string): number {
   ) {
     return 1;
   }
-  if (lower.includes("pp1") || lower.includes("pre-primary 1")) return 2;
-  if (lower.includes("pp2") || lower.includes("pre-primary 2")) return 3;
-  if (lower.includes("pp3") || lower.includes("pre-primary 3")) return 4;
+  const pp = prePrimaryNumber(gradeName);
+  if (pp) return 1 + pp;
 
   const formMatch = lower.match(/^form\s*(\d+)/);
   if (formMatch) return 10 + parseInt(formMatch[1], 10);
@@ -79,9 +87,8 @@ export function getGradeSortOrder(gradeName: string): number {
 export function formatGradeDisplayName(gradeName: string): string {
   const lower = normalizeGradeName(gradeName);
 
-  if (lower.includes("pp1") || lower.includes("baby")) return "PP1";
-  if (lower.includes("pp2") || lower.includes("nursery")) return "PP2";
-  if (lower.includes("pp3") || lower.includes("reception")) return "PP3";
+  const pp = prePrimaryNumber(gradeName);
+  if (pp) return `PP${pp}`;
 
   const formMatch = lower.match(/^form\s*(\d+)/);
   if (formMatch) return `Form ${formMatch[1]}`;

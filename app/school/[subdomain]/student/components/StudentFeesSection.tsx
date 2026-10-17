@@ -130,7 +130,7 @@ export function StudentFeesSection({
           title="My Fees"
           subtitle={
             canPay
-              ? 'Pay with M-Pesa Express or review your statement'
+              ? 'Pay with M-Pesa or review your statement'
               : 'View-only — contact the finance office to make payments'
           }
           onBack={handleBack}
@@ -179,7 +179,7 @@ export function StudentFeesSection({
           <Section
             icon={Smartphone}
             title="Outstanding invoices"
-            description="Settle instantly with M-Pesa Express"
+            description="Settle instantly with M-Pesa"
           >
             <div className="space-y-2">
               {outstandingInvoices.map((invoice) => (

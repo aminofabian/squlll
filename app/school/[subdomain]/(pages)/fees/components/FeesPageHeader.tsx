@@ -33,7 +33,7 @@ const SECTION_TITLES: Record<FeesSection, string> = {
   overview: "Collections",
   balances: "Balances",
   reports: "Reports",
-  plans: "Fee structures",
+  plans: "Fee plans",
   assignments: "Class links",
 };
 
@@ -121,7 +121,12 @@ export function FeesPageHeader({
           ) : null}
           {integrated && activeSection === "plans" ? (
             <p className="mt-0.5 text-[11px] text-[#1a4d42]/50">
-              Templates for what each class owes — link classes, then bill
+              What each class owes — link classes, then bill
+            </p>
+          ) : null}
+          {integrated && activeSection === "assignments" ? (
+            <p className="mt-0.5 text-[11px] text-[#1a4d42]/50">
+              Apply a fee plan to the classes it covers, then bill
             </p>
           ) : null}
         </div>

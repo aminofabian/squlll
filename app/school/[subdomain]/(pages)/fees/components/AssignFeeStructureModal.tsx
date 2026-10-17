@@ -369,7 +369,7 @@ export const AssignFeeStructureModal = ({
 
         if (result.errors?.length) {
           throw new Error(
-            result.errors[0]?.message || 'Failed to fetch fee structure',
+            result.errors[0]?.message || 'Failed to fetch fee plan',
           )
         }
 
@@ -491,7 +491,7 @@ export const AssignFeeStructureModal = ({
     e.preventDefault()
 
     if (!feeStructure) {
-      setError('No fee structure selected')
+      setError('No fee plan selected')
       return
     }
 
@@ -553,7 +553,7 @@ export const AssignFeeStructureModal = ({
       const studentsAssigned = assignmentResult?.studentsAssignedCount ?? 0
 
       toast({
-        title: 'Fee structure linked',
+        title: 'Fee plan linked',
         description:
           studentsAssigned > 0
             ? `Linked ${tenantGradeLevelIds.length} ${gradeLabelPlural} — ${studentsAssigned} student${studentsAssigned !== 1 ? 's' : ''} assigned now.`
@@ -610,7 +610,7 @@ export const AssignFeeStructureModal = ({
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="text-base font-semibold text-slate-900">
-                Link structure to grades
+                Link fee plan to grades
               </span>
               {feeStructure ? (
                 <span className="truncate text-xs text-slate-500">
@@ -621,7 +621,7 @@ export const AssignFeeStructureModal = ({
                 </span>
               ) : (
                 <span className="text-xs text-slate-500">
-                  Choose which grades receive this structure
+                  Choose which grades receive this fee plan
                 </span>
               )}
             </span>
@@ -675,7 +675,7 @@ export const AssignFeeStructureModal = ({
 
                 <DrawerSection
                   step={2}
-                  title={`Which ${gradeLabelPlural} should get this structure?`}
+                  title={`Which ${gradeLabelPlural} should get this fee plan?`}
                   hint={`Tap to select. Applies to every student currently in that ${gradeLabel}.`}
                   action={
                     displayItems.length > 0 && !isLoading
@@ -739,9 +739,9 @@ export const AssignFeeStructureModal = ({
                               }
                               badge={
                                 isAlreadyAssigned
-                                  ? 'Already on this structure'
+                                  ? 'Already on this plan'
                                   : grade.feeStructureId
-                                    ? 'Other structure'
+                                    ? 'Other plan'
                                     : undefined
                               }
                             />

@@ -10,6 +10,7 @@ import {
   Globe,
   Map,
   Inbox,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -84,6 +85,12 @@ export const SUPERADMIN_NAV_SECTIONS: NavSection[] = [
         href: "/dashboard/walkthroughs",
         label: "Walkthroughs",
         icon: Inbox,
+      },
+      {
+        href: "/dashboard/support",
+        label: "Squl Support",
+        mobileLabel: "Support",
+        icon: LifeBuoy,
       },
     ],
   },

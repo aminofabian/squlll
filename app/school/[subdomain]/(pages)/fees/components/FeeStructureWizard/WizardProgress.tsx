@@ -50,7 +50,7 @@ export const WizardProgress = ({
                     </span>
                     <span
                         className={cn(
-                            'hidden truncate text-xs font-medium sm:inline',
+                            'truncate text-[10px] font-medium sm:text-xs',
                             current ? 'text-emerald-900' : 'text-slate-600',
                         )}
                     >

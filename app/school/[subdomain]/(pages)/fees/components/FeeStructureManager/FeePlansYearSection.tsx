@@ -69,7 +69,7 @@ export function FeePlansYearSection({
               ) : null}
             </div>
             <p className="mt-0.5 text-xs text-[#1a4d42]/55">
-              {plans.length} structure{plans.length === 1 ? "" : "s"}
+              {plans.length} fee plan{plans.length === 1 ? "" : "s"}
               {termCount > 0 ? ` · ${termCount} terms` : ""}
               {isCurrentSchoolYear && currentTermName ? (
                 <span className="text-[#1a4d42]/45">
@@ -182,7 +182,7 @@ export function FeePlansYearSection({
           <p className="mt-2 text-[11px] text-[#1a4d42]/55">
             {partialGrades.length} grade
             {partialGrades.length === 1 ? "" : "s"} linked for some terms only —
-            open a structure to finish linking.
+            open a fee plan to finish linking.
           </p>
         ) : allLinked && totalSchoolGrades > 0 && !needsAttention ? (
           <p className="mt-2 text-[11px] text-[#246a59]">

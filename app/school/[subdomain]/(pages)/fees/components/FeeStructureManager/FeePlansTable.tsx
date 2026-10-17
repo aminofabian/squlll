@@ -502,7 +502,7 @@ export function FeePlansTable({
                   <TableHeader>
                     <TableRow className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] hover:bg-[#f8fbfa]">
                       <TableHead className={cn("min-w-0", FEES_TH)}>
-                        <ColumnHint label="Structure" hint="Fee structure name and status" />
+                        <ColumnHint label="Plan" hint="Fee plan name and status" />
                       </TableHead>
                       <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint
@@ -513,7 +513,7 @@ export function FeePlansTable({
                       <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint
                           label="Classes"
-                          hint="Grades linked to this structure"
+                          hint="Grades linked to this plan"
                         />
                       </TableHead>
                       <TableHead className={cn("min-w-0", FEES_TH)}>

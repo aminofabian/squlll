@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Filter, MoreHorizontal, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Filter, MoreHorizontal, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,6 +38,10 @@ export function ClassesPageHeader({
   isGradePanelOpen = true,
   onToggleGradePanel,
 }: ClassesPageHeaderProps) {
+  const visibleActions = hasGradeSelected
+    ? actions.filter((action) => action.id !== "assign-teacher")
+    : actions.filter((action) => !action.disabled);
+
   return (
     <div className="sticky top-0 z-20 shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-1.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
       <div className="mx-auto flex max-w-6xl items-center gap-2">
@@ -53,21 +57,21 @@ export function ClassesPageHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className={cn(classesActionButton, "lg:hidden")}
-            onClick={onOpenGradePicker}
-          >
-            <Filter className="h-3.5 w-3.5" />
-            <span className="hidden min-[380px]:inline">
-              {hasGradeSelected ? "Grades" : "Browse"}
-            </span>
-          </Button>
+          {hasGradeSelected ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={cn(classesActionButton, "lg:hidden")}
+              onClick={onOpenGradePicker}
+            >
+              <Filter className="h-3.5 w-3.5" />
+              <span className="hidden min-[380px]:inline">Grades</span>
+            </Button>
+          ) : null}
 
           <div className="hidden items-center gap-1 lg:flex">
-            {actions.map((action) => {
+            {visibleActions.map((action) => {
               const Icon = action.icon;
               return (
                 <Button
@@ -119,7 +123,7 @@ export function ClassesPageHeader({
             <DropdownMenuContent align="end" className="w-48 rounded-none">
               <DropdownMenuLabel className="text-xs">Class tasks</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {actions.map((action) => {
+              {visibleActions.map((action) => {
                 const Icon = action.icon;
                 return (
                   <DropdownMenuItem
@@ -134,18 +138,7 @@ export function ClassesPageHeader({
                   </DropdownMenuItem>
                 );
               })}
-              {!hasGradeSelected ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    disabled
-                    className="gap-2 text-xs text-[#1a4d42]/45"
-                  >
-                    <BookOpen className="h-3.5 w-3.5" />
-                    Select a grade to add subjects or streams
-                  </DropdownMenuItem>
-                </>
-              ) : null}
+
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -79,7 +79,7 @@ export function FeesSetupBanner({
             {plansReady
               ? classesLinked
                 ? "Your structures are linked — send term invoices so balances and collection % reflect real data."
-                : `You have ${planCount} fee structure${planCount === 1 ? "" : "s"} — link each structure to the classes it applies to.`
+                : `You have ${planCount} fee plan${planCount === 1 ? "" : "s"} — link each plan to the classes it applies to.`
               : "Start with a guided setup: academic year, categories, and amounts per grade."}
           </p>
         </div>

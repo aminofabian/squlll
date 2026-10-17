@@ -31,7 +31,7 @@ export function FeeLetterSetupHero() {
               Parent communications
             </p>
             <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Fee structure letter
+              Fee letter
             </h2>
             <p className="mt-1 max-w-md text-sm text-slate-600 leading-relaxed">
               Configure what parents see, then choose a layout and print or share.

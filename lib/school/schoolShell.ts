@@ -30,7 +30,7 @@ export function getSchoolPageTitle(pathname: string): string {
   }
 
   const titles: Record<string, string> = {
-    dashboard: "Dashboard",
+    dashboard: "Overview",
     classes: "Classes",
     students: "Students",
     teachers: "Teachers",

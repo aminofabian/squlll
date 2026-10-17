@@ -19,7 +19,6 @@ import {
   Info,
   Loader2,
   Plus,
-  Wallet,
   X,
 } from 'lucide-react'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
@@ -180,6 +179,50 @@ function FeeLineOption({
   )
 }
 
+/** Compact toggle used for the four common fee lines. */
+function FeeLineChip({
+  label,
+  hint,
+  checked,
+  locked,
+  onToggle,
+}: {
+  label: string
+  hint?: string
+  checked: boolean
+  locked?: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={locked ? undefined : onToggle}
+      disabled={locked}
+      title={hint}
+      aria-pressed={checked}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+        checked
+          ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/60',
+        locked && 'cursor-default',
+      )}
+    >
+      {checked ? (
+        <Check className="h-3.5 w-3.5" />
+      ) : (
+        <Plus className="h-3.5 w-3.5 text-slate-400" />
+      )}
+      {label}
+      {locked ? (
+        <span className="text-[9px] font-semibold uppercase tracking-wide text-emerald-700">
+          Always
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
 /** Big radio-style card used to choose how fees are set */
 function FeeModeCard({
   selected,
@@ -250,7 +293,9 @@ export function StepFees({
   const [customInput, setCustomInput] = useState('')
   const [customError, setCustomError] = useState('')
   const [showExtraLines, setShowExtraLines] = useState(false)
+  const [showGrades, setShowGrades] = useState(false)
   const didAutoYear = useRef(false)
+  const didAutoGrades = useRef(false)
   const [bulkAmount, setBulkAmount] = useState('')
 
   const gradeOptions = useMemo(
@@ -315,9 +360,13 @@ export function StepFees({
   ])
 
   useEffect(() => {
-    if (readOnlyYear) return
-    if (value.selectedGrades.length > 0) return
+    if (readOnlyYear || didAutoGrades.current) return
+    if (value.selectedGrades.length > 0) {
+      didAutoGrades.current = true
+      return
+    }
     if (gradesLoading || gradeOptions.length === 0) return
+    didAutoGrades.current = true
     onChange({ selectedGrades: gradeOptions })
   }, [
     gradeOptions,
@@ -417,25 +466,10 @@ export function StepFees({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: FEES_BRAND.primaryLight }}
-          aria-hidden
-        >
-          <Wallet className="h-4 w-4" style={{ color: FEES_BRAND.primary }} />
-        </span>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-slate-900">
-            Start with the total each student pays in one term
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">
-            Pick the year and grades, type one term total, then tick what it
-            covers. On the next step you&apos;ll split that total into fee
-            lines.
-          </p>
-        </div>
-      </div>
+      <p className="text-sm leading-relaxed text-slate-600">
+        Set one term total for the selected grades, then choose what it covers.
+        You&apos;ll split that total into fee lines on the next step.
+      </p>
 
       <FeesWizardSection
         title="Which year?"
@@ -501,14 +535,10 @@ export function StepFees({
           gradeOptions.length > 1 ? (
             <button
               type="button"
-              onClick={() =>
-                onChange({
-                  selectedGrades: allGradesSelected ? [] : [...gradeOptions],
-                })
-              }
+              onClick={() => setShowGrades((value) => !value)}
               className="text-xs font-medium text-emerald-700 hover:underline"
             >
-              {allGradesSelected ? 'Clear all' : 'Select all'}
+              {showGrades ? 'Done' : 'Change'}
             </button>
           ) : undefined
         }
@@ -520,32 +550,69 @@ export function StepFees({
           </div>
         ) : (
           <>
-            <div className="flex flex-wrap gap-1.5">
-              {gradeOptions.map((grade) => {
-                const on = value.selectedGrades.includes(grade)
-                return (
-                  <button
-                    key={grade}
-                    type="button"
-                    onClick={() => toggleGrade(grade)}
-                    aria-pressed={on}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
-                      on
-                        ? 'border-transparent text-white'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
-                    )}
-                    style={
-                      on ? { backgroundColor: FEES_BRAND.primary } : undefined
-                    }
-                  >
-                    {on ? <Check className="h-3.5 w-3.5" /> : null}
-                    {grade}
-                  </button>
-                )
-              })}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <p className="text-sm font-medium text-slate-800">
+                {allGradesSelected
+                  ? `All ${gradeOptions.length} grades`
+                  : selectedCountLabel}
+              </p>
+              {!allGradesSelected && value.selectedGrades.length > 0 ? (
+                <p className="min-w-0 max-w-[18rem] truncate text-xs text-slate-500">
+                  {value.selectedGrades.slice(0, 4).join(', ')}
+                  {value.selectedGrades.length > 4
+                    ? ` +${value.selectedGrades.length - 4} more`
+                    : ''}
+                </p>
+              ) : null}
             </div>
-            <p className="mt-2.5 text-xs text-slate-500">{selectedCountLabel}</p>
+
+            {showGrades ? (
+              <>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {gradeOptions.map((grade) => {
+                    const on = value.selectedGrades.includes(grade)
+                    return (
+                      <button
+                        key={grade}
+                        type="button"
+                        onClick={() => toggleGrade(grade)}
+                        aria-pressed={on}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+                          on
+                            ? 'border-transparent text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
+                        )}
+                        style={
+                          on ? { backgroundColor: FEES_BRAND.primary } : undefined
+                        }
+                      >
+                        {on ? <Check className="h-3.5 w-3.5" /> : null}
+                        {grade}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-xs text-slate-500">{selectedCountLabel}</p>
+                  {gradeOptions.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onChange({
+                          selectedGrades: allGradesSelected
+                            ? []
+                            : [...gradeOptions],
+                        })
+                      }
+                      className="text-xs font-medium text-emerald-700 hover:underline"
+                    >
+                      {allGradesSelected ? 'Clear all' : 'Select all'}
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
           </>
         )}
         <FieldError message={errors?.selectedGrades} />
@@ -743,7 +810,7 @@ export function StepFees({
                   <span className="font-medium text-slate-800">
                     {amountBands.length} different amounts
                   </span>
-                  , so we&apos;ll create {amountBands.length} fee schedules. The
+                  , so we&apos;ll create {amountBands.length} fee plans. The
                   next step splits the first one.
                 </span>
               </p>
@@ -758,9 +825,9 @@ export function StepFees({
         title="What does the fee cover?"
         description="Tick everything included in the term total above. Tuition is always included."
       >
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="flex flex-wrap gap-1.5">
           {QUICK_LINES.map((cat) => (
-            <FeeLineOption
+            <FeeLineChip
               key={cat}
               label={cat}
               hint={LINE_HINTS[cat]}
@@ -770,6 +837,10 @@ export function StepFees({
             />
           ))}
         </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Tuition is always included. Add lunch, transport or boarding if the
+          school charges for them — you&apos;ll split the total in the next step.
+        </p>
 
         {extraPresets.length > 0 ? (
           <div className="mt-3">

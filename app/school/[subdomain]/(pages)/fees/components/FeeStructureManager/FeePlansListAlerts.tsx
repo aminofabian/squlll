@@ -54,7 +54,7 @@ export function FeePlansListAlerts({
               </span>
               <span className="text-rose-800/90">
                 {" "}
-                — same class on two structures for one term. Fix before billing.
+                — same class on two fee plans for one term. Fix before billing.
               </span>
             </p>
             <Link
@@ -107,17 +107,17 @@ export function FeePlansListAlerts({
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
           <p>
             <span className="font-semibold">
-              {unlinkedPlanCount} structure
+              {unlinkedPlanCount} fee plan
               {unlinkedPlanCount === 1 ? "" : "s"} without classes.
             </span>{" "}
-            Open a structure and link grades before billing.
+            Open a fee plan and link classes before billing.
           </p>
         </div>
       ) : null}
 
       {showUnbilled ? (
         <p className="mt-2 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-2 text-xs text-[#1a4d42]/65">
-          {unbilledPlanCount} structure
+          {unbilledPlanCount} fee plan
           {unbilledPlanCount === 1 ? " has" : "s have"} no invoices yet.{" "}
           <Link
             href={feesOverviewHref()}

@@ -7,6 +7,7 @@ import {
   GraduationCap,
   KeyRound,
   MoreHorizontal,
+  Smartphone,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ interface StudentProfileHeroProps {
   student: StudentDetailSummary;
   missingStream: boolean;
   onAssignClass: () => void;
+  onRequestPayment?: () => void;
   onTabSelect: (tab: string) => void;
 }
 
@@ -59,6 +61,7 @@ export function StudentProfileHero({
   student,
   missingStream,
   onAssignClass,
+  onRequestPayment,
   onTabSelect,
 }: StudentProfileHeroProps) {
   const balance = Math.max(0, student.feeSummary.balance);
@@ -141,6 +144,18 @@ export function StudentProfileHero({
               <GraduationCap className="h-3.5 w-3.5" />
               {student.gradeLevelId ? "Change class" : "Assign class"}
             </Button>
+            {onRequestPayment ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={cn(studentsActionButton, "h-8 gap-1.5")}
+                onClick={onRequestPayment}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Send M-Pesa request
+              </Button>
+            ) : null}
             <div className="flex gap-1.5">
               {balance > 0 ? (
                 <Button

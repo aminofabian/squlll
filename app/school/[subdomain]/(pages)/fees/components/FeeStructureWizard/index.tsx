@@ -51,6 +51,7 @@ import { buildDefaultFeePlanName } from '../../lib/feePlanStats'
 import { useToast } from '@/components/ui/use-toast'
 import { getDisplayErrorMessage } from '@/lib/utils/graphql-errors'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 interface FeeStructureWizardProps {
     isOpen: boolean
@@ -557,7 +558,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             validateFeeAmounts(newErrors)
         } else if (step === 3) {
             if (!formData.name.trim()) {
-                newErrors.name = 'Schedule name is required'
+                newErrors.name = 'Plan name is required'
             }
             if (!formData.schoolDetails?.name?.trim()) {
                 newErrors.schoolName = 'School name is required on the letter'
@@ -1065,7 +1066,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 name:
                     amountBands.length === 1
                         ? createdStructures[0].name
-                        : `${createdStructures.length} fee schedules`,
+                        : `${createdStructures.length} fee plans`,
                 academicYear: formData.academicYear,
                 terms:
                     formData.terms?.map((t) => t.name).join(', ') ||
@@ -1088,7 +1089,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             console.error('Failed to save:', error)
             setSaveError(message)
             toast({
-                title: isEditMode ? 'Could not update fee schedule' : 'Could not create fee schedule',
+                title: isEditMode ? 'Could not update fee plan' : 'Could not create fee plan',
                 description: message,
                 variant: 'destructive',
             })
@@ -1120,7 +1121,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     style={{ backgroundColor: FEES_BRAND.primaryLight }}
                 >
                     <SheetTitle className="text-lg font-semibold text-slate-900">
-                        {isEditMode ? 'Edit fee schedule' : "Set this year's fees"}
+                        {isEditMode ? 'Edit fee plan' : "Set this year's fees"}
                     </SheetTitle>
                     <SheetDescription className="text-sm text-slate-600">
                         Step {currentStep} of {steps.length} · {stepSubtitle}
@@ -1170,6 +1171,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                     onChange={updateFormData}
                                     onCategorySplitsChange={setCategorySplits}
                                     errors={errors}
+                                    onBack={handleBack}
                                 />
                             )}
                             {currentStep === 3 && (
@@ -1179,7 +1181,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                             htmlFor="schedule-name"
                                             className="block text-sm font-medium text-slate-900"
                                         >
-                                            Name this fee schedule
+                                            Name this fee plan
                                         </label>
                                         <p className="mt-0.5 text-xs text-slate-500">
                                             A label you&apos;ll recognise later, like
@@ -1224,7 +1226,14 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     </div>
                 ) : null}
 
-                <div className="shrink-0 flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-3">
+                <div
+                    className={cn(
+                        "shrink-0 border-t border-slate-100 bg-white px-5 py-3",
+                        currentStep === 1
+                            ? "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                            : "flex items-center justify-between gap-3",
+                    )}
+                >
                     {currentStep > 1 ? (
                         <Button
                             variant="ghost"
@@ -1237,15 +1246,38 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             Back
                         </Button>
                     ) : (
-                        <span aria-hidden />
+                        <div className="w-full min-w-0 text-xs text-slate-500 sm:w-auto sm:flex-1">
+                            <span className="font-medium text-slate-700">
+                                {feesValue.sameFeeForAll
+                                    ? representativeTermTotal(feesValue) > 0
+                                        ? `KES ${representativeTermTotal(feesValue).toLocaleString('en-KE')} per term`
+                                        : 'Enter a term total'
+                                    : representativeTermTotal(feesValue) > 0
+                                      ? `From KES ${representativeTermTotal(feesValue).toLocaleString('en-KE')} per term`
+                                      : 'Set grade amounts'}
+                            </span>
+                            <span className="hidden sm:inline">
+                                {' '}· {feesValue.selectedGrades.length} grade
+                                {feesValue.selectedGrades.length === 1 ? '' : 's'} ·{' '}
+                                {feesValue.categories.length} fee line
+                                {feesValue.categories.length === 1 ? '' : 's'}
+                            </span>
+                        </div>
                     )}
 
-                    <div className="flex items-center gap-2">
+                    <div
+                        className={cn(
+                            "flex items-center gap-2",
+                            currentStep === 1
+                                ? "w-full justify-between sm:w-auto sm:justify-end"
+                                : "justify-end",
+                        )}
+                    >
                         <Button
                             variant="ghost"
                             onClick={onClose}
                             size="sm"
-                            className="shrink-0 whitespace-nowrap text-slate-500"
+                            className="shrink-0 whitespace-nowrap text-slate-500 max-sm:px-2"
                         >
                             Cancel
                         </Button>
@@ -1253,9 +1285,13 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                         {currentStep < steps.length ? (
                             <Button
                                 onClick={() => void handleNext()}
-                                disabled={isProvisioningSetup}
+                                disabled={
+                                    isProvisioningSetup ||
+                                    (currentStep === 1 &&
+                                        representativeTermTotal(feesValue) <= 0)
+                                }
                                 size="sm"
-                                className="shrink-0 whitespace-nowrap text-white"
+                                className="shrink-0 whitespace-nowrap text-white max-sm:flex-1 disabled:cursor-not-allowed disabled:opacity-40"
                                 style={{ backgroundColor: FEES_BRAND.primary }}
                             >
                                 {isProvisioningSetup ? (
@@ -1269,7 +1305,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 size="sm"
-                                className="shrink-0 whitespace-nowrap text-white"
+                                className="shrink-0 whitespace-nowrap text-white max-sm:flex-1 disabled:cursor-not-allowed disabled:opacity-40"
                                 style={{ backgroundColor: FEES_BRAND.primary }}
                             >
                                 {isSaving ? (
@@ -1280,7 +1316,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 ) : isEditMode ? (
                                     'Save changes'
                                 ) : (
-                                    'Save fee schedule'
+                                    'Save fee plan'
                                 )}
                             </Button>
                         )}
@@ -1293,7 +1329,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             <CheckCircle2 className="h-8 w-8 text-emerald-700" />
                         </span>
                         <p className="text-lg font-semibold text-emerald-800">
-                            {isEditMode ? 'Fee schedule updated' : 'Fee schedule saved'}
+                            {isEditMode ? 'Fee plan updated' : 'Fee plan saved'}
                         </p>
                         <p className="text-sm text-slate-500">
                             Taking you back to the fees page…

@@ -134,7 +134,7 @@ export function StudentPayNowSheet({
         invoiceId: selectedInvoice.id,
         amount: numericAmount,
         phone: phone.trim(),
-        notes: `Student self-service M-Pesa Express · ${invoiceLabel(selectedInvoice)}`,
+        notes: `Student self-service M-Pesa · ${invoiceLabel(selectedInvoice)}`,
       })
       setIntent(created)
       if (created.status === 'SUCCESS') {
@@ -223,7 +223,7 @@ export function StudentPayNowSheet({
             </span>
             <div className="min-w-0">
               <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-400">
-                Lipa na M-Pesa
+                Pay with M-Pesa
               </span>
               <DialogTitle className="text-lg font-semibold text-foreground">
                 Pay school fees
@@ -231,8 +231,7 @@ export function StudentPayNowSheet({
             </div>
           </div>
           <DialogDescription className="mt-2 text-xs text-muted-foreground">
-            We send a payment request to your phone — approve it with your M-Pesa
-            PIN. No card, no queuing.
+            We send a payment request to your phone. Enter your M-Pesa PIN and the money goes straight to the school bank account. No card, no queuing.
           </DialogDescription>
         </DialogHeader>
 
@@ -348,7 +347,7 @@ export function StudentPayNowSheet({
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Safaricom will prompt this number to enter your PIN.
+                  Safaricom will send a request to this number. Enter your M-Pesa PIN to approve.
                 </p>
               </div>
 
@@ -416,7 +415,7 @@ function WaitingPanel({
         Waiting for confirmation from Safaricom…
       </p>
       <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-        I didn&apos;t get a prompt
+        I didn&apos;t get a request
       </Button>
     </div>
   )

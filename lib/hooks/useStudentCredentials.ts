@@ -10,7 +10,7 @@ interface UseStudentCredentialsResult {
   credentials: StudentCredentials | null;
   loading: boolean;
   error: string | null;
-  fetchCredentials: () => Promise<void>;
+  fetchCredentials: () => Promise<StudentCredentials | null>;
 }
 
 export function useStudentCredentials(studentId: string): UseStudentCredentialsResult {
@@ -18,8 +18,8 @@ export function useStudentCredentials(studentId: string): UseStudentCredentialsR
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCredentials = async () => {
-    if (!studentId) return;
+  const fetchCredentials = async (): Promise<StudentCredentials | null> => {
+    if (!studentId) return null;
     
     setLoading(true);
     setError(null);
@@ -56,11 +56,13 @@ export function useStudentCredentials(studentId: string): UseStudentCredentialsR
       
       if (credentialsData) {
         setCredentials(credentialsData);
-      } else {
-        setError('Student credentials not found');
+        return credentialsData;
       }
+      setError('Student credentials not found');
+      return null;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch student credentials');
+      return null;
     } finally {
       setLoading(false);
     }

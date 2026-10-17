@@ -86,7 +86,7 @@ export const FeeAssignmentsView = () => {
     if (!data) return;
     const date = new Date().toISOString().split("T")[0];
     downloadCsv(`class-links-${date}.csv`, [
-      ["Fee structure", "Billing period", "Classes", "Students", "Status", "Created"],
+      ["Fee plan", "Billing period", "Classes", "Students", "Status", "Created"],
       ...filteredGroups.map((g) => {
         const a = g.feeAssignment;
         return [

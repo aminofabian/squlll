@@ -3,12 +3,16 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
+  Activity,
   Clock,
   Coffee,
   GraduationCap,
   CheckCircle2,
+  Pencil,
   Plus,
   Trash2,
+  Users,
+  Utensils,
 } from "lucide-react";
 import { useGradeLevelsForSchoolType } from "@/lib/hooks/useGradeLevelsForSchoolType";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
@@ -42,7 +46,6 @@ import {
   createTimetablesForScopes,
   mapGradeLevelsForSchoolType,
   markTimetableWizardComplete,
-  scopeSummaryLabel,
   newBreakDraft,
   parsePositiveInt,
   suggestBreaksForPeriodCount,
@@ -53,6 +56,7 @@ import {
   TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS,
 } from "@/lib/utils/timetable-setup";
 import { cn } from "@/lib/utils";
+import { getGradeSortOrder } from "@/lib/utils/grade-display";
 import { tt } from "../utils/timetableTheme";
 
 const WIZARD_STEPS = [
@@ -179,6 +183,46 @@ function formatTimeFriendly(hhmm: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${ap}`;
 }
 
+function timeToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return 8 * 60;
+  return h * 60 + m;
+}
+
+function minutesToTime(totalMinutes: number): string {
+  const mins = Math.max(0, totalMinutes);
+  const h = Math.floor(mins / 60) % 24;
+  const m = mins % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+type TimedFields = {
+  startMinutes: number;
+  endMinutes: number;
+  startLabel: string;
+  endLabel: string;
+  durationMinutes: number;
+};
+
+type TimedDayRow =
+  | ({ kind: "period"; period: number; start: string; end: string } & TimedFields)
+  | ({
+      kind: "break";
+      id?: string;
+      label: string;
+      afterPeriod: number;
+      icon?: string;
+    } & TimedFields);
+
+function breakIconForLabel(label: string) {
+  const l = label.toLowerCase();
+  if (l.includes("lunch") || l.includes("dinner")) return Utensils;
+  if (l.includes("assembly")) return Users;
+  if (l.includes("game") || l.includes("recess") || l.includes("sport"))
+    return Activity;
+  return Coffee;
+}
+
 function wizardChipClass(selected: boolean) {
   return cn(
     "shrink-0 rounded-none border px-2.5 py-1.5 transition-colors",
@@ -257,19 +301,41 @@ function FieldRow({
   );
 }
 
-function SchoolDayPreview({
+function DaySummary({
   startFriendly,
-  dayEndFriendly,
+  endFriendly,
   periodCountNum,
   periodDurationNum,
   weekLabel,
+  breakCount,
+  breakMinutes,
+  selectedCount,
+  totalCount,
 }: {
   startFriendly: string;
-  dayEndFriendly: string;
+  endFriendly: string;
   periodCountNum: number;
   periodDurationNum: number;
   weekLabel: string;
+  breakCount?: number | null;
+  breakMinutes?: number;
+  selectedCount?: number;
+  totalCount?: number;
 }) {
+  const details = [
+    `${periodCountNum} lesson${periodCountNum === 1 ? "" : "s"}`,
+    periodDurationNum > 0 ? `${periodDurationNum} min each` : null,
+    breakCount == null
+      ? null
+      : breakCount > 0
+        ? `${breakCount} break${breakCount === 1 ? "" : "s"} · ${breakMinutes ?? 0} min`
+        : "No breaks yet",
+    weekLabel,
+    selectedCount != null && totalCount != null
+      ? `${selectedCount}/${totalCount} classes`
+      : null,
+  ].filter(Boolean);
+
   return (
     <div
       className={cn(
@@ -277,99 +343,168 @@ function SchoolDayPreview({
         tt.border.hair,
       )}
     >
-      <p className={cn(tt.text.title, tt.ink.base)}>
-        <span className="font-medium">{startFriendly} → {dayEndFriendly}</span>
-        <span className={cn(tt.ink.faint, tt.numeral)}>
-          {" "}
-          · {periodCountNum}×{periodDurationNum} min · {weekLabel}
+      <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className={cn("font-medium tabular-nums", tt.text.title, tt.ink.base)}>
+          {startFriendly} → {endFriendly}
+        </span>
+        <span className={cn(tt.text.small, tt.ink.faint)}>
+          · {details.join(" · ")}
         </span>
       </p>
     </div>
   );
 }
 
-function BreakDayPreview({
-  dayPreview,
+function BreakTimeline({
+  rows,
+  title,
+  subtitle,
+  onEditBreaks,
+  onAddBreak,
+  onChangeShape,
 }: {
-  dayPreview: ReturnType<typeof buildDayTimelinePreview>;
+  rows: TimedDayRow[];
+  title: string;
+  subtitle?: string;
+  onEditBreaks: () => void;
+  onAddBreak: () => void;
+  onChangeShape: () => void;
 }) {
   return (
-    <div
-      className={cn(
-        "border-b bg-[#f8fbfa] px-6 py-2.5 dark:bg-white/[0.02] sm:px-8",
-        tt.border.hair,
-      )}
-    >
-      {dayPreview.length === 0 ? (
-        <p className={cn(tt.text.title, tt.ink.muted)}>Lessons only</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {dayPreview.map((row, i) =>
-            row.kind === "period" ? (
-              <span
-                key={`p-${i}`}
-                className={cn(
-                  "rounded-none border border-[#1a4d42]/12 bg-white px-2.5 py-1 font-medium dark:border-white/10 dark:bg-[#0c1a17]",
-                  tt.text.small,
-                  tt.ink.base,
-                  tt.numeral,
-                )}
-              >
-                Lesson {row.period}
-              </span>
-            ) : (
-              <span
-                key={`b-${i}`}
-                className={cn(
-                  "rounded-none border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100",
-                  tt.text.small,
-                )}
-                title={`${row.durationMinutes} min`}
-              >
-                {row.icon} {row.label}
-              </span>
-            ),
-          )}
+    <div className="space-y-3">
+      <div className={cn(tt.panel, "overflow-hidden")}>
+        <div className="border-b border-[#1a4d42]/10 px-3 py-2.5 dark:border-white/10">
+          <p className={cn(tt.text.title, tt.ink.strong)}>{title}</p>
+          {subtitle ? (
+            <p className={cn("mt-0.5", tt.text.small, tt.ink.faint)}>
+              {subtitle}
+            </p>
+          ) : null}
         </div>
-      )}
-    </div>
-  );
-}
 
-function ClassesSummaryPreview({
-  startFriendly,
-  dayEndFriendly,
-  periodCountNum,
-  periodDurationNum,
-  weekLabel,
-  selectedCount,
-  totalCount,
-}: {
-  startFriendly: string;
-  dayEndFriendly: string;
-  periodCountNum: number;
-  periodDurationNum: number;
-  weekLabel: string;
-  selectedCount: number;
-  totalCount: number;
-}) {
-  return (
-    <div
-      className={cn(
-        "border-b bg-[#f8fbfa] px-6 py-2.5 dark:bg-white/[0.02] sm:px-8",
-        tt.border.hair,
-      )}
-    >
-      <p className={cn(tt.text.title, tt.ink.base)}>
-        <span className="font-medium">{startFriendly} → {dayEndFriendly}</span>
-        <span className={cn(tt.ink.faint, tt.numeral)}>
-          {" "}
-          · {periodCountNum}×{periodDurationNum} min · {weekLabel}
-        </span>
-        <span className={cn(tt.ink.faint, tt.numeral)}>
-          {" "}
-          · {selectedCount}/{totalCount} selected
-        </span>
+        <ol className="divide-y divide-[#1a4d42]/8 dark:divide-white/8">
+          {rows.map((row) => {
+            const isBreak = row.kind === "break";
+            const BreakIcon = isBreak ? breakIconForLabel(row.label) : Coffee;
+            return (
+              <li
+                key={
+                  isBreak
+                    ? `break-${row.id ?? row.startMinutes}`
+                    : `period-${row.period}`
+                }
+                className={cn(
+                  "grid grid-cols-[4.4rem_1fr_auto] items-center gap-2 px-3 py-2",
+                  isBreak &&
+                    "bg-amber-50/70 dark:bg-amber-950/15",
+                )}
+              >
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    tt.text.small,
+                    isBreak
+                      ? "font-medium text-amber-800 dark:text-amber-300"
+                      : tt.ink.muted,
+                  )}
+                >
+                  {formatTimeFriendly(row.startLabel)}
+                </span>
+
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center border",
+                      isBreak
+                        ? "border-amber-300/80 bg-amber-100 text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-300"
+                        : "border-[#1a4d42]/12 bg-[#f8fbfa] text-[#246a59] dark:border-white/10 dark:bg-white/5 dark:text-emerald-300",
+                    )}
+                  >
+                    {isBreak ? (
+                      <BreakIcon className="h-3 w-3" strokeWidth={2} />
+                    ) : (
+                      <span className="text-[9px] font-semibold tabular-nums">
+                        {row.period}
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      "truncate",
+                      tt.text.title,
+                      isBreak ? "font-medium" : tt.ink.base,
+                    )}
+                  >
+                    {isBreak ? row.label : `Lesson ${row.period}`}
+                  </span>
+                  {isBreak ? (
+                    <span className="hidden shrink-0 border border-amber-200/80 bg-white/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-amber-800 sm:inline dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
+                      break
+                    </span>
+                  ) : null}
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      "tabular-nums",
+                      tt.text.small,
+                      tt.ink.faint,
+                    )}
+                  >
+                    {isBreak
+                      ? `${row.durationMinutes} min`
+                      : formatTimeFriendly(row.endLabel)}
+                  </span>
+                  {isBreak ? (
+                    <button
+                      type="button"
+                      onClick={onEditBreaks}
+                      className={cn(
+                        "inline-flex h-6 w-6 items-center justify-center text-amber-800/55 transition-colors hover:bg-amber-100 hover:text-amber-900 dark:text-amber-300/60 dark:hover:bg-amber-900/30 dark:hover:text-amber-200",
+                        tt.focus,
+                      )}
+                      aria-label={`Edit ${row.label}`}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  ) : null}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#1a4d42]/10 px-3 py-2 dark:border-white/10">
+          <button
+            type="button"
+            onClick={onAddBreak}
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[#246a59] transition-colors hover:text-[#0a1f1a] hover:underline dark:text-[#7eb8a8] dark:hover:text-white",
+              tt.text.title,
+              tt.focus,
+            )}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add break
+          </button>
+          <button
+            type="button"
+            onClick={onChangeShape}
+            className={cn(
+              "text-[#1a4d42]/55 transition-colors hover:text-[#246a59] hover:underline dark:text-white/45 dark:hover:text-[#7eb8a8]",
+              tt.text.title,
+              tt.focus,
+            )}
+          >
+            Change day shape
+          </button>
+        </div>
+      </div>
+
+      <p className={cn("px-0.5", tt.text.small, tt.ink.faint)}>
+        Breaks sit between lessons and extend the end of the school day. Tap the
+        pencil on a break to edit it.
       </p>
     </div>
   );
@@ -665,6 +800,17 @@ export function TimetableSetupWizard({
     [gradeLevelsRaw],
   );
 
+  /** School order: Baby Class, PP1, PP2, Grade 1 … Grade 12. */
+  const sortedGradeLevels = useMemo(
+    () =>
+      [...gradeLevelsWithStreams].sort(
+        (a, b) =>
+          getGradeSortOrder(a.displayName || a.name) -
+          getGradeSortOrder(b.displayName || b.name),
+      ),
+    [gradeLevelsWithStreams],
+  );
+
   const scopeTargets = useMemo(
     () => buildTimetableScopeTargets(selectedScopeKeys, gradeLevelsWithStreams),
     [selectedScopeKeys, gradeLevelsWithStreams],
@@ -705,7 +851,14 @@ export function TimetableSetupWizard({
   const weekLabel = weekdaySummary(activeWeekdays);
 
   const dayPreview = useMemo(() => {
-    if (breakMode === "none" || breaks.length === 0) return [];
+    if (breakMode === "none") {
+      return buildDayTimelinePreview(
+        startTime,
+        periodCountNum,
+        periodDurationNum,
+        [],
+      );
+    }
     return buildDayTimelinePreview(
       startTime,
       periodCountNum,
@@ -719,6 +872,37 @@ export function TimetableSetupWizard({
     periodCountNum,
     periodDurationNum,
   ]);
+
+  const timedDayPreview = useMemo<TimedDayRow[]>(() => {
+    let cursor = timeToMinutes(startTime);
+    return dayPreview.map((row) => {
+      const duration =
+        row.kind === "period"
+          ? periodDurationNum
+          : (parsePositiveInt(String(row.durationMinutes)) ?? 15);
+      const startMinutes = cursor;
+      cursor += duration;
+      return {
+        ...row,
+        startMinutes,
+        endMinutes: cursor,
+        startLabel: minutesToTime(startMinutes),
+        endLabel: minutesToTime(cursor),
+        durationMinutes: duration,
+      };
+    });
+  }, [dayPreview, startTime, periodDurationNum]);
+
+  const breakRows = timedDayPreview.filter((row) => row.kind === "break");
+  const breakCount = breakRows.length;
+  const breakMinutes = breakRows.reduce(
+    (sum, row) => sum + row.durationMinutes,
+    0,
+  );
+  const lastTimedRow = timedDayPreview[timedDayPreview.length - 1];
+  const schoolDayEndFriendly = formatTimeFriendly(
+    minutesToTime(lastTimedRow?.endMinutes ?? timeToMinutes(dayEndTime)),
+  );
 
   useEffect(() => {
     if (breakMode === "custom") return;
@@ -1007,9 +1191,6 @@ export function TimetableSetupWizard({
     if (step > 1) setStep((s) => s - 1);
   };
 
-  const whenLabel = (afterPeriod: number) =>
-    afterPeriod === 0 ? "Before lesson 1" : `After lesson ${afterPeriod}`;
-
   const renderBreakRow = (b: TimetableBreakDraft) => {
     const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
     const displayName =
@@ -1032,7 +1213,7 @@ export function TimetableSetupWizard({
               const shortLabel =
                 typeValue === TIMETABLE_BREAK_TYPE_CUSTOM
                   ? "Other"
-                  : opt.label.replace(" break", "").replace(" / sports", "");
+                  : opt.label;
               return (
                 <option key={typeValue} value={typeValue}>
                   {shortLabel}
@@ -1260,212 +1441,202 @@ export function TimetableSetupWizard({
     }
 
     /* review — confirm-first: default is already applied */
+    const timelineTitle =
+      selectedPreset === "none"
+        ? "Lessons only"
+        : isCustomized
+          ? "Your day"
+          : presetLabel;
+    const timelineSubtitle =
+      selectedPreset === "none"
+        ? "No breaks yet — you can add them now or later from the timetable."
+        : !isCustomized
+          ? "Pre-filled for you — continue if it matches your school."
+          : "Customized breaks — check the times below.";
+
     return (
-      <div className="space-y-4">
-        <div className={cn(tt.panel, "p-3 sm:p-4")}>
-          <div className="mb-3">
-            <p className={cn(tt.text.title, tt.ink.strong)}>
-              {selectedPreset === "none"
-                ? "No breaks for now"
-                : isCustomized
-                  ? "Your breaks"
-                  : presetLabel}
-            </p>
-            {selectedPreset !== "none" && !isCustomized ? (
-              <p className={cn("mt-0.5", tt.text.small, tt.ink.faint)}>
-                Pre-filled for you — continue if this matches your school
-              </p>
-            ) : null}
-          </div>
-
-          {selectedPreset === "none" || breaks.length === 0 ? (
-            <p className={cn(tt.text.title, tt.ink.muted)}>
-              Lessons only. You can add breaks later from the timetable.
-            </p>
-          ) : (
-            <ul className="space-y-1.5">
-              {breaks.map((b) => {
-                const name =
-                  b.label.trim() ||
-                  getWizardBreakTypeOption(b.type)?.label ||
-                  "Break";
-                const icon =
-                  b.icon || getWizardBreakTypeOption(b.type)?.icon || "☕";
-                return (
-                  <li
-                    key={b.id}
-                    className={cn(
-                      tt.panelMuted,
-                      "flex items-center justify-between gap-2 px-2.5 py-2.5",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex min-w-0 items-center gap-2 truncate",
-                        tt.text.title,
-                        tt.ink.strong,
-                      )}
-                    >
-                      <span aria-hidden>{icon}</span>
-                      <span className="truncate">{name}</span>
-                    </span>
-                    <span
-                      className={cn(
-                        "shrink-0",
-                        tt.text.small,
-                        tt.ink.muted,
-                        tt.numeral,
-                      )}
-                    >
-                      {b.durationMinutes || "—"} min · {whenLabel(b.afterPeriod)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={() => setBreaksPanel("edit")}
-            className={cn(
-              "text-left text-[#246a59] hover:underline dark:text-[#7eb8a8]",
-              tt.text.title,
-              tt.focus,
-            )}
-          >
-            {breaks.length === 0 ? "Add breaks" : "Change times or names"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setBreaksPanel("patterns")}
-            className={cn(
-              "text-left hover:text-[#246a59] hover:underline dark:hover:text-[#7eb8a8] sm:text-right",
-              tt.text.title,
-              tt.ink.muted,
-              tt.focus,
-            )}
-          >
-            This isn&apos;t our day shape
-          </button>
-        </div>
-      </div>
+      <BreakTimeline
+        rows={timedDayPreview}
+        title={timelineTitle}
+        subtitle={timelineSubtitle}
+        onEditBreaks={() => setBreaksPanel("edit")}
+        onAddBreak={addAnotherBreak}
+        onChangeShape={() => setBreaksPanel("patterns")}
+      />
     );
   };
 
   const renderClassesStep = () => {
     const allScopeKeys = buildDefaultScopeKeys(gradeLevelsWithStreams);
+    const totalCount = allScopeKeys.length;
+    const selectedCount = selectedScopeKeys.size;
     const allSelected =
-      allScopeKeys.length > 0 &&
-      allScopeKeys.every((key) => selectedScopeKeys.has(key));
-    const noneSelected = selectedScopeKeys.size === 0;
+      totalCount > 0 && allScopeKeys.every((key) => selectedScopeKeys.has(key));
+
+    const setKeys = (keys: string[], checked: boolean) => {
+      setSelectedScopeKeys((prev) => {
+        const next = new Set(prev);
+        for (const key of keys) {
+          if (checked) next.add(key);
+          else next.delete(key);
+        }
+        return next;
+      });
+    };
 
     return (
       <div className="space-y-3">
-        <WizardQuestion
-          number={1}
-          title="Select classes"
-        >
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className={cn(tt.text.small, tt.ink.muted, tt.numeral)}>
+            <span className="font-medium text-[#0a1f1a] dark:text-white">
+              {selectedCount}
+            </span>{" "}
+            of {totalCount} selected
+          </p>
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={selectAllScopes}
-              className={wizardChipClass(allSelected)}
+              disabled={allSelected || totalCount === 0}
+              className={cn(
+                "font-medium text-[#246a59] transition-colors hover:text-[#0a1f1a] hover:underline disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#7eb8a8] dark:hover:text-white",
+                tt.text.title,
+                tt.focus,
+              )}
             >
-              All classes
+              Select all
             </button>
+            <span aria-hidden className="h-3 w-px bg-[#1a4d42]/15 dark:bg-white/15" />
             <button
               type="button"
               onClick={() => setSelectedScopeKeys(new Set())}
-              className={wizardChipClass(noneSelected)}
-            >
-              None
-            </button>
-          </div>
-
-          {gradeLevelsLoading ? (
-            <p className={cn("py-6 text-center", tt.text.title, tt.ink.muted)}>
-              Loading classes…
-            </p>
-          ) : gradeLevelsWithStreams.length === 0 ? (
-            <p
+              disabled={selectedCount === 0}
               className={cn(
-                "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-4 text-center dark:border-white/10 dark:bg-white/[0.02]",
+                "font-medium text-[#1a4d42]/55 transition-colors hover:text-[#0a1f1a] hover:underline disabled:cursor-not-allowed disabled:opacity-40 dark:text-white/45 dark:hover:text-white",
                 tt.text.title,
-                tt.ink.muted,
+                tt.focus,
               )}
             >
-              No classes yet — finish school setup first.
-            </p>
-          ) : (
-            <div className="max-h-[min(44vh,380px)] space-y-3 overflow-y-auto pr-1">
-              {gradeLevelsWithStreams.map((gl) => {
-                const gradeName = gl.displayName || gl.name;
-                const items =
-                  gl.streams.length > 0
-                    ? gl.streams.map((s) => ({
-                        key: `${gl.gradeLevelId}:${s.tenantStreamId}`,
-                        label: s.name,
-                      }))
-                    : [{ key: `${gl.gradeLevelId}:`, label: gradeName }];
+              Clear
+            </button>
+          </div>
+        </div>
 
-                return (
-                  <div key={gl.gradeLevelId}>
-                    {gl.streams.length > 0 && (
-                      <p
+        {gradeLevelsLoading ? (
+          <p className={cn("py-6 text-center", tt.text.title, tt.ink.muted)}>
+            Loading classes…
+          </p>
+        ) : gradeLevelsWithStreams.length === 0 ? (
+          <p
+            className={cn(
+              "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-4 text-center dark:border-white/10 dark:bg-white/[0.02]",
+              tt.text.title,
+              tt.ink.muted,
+            )}
+          >
+            No classes yet — finish school setup first.
+          </p>
+        ) : (
+          <div className="grid max-h-[min(46vh,360px)] sm:max-h-[min(58vh,560px)] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+            {sortedGradeLevels.map((gl) => {
+              const gradeName = gl.displayName || gl.name;
+              const streams = gl.streams;
+              const keys =
+                streams.length > 0
+                  ? streams.map((s) => `${gl.gradeLevelId}:${s.tenantStreamId}`)
+                  : [`${gl.gradeLevelId}:`];
+              const checkedCount = keys.filter((key) =>
+                selectedScopeKeys.has(key),
+              ).length;
+              const all = keys.length > 0 && checkedCount === keys.length;
+              const some = checkedCount > 0 && !all;
+
+              return (
+                <div
+                  key={gl.gradeLevelId}
+                  className={cn(
+                    "border p-2.5 transition-colors",
+                    all || some
+                      ? "border-[#246a59]/40 bg-[#246a59]/[0.05] dark:border-[#246a59]/60 dark:bg-[#246a59]/10"
+                      : "border-[#1a4d42]/12 bg-white hover:border-[#1a4d42]/25 dark:border-white/10 dark:bg-[#0c1a17] dark:hover:border-white/20",
+                  )}
+                >
+                  <label className="flex cursor-pointer items-center gap-2.5">
+                    <Checkbox
+                      checked={all ? true : some ? "indeterminate" : false}
+                      onCheckedChange={(checked) =>
+                        setKeys(keys, checked === true)
+                      }
+                      aria-label={`Select ${gradeName}`}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span
                         className={cn(
-                          "mb-1.5 font-medium",
-                          tt.text.small,
-                          tt.ink.muted,
+                          "block truncate",
+                          tt.text.title,
+                          tt.ink.strong,
                         )}
                       >
                         {gradeName}
-                      </p>
-                    )}
-                    <ul className="space-y-1.5">
-                      {items.map(({ key, label }) => {
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-0.5 block truncate",
+                          tt.text.small,
+                          tt.ink.faint,
+                        )}
+                      >
+                        {streams.length === 0
+                          ? "Whole class"
+                          : `${streams.length} stream${streams.length === 1 ? "" : "s"}`}
+                      </span>
+                    </span>
+                    {streams.length === 1 ? (
+                      <span className="shrink-0 border border-[#1a4d42]/12 bg-[#f8fbfa] px-1.5 py-0.5 text-[10px] font-medium text-[#1a4d42]/60 dark:border-white/10 dark:bg-[#071411] dark:text-white/50">
+                        Stream {streams[0].name}
+                      </span>
+                    ) : null}
+                  </label>
+
+                  {streams.length > 1 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5 pl-7">
+                      {streams.map((stream) => {
+                        const key = `${gl.gradeLevelId}:${stream.tenantStreamId}`;
                         const checked = selectedScopeKeys.has(key);
                         return (
-                          <li key={key}>
-                            <label
-                              className={cn(
-                                "flex cursor-pointer items-center gap-2.5 rounded-none border px-3 py-2 transition-colors",
+                          <label
+                            key={key}
+                            className={cn(
+                              "inline-flex cursor-pointer items-center gap-1.5 border px-2 py-1 text-[11px] transition-colors",
+                              checked
+                                ? "border-[#246a59] bg-[#246a59] text-white"
+                                : "border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/65 hover:bg-white dark:border-white/10 dark:bg-[#071411] dark:text-white/55 dark:hover:bg-white/5",
+                            )}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(value) =>
+                                setKeys([key], value === true)
+                              }
+                              className={
                                 checked
-                                  ? "border-[#0a1f1a] bg-[#246a59]/10 dark:border-[#246a59] dark:bg-[#246a59]/20"
-                                  : "border-[#1a4d42]/12 bg-white hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17]",
-                              )}
-                            >
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(c) =>
-                                  toggleScopeKey(key, c === true)
-                                }
-                              />
-                              <span className={cn(tt.text.title, tt.ink.strong)}>
-                                {gl.streams.length > 0
-                                  ? label
-                                  : gradeName}
-                              </span>
-                            </label>
-                          </li>
+                                  ? "border-white/70 data-[state=checked]:bg-white data-[state=checked]:text-[#0a1f1a]"
+                                  : undefined
+                              }
+                              aria-label={`Select ${gradeName} stream ${stream.name}`}
+                            />
+                            {stream.name}
+                          </label>
                         );
                       })}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-          {scopeTargets.length > 0 && (
-            <p className={cn(tt.text.small, tt.ink.muted, tt.numeral)}>
-              {scopeTargets.length} timetable{scopeTargets.length === 1 ? "" : "s"}:{" "}
-              {scopeSummaryLabel(scopeTargets)}
-            </p>
-          )}
-        </WizardQuestion>
       </div>
     );
   };
@@ -1480,12 +1651,13 @@ export function TimetableSetupWizard({
               icon={Clock}
               title="When does school run?"
             />
-            <SchoolDayPreview
+            <DaySummary
               startFriendly={startFriendly}
-              dayEndFriendly={dayEndFriendly}
+              endFriendly={dayEndFriendly}
               periodCountNum={periodCountNum}
               periodDurationNum={periodDurationNum}
               weekLabel={weekLabel}
+              breakCount={null}
             />
             <StepBody className="space-y-3 py-4 sm:py-5">
               <WizardQuestion
@@ -1560,19 +1732,14 @@ export function TimetableSetupWizard({
                     max={240}
                     inputMode="numeric"
                     value={isCustomLessonLength ? periodDuration : ""}
-                    placeholder="35"
+                    placeholder="e.g. 35"
                     onChange={(e) => {
                       const raw = e.target.value.replace(/\D/g, "");
                       setPeriodDuration(raw);
                     }}
-                    onFocus={() => {
-                      if (PRESET_LESSON_LENGTH_VALUES.has(periodDuration)) {
-                        setPeriodDuration("");
-                      }
-                    }}
                     className={cn(
                       onboardingInputClass,
-                      "h-9 w-16 px-2",
+                      "h-9 w-24 px-2",
                       tt.text.title,
                       isCustomLessonLength &&
                         "border-[#0a1f1a] ring-1 ring-[#0a1f1a]/20 dark:border-[#246a59]",
@@ -1615,19 +1782,14 @@ export function TimetableSetupWizard({
                     max={20}
                     inputMode="numeric"
                     value={isCustomPeriodCount ? periodCount : ""}
-                    placeholder="10"
+                    placeholder="e.g. 10"
                     onChange={(e) => {
                       const raw = e.target.value.replace(/\D/g, "");
                       setPeriodCount(raw);
                     }}
-                    onFocus={() => {
-                      if (PRESET_LESSONS_PER_DAY_VALUES.has(periodCount)) {
-                        setPeriodCount("");
-                      }
-                    }}
                     className={cn(
                       onboardingInputClass,
-                      "h-9 w-16 px-2",
+                      "h-9 w-24 px-2",
                       tt.text.title,
                       isCustomPeriodCount &&
                         "border-[#0a1f1a] ring-1 ring-[#0a1f1a]/20 dark:border-[#246a59]",
@@ -1708,7 +1870,15 @@ export function TimetableSetupWizard({
               title="School breaks"
               description="We've set a typical day. Continue if it looks right — or tweak it."
             />
-            <BreakDayPreview dayPreview={dayPreview} />
+            <DaySummary
+              startFriendly={startFriendly}
+              endFriendly={schoolDayEndFriendly}
+              periodCountNum={periodCountNum}
+              periodDurationNum={periodDurationNum}
+              weekLabel={weekLabel}
+              breakCount={breakCount}
+              breakMinutes={breakMinutes}
+            />
             <StepBody className="space-y-3 py-4 sm:py-5">
               {renderBreaksStep()}
             </StepBody>
@@ -1718,15 +1888,20 @@ export function TimetableSetupWizard({
       case 3:
         return (
           <>
-            <StepIntro compact icon={GraduationCap} title="Select classes" />
-            <ClassesSummaryPreview
+            <StepIntro
+              compact
+              icon={GraduationCap}
+              title="Choose classes"
+              description="Each selected class gets its own weekly timetable. You can add the rest later."
+            />
+            <DaySummary
               startFriendly={startFriendly}
-              dayEndFriendly={dayEndFriendly}
+              endFriendly={schoolDayEndFriendly}
               periodCountNum={periodCountNum}
               periodDurationNum={periodDurationNum}
               weekLabel={weekLabel}
-              selectedCount={scopeTargets.length}
-              totalCount={buildDefaultScopeKeys(gradeLevelsWithStreams).length}
+              breakCount={breakCount}
+              breakMinutes={breakMinutes}
             />
             <StepBody className="space-y-3 py-4 sm:py-5">
               {renderClassesStep()}
@@ -1748,13 +1923,13 @@ export function TimetableSetupWizard({
         steps={[...WIZARD_STEPS]}
         onBack={handleBack}
         onSkip={handleSkip}
-        skipLabel="I'll do this later"
+        skipLabel="Later"
         onContinue={() => void handleContinue()}
         continueLabel={
           step === TOTAL_STEPS
             ? isSubmitting
               ? "May take a few minutes…"
-              : "Make my timetables"
+              : "Make timetables"
             : `Next: ${WIZARD_STEPS[step]?.name ?? "Continue"}`
         }
         showSkip={!isSubmitting}

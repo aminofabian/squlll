@@ -17,7 +17,6 @@ import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { ClassesClassDetail } from "./components/ClassesClassDetail";
 import { X } from "lucide-react";
 import { ClassesPulseHero } from "./components/ClassesPulseHero";
-import { ClassesQuickLinks } from "./components/ClassesQuickLinks";
 import { ClassesCampusOverview } from "./components/ClassesCampusOverview";
 import { useStudentsFromStore } from "@/lib/hooks/useStudents";
 import { useTenantStatistics } from "@/lib/hooks/useTenantStatistics";
@@ -320,11 +319,13 @@ export default function ClassesPage() {
     [defaultAddSubjectContext, openAddSubject, openAssignTeacher, selectedGrade],
   );
 
-  const headerTitle = selectedGrade ? "Class" : "Classes";
+  const headerTitle = selectedGrade
+    ? `${selectedGrade.displayName}${selectedGrade.streamName ? ` · ${selectedGrade.streamName}` : ""}`
+    : "Classes";
 
   const headerSubtitle = selectedGrade
-    ? `${selectedGrade.displayName}${selectedGrade.streamName ? ` · ${selectedGrade.streamName}` : ""} · ${selectedGrade.levelName}`
-    : "Structure, subjects, and teachers by grade";
+    ? selectedGrade.levelName
+    : "Browse every class by level";
 
   if (isLoading && !config) {
     return <ClassesPageSkeleton />;
@@ -372,17 +373,14 @@ export default function ClassesPage() {
                   isLoading={isLoading}
                   studentCount={studentCount}
                   studentsLoading={statsLoading}
-                />
-
-                <ClassesQuickLinks
-                  onOpenSubjects={() => setShowSubjectsDrawer(true)}
+                  onEnrolStudents={() => router.push("/students?action=add")}
+                  onAddTeachers={() => router.push("/teachers")}
                 />
 
                 <ClassesCampusOverview
                   config={config}
                   students={students}
                   isLoading={isLoading}
-                  onOpenGradePicker={() => setIsGradeSheetOpen(true)}
                   onGradeSelect={handleGradeSelect}
                   onStreamSelect={handleStreamSelect}
                 />

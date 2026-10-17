@@ -403,7 +403,7 @@ export function TimetableJourney({
                   {stops.length}
                 </span>
                 <span className="hidden sm:inline tabular-nums">
-                  {doneCount}/{stops.length}
+                  {doneCount}/{stops.length} done
                 </span>
                 {current?.optional ? " · optional" : ""}
               </span>

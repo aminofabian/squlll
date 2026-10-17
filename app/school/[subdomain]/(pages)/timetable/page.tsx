@@ -82,6 +82,7 @@ import { getSubjectAccent } from "./utils/timetableSubjectColors";
 import { tt } from "./utils/timetableTheme";
 import { ttMenu } from "./utils/timetableActionMenuStyles";
 import { cn } from "@/lib/utils";
+import { getGradeSortOrder } from "@/lib/utils/grade-display";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -2205,7 +2206,7 @@ export default function SmartTimetableNew() {
                       ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
                       : schoolWideView
                         ? "All classes"
-                        : "Choose a class"}
+                        : "Timetable"}
                   </h1>
                   <RealtimeLiveIndicator />
                 </div>
@@ -2918,7 +2919,11 @@ export default function SmartTimetableNew() {
                               tt.border.hair,
                             )}
                           >
-                            <LayoutGrid className={cn("h-4 w-4", tt.ink.muted)} />
+                            {hasScheduleStructure ? (
+                              <LayoutGrid className={cn("h-4 w-4", tt.ink.muted)} />
+                            ) : (
+                              <Clock className={cn("h-4 w-4", tt.ink.muted)} />
+                            )}
                           </div>
                           <h3
                             className={cn(
@@ -2927,53 +2932,83 @@ export default function SmartTimetableNew() {
                               tt.ink.strong,
                             )}
                           >
-                            Choose a class
+                            {hasScheduleStructure
+                              ? "Choose a class"
+                              : "Set up your school day first"}
                           </h3>
                           <p className={cn("mt-1", tt.text.small, tt.ink.muted)}>
-                            Pick a class from the list to view and edit its
-                            timetable.
+                            {hasScheduleStructure
+                              ? "Pick a class from the list to view and edit its timetable."
+                              : "Add lesson times and breaks, then pick a class to build its timetable."}
                           </p>
-                          {grades.length > 0 ? (
-                            <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-                              {grades.slice(0, 12).map((grade) => (
-                                <button
-                                  key={grade.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSchoolWideView(false);
-                                    setSelectedGrade(grade.id);
-                                  }}
+
+                          {hasScheduleStructure ? (
+                            <>
+                              {grades.length > 0 ? (
+                                <div className="mt-4 flex max-h-56 flex-wrap justify-center gap-1.5 overflow-y-auto">
+                                  {[...grades]
+                                    .sort(
+                                      (a, b) =>
+                                        getGradeSortOrder(a.displayName || a.name) -
+                                        getGradeSortOrder(b.displayName || b.name),
+                                    )
+                                    .map((grade) => (
+                                      <button
+                                        key={grade.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setSchoolWideView(false);
+                                          setSelectedGrade(grade.id);
+                                        }}
+                                        className={cn(
+                                          "rounded-none border px-2.5 py-1.5 font-medium transition-colors",
+                                          tt.text.small,
+                                          tt.border.hair,
+                                          tt.ink.base,
+                                          "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
+                                        )}
+                                      >
+                                        {grade.displayName || grade.name}
+                                      </button>
+                                    ))}
+                                </div>
+                              ) : (
+                                <p className={cn("mt-3", tt.text.small, tt.ink.muted)}>
+                                  No classes yet. Add classes first.
+                                </p>
+                              )}
+                              <div className={cn("mt-5 border-t pt-4", tt.border.hair)}>
+                                <p className={cn(tt.text.caption, tt.ink.muted)}>
+                                  Need the bigger picture?
+                                </p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   className={cn(
-                                    "rounded-none border px-2.5 py-1.5 font-medium transition-colors",
+                                    "mt-2 h-8 gap-1.5 rounded-none font-medium",
                                     tt.text.small,
-                                    tt.border.hair,
-                                    tt.ink.base,
-                                    "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
-                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
                                   )}
+                                  onClick={() => setSchoolWideView(true)}
                                 >
-                                  {grade.displayName || grade.name}
-                                </button>
-                              ))}
-                            </div>
-                          ) : null}
-                          <div className={cn("mt-5 border-t pt-4", tt.border.hair)}>
-                            <p className={cn(tt.text.caption, tt.ink.muted)}>
-                              Need the bigger picture?
-                            </p>
+                                  <LayoutGrid className="h-3.5 w-3.5" />
+                                  View whole school
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
                             <Button
-                              variant="outline"
                               size="sm"
                               className={cn(
-                                "mt-2 h-8 gap-1.5 rounded-none font-medium",
+                                "mt-4 h-9 gap-1.5 rounded-none bg-[#0a1f1a] px-3 font-medium text-white hover:bg-[#246a59]",
                                 tt.text.small,
                               )}
-                              onClick={() => setSchoolWideView(true)}
+                              onClick={() => setShowTimetableWizard(true)}
                             >
-                              <LayoutGrid className="h-3.5 w-3.5" />
-                              View whole school
+                              <Clock className="h-3.5 w-3.5" />
+                              Set up school day
                             </Button>
-                          </div>
+                          )}
                         </div>
                       </div>
                     )

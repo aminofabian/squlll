@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { useParams } from "next/navigation";
 import {
+  ArrowRight,
   Building2,
   CheckCircle2,
   Landmark,
   Loader2,
+  MessageSquare,
+  ShieldCheck,
   Smartphone,
   Sparkles,
 } from "lucide-react";
@@ -13,11 +17,14 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SupportDialog } from "@/components/chat/SupportDialog";
 import { CustodyMpesaSettingsPanel } from "../../fees/components/CustodyMpesaSettingsPanel";
 import { SchoolBankAccountsPanel } from "../../fees/components/SchoolBankAccountsPanel";
 import { useMpesaCustody } from "../../fees/hooks/useMpesaCustody";
@@ -42,119 +49,147 @@ export function OwnerPaymentsDrawer({
   defaultRail = "mpesa",
   allowDuringOnboarding = false,
 }: OwnerPaymentsDrawerProps) {
+  const params = useParams();
+  const subdomain = typeof params?.subdomain === "string" ? params.subdomain : "";
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [rail, setRail] = useState<Rail>(defaultRail);
+  const [supportOpen, setSupportOpen] = useState(false);
   const isOwner = useMemo(() => readIsSchoolOwner(), []);
   const { destination, availability, loading, custodyLine } = useMpesaCustody();
 
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
 
-  useEffect(() => {
-    if (open) setRail(defaultRail);
-  }, [open, defaultRail]);
-
   if (!isOwner && !allowDuringOnboarding) return null;
 
-  const tillReady = Boolean(destination && availability?.custodyProvider === "DARAJA");
+  const railOn = availability?.custodyProvider === "DARAJA";
+  const tillReady = Boolean(destination && railOn);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) setRail(defaultRail);
+    setOpen(next);
+  };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
-      <SheetContent
-        side="right"
-        className={cn(
-          "flex w-full flex-col gap-0 overflow-hidden border-l border-[#1a4d42]/15 p-0 sm:max-w-md",
-          "bg-[#f3f7f5] dark:bg-[#071411]",
-        )}
-      >
-        <div
-          className="relative overflow-hidden border-b border-[#1a4d42]/15 bg-[#0a1f1a] px-5 pb-5 pt-6 text-white"
-          style={{
-            backgroundImage: `
-              radial-gradient(ellipse 80% 60% at 100% 0%, rgba(36,106,89,0.55), transparent 55%),
-              radial-gradient(ellipse 50% 40% at 0% 100%, rgba(16,185,129,0.18), transparent 50%)
-            `,
-          }}
+    <>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col gap-0 overflow-hidden border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 dark:border-white/10 dark:bg-[#071411]"
         >
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.12]"
-            aria-hidden
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, rgba(255,255,255,0.35) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.35) 1px, transparent 1px)
-              `,
-              backgroundSize: "24px 24px",
-            }}
-          />
-          <SheetHeader className="relative space-y-2 p-0 text-left">
-            <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/90">
+          <SheetHeader className="space-y-1 border-b border-[#1a4d42]/12 bg-white px-5 pb-4 pt-5 pr-12 text-left dark:border-white/10 dark:bg-[#0c1a17]">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#246a59]">
               <Sparkles className="h-3 w-3" />
-              Owner · payment rails
+              Payment settings
             </p>
-            <SheetTitle className="font-display text-xl tracking-tight text-white">
+            <SheetTitle className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
               How parents pay
             </SheetTitle>
-            <SheetDescription className="max-w-[22rem] text-[13px] leading-relaxed text-white/65">
-              Till for M-Pesa Express PIN prompts, and bank details for fee
-              letters — only you can edit these.
+            <SheetDescription className="max-w-[26rem] text-[12px] leading-relaxed text-[#1a4d42]/60 dark:text-white/50">
+              One place for the school&apos;s M-Pesa payment account and the bank details printed on fee letters. Parents pay from their phone — no cash handling.
             </SheetDescription>
+            <div className="pt-1.5">
+              {rail === "bank" ? (
+                <span className="inline-flex items-center gap-1.5 border border-[#1a4d42]/15 bg-[#f8fbfa] px-2 py-1 text-[10px] font-medium text-[#1a4d42]/65 dark:border-white/10 dark:bg-[#071411] dark:text-white/55">
+                  <Landmark className="h-3 w-3" />
+                  Shown on fee letters
+                </span>
+              ) : loading ? (
+                <span className="inline-flex items-center gap-1.5 border border-[#1a4d42]/12 bg-[#f8fbfa] px-2 py-1 text-[10px] font-medium text-[#1a4d42]/60 dark:border-white/10 dark:bg-[#071411]">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Checking payment rail…
+                </span>
+              ) : tillReady && custodyLine ? (
+                <span className="inline-flex max-w-full items-center gap-1.5 border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-800">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{custodyLine}</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-900">
+                  <span className="h-1.5 w-1.5 bg-amber-500" />
+                  {railOn ? "Till not set yet" : "M-Pesa not set up yet"}
+                </span>
+              )}
+            </div>
           </SheetHeader>
 
-          <div className="relative mt-4 flex items-center gap-2">
-            {loading ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] text-white/70">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Checking till…
-              </span>
-            ) : tillReady && custodyLine ? (
-              <span className="inline-flex max-w-full items-center gap-1.5 truncate rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] text-emerald-100">
-                <CheckCircle2 className="h-3 w-3 shrink-0" />
-                <span className="truncate">{custodyLine}</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-400/10 px-2.5 py-1 text-[11px] text-amber-100">
-                Till not set yet
-              </span>
-            )}
+          <div
+            className="grid shrink-0 grid-cols-2 gap-1 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
+            role="tablist"
+            aria-label="Payment rail"
+          >
+            <RailTab
+              active={rail === "mpesa"}
+              onClick={() => setRail("mpesa")}
+              icon={Smartphone}
+              label="M-Pesa"
+              hint={railOn ? "Phone request" : "Not on yet"}
+            />
+            <RailTab
+              active={rail === "bank"}
+              onClick={() => setRail("bank")}
+              icon={Landmark}
+              label="Bank"
+              hint="On fee letters"
+            />
           </div>
-        </div>
 
-        <div className="flex gap-1 border-b border-[#1a4d42]/10 bg-white/70 px-3 py-2 dark:bg-[#0c1a17]/80">
-          <RailTab
-            active={rail === "mpesa"}
-            onClick={() => setRail("mpesa")}
-            icon={Smartphone}
-            label="M-Pesa Express"
-            hint="Till / paybill"
-          />
-          <RailTab
-            active={rail === "bank"}
-            onClick={() => setRail("bank")}
-            icon={Landmark}
-            label="Bank"
-            hint="Fee letters"
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="rounded-none border border-[#1a4d42]/12 bg-white p-4 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
             {rail === "mpesa" ? (
-              <CustodyMpesaSettingsPanel compact />
+              loading ? (
+                <div className="flex items-center gap-2 border border-[#1a4d42]/12 bg-white px-4 py-6 text-sm text-[#1a4d42]/60">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Checking M-Pesa settings…
+                </div>
+              ) : railOn ? (
+                <div className="border border-[#1a4d42]/12 bg-white p-4 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]">
+                  <CustodyMpesaSettingsPanel compact />
+                </div>
+              ) : (
+                <MpesaUnavailable
+                  onSupport={() => setSupportOpen(true)}
+                  onBank={() => setRail("bank")}
+                />
+              )
             ) : (
-              <SchoolBankAccountsPanel compact />
+              <div className="border border-[#1a4d42]/12 bg-white p-4 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]">
+                <SchoolBankAccountsPanel compact />
+              </div>
             )}
+
+            <p className="mt-4 flex items-start gap-2 px-1 text-[10.5px] leading-relaxed text-[#1a4d42]/45 dark:text-white/40">
+              <Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Bank payments do not ping a phone. Parents pay the paybill on the letter and use the account number as the reference.
+            </p>
           </div>
 
-          <p className="mt-4 flex items-start gap-2 px-0.5 text-[11px] leading-relaxed text-[#1a4d42]/55 dark:text-white/40">
-            <Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            Express money lands on your till (PartyB). Bank accounts only print
-            on letters — they are not for STK.
-          </p>
-        </div>
-      </SheetContent>
-    </Sheet>
+          <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-[#1a4d42]/12 bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
+            <p className="flex items-center gap-1.5 text-[10px] text-[#1a4d42]/45 dark:text-white/40">
+              <ShieldCheck className="h-3 w-3" />
+              Only the school owner can change these.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 border-[#1a4d42]/15 px-3 text-xs"
+              onClick={() => setOpen(false)}
+            >
+              Done
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {supportOpen ? (
+        <SupportDialog
+          open={supportOpen}
+          onOpenChange={setSupportOpen}
+          subdomain={subdomain}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -174,12 +209,14 @@ function RailTab({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex flex-1 items-center gap-2 px-2.5 py-2 text-left transition-colors",
+        "flex min-w-0 items-center gap-2 border px-2.5 py-2 text-left transition-colors",
         active
-          ? "border border-[#246a59]/25 bg-[#246a59]/[0.08] text-[#0a1f1a] dark:text-white"
-          : "border border-transparent text-[#1a4d42]/55 hover:bg-[#1a4d42]/[0.04] dark:text-white/50",
+          ? "border-[#246a59]/30 bg-white text-[#0a1f1a] shadow-[2px_2px_0_0_rgba(10,31,26,0.05)] dark:bg-[#0c1a17] dark:text-white"
+          : "border-transparent text-[#1a4d42]/55 hover:bg-white/70 dark:text-white/45 dark:hover:bg-white/5",
       )}
     >
       <span
@@ -193,9 +230,61 @@ function RailTab({
         <Icon className="h-3.5 w-3.5" />
       </span>
       <span className="min-w-0">
-        <span className="block text-[12px] font-semibold leading-tight">{label}</span>
-        <span className="block text-[10px] opacity-60">{hint}</span>
+        <span className="block truncate text-[11.5px] font-semibold leading-tight">
+          {label}
+        </span>
+        <span className="block truncate text-[9.5px] opacity-60">{hint}</span>
       </span>
     </button>
+  );
+}
+
+function MpesaUnavailable({
+  onSupport,
+  onBank,
+}: {
+  onSupport: () => void;
+  onBank: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]">
+        <p className="text-[13px] font-semibold text-[#0a1f1a] dark:text-white">
+          Set the school bank now
+        </p>
+        <p className="mt-1 text-[12px] leading-relaxed text-[#1a4d42]/65 dark:text-white/55">
+          Phone requests are not switched on yet. Parents can still pay from the
+          bank printed on the fee letter.
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          className="mt-3 h-9 w-full gap-1.5 bg-[#0a1f1a] text-xs text-white hover:bg-[#246a59]"
+          onClick={onBank}
+        >
+          Choose the bank
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      <div className="border border-amber-200 bg-amber-50 px-4 py-3">
+        <p className="text-[12px] font-semibold text-amber-950">
+          Want a payment request on the parent&apos;s phone?
+        </p>
+        <p className="mt-1 text-[11px] leading-relaxed text-amber-900/80">
+          Ask SQUL to switch M-Pesa on. Then add the school bank paybill (for example NCBA 880100) and send a KES 1 test.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3 h-8 gap-1.5 border-amber-300 bg-white text-xs text-amber-950 hover:bg-amber-100"
+          onClick={onSupport}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          Message SQUL support
+        </Button>
+      </div>
+    </div>
   );
 }

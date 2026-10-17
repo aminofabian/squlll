@@ -51,3 +51,15 @@ export const MARK_CONVERSATION_READ = `
     markConversationAsRead(conversationId: $conversationId)
   }
 `
+
+export const CHAT_CONTACTS = `
+  query ChatContacts {
+    chatContacts {
+      id
+      type
+      name
+      subtitle
+      email
+    }
+  }
+`

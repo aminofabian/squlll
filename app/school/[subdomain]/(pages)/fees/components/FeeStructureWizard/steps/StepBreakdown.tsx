@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Copy } from 'lucide-react'
+import { Copy, Info } from 'lucide-react'
 import { CategorySplitEditor } from '../../CategorySplitEditor'
 import { initSplitsForCategories } from '../../../lib/categorySplits'
 import { roundToNearestTen } from '../../../lib/feesAmounts'
@@ -46,6 +46,7 @@ interface StepBreakdownProps {
   onChange: (field: string, value: unknown) => void
   onCategorySplitsChange?: (splits: Record<string, number>) => void
   errors?: Record<string, string>
+  onBack?: () => void
 }
 
 export function StepBreakdown({
@@ -56,12 +57,14 @@ export function StepBreakdown({
   onChange,
   onCategorySplitsChange,
   errors,
+  onBack,
 }: StepBreakdownProps) {
   const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({})
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [draftSplits, setDraftSplits] = useState<Record<string, number>>(() =>
     initSplitsForCategories(categories, categorySplits),
   )
+  const [mobileTermId, setMobileTermId] = useState('')
 
   const sortedTerms = useMemo(
     () => sortTermsForLetter(formData.terms || []),
@@ -180,6 +183,47 @@ export function StepBreakdown({
   }
 
   const draftKey = (termId: string, bucketId: string) => `${termId}:${bucketId}`
+  const hasRemaining = sortedTerms.some((term) => getRemaining(term.id) !== 0)
+  const activeMobileTermId = sortedTerms.some((term) => term.id === mobileTermId)
+    ? mobileTermId
+    : sortedTerms[0]?.id ?? ''
+
+  const renderAmountInput = (bucketId: string, termId: string) => {
+    const key = draftKey(termId, bucketId)
+    const committed = getAmount(bucketId, termId)
+    const draft = amountDrafts[key]
+    return (
+      <Input
+        className="h-8 border-slate-200 text-right text-xs tabular-nums"
+        inputMode="numeric"
+        value={
+          draft !== undefined
+            ? draft
+            : committed > 0
+              ? committed.toLocaleString('en-KE')
+              : ''
+        }
+        onChange={(e) => {
+          setAmountDrafts((prev) => ({
+            ...prev,
+            [key]: e.target.value,
+          }))
+        }}
+        onBlur={() => {
+          const raw = (amountDrafts[key] ?? String(committed))
+            .replace(/,/g, '')
+            .trim()
+          const n = Number(raw)
+          setLineAmount(bucketId, termId, Number.isFinite(n) ? n : 0)
+          setAmountDrafts((prev) => {
+            const next = { ...prev }
+            delete next[key]
+            return next
+          })
+        }}
+      />
+    )
+  }
 
   return (
     <div className="space-y-5">
@@ -190,6 +234,33 @@ export function StepBreakdown({
         reaches 0.
       </p>
 
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Included in this plan
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {categories.map((category) => (
+              <span
+                key={category}
+                className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800"
+              >
+                {category}
+              </span>
+            ))}
+          </div>
+        </div>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="shrink-0 text-xs font-medium text-primary hover:underline"
+          >
+            Add or remove lines
+          </button>
+        ) : null}
+      </div>
+
       <FeesWizardSection
         title="Split the total across fee lines"
         description="Type what each line costs for every term below."
@@ -199,7 +270,91 @@ export function StepBreakdown({
             No fee lines yet. Go back and choose what the fee covers.
           </p>
         ) : (
-          <FeesAmountTable>
+          <>
+            <div className="sm:hidden">
+              <div className="flex gap-1.5 overflow-x-auto pb-1">
+                {sortedTerms.map((term) => {
+                  const active = term.id === activeMobileTermId
+                  return (
+                    <button
+                      key={term.id}
+                      type="button"
+                      onClick={() => setMobileTermId(term.id)}
+                      className={cn(
+                        'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                        active
+                          ? 'border-transparent text-white'
+                          : 'border-slate-200 bg-white text-slate-600',
+                      )}
+                      style={
+                        active
+                          ? { backgroundColor: FEES_BRAND.primary }
+                          : undefined
+                      }
+                    >
+                      {term.name}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-2 overflow-hidden rounded-lg border border-slate-200">
+                <div className="flex items-center justify-between gap-3 bg-emerald-50/70 px-3 py-2.5">
+                  <span className="shrink-0 whitespace-nowrap text-sm font-medium text-slate-800">
+                    Term total
+                  </span>
+                  <FeesKesCell amount={termTotalKes} />
+                </div>
+                {(formData.selectedBuckets || []).map((bucketId) => {
+                  const meta = formData.bucketAmounts[bucketId]
+                  if (!meta) return null
+                  return (
+                    <div
+                      key={bucketId}
+                      className="flex items-center justify-between gap-3 border-t border-slate-100 px-3 py-2"
+                    >
+                      <span className="min-w-0 truncate text-sm font-medium text-slate-800">
+                        {meta.name}
+                      </span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <span className="text-[10px] text-slate-400">KES</span>
+                        <div className="w-28">
+                          {renderAmountInput(bucketId, activeMobileTermId)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-3 py-2.5">
+                  <span className="text-sm font-medium text-slate-800">
+                    Remaining
+                  </span>
+                  {(() => {
+                    const rem = getRemaining(activeMobileTermId)
+                    return (
+                      <span
+                        className={cn(
+                          'text-sm font-semibold tabular-nums',
+                          rem === 0
+                            ? 'text-emerald-700'
+                            : rem > 0
+                              ? 'text-amber-700'
+                              : 'text-rose-700',
+                        )}
+                      >
+                        {rem === 0
+                          ? '0'
+                          : rem > 0
+                            ? rem.toLocaleString('en-KE')
+                            : `−${Math.abs(rem).toLocaleString('en-KE')}`}
+                      </span>
+                    )
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            <FeesAmountTable className="hidden sm:block">
             <thead>
               <tr className={feesTableHead}>
                 <th className={feesTableThFirst}>Line</th>
@@ -225,50 +380,11 @@ export function StepBreakdown({
                 return (
                   <tr key={bucketId} className="border-b border-slate-100">
                     <td className={feesTableCellLabel}>{meta.name}</td>
-                    {sortedTerms.map((term) => {
-                      const key = draftKey(term.id, bucketId)
-                      const committed = getAmount(bucketId, term.id)
-                      const draft = amountDrafts[key]
-                      return (
-                        <td key={term.id} className={feesTableCellAmount}>
-                          <Input
-                            className="h-8 border-slate-200 text-right text-xs tabular-nums"
-                            inputMode="numeric"
-                            value={
-                              draft !== undefined
-                                ? draft
-                                : committed > 0
-                                  ? committed.toLocaleString('en-KE')
-                                  : ''
-                            }
-                            onChange={(e) => {
-                              setAmountDrafts((prev) => ({
-                                ...prev,
-                                [key]: e.target.value,
-                              }))
-                            }}
-                            onBlur={() => {
-                              const raw = (
-                                amountDrafts[key] ?? String(committed)
-                              )
-                                .replace(/,/g, '')
-                                .trim()
-                              const n = Number(raw)
-                              setLineAmount(
-                                bucketId,
-                                term.id,
-                                Number.isFinite(n) ? n : 0,
-                              )
-                              setAmountDrafts((prev) => {
-                                const next = { ...prev }
-                                delete next[key]
-                                return next
-                              })
-                            }}
-                          />
-                        </td>
-                      )
-                    })}
+                    {sortedTerms.map((term) => (
+                      <td key={term.id} className={feesTableCellAmount}>
+                        {renderAmountInput(bucketId, term.id)}
+                      </td>
+                    ))}
                   </tr>
                 )
               })}
@@ -301,7 +417,8 @@ export function StepBreakdown({
                 })}
               </tr>
             </tbody>
-          </FeesAmountTable>
+            </FeesAmountTable>
+          </>
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -318,15 +435,17 @@ export function StepBreakdown({
               ? `Copy ${sortedTerms[0].name} to all terms`
               : 'Copy first term to all'}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs"
-            onClick={autoFillTuition}
-          >
-            Put the remaining into Tuition
-          </Button>
+          {hasRemaining ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={autoFillTuition}
+            >
+              Put the remaining into Tuition
+            </Button>
+          ) : null}
         </div>
 
         {errors?.bucketAmounts || errors?.remaining ? (
@@ -366,6 +485,11 @@ export function StepBreakdown({
           </Button>
         </div>
       </details>
+      <div className="flex items-start gap-2 rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs leading-relaxed text-slate-500">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+        After saving, link this plan to classes and create student invoices for
+        the term.
+      </div>
     </div>
   )
 }

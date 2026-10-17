@@ -19,6 +19,7 @@ interface ClassDetailQuickLinksProps {
   gradeDisplayName: string;
   streamId?: string | null;
   className?: string;
+  layout?: "row" | "stack";
 }
 
 const items = [
@@ -50,6 +51,7 @@ export function ClassDetailQuickLinks({
   gradeDisplayName,
   streamId,
   className,
+  layout = "row",
 }: ClassDetailQuickLinksProps) {
   const hrefFor = (id: (typeof items)[number]["id"]) => {
     switch (id) {
@@ -67,7 +69,8 @@ export function ClassDetailQuickLinks({
   return (
     <div
       className={cn(
-        "grid gap-2 sm:grid-cols-3",
+        "grid gap-2",
+        layout === "row" ? "sm:grid-cols-3" : "grid-cols-1",
         className,
       )}
     >

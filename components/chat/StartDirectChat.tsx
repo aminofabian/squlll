@@ -13,7 +13,7 @@ interface StartDirectChatProps {
   recipientId: string
   recipientLabel?: string
   subdomain: string
-  onSent: () => void
+  onSent: (conversationId?: string) => void
   onBack?: () => void
 }
 
@@ -37,9 +37,13 @@ export function StartDirectChat({
     setSending(true)
     setError(null)
     try {
-      await sendMessageViaGraphql(subdomain, { recipientType, recipientId, content })
+      const sent = await sendMessageViaGraphql(subdomain, {
+        recipientType,
+        recipientId,
+        content,
+      })
       setDraft('')
-      onSent()
+      onSent(sent.conversationId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message')
     } finally {

@@ -88,6 +88,69 @@ export function SectionIcon({
   return <Icon className={className} strokeWidth={1.5} />
 }
 
+/** Two-letter monogram used by the Campus Dawn crest and seals. */
+export function schoolInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'S'
+  )
+}
+
+/**
+ * A restrained heraldic shield used across the Campus Dawn theme: nav mark,
+ * hero lockup, admissions card and footer seal. Drawn with currentColor so it
+ * inherits the school palette in both dark and paper contexts.
+ */
+export function DawnCrest({
+  initials,
+  className,
+}: {
+  initials: string
+  className?: string
+}) {
+  return (
+    <svg
+      viewBox="0 0 72 84"
+      fill="none"
+      className={className}
+      aria-hidden
+      focusable="false"
+    >
+      <path
+        d="M36 2.5 68.5 13.9v28.3c0 18.6-13.6 31.7-32.5 40.3C17.1 73.9 3.5 60.8 3.5 42.2V13.9L36 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M36 8.4 62.8 17.7v24.5c0 15.9-11.8 27.3-26.8 35C21 69.5 9.2 58.1 9.2 42.2V17.7L36 8.4Z"
+        stroke="currentColor"
+        strokeWidth="0.7"
+        opacity="0.55"
+      />
+      <circle cx="36" cy="22.5" r="4.2" stroke="currentColor" strokeWidth="0.9" />
+      <circle cx="36" cy="22.5" r="1.1" fill="currentColor" />
+      <text
+        x="36"
+        y="51"
+        textAnchor="middle"
+        fill="currentColor"
+        fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif"
+        fontSize="19"
+        letterSpacing="1.5"
+      >
+        {initials}
+      </text>
+      <path d="M25 59.5h22" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
+      <path d="M30.5 64.5h11" stroke="currentColor" strokeWidth="0.9" opacity="0.4" />
+    </svg>
+  )
+}
+
 export function themeStyle(theme: HomepageTheme): CSSProperties {
   return {
     '--primary': theme.primary,
@@ -1283,6 +1346,94 @@ export function HomepageShellStyles({
         .horizon-board-shell section.border-y {
           background: #fff !important;
           border-color: rgba(27,21,18,0.12) !important;
+        }
+
+        /* ---- Campus Dawn / prospectus shell ---- */
+        .campus-dawn-shell {
+          --cd-rule: color-mix(in srgb, var(--school-ink) 13%, transparent);
+          --cd-rule-soft: color-mix(in srgb, var(--school-ink) 7%, transparent);
+          --cd-muted: color-mix(in srgb, var(--school-ink) 62%, transparent);
+          --cd-accent-ink: color-mix(in srgb, var(--school-accent) 58%, var(--school-ink));
+          --cd-paper-2: color-mix(in srgb, var(--school-paper) 86%, #e6d8bc);
+          --cd-shadow: color-mix(in srgb, var(--school-ink) 22%, transparent);
+          background-color: var(--school-paper);
+          text-rendering: optimizeLegibility;
+        }
+        .campus-dawn-shell .cd-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-family: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+          font-size: 0.6875rem;
+          line-height: 1;
+          font-weight: 600;
+          letter-spacing: 0.26em;
+          text-transform: uppercase;
+        }
+        .campus-dawn-shell .cd-eyebrow::before {
+          content: "";
+          width: 1.5rem;
+          height: 1px;
+          background: currentColor;
+          opacity: 0.55;
+        }
+        .campus-dawn-shell .cd-eyebrow--bare::before { display: none; }
+        .campus-dawn-shell .cd-card {
+          border: 1px solid var(--cd-rule);
+          background: #fff;
+          box-shadow:
+            0 34px 80px -58px var(--cd-shadow),
+            0 1px 0 rgba(255, 255, 255, 0.75) inset;
+        }
+        .campus-dawn-shell .cd-hero-grid {
+          background-image:
+            linear-gradient(to right, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+          background-size: 88px 88px;
+          -webkit-mask-image: linear-gradient(to bottom, #000 8%, transparent 82%);
+          mask-image: linear-gradient(to bottom, #000 8%, transparent 82%);
+        }
+        .campus-dawn-shell .cd-link::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -0.2rem;
+          height: 1px;
+          background: currentColor;
+          opacity: 0;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        .campus-dawn-shell .cd-link:hover::after,
+        .campus-dawn-shell .cd-link:focus-visible::after {
+          opacity: 0.6;
+          transform: scaleX(1);
+        }
+        .campus-dawn-shell .school-programs {
+          background-color: var(--school-paper);
+          background-image:
+            radial-gradient(ellipse 60% 50% at 100% 0%, color-mix(in srgb, var(--school-accent) 10%, transparent), transparent 62%),
+            radial-gradient(ellipse 50% 40% at 0% 100%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 55%);
+          border-color: var(--cd-rule) !important;
+        }
+        .campus-dawn-shell .school-programs .school-program-card {
+          border: 1px solid var(--cd-rule);
+          background: #fff;
+          box-shadow: 0 30px 60px -52px var(--cd-shadow);
+        }
+        .campus-dawn-shell .school-programs .school-program-subjects {
+          background: color-mix(in srgb, var(--school-paper) 55%, #fff);
+        }
+        .campus-dawn-shell a:focus-visible,
+        .campus-dawn-shell button:focus-visible {
+          outline: 2px solid var(--cd-accent-ink);
+          outline-offset: 3px;
+        }
+        .campus-dawn-shell ::selection {
+          background: color-mix(in srgb, var(--school-accent) 45%, transparent);
+          color: var(--school-ink);
         }
 
         @media (prefers-reduced-motion: reduce) {

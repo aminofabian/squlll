@@ -310,12 +310,10 @@ APP_PAYMENTS_ENCRYPTION_KEY=<paste output>`}
           <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800/60 dark:bg-slate-900/80">
             <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Custody rail (till / paybill only)
+                M-Pesa rail (school bank paybill)
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                When ON, schools enter Buy Goods till or HO paybill — STK uses
-                platform BusinessShortCode and their till as PartyB. No B2B.
-                Bank shared paybills (NCBA 880100) are refused.
+                When ON, parents get an M-Pesa request and the money goes to the school bank paybill (for example NCBA 880100) and account number. STK uses the platform shortcode; no B2B.
               </p>
             </div>
             <div className="space-y-4 p-5">

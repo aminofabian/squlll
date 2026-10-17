@@ -64,35 +64,37 @@ export function ClassStudentsRoster({
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            asChild
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs"
-          >
-            <Link href={studentsClassHref(gradeId, { streamId: streamId ?? undefined })}>
-              View all
-              <ArrowUpRight className="ml-1 h-3 w-3" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            type="button"
-            size="sm"
-            className="h-8 gap-1 bg-[#246a59] text-xs hover:bg-[#1a4d42]"
-          >
-            <Link
-              href={studentsClassHref(gradeId, {
-                streamId: streamId ?? undefined,
-                action: "add",
-              })}
+        {students.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              asChild
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
             >
-              Enrol student
-            </Link>
-          </Button>
-        </div>
+              <Link href={studentsClassHref(gradeId, { streamId: streamId ?? undefined })}>
+                View all
+                <ArrowUpRight className="ml-1 h-3 w-3" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              type="button"
+              size="sm"
+              className="h-8 gap-1 bg-[#246a59] text-xs hover:bg-[#1a4d42]"
+            >
+              <Link
+                href={studentsClassHref(gradeId, {
+                  streamId: streamId ?? undefined,
+                  action: "add",
+                })}
+              >
+                Enrol student
+              </Link>
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {students.length === 0 ? (

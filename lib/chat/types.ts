@@ -26,6 +26,14 @@ export interface ChatConversation {
   tenantId: string
 }
 
+export interface ChatContact {
+  id: string
+  type: string
+  name: string
+  subtitle?: string | null
+  email?: string | null
+}
+
 export interface NewMessageEvent {
   id: string
   conversationId: string

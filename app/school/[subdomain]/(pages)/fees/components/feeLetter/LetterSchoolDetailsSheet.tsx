@@ -52,9 +52,9 @@ function LetterMpesaTillCard() {
   if (!availability?.available && availability?.custodyProvider !== 'DARAJA') {
     return (
       <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3 text-xs text-slate-600">
-        <p className="font-medium text-slate-800">M-Pesa Express (till / paybill)</p>
+        <p className="font-medium text-slate-800">M-Pesa payments</p>
         <p className="mt-1 text-slate-500">
-          Not available yet — platform custody is off, or Daraja is not configured.
+          M-Pesa payments are not switched on for this school yet.
         </p>
         <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" asChild>
           <Link href="/dashboard?payments=open">Open payment settings</Link>
@@ -74,21 +74,21 @@ function LetterMpesaTillCard() {
     <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-950">
       <p className="flex items-center gap-1.5 font-medium">
         <Smartphone className="h-3.5 w-3.5" />
-        M-Pesa Express on letters
+        M-Pesa on letters
       </p>
       {line ? (
         <p className="mt-1 font-mono text-[11px]">{line}</p>
       ) : (
         <p className="mt-1 text-emerald-900/80">
-          No till/paybill saved yet — parents won&apos;t see STK until you add one.
+          No M-Pesa number saved yet — parents won&apos;t get payment requests until you add one.
         </p>
       )}
       <p className="mt-1 text-[10px] text-emerald-900/70">
-        Shown to parents as PartyB. Configure under Fees → M-Pesa till / paybill.
+        Shown to parents on fee letters and payment requests.
       </p>
       <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" asChild>
         <Link href="/dashboard?payments=open">
-          {line ? 'Edit till / paybill' : 'Add till / paybill'}
+          {line ? 'Edit M-Pesa number' : 'Add M-Pesa number'}
         </Link>
       </Button>
     </div>

@@ -357,7 +357,7 @@ export function ParentFeesSection({
                 Outstanding invoices
               </h3>
               <span className="text-[10px] text-slate-500">
-                Settle instantly with M-Pesa Express
+                Pay now with M-Pesa
               </span>
             </div>
             <div className="space-y-1">

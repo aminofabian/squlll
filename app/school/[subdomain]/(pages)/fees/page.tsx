@@ -148,6 +148,11 @@ export default function FeesPage() {
     typeof params?.subdomain === "string" ? params.subdomain : undefined,
   );
 
+  useEffect(() => {
+    document.body.classList.add("fees-square-mode");
+    return () => document.body.classList.remove("fees-square-mode");
+  }, []);
+
   const feesAccess = useFeesAccess();
   const {
     applyFeeAdjustment,
@@ -546,8 +551,8 @@ export default function FeesPage() {
     }
     if (processedFeeStructures.length === 0) {
       toast({
-        title: "Create a fee structure first",
-        description: "Add a fee structure before billing students.",
+        title: "Create a fee plan first",
+        description: "Add a fee plan before billing students.",
       });
       handleCreateNew();
       return;
@@ -559,7 +564,7 @@ export default function FeesPage() {
       toast({
         title: "Link structure to classes first",
         description:
-          "Apply this fee structure to grades or classes before generating bills.",
+          "Apply this fee plan to grades or classes before generating bills.",
         variant: "destructive",
       });
       handleAssignToGrade(targetId);
@@ -570,7 +575,7 @@ export default function FeesPage() {
       toast({
         title: "Link structure to classes first",
         description:
-          "Apply a fee structure to your classes before billing students.",
+          "Apply a fee plan to your classes before billing students.",
         variant: "destructive",
       });
       handleAssignToGradeAction();
@@ -606,6 +611,7 @@ export default function FeesPage() {
     // 5. We've already done the initial mount fetch
     if (
       feesSection === "plans" &&
+      !lastFetchTime &&
       graphQLStructures.length === 0 &&
       !structuresLoading &&
       !structuresError &&
@@ -622,7 +628,14 @@ export default function FeesPage() {
           isFetchingRef.current = false;
         });
     }
-  }, [feesSection, graphQLStructures.length, structuresLoading, structuresError, fetchFeeStructures]);
+  }, [
+    feesSection,
+    graphQLStructures.length,
+    structuresLoading,
+    structuresError,
+    fetchFeeStructures,
+    lastFetchTime,
+  ]);
 
   // Student Summary hook for detailed student data
   const {
@@ -788,25 +801,6 @@ export default function FeesPage() {
 
   const overviewBootstrapping =
     studentsLoading || feeAssignmentsLoading;
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!feesAccess.canManagePlans || currentView !== "dashboard") return;
-    const dismissed = localStorage.getItem("fees-setup-wizard-dismissed");
-    const needsSetup =
-      processedFeeStructures.length === 0 && graphQLStructures.length === 0;
-    if (needsSetup && !dismissed) {
-      router.replace(feesPlansHref(), { scroll: false });
-      setShowCreateForm(true);
-      localStorage.setItem("fees-setup-wizard-dismissed", "1");
-    }
-  }, [
-    processedFeeStructures.length,
-    graphQLStructures.length,
-    currentView,
-    feesAccess.canManagePlans,
-    router,
-  ]);
 
   const assignedClassCount = useMemo(() => {
     let total = 0;
@@ -978,7 +972,7 @@ export default function FeesPage() {
       toast({
         title: "Structure is inactive",
         description:
-          "Expired fee structures are read-only. Existing balances can still be collected from Balances.",
+          "Expired fee plans are read-only. Existing balances can still be collected from Balances.",
         variant: "destructive",
       });
       return;
@@ -1013,10 +1007,10 @@ export default function FeesPage() {
       deletingStructureId.current = feeStructureId;
 
       toast({
-        title: "Deleting fee structure...",
+        title: "Deleting fee plan...",
         description: structureName
           ? `Please wait while we delete "${structureName}".`
-          : "Please wait while we delete this fee structure.",
+          : "Please wait while we delete this fee plan.",
       });
 
       const success = await graphqlDeleteFeeStructure(feeStructureId);
@@ -1026,7 +1020,7 @@ export default function FeesPage() {
           await fetchFeeStructures();
         } catch (refreshError) {
           console.error(
-            "Failed to refresh fee structures list, but deletion succeeded:",
+            "Failed to refresh fee plans list, but deletion succeeded:",
             refreshError,
           );
           // Don't show error to user since deletion succeeded
@@ -1035,15 +1029,15 @@ export default function FeesPage() {
         appendAudit({
           action: "fee_plan_deleted",
           summary: structureName
-            ? `Fee structure "${structureName}" deleted`
-            : "Fee structure deleted",
+            ? `Fee plan "${structureName}" deleted`
+            : "Fee plan deleted",
         });
 
         toast({
-          title: "Fee structure deleted",
+          title: "Fee plan deleted",
           description: structureName
             ? `"${structureName}" has been successfully deleted.`
-            : "The fee structure has been successfully deleted.",
+            : "The fee plan has been successfully deleted.",
           variant: "default",
         });
 
@@ -1057,7 +1051,7 @@ export default function FeesPage() {
       } else {
         const errorMsg =
           deleteError ||
-          "Failed to delete fee structure. It may be in use or you may not have permission to delete it.";
+          "Failed to delete fee plan. It may be in use or you may not have permission to delete it.";
         console.error(`Delete failed for ${feeStructureId}:`, errorMsg);
         toast({
           title: "Deletion failed",
@@ -1145,7 +1139,7 @@ export default function FeesPage() {
       const wasCreate = !selectedStructure;
 
       toast({
-        title: wasCreate ? "Fee structure created" : "Fee structure updated",
+        title: wasCreate ? "Fee plan created" : "Fee plan updated",
         description: wasCreate
           ? "Next, apply it to your classes so students can be billed."
           : "Your changes have been saved.",
@@ -1156,8 +1150,8 @@ export default function FeesPage() {
         appendAudit({
           action: "fee_plan_created",
           summary: wasCreate
-            ? `Fee structure "${(formData as { name?: string }).name || "New structure"}" created`
-            : `Fee structure updated`,
+            ? `Fee plan "${(formData as { name?: string }).name || "New plan"}" created`
+            : `Fee plan updated`,
         });
       }
 
@@ -1165,7 +1159,7 @@ export default function FeesPage() {
         const name =
           (formData as { name?: string }).name ||
           graphQLStructures.find((s) => s.id === result)?.name ||
-          "Fee structure";
+          "Fee plan";
         setFeeStructureToAssign({
           id: result,
           name,
@@ -1180,7 +1174,7 @@ export default function FeesPage() {
       console.error("Error saving fee structure:", error);
 
       toast({
-        title: selectedStructure ? "Could not update fee structure" : "Could not create fee structure",
+        title: selectedStructure ? "Could not update fee plan" : "Could not create fee plan",
         description: errorMessage,
         variant: "destructive",
       });
@@ -1198,7 +1192,7 @@ export default function FeesPage() {
       toast({
         title: "Structure is inactive",
         description:
-          "Cannot generate new invoices from an expired fee structure. Collect against existing balances instead.",
+          "Cannot generate new invoices from an expired fee plan. Collect against existing balances instead.",
         variant: "destructive",
       });
       return;
@@ -1247,7 +1241,7 @@ export default function FeesPage() {
       toast({
         title: "Structure is inactive",
         description:
-          "Cannot link classes or create new assignments from an expired fee structure.",
+          "Cannot link classes or create new assignments from an expired fee plan.",
         variant: "destructive",
       });
       return;
@@ -1266,7 +1260,7 @@ export default function FeesPage() {
       toast({
         title: "Error",
         description:
-          "Fee structure not found. Please refresh the page and try again.",
+          "Fee plan not found. Please refresh the page and try again.",
         variant: "destructive",
       });
     }
@@ -1276,7 +1270,7 @@ export default function FeesPage() {
   const handleAssignmentSuccess = (assignmentResult: any) => {
     appendAudit({
       action: "plan_assigned",
-      summary: `Fee structure linked to classes`,
+      summary: `Fee plan linked to classes`,
     });
     Promise.all([
       fetchFeeStructures(),
@@ -1461,8 +1455,8 @@ export default function FeesPage() {
 
     if (processedFeeStructures.length === 0) {
       toast({
-        title: "Create a fee structure first",
-        description: "Add a fee structure, then apply it to your classes.",
+        title: "Create a fee plan first",
+        description: "Add a fee plan, then apply it to your classes.",
       });
       setShowCreateForm(true);
       return;
@@ -1474,7 +1468,7 @@ export default function FeesPage() {
     }
 
     toast({
-      title: "Choose a fee structure",
+      title: "Choose a fee plan",
       description:
         "Open the structure you want below, then tap Apply to class on that card.",
     });
@@ -1640,7 +1634,7 @@ export default function FeesPage() {
               {feesSection === "plans" && !feesAccess.canManagePlans && (
                 <FeesPanel>
                 <p className="text-sm text-slate-600">
-                  Your role cannot edit fee structures. Open Reports or Student
+                  Your role cannot edit fee plans. Open Reports or Student
                   balances instead.
                 </p>
                 </FeesPanel>
@@ -1828,7 +1822,7 @@ export default function FeesPage() {
                 onStepClick={handleFeeWorkflowStep}
               />
 
-              <FeesPanel title="Manage fee structures" noPadding>
+              <FeesPanel title="Manage fee plans" noPadding>
                 <div className="p-5 sm:p-6">
               <FeeStructureManager
                 onCreateNew={handleCreateNew}

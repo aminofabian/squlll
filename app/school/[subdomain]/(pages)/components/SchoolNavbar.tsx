@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useParams } from 'next/navigation'
 import {
   Menu,
   ChevronDown,
@@ -16,7 +18,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Search,
-  HelpCircle,
+  LifeBuoy,
+  MessageCircle,
   type LucideIcon,
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -33,6 +36,8 @@ import { useSignout } from '@/lib/hooks/useSignout'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { getSchoolPageTitle } from '@/lib/school/schoolShell'
+import { useChatUnreadTotal } from '@/lib/chat/ChatProvider'
+import { SupportDialog } from '@/components/chat/SupportDialog'
 
 interface SchoolNavbarProps {
   userName: string
@@ -97,10 +102,15 @@ export function SchoolNavbar({
 }: SchoolNavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const params = useParams()
+  const subdomain = typeof params?.subdomain === 'string' ? params.subdomain : ''
   const { signOut, isSigningOut } = useSignout()
+  const [supportOpen, setSupportOpen] = useState(false)
   const setupSteps = buildSetupSteps()
   const showSetupInNav = !pathname?.endsWith('/dashboard')
   const pageTitle = getSchoolPageTitle(pathname ?? '')
+  const chatUnread = useChatUnreadTotal()
+  const messagesActive = pathname?.includes('/communication') ?? false
 
   const getInitials = (name: string) => {
     if (!name || name.trim() === '') return 'U'
@@ -160,6 +170,7 @@ export function SchoolNavbar({
     'rounded-none border border-[#1a4d42]/15 bg-white shadow-[6px_6px_0_0_rgba(10,31,26,0.08)] dark:border-white/10 dark:bg-[#0c1a17] dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.4)] p-1.5'
 
   return (
+    <>
     <header className="sticky top-0 z-30 shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95">
       <div className="flex h-12 items-center gap-3 px-3 lg:px-5">
         {/* Left — page mark */}
@@ -276,6 +287,29 @@ export function SchoolNavbar({
 
         {/* Right toolbar */}
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+          <Link
+            href="/communication"
+            aria-label={
+              chatUnread > 0
+                ? `Messages, ${chatUnread} unread`
+                : 'Messages'
+            }
+            title="Messages"
+            className={cn(
+              'relative flex h-8 items-center gap-1.5 border px-2 text-xs font-semibold transition-colors',
+              messagesActive
+                ? 'border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59]'
+                : 'border-[#1a4d42]/15 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#f3f7f5] hover:text-[#0a1f1a] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/65 dark:hover:bg-white/5 dark:hover:text-white',
+            )}
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Messages</span>
+            {chatUnread > 0 ? (
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-none bg-[#c2410c] px-1 text-[9px] font-semibold tabular-nums leading-none text-white">
+                {chatUnread > 9 ? '9+' : chatUnread}
+              </span>
+            ) : null}
+          </Link>
           <div className="hidden items-center gap-1.5 md:flex">
             <TermsDropdown />
 
@@ -324,8 +358,15 @@ export function SchoolNavbar({
               iconButtonClass={iconButtonClass}
             />
 
-            <Button variant="ghost" size="icon" className={iconButtonClass} title="Help">
-              <HelpCircle className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className={iconButtonClass}
+              title="Talk to Squl Technical Support"
+              aria-label="Talk to Squl Technical Support"
+              onClick={() => setSupportOpen(true)}
+            >
+              <LifeBuoy className="h-4 w-4" />
             </Button>
           </div>
 
@@ -405,5 +446,30 @@ export function SchoolNavbar({
         </div>
       </div>
     </header>
+
+    <SupportDialog
+      open={supportOpen}
+      onOpenChange={setSupportOpen}
+      subdomain={subdomain}
+    />
+
+    {!pathname?.includes('/communication') ? (
+      <button
+        type="button"
+        onClick={() => setSupportOpen(true)}
+        className="fixed bottom-24 right-4 z-40 flex items-center gap-2 border border-white/20 bg-[#0a1f1a] px-3 py-2.5 text-[11px] font-semibold text-white shadow-[0_8px_30px_rgba(10,31,26,0.28)] transition-colors hover:bg-[#246a59] md:bottom-24 md:right-8"
+        aria-label="Talk to Squl Technical Support"
+      >
+        <LifeBuoy className="h-4 w-4" />
+        <span className="hidden sm:inline">Talk to Squl support</span>
+        <span className="sm:hidden">Squl support</span>
+        {chatUnread > 0 ? (
+          <span className="flex h-4 min-w-4 items-center justify-center bg-amber-300 px-1 text-[9px] font-bold tabular-nums text-[#0a1f1a]">
+            {chatUnread > 9 ? '9+' : chatUnread}
+          </span>
+        ) : null}
+      </button>
+    ) : null}
+    </>
   )
 }

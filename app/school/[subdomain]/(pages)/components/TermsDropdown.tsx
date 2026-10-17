@@ -27,7 +27,7 @@ interface TermsDropdownProps {
 
 export function TermsDropdown({ className }: TermsDropdownProps) {
   const queryClient = useQueryClient();
-  const { availableTerms, termsLoading } = useTerm();
+  const { availableTerms, termsLoading, selectedTerm } = useTerm();
   const [modalOpen, setModalOpen] = useState(false);
 
   const {
@@ -65,7 +65,11 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
     return { name: `Term 1`, year: String(year) };
   };
 
-  const currentTerm = terms.find((t) => t.isCurrent);
+  const currentTerm =
+    selectedTerm ??
+    terms.find((t) => t.isCurrent) ??
+    terms.find((t) => t.isActive) ??
+    null;
   const isLoading = currentAcademicYearLoading || termsLoading;
 
   const termName = currentTerm?.name ?? (isLoading ? "..." : getFallbackTerm().name);

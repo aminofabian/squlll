@@ -24,7 +24,7 @@ export const KENYA_BANKS: KenyaBankOption[] = [
   { id: 'equity', name: 'Equity Bank Limited', businessNumber: '247247' },
   { id: 'family', name: 'Family Bank Limited', businessNumber: '222111' },
   { id: 'kcb', name: 'KCB Bank Kenya Limited', businessNumber: '522522' },
-  { id: 'ncba', name: 'NCBA Bank Kenya PLC', businessNumber: '627627' },
+  { id: 'ncba', name: 'NCBA Bank Kenya PLC', businessNumber: '880100' },
   {
     id: 'stanchart',
     name: 'Standard Chartered Bank Kenya Limited',
@@ -65,11 +65,6 @@ export const KENYA_BANKS: KenyaBankOption[] = [
   { id: 'boi', name: 'Bank of India', businessNumber: null },
   { id: 'citi', name: 'Citi Bank', businessNumber: '100229' },
   {
-    id: 'cba',
-    name: 'Commercial Bank of Africa Limited',
-    businessNumber: '880100',
-  },
-  {
     id: 'dtb',
     name: 'Diamond Trust Bank Kenya Limited',
     businessNumber: '516600',
@@ -104,6 +99,83 @@ export const KENYA_BANKS: KenyaBankOption[] = [
     businessNumber: '559900',
   },
 ]
+
+const SHORT_NAMES: Record<string, string> = {
+  absa: 'Absa',
+  boa: 'Bank of Africa',
+  barclays: 'Barclays',
+  coop: 'Co-op',
+  equity: 'Equity',
+  family: 'Family',
+  kcb: 'KCB',
+  ncba: 'NCBA',
+  stanchart: 'StanChart',
+  im: 'I&M',
+  nbk: 'National Bank',
+  nic: 'NIC',
+  sbm: 'SBM',
+  credit: 'Credit Bank',
+  fcb: 'First Community',
+  gtb: 'GTBank',
+  jamii: 'Jamii Bora',
+  mayfair: 'Mayfair',
+  paramount: 'Paramount',
+  sidian: 'Sidian',
+  baroda: 'Baroda',
+  boi: 'Bank of India',
+  citi: 'Citi',
+  cba: 'CBA',
+  dtb: 'DTB',
+  ecobank: 'Ecobank',
+  equatorial: 'Equatorial',
+  habib: 'Habib',
+  hf: 'HF',
+  meb: 'Middle East',
+  prime: 'Prime',
+  spire: 'Spire',
+  tnb: 'Trans National',
+  uba: 'UBA',
+}
+
+/** Banks parents in Kenya actually use, in the order to show first. */
+export const POPULAR_BANK_IDS = [
+  'equity',
+  'kcb',
+  'coop',
+  'absa',
+  'ncba',
+  'family',
+  'stanchart',
+  'dtb',
+  'im',
+  'nbk',
+] as const
+
+export function bankShortName(bank: KenyaBankOption): string {
+  return SHORT_NAMES[bank.id] ?? bank.name
+}
+
+export function popularKenyaBanks(): KenyaBankOption[] {
+  return POPULAR_BANK_IDS.flatMap((id) => {
+    const bank = KENYA_BANKS.find((item) => item.id === id)
+    return bank ? [bank] : []
+  })
+}
+
+export function searchKenyaBanks(query: string): KenyaBankOption[] {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return KENYA_BANKS
+  return KENYA_BANKS.filter((bank) => {
+    const haystack = [
+      bank.name,
+      bankShortName(bank),
+      bank.businessNumber ?? '',
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(needle)
+  })
+}
 
 /** Sentinel for “Other / my bank isn’t listed”. */
 export const CUSTOM_BANK_ID = '__custom__'

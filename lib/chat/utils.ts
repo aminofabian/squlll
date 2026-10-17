@@ -22,6 +22,9 @@ export function formatParticipantLabel(
   const type = isP1 ? conversation.participant2Type : conversation.participant1Type
   const id = isP1 ? conversation.participant2Id : conversation.participant1Id
   const name = isP1 ? conversation.participant2Name : conversation.participant1Name
+  if (type.trim().toLowerCase() === 'superadmin') {
+    return 'Squl Technical Support'
+  }
   if (name && name.trim()) return name.trim()
   // Fallback when the server couldn't resolve a name.
   const label = type.charAt(0).toUpperCase() + type.slice(1)

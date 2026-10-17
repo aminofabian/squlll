@@ -29,7 +29,7 @@ import {
 import { SchoolConfiguration } from '@/lib/types/school-config'
 import { cn } from '@/lib/utils'
 import { SchoolHomepageFeeDownloads } from '../SchoolHomepageFeeDownloads'
-import { HomepageRuntime, Reveal, SectionIcon } from './shared'
+import { HomepageRuntime, Reveal, SectionIcon, DawnCrest, schoolInitials } from './shared'
 import {
   HomepageNavAuthActions,
   HomepageNavAuthMobile,
@@ -70,6 +70,7 @@ export function HomepageNav({
   const isDisc = variant === 'disc'
   const isFolio = variant === 'folio'
   const isMarquee = variant === 'marquee'
+  const isDawn = variant === 'dawn'
   const solid =
     scrolled ||
     open ||
@@ -82,12 +83,181 @@ export function HomepageNav({
     isFolio ||
     isMarquee
   const logoUrl = config.logoUrl || runtime.logoUrl
-  const initials = runtime.schoolName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  const initials = schoolInitials(runtime.schoolName)
+
+  if (isDawn) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300',
+          runtime.preview ? 'absolute' : 'fixed',
+          solid
+            ? 'bg-[var(--school-paper)] shadow-[0_1px_0_rgba(12,31,26,0.09)]'
+            : 'bg-gradient-to-b from-[#071812]/75 via-[#071812]/30 to-transparent',
+        )}
+      >
+        <div
+          aria-hidden
+          className="h-[2px] w-full bg-gradient-to-r from-primary via-[var(--school-accent)] to-primary"
+        />
+        <div className="mx-auto grid h-[calc(var(--school-nav-h)-2px)] max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr] lg:px-8">
+          <Link
+            href="/"
+            aria-label={`${runtime.schoolName} home`}
+            className="group flex min-w-0 items-center gap-3.5"
+          >
+            <span
+              className={cn(
+                'relative flex h-11 w-11 shrink-0 items-center justify-center border p-[3px] transition-colors duration-300',
+                solid ? 'border-[var(--school-ink)]/20' : 'border-white/35',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-full w-full items-center justify-center border transition-colors duration-300',
+                  solid
+                    ? 'border-primary/25 bg-primary/[0.04]'
+                    : 'border-white/20 bg-white/[0.06]',
+                )}
+              >
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt=""
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <DawnCrest
+                    initials={initials}
+                    className={cn(
+                      'h-7 w-6 transition-colors duration-300',
+                      solid ? 'text-primary' : 'text-white',
+                    )}
+                  />
+                )}
+              </span>
+              <span
+                aria-hidden
+                className="absolute -bottom-px -right-px h-1.5 w-1.5 bg-[var(--school-accent)]"
+              />
+            </span>
+            <span className="min-w-0">
+              <span
+                className={cn(
+                  'block truncate font-display text-[1.3rem] leading-none tracking-[-0.01em] transition-colors duration-300 sm:text-[1.45rem]',
+                  solid ? 'text-[var(--school-ink)]' : 'text-white',
+                )}
+              >
+                {runtime.schoolName}
+              </span>
+              {slots.showTagline !== false && (
+                <span
+                  className={cn(
+                    'mt-1.5 block truncate text-[9px] font-semibold uppercase leading-none tracking-[0.24em] transition-colors duration-300 sm:text-[9.5px] lg:hidden xl:block',
+                    solid ? 'text-primary' : 'text-white/60',
+                  )}
+                >
+                  {runtime.tagline || 'Inspiring excellence every day'}
+                </span>
+              )}
+            </span>
+          </Link>
+
+          <div className="hidden items-center justify-center lg:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className={cn(
+                  'group relative px-2.5 py-2 text-[11.5px] font-semibold uppercase tracking-[0.12em] transition-colors xl:px-3.5 xl:tracking-[0.14em]',
+                  solid
+                    ? 'text-[var(--school-ink)]/65 hover:text-[var(--school-ink)]'
+                    : 'text-white/75 hover:text-white',
+                )}
+              >
+                {link.label}
+                <span
+                  aria-hidden
+                  className={cn(
+                    'absolute inset-x-2.5 bottom-0.5 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100 xl:inset-x-3.5',
+                    solid ? 'bg-primary' : 'bg-[var(--school-accent)]',
+                  )}
+                />
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center justify-end gap-5 lg:flex">
+            <div
+              aria-hidden
+              className={cn(
+                'h-7 w-px transition-colors duration-300',
+                solid ? 'bg-[var(--school-ink)]/12' : 'bg-white/20',
+              )}
+            />
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Portal'}
+              applyLabel={slots.applyLabel || 'Apply now'}
+              greetingClassName={solid ? 'text-[var(--school-ink)]' : 'text-white'}
+              portalClassName={cn(
+                'h-9 rounded-none border-0 bg-transparent px-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-none hover:bg-transparent',
+                solid
+                  ? 'text-[var(--school-ink)]/65 hover:text-primary'
+                  : 'text-white/75 hover:text-white',
+              )}
+              applyClassName={cn(
+                'h-10 rounded-none px-5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-none transition-colors',
+                solid
+                  ? 'bg-primary text-white hover:bg-primary-dark'
+                  : 'bg-white text-[var(--school-ink)] hover:bg-[var(--school-accent)]',
+              )}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              'inline-flex h-10 w-10 items-center justify-center border transition-colors lg:hidden',
+              solid
+                ? 'border-[var(--school-ink)]/15 text-[var(--school-ink)]'
+                : 'border-white/30 text-white',
+            )}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-[var(--cd-rule)] bg-[var(--school-paper)] lg:hidden">
+            <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
+              <div className="divide-y divide-[var(--cd-rule)]">
+                {links.map((link) => (
+                  <Link
+                    key={link.href + link.label}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-between py-3.5 font-display text-[1.35rem] leading-none text-[var(--school-ink)]"
+                  >
+                    {link.label}
+                    <ArrowRight className="h-4 w-4 text-primary/40" />
+                  </Link>
+                ))}
+              </div>
+              <HomepageNavAuthMobile
+                portalLabel={slots.portalLabel || 'Portal'}
+                applyLabel={slots.applyLabel || 'Apply now'}
+                onNavigate={() => setOpen(false)}
+                linkClassName="text-[var(--school-ink)]"
+                primaryClassName="bg-primary px-4 text-white"
+              />
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
 
   if (isFolio) {
     return (
@@ -796,7 +966,7 @@ export function HomepageNav({
 export function HomepageHero({
   config,
   runtime,
-  variant = 'dawn',
+  variant = 'default',
 }: {
   config: HomepageConfig
   runtime: HomepageRuntime
@@ -1809,6 +1979,158 @@ export function HomepageHero({
     )
   }
 
+  if (variant === 'dawn') {
+    const logoUrl = config.logoUrl || runtime.logoUrl
+    const initials = schoolInitials(runtime.schoolName)
+
+    return (
+      <section className="relative isolate flex min-h-[90svh] flex-col justify-center overflow-hidden bg-[var(--school-ink)]">
+        <div className="absolute inset-0">
+          <img
+            src={img}
+            alt=""
+            aria-hidden
+            fetchPriority="high"
+            className={cn(
+              'school-hero-media h-full w-full object-cover object-[58%_32%]',
+              ready ? '' : 'opacity-0',
+            )}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(90deg, rgba(7,24,18,0.94) 0%, rgba(7,24,18,${Math.min(
+                0.9,
+                overlay + 0.16,
+              )}) 46%, rgba(7,24,18,${Math.max(0.22, overlay * 0.5)}) 100%)`,
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--school-ink)] via-[var(--school-ink)]/10 to-[var(--school-ink)]/55" />
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-80"
+            style={{
+              background:
+                'radial-gradient(ellipse 55% 45% at 82% -8%, color-mix(in srgb, var(--school-accent) 20%, transparent), transparent 62%)',
+            }}
+          />
+          <div aria-hidden className="cd-hero-grid absolute inset-0" />
+        </div>
+
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 top-1/2 hidden -translate-y-1/2 opacity-[0.07] lg:block"
+        >
+          <DawnCrest initials={initials} className="h-[430px] w-[370px] text-white" />
+        </div>
+
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-4 pb-44 pt-[calc(var(--school-nav-h)+4rem)] sm:px-6 lg:px-8">
+          <div className="max-w-[46rem]">
+            <div
+              className={cn(
+                'school-hero-copy flex items-center gap-3 sm:gap-4',
+                ready ? '' : 'opacity-0',
+              )}
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/25 bg-white/[0.06] p-[3px] backdrop-blur-sm sm:h-14 sm:w-14">
+                <span className="flex h-full w-full items-center justify-center border border-white/15">
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt=""
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <DawnCrest
+                      initials={initials}
+                      className="h-8 w-7 text-[var(--school-accent)]"
+                    />
+                  )}
+                </span>
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase leading-relaxed tracking-[0.18em] text-[var(--school-accent)] sm:text-[11px] sm:tracking-[0.3em]">
+                  {slots.eyebrow}
+                </p>
+                <span aria-hidden className="mt-2.5 block h-px w-16 bg-white/25" />
+              </div>
+            </div>
+
+            <h1
+              className={cn(
+                'school-hero-copy school-hero-copy-delay mt-7 max-w-full font-display text-[clamp(2.9rem,7vw,5.75rem)] leading-[0.94] tracking-[-0.02em] text-white [text-wrap:balance]',
+                ready ? '' : 'opacity-0',
+              )}
+            >
+              {slots.headline || runtime.schoolName}
+            </h1>
+
+            <p
+              className={cn(
+                'school-hero-copy school-hero-copy-delay-2 mt-7 max-w-[34rem] text-[1.0625rem] leading-[1.75] text-white/80 sm:text-[1.125rem]',
+                ready ? '' : 'opacity-0',
+              )}
+            >
+              {slots.subcopy}
+            </p>
+
+            <div
+              className={cn(
+                'school-hero-copy school-hero-copy-delay-2 mt-10 flex flex-col gap-3 sm:flex-row sm:items-center',
+                ready ? '' : 'opacity-0',
+              )}
+            >
+              {slots.primaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-none bg-white px-7 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)] shadow-none transition-colors hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
+                >
+                  <Link href={slots.primaryCta.href}>
+                    {slots.primaryCta.label}
+                    <ArrowRight className="ml-2.5 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {slots.secondaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 rounded-none border-white/35 bg-transparent px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white shadow-none transition-colors hover:border-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href={slots.secondaryCta.href}>
+                    <LogIn className="mr-2.5 h-4 w-4" />
+                    {slots.secondaryCta.label}
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-48"
+          style={{
+            background:
+              'linear-gradient(to top, var(--school-paper) 0%, color-mix(in srgb, var(--school-paper) 72%, transparent) 34%, transparent 78%)',
+          }}
+        />
+
+        <div className="absolute bottom-24 right-6 z-10 hidden items-center gap-3 lg:right-8 lg:flex">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.3em] text-white/45">
+            Scroll
+          </span>
+          <span
+            aria-hidden
+            className="h-12 w-px bg-gradient-to-b from-white/60 to-transparent"
+          />
+        </div>
+      </section>
+    )
+  }
+
   const isNight = variant === 'night' || variant === 'horizon'
   const isPlayfield = variant === 'playfield'
   const isStudio = variant === 'studio'
@@ -2249,6 +2571,68 @@ export function HomepageStats({
               </div>
             </Reveal>
           ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'dawn') {
+    const enabledSections = config.sections.filter((section) => section.enabled)
+    const heroIndex = enabledSections.findIndex((section) => section.type === 'hero')
+    const statsIndex = enabledSections.findIndex((section) => section.type === 'stats')
+    const heroBefore = heroIndex !== -1 && heroIndex < statsIndex
+
+    return (
+      <section
+        className={cn(
+          'relative z-20 pb-10',
+          heroBefore && '-mt-20 sm:-mt-24',
+        )}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="cd-card relative overflow-hidden">
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--school-accent)] to-transparent opacity-80"
+            />
+            <div className="grid grid-cols-2 lg:grid-cols-4">
+              {items.map((stat, i) => (
+                <Reveal key={stat.label} delay={i * 70} className="h-full">
+                  <div
+                    className={cn(
+                      'group flex h-full flex-col justify-between gap-8 px-6 py-7 sm:px-8 sm:py-9',
+                      i % 2 === 1 && 'border-l border-[var(--cd-rule)]',
+                      i >= 2 && 'border-t border-[var(--cd-rule)] lg:border-t-0',
+                      i > 0 && 'lg:border-l lg:border-[var(--cd-rule)]',
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-display text-[13px] italic tracking-[0.06em] text-[var(--cd-accent-ink)]">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span
+                        aria-hidden
+                        className="h-px w-6 bg-[var(--cd-rule)] transition-colors duration-300 group-hover:bg-[var(--school-accent)]"
+                      />
+                    </div>
+                    <div>
+                      <p className="font-display text-[clamp(2.35rem,3.4vw,3rem)] leading-[0.9] tracking-[-0.02em] tabular-nums text-[var(--school-ink)]">
+                        {stat.value}
+                      </p>
+                      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--school-ink)]/65">
+                        {stat.label}
+                      </p>
+                      {stat.hint && (
+                        <p className="mt-1.5 text-[12px] leading-snug text-[var(--cd-muted)]">
+                          {stat.hint}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     )
@@ -2697,6 +3081,79 @@ export function HomepageOfferings({
     )
   }
 
+  if (variant === 'dawn') {
+    return (
+      <section className="relative overflow-hidden py-24 sm:py-28">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 55% 45% at 0% 0%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 58%)',
+          }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                {slots.eyebrow && (
+                  <p className="cd-eyebrow text-[var(--cd-accent-ink)]">
+                    {slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="mt-4 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-[1.02] tracking-[-0.02em] text-[var(--school-ink)] [text-wrap:balance]">
+                  {slots.headline}
+                </h2>
+                <p className="mt-5 max-w-xl text-[1.0625rem] leading-[1.7] text-[var(--cd-muted)]">
+                  {slots.subcopy}
+                </p>
+              </div>
+              <div className="hidden items-center gap-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--school-ink)]/40 lg:flex">
+                <span>01</span>
+                <span aria-hidden className="h-px w-12 bg-[var(--cd-rule)]" />
+                <span>{String(items.length).padStart(2, '0')}</span>
+              </div>
+            </div>
+          </Reveal>
+
+          <div className="mt-14 grid gap-px border border-[var(--cd-rule)] bg-[var(--cd-rule)] sm:grid-cols-3">
+            {items.map((item, index) => (
+              <Reveal key={item.title} delay={index * 80} className="h-full">
+                <article className="group relative flex h-full flex-col bg-[var(--school-paper)] p-7 transition-colors duration-300 hover:bg-white sm:p-9">
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-primary transition-transform duration-300 group-hover:scale-x-100"
+                  />
+                  <div className="flex items-start justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center border border-[var(--cd-rule)] bg-white/60 text-primary transition-colors duration-300 group-hover:border-primary group-hover:bg-primary group-hover:text-white">
+                      <SectionIcon name={item.icon} className="h-5 w-5" />
+                    </span>
+                    <span className="font-display text-[13px] italic tracking-[0.08em] text-[var(--cd-accent-ink)]">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <h3 className="mt-8 font-display text-[1.7rem] leading-[1.1] tracking-[-0.01em] text-[var(--school-ink)]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-[0.95rem] leading-[1.7] text-[var(--cd-muted)]">
+                    {item.body}
+                  </p>
+                  <Link
+                    href={item.href}
+                    className="mt-8 flex items-center justify-between gap-4 border-t border-[var(--cd-rule)] pt-4 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[var(--school-ink)] transition-colors hover:text-primary"
+                  >
+                    {item.ctaLabel}
+                    <ArrowRight className="h-4 w-4 shrink-0 text-primary transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section
       className={cn(
@@ -2811,6 +3268,7 @@ export function HomepagePrograms({
   const soft = config.theme.radiusMode === 'soft'
   const radius = soft ? 'rounded-2xl' : 'rounded-none'
   const chipRadius = soft ? 'rounded-md' : 'rounded-none'
+  const isDawn = config.templateId === 'campus-dawn'
 
   return (
     <section className="school-programs relative overflow-hidden border-y border-[var(--school-ink)]/10 py-20 sm:py-24">
@@ -2826,22 +3284,31 @@ export function HomepagePrograms({
         <Reveal>
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
+              {slots.eyebrow && (
+                <p
+                  className={cn(
+                    'mb-4 text-[11px] font-semibold uppercase tracking-[0.2em]',
+                    isDawn
+                      ? 'cd-eyebrow text-[var(--cd-accent-ink)]'
+                      : 'text-primary',
+                  )}
+                >
+                  {slots.eyebrow}
+                </p>
+              )}
               <h2 className="font-display text-[clamp(1.85rem,3.5vw,3rem)] tracking-tight text-[var(--school-ink)]">
                 {slots.headline}
               </h2>
               <p className="mt-4 max-w-[42rem] text-base leading-[1.7] text-[var(--school-ink)]/65 sm:text-lg">
                 {slots.subcopy}
               </p>
-              {slots.eyebrow && (
-                <p className="mt-5 text-[12px] font-medium tracking-[0.04em] text-[var(--school-ink)]/45">
-                  {slots.eyebrow}
-                </p>
-              )}
             </div>
             <Button
               asChild
               className={cn(
                 'h-12 w-fit border border-primary bg-primary px-7 text-sm font-semibold text-white shadow-none transition-[background-color,transform] hover:bg-primary-dark active:scale-[0.98]',
+                isDawn &&
+                  'px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em]',
                 soft ? 'rounded-xl' : 'rounded-none',
               )}
             >
@@ -2875,7 +3342,7 @@ export function HomepagePrograms({
                         <h3 className="font-display text-[clamp(1.45rem,2.5vw,1.85rem)] tracking-tight text-[var(--school-ink)]">
                           {level.name}
                         </h3>
-                        <p className="shrink-0 text-[12px] font-medium tabular-nums text-[var(--school-ink)]/45">
+                        <p className="shrink-0 text-[12px] font-medium tabular-nums text-[var(--school-ink)]/60">
                           {[
                             grades.length
                               ? `${grades.length} ${grades.length === 1 ? 'grade' : 'grades'}`
@@ -2888,11 +3355,15 @@ export function HomepagePrograms({
                             .join(' · ')}
                         </p>
                       </div>
-                      {level.description && (
-                        <p className="mt-2 max-w-[40rem] text-[0.95rem] leading-relaxed text-[var(--school-ink)]/60">
-                          {level.description}
-                        </p>
-                      )}
+                      {level.description &&
+                        level.description
+                          .replace(/[^a-z0-9]/gi, '')
+                          .toLowerCase() !==
+                          level.name.replace(/[^a-z0-9]/gi, '').toLowerCase() && (
+                          <p className="mt-2 max-w-[40rem] text-[0.95rem] leading-relaxed text-[var(--school-ink)]/60">
+                            {level.description}
+                          </p>
+                        )}
                     </div>
 
                     <div
@@ -2939,7 +3410,7 @@ export function HomepagePrograms({
 
                       {subjects.length > 0 && (
                         <div className="bg-white/55 px-6 py-6 sm:px-8">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)]/50">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)]/65">
                             Curriculum subjects
                           </p>
                           <ul className="school-program-subjects mt-4 grid grid-cols-1 gap-x-8 sm:grid-cols-2">
@@ -3362,6 +3833,97 @@ export function HomepageGallery({
     )
   }
 
+  if (variant === 'dawn') {
+    const mosaic = images.length >= 5
+    const shown = mosaic ? images.slice(0, 6) : images
+    return (
+      <section className="py-24 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                {data.slots.eyebrow && (
+                  <p className="cd-eyebrow text-[var(--cd-accent-ink)]">
+                    {data.slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="mt-4 font-display text-[clamp(2.25rem,4vw,3.4rem)] leading-[1.03] tracking-[-0.02em] text-[var(--school-ink)] [text-wrap:balance]">
+                  {data.slots.headline}
+                </h2>
+              </div>
+              <p className="shrink-0 pb-1 font-display text-sm italic tracking-[0.02em] text-[var(--cd-muted)]">
+                Selected moments
+              </p>
+            </div>
+          </Reveal>
+
+          <div
+            className={cn(
+              'mt-12 grid grid-cols-2 gap-3 sm:gap-4',
+              mosaic && 'sm:auto-rows-[190px] sm:grid-cols-4 lg:auto-rows-[215px]',
+            )}
+          >
+            {shown.map((image, i) => {
+              const featured = mosaic && i === 0
+              const banner = mosaic && i === 5
+              const wide =
+                !mosaic &&
+                i === 0 &&
+                (shown.length === 1 || shown.length === 3)
+              return (
+                <Reveal
+                  key={image.url + i}
+                  delay={i * 60}
+                  className={cn(
+                    'h-full',
+                    featured && 'col-span-2 sm:row-span-2',
+                    banner && 'col-span-2 sm:col-span-4',
+                    wide && 'col-span-2',
+                  )}
+                >
+                  <figure
+                    className={cn(
+                      'group relative h-full overflow-hidden border border-[var(--cd-rule)] bg-[var(--school-ink)]',
+                      mosaic
+                        ? featured
+                          ? 'aspect-[4/3] sm:aspect-auto'
+                          : banner
+                            ? 'aspect-[2/1] sm:aspect-auto'
+                            : 'aspect-[4/3]'
+                        : wide
+                          ? 'aspect-[16/9]'
+                          : 'aspect-[4/3]',
+                    )}
+                  >
+                    <img
+                      src={image.url}
+                      alt={image.caption || ''}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                    />
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent opacity-90"
+                    />
+                    <span className="absolute right-3 top-3 bg-[var(--school-paper)]/90 px-2 py-1 font-display text-[10px] italic tracking-[0.08em] text-[var(--school-ink)]">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    {image.caption && (
+                      <figcaption className="absolute inset-x-0 bottom-0 p-3.5 text-[10px] font-semibold uppercase leading-snug tracking-[0.14em] text-white/90 sm:p-4">
+                        {image.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -3758,6 +4320,71 @@ export function HomepageTestimonials({
     )
   }
 
+  if (variant === 'dawn') {
+    return (
+      <section className="border-y border-[var(--cd-rule)] bg-[var(--cd-paper-2)] py-24 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                {data.slots.eyebrow && (
+                  <p className="cd-eyebrow text-[var(--cd-accent-ink)]">
+                    {data.slots.eyebrow}
+                  </p>
+                )}
+                <h2 className="mt-4 font-display text-[clamp(2.25rem,4vw,3.4rem)] leading-[1.03] tracking-[-0.02em] text-[var(--school-ink)] [text-wrap:balance]">
+                  {data.slots.headline}
+                </h2>
+              </div>
+              <p className="shrink-0 pb-1 font-display text-sm italic tracking-[0.02em] text-[var(--cd-muted)]">
+                Voices from our community
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 grid gap-5 md:grid-cols-2">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 70} className="h-full">
+                <blockquote className="cd-card relative flex h-full flex-col p-8 sm:p-10">
+                  <span
+                    aria-hidden
+                    className="font-display text-[4rem] leading-[0.65] text-[var(--school-accent)]/45"
+                  >
+                    &ldquo;
+                  </span>
+                  <p className="-mt-1 flex-1 font-display text-[1.45rem] leading-[1.38] tracking-[-0.01em] text-[var(--school-ink)] sm:text-[1.6rem]">
+                    {item.quote}
+                  </p>
+                  <footer className="mt-8 flex items-center gap-3.5 border-t border-[var(--cd-rule)] pt-5">
+                    {item.photoUrl ? (
+                      <img
+                        src={item.photoUrl}
+                        alt=""
+                        className="h-11 w-11 shrink-0 object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--cd-rule)] bg-[var(--school-paper)] font-display text-[13px] italic tracking-[0.06em] text-primary">
+                        {schoolInitials(item.name)}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-[1.05rem] leading-none text-[var(--school-ink)]">
+                        {item.name}
+                      </p>
+                      <p className="mt-1.5 truncate text-[9.5px] font-semibold uppercase tracking-[0.18em] text-[var(--cd-muted)]">
+                        {item.role}
+                      </p>
+                    </div>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -4117,6 +4744,94 @@ export function HomepageCtaBand({
     )
   }
 
+  if (variant === 'dawn') {
+    const body =
+      slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) || slots.body
+    return (
+      <section className="relative overflow-hidden bg-[var(--school-ink)] text-white">
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--school-accent)]/70 to-transparent"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 50% 60% at 88% 0%, color-mix(in srgb, var(--school-accent) 15%, transparent), transparent 60%), radial-gradient(ellipse 45% 55% at 0% 100%, color-mix(in srgb, var(--primary) 42%, transparent), transparent 65%)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.032]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
+            backgroundSize: '96px 96px',
+          }}
+        />
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-20 lg:px-8">
+          <Reveal>
+            <span aria-hidden className="block h-px w-16 bg-[var(--school-accent)]" />
+            <h2 className="mt-6 max-w-2xl font-display text-[clamp(2.5rem,4.6vw,4rem)] leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance]">
+              {slots.headline}
+            </h2>
+            <p className="mt-6 max-w-xl text-[1.0625rem] leading-[1.75] text-white/65">
+              {body}
+            </p>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="border border-white/15 bg-white/[0.035] p-6 backdrop-blur-sm sm:p-8">
+              <div className="flex items-center gap-3.5 border-b border-white/10 pb-5">
+                <DawnCrest
+                  initials={schoolInitials(runtime.schoolName)}
+                  className="h-10 w-9 shrink-0 text-[var(--school-accent)]"
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-display text-[1.15rem] leading-none text-white">
+                    {runtime.schoolName}
+                  </p>
+                  {runtime.tagline && (
+                    <p className="mt-1.5 truncate text-[9px] font-semibold uppercase tracking-[0.22em] text-white/45">
+                      {runtime.tagline}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col gap-3">
+                {slots.primaryCta && (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 w-full rounded-none bg-white px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)] shadow-none transition-colors hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
+                  >
+                    <Link href={slots.primaryCta.href}>
+                      {slots.primaryCta.label}
+                      <ArrowRight className="ml-2.5 h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+                {slots.secondaryCta && (
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="h-12 w-full rounded-none border-white/30 bg-transparent px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white shadow-none transition-colors hover:border-white/60 hover:bg-white/10 hover:text-white"
+                  >
+                    <Link href={slots.secondaryCta.href}>
+                      <MapPin className="mr-2.5 h-4 w-4" />
+                      {slots.secondaryCta.label}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section
       className={cn(
@@ -4205,6 +4920,153 @@ export function HomepageFooter({
   }>(config, 'footer')
   if (!data) return null
   const { slots } = data
+  const isDawn = config.templateId === 'campus-dawn'
+
+  if (isDawn) {
+    const nav = getSection<{ portalLabel?: string; applyLabel?: string }>(
+      config,
+      'nav',
+    )
+    const email = slots.email || `info@${runtime.subdomain}.edu`
+    const phone = slots.phone?.trim() || ''
+    const logoUrl = config.logoUrl || runtime.logoUrl
+    const initials = schoolInitials(runtime.schoolName)
+
+    return (
+      <footer className="relative overflow-hidden bg-[var(--school-ink)] text-white">
+        <div
+          aria-hidden
+          className="h-[2px] w-full bg-gradient-to-r from-primary via-[var(--school-accent)]/80 to-primary"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-20 -right-16 hidden opacity-[0.028] sm:block"
+        >
+          <DawnCrest initials={initials} className="h-[360px] w-[310px] text-white" />
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 45% 45% at 92% 0%, color-mix(in srgb, var(--school-accent) 8%, transparent), transparent 60%)',
+          }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1.5fr_0.9fr_1fr] lg:gap-16">
+            <div>
+              <div className="flex items-center gap-4">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center border border-white/20 p-[4px]">
+                  <span className="flex h-full w-full items-center justify-center border border-white/10 bg-white/[0.03]">
+                    {logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt=""
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <DawnCrest
+                        initials={initials}
+                        className="h-8 w-7 text-[var(--school-accent)]"
+                      />
+                    )}
+                  </span>
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-display text-[1.6rem] leading-none tracking-[-0.01em]">
+                    {runtime.schoolName}
+                  </p>
+                  {runtime.tagline && (
+                    <p className="mt-2 truncate text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--school-accent)]">
+                      {runtime.tagline}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="mt-6 max-w-sm text-sm leading-[1.75] text-white/55">
+                {slots.blurb}
+              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-5">
+                <Link
+                  href="/apply"
+                  className="cd-link relative inline-flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-white"
+                >
+                  {nav?.slots.applyLabel || 'Apply now'}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <span aria-hidden className="h-3 w-px bg-white/20" />
+                <Link
+                  href="/login"
+                  className="cd-link relative inline-flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-white"
+                >
+                  {nav?.slots.portalLabel || 'Portal'}
+                  <LogIn className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/50">
+                Explore
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {(slots.quickLinks || []).map((link) => (
+                  <li key={link.href + link.label}>
+                    <Link
+                      href={link.href}
+                      className="group inline-flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-white"
+                    >
+                      <span
+                        aria-hidden
+                        className="h-px w-0 bg-[var(--school-accent)] transition-all duration-300 group-hover:w-4"
+                      />
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/50">
+                Contact
+              </h3>
+              <div className="mt-5 space-y-3.5 text-sm">
+                <a
+                  href={`mailto:${email}`}
+                  className="group flex items-start gap-3 text-white/60 transition-colors hover:text-white"
+                >
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-white/10 text-[var(--school-accent)] transition-colors group-hover:border-white/25">
+                    <Mail className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="min-w-0 break-all pt-1.5">{email}</span>
+                </a>
+                {phone && (
+                  <a
+                    href={`tel:${phone.replace(/[^+\d]/g, '')}`}
+                    className="group flex items-start gap-3 text-white/60 transition-colors hover:text-white"
+                  >
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-white/10 text-[var(--school-accent)] transition-colors group-hover:border-white/25">
+                      <PhoneCall className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="pt-1.5">{phone}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-14 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[11px] text-white/50">
+              © {new Date().getFullYear()} {runtime.schoolName}. All rights
+              reserved.
+            </p>
+
+          </div>
+        </div>
+      </footer>
+    )
+  }
 
   return (
     <footer className="bg-[var(--school-ink)] py-16 text-white">

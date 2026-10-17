@@ -63,7 +63,7 @@ interface ParentMakePaymentSheetProps {
   studentId: string
   childName?: string
   outstanding: number
-  /** Outstanding invoices the parent can settle individually via M-Pesa Express. */
+  /** Outstanding invoices the parent can settle individually via M-Pesa. */
   invoices?: ParentOutstandingInvoice[]
   /** Invoice to preselect when the sheet opens (e.g. from a row's Pay button). */
   initialInvoiceId?: string | null
@@ -309,11 +309,11 @@ export function ParentMakePaymentSheet({
         return
       }
       if (!stkPhone.trim()) {
-        setError('Enter the Safaricom number that should receive the PIN prompt')
+        setError('Enter the Safaricom number that should receive the payment request')
         return
       }
       setStkBusy(true)
-      setStkStatus('Sending STK prompt…')
+      setStkStatus('Sending request to your phone…')
       try {
         const intent = await initiateParentCustodyStk(subdomain, {
           studentId,
@@ -325,7 +325,7 @@ export function ParentMakePaymentSheet({
         })
         setStkStatus('Waiting for PIN on your phone…')
         toast({
-          title: 'STK sent',
+          title: 'Payment request sent',
           description: `Prompt to ${intent.phone}. Money goes to school till ${intent.partyB}.`,
         })
 
@@ -352,7 +352,7 @@ export function ParentMakePaymentSheet({
         }
         setStkStatus('Still pending — check payment history shortly')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not send STK')
+        setError(err instanceof Error ? err.message : 'Could not send the payment request')
         setStkStatus(null)
       } finally {
         setStkBusy(false)
@@ -433,7 +433,7 @@ export function ParentMakePaymentSheet({
               </SheetTitle>
               <SheetDescription className="text-xs leading-relaxed text-slate-600">
                 {instructions?.stkAvailable
-                  ? `Send an M-Pesa PIN prompt for ${childName ?? 'your child'}. Money goes straight to the school till.`
+                  ? `Send an M-Pesa payment request for ${childName ?? 'your child'}. Money goes straight to the school bank account.`
                   : `Log money you already sent. We match it to ${childName ?? 'your child'}'s account.`}
               </SheetDescription>
               <SheetSteps active={sheetStep} />
@@ -513,7 +513,7 @@ export function ParentMakePaymentSheet({
                             <div className="flex gap-2">
                               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                               <span>
-                                <span className="font-medium">M-Pesa Express</span>
+                                <span className="font-medium">M-Pesa</span>
                                 <br />
                                 {instructions.stkHint}
                                 <br />
@@ -550,7 +550,7 @@ export function ParentMakePaymentSheet({
                                 : 'border-slate-200 bg-white text-slate-600',
                             )}
                           >
-                            Pay with STK
+                            Send request
                           </button>
                           <button
                             type="button"
@@ -871,7 +871,7 @@ export function ParentMakePaymentSheet({
                           : 'Recording…'}
                     </>
                   ) : payMode === 'stk' ? (
-                    'Send M-Pesa prompt'
+                    'Send payment request'
                   ) : (
                     'Record payment'
                   )}

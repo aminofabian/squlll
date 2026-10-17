@@ -50,11 +50,11 @@ export function DashboardHeader({
     ? selectedStreamLabel
       ? `${selectedGradeLabel} · ${selectedStreamLabel}`
       : selectedGradeLabel ?? "Grade"
-    : "Dashboard";
+    : "Overview";
 
   return (
     <div className="sticky top-0 z-10 shrink-0 border-b border-[#1a4d42]/12 bg-[#f3f7f5]/95 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2 sm:px-4 lg:px-5">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-2 sm:px-4 lg:px-5">
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
             {title}
@@ -79,7 +79,7 @@ export function DashboardHeader({
           >
             <Filter className="h-3.5 w-3.5" />
             <span className="hidden min-[380px]:inline">
-              {hasGradeSelected ? "Grades" : "Grades &amp; classes"}
+              {hasGradeSelected ? "Grades" : "Grades & classes"}
             </span>
           </Button>
 

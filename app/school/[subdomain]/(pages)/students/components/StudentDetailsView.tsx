@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, type ComponentProps } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsContent,
@@ -11,9 +10,6 @@ import {
 } from "@/components/ui/tabs";
 import {
   ArrowLeft,
-  User,
-  Mail,
-  Phone,
   Calendar,
   School,
   BookOpen,
@@ -32,13 +28,18 @@ import {
 import SchoolReportCard from "./ReportCard";
 import { useStudentDetailSummary } from "@/lib/hooks/useStudentDetailSummary";
 import { useStudentCredentials } from "@/lib/hooks/useStudentCredentials";
+import { sendTestReminder } from "@/lib/school/communicationsApi";
+import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
+import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import { cn } from "@/lib/utils";
 import { AssignGradeStreamDialog } from "./AssignGradeStreamDialog";
 import { StudentAccountPanel } from "./StudentAccountPanel";
 import { StudentCredentialsDialog } from "./StudentCredentialsDialog";
 import { StudentProfileHero } from "./StudentProfileHero";
 import { StudentProfileOverview } from "./StudentProfileOverview";
+import { StudentMpesaPromptDialog } from "./StudentMpesaPromptDialog";
 import { StudentParentsPanel } from "./StudentParentsPanel";
+import { StudentContactCard } from "./StudentContactCard";
 import { StudentProfileMoneyTab } from "./StudentProfileMoneyTab";
 import {
   STUDENT_PROFILE_TABS,
@@ -71,8 +72,6 @@ interface StudentDetailsViewProps {
   activeTab: StudentProfileTab;
   onTabChange: (tab: StudentProfileTab) => void;
 }
-
-type ReportCardProps = ComponentProps<typeof SchoolReportCard>
 
 function DetailField({
   label,
@@ -113,26 +112,6 @@ function DetailField({
   );
 }
 
-function InfoGroup({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
-        <Icon className="h-3.5 w-3.5" />
-        {title}
-      </h3>
-      <div className="space-y-2">{children}</div>
-    </section>
-  );
-}
-
 function EmptyPanel({
   icon: Icon,
   title,
@@ -155,6 +134,25 @@ function EmptyPanel({
   );
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return character;
+    }
+  });
+}
+
 export function StudentDetailsView({
   studentId,
   onClose,
@@ -169,6 +167,7 @@ export function StudentDetailsView({
   >({});
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
   const [showAssignClassDialog, setShowAssignClassDialog] = useState(false);
+  const [showMpesaPrompt, setShowMpesaPrompt] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<
     "modern" | "classic" | "compact" | "uganda-classic"
@@ -178,6 +177,9 @@ export function StudentDetailsView({
   const [teacherComment, setTeacherComment] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
+  const [sendingCredentials, setSendingCredentials] = useState<
+    "SMS" | "EMAIL" | null
+  >(null);
 
   const params = useParams();
   const subdomain = params.subdomain as string;
@@ -238,7 +240,7 @@ export function StudentDetailsView({
             {error || "Student not found"}
           </p>
           <Button
-            onClick={refetch}
+            onClick={() => refetch()}
             variant="outline"
             size="sm"
             className={cn(studentsActionButton, "mt-3")}
@@ -252,7 +254,71 @@ export function StudentDetailsView({
   }
 
   const student = studentDetail;
+  const refreshStudent = () => {
+    void refetch(true);
+    onEnrollmentUpdated?.();
+  };
   const missingStream = !student.streamName;
+  const portalUrl = schoolPortalUrl(subdomain, "/student");
+  const schoolName = schoolConfig?.tenant?.schoolName ?? "your school";
+
+  const handleSendCredentials = async (channel: "SMS" | "EMAIL") => {
+    if (sendingCredentials) return;
+
+    const current = credentials ?? (await fetchCredentials());
+    const loginEmail = current?.email ?? student.email;
+    const password = current?.password ?? student.admissionNumber;
+    const to = channel === "SMS" ? student.phone : loginEmail;
+
+    if (!to) {
+      toast.error(
+        channel === "SMS"
+          ? "No phone number is on file for this student."
+          : "No email address is on file for this student.",
+      );
+      return;
+    }
+
+    setSendingCredentials(channel);
+    try {
+      const text = [
+        `Hello ${student.studentName},`,
+        "",
+        `Your ${schoolName} student portal login:`,
+        `Email: ${loginEmail}`,
+        `Password: ${password}`,
+        `Sign in: ${portalUrl}`,
+        "",
+        "Keep these details private.",
+      ].join("\n");
+      const html = [
+        `<p>Hello ${escapeHtml(student.studentName)},</p>`,
+        `<p>Your ${escapeHtml(schoolName)} student portal login:</p>`,
+        `<p><strong>Email:</strong> ${escapeHtml(loginEmail)}<br/>`,
+        `<strong>Password:</strong> ${escapeHtml(password)}<br/>`,
+        `<strong>Sign in:</strong> <a href="${portalUrl}">${portalUrl}</a></p>`,
+        "<p>Keep these details private.</p>",
+      ].join("");
+      const result = await sendTestReminder({
+        channel,
+        to,
+        body: channel === "EMAIL" ? html : text,
+        subject:
+          channel === "EMAIL" ? "Your student portal login" : undefined,
+      });
+      if (result.ok) {
+        toast.success(
+          `Login details sent via ${channel === "SMS" ? "SMS" : "email"} to ${to}`,
+        );
+      } else {
+        toast.error(result.message);
+      }
+    } catch (err) {
+      toast.error(getDisplayErrorMessage(err));
+    } finally {
+      setSendingCredentials(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -303,6 +369,7 @@ export function StudentDetailsView({
         student={student}
         missingStream={missingStream}
         onAssignClass={() => setShowAssignClassDialog(true)}
+        onRequestPayment={() => setShowMpesaPrompt(true)}
         onTabSelect={(tab) => onTabChange(tab as StudentProfileTab)}
       />
 
@@ -343,20 +410,27 @@ export function StudentDetailsView({
           <StudentProfileOverview
             student={student}
             missingStream={missingStream}
+            credentials={credentials}
+            credentialsLoading={credentialsLoading}
+            portalUrl={portalUrl}
+            onViewCredentials={handleShowCredentials}
+            onSendCredentials={handleSendCredentials}
+            sendingChannel={sendingCredentials}
             onTabSelect={(tab) => onTabChange(tab as StudentProfileTab)}
             onAssignClass={() => setShowAssignClassDialog(true)}
+            onProfileSaved={refreshStudent}
           />
         </TabsContent>
 
         <TabsContent value="person" className="mt-0 space-y-4">
-          <div className={`${studentsPanel} overflow-hidden`}>
-            <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:px-5">
-              <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
-                Personal &amp; contact
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2 sm:p-5">
-              <InfoGroup title="Personal" icon={User}>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className={`${studentsPanel} overflow-hidden`}>
+              <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+                <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+                  Personal
+                </h3>
+              </div>
+              <div className="space-y-2 p-4 sm:p-5">
                 <DetailField label="Full name" value={student.studentName} />
                 <DetailField
                   label="Gender"
@@ -380,42 +454,9 @@ export function StudentDetailsView({
                   label="Status"
                   value={student.isActive ? "Active" : "Inactive"}
                 />
-              </InfoGroup>
-
-              <InfoGroup title="Contact" icon={Mail}>
-                <DetailField
-                  label="Email"
-                  icon={Mail}
-                  copyValue={student.email || undefined}
-                  value={
-                    student.email ? (
-                      <a
-                        href={`mailto:${student.email}`}
-                        className="break-all text-emerald-700 hover:underline dark:text-emerald-400"
-                      >
-                        {student.email}
-                      </a>
-                    ) : (
-                      <span className="text-[#1a4d42]/40">Not provided</span>
-                    )
-                  }
-                />
-                <DetailField
-                  label="Phone"
-                  icon={Phone}
-                  copyValue={student.phone || undefined}
-                  value={
-                    student.phone ? (
-                      <a href={`tel:${student.phone}`} className="hover:underline">
-                        {student.phone}
-                      </a>
-                    ) : (
-                      <span className="text-[#1a4d42]/40">Not provided</span>
-                    )
-                  }
-                />
-              </InfoGroup>
+              </div>
             </div>
+            <StudentContactCard student={student} onSaved={refreshStudent} />
           </div>
 
           <StudentParentsPanel
@@ -482,7 +523,11 @@ export function StudentDetailsView({
         </TabsContent>
 
         <TabsContent value="money" className="mt-0">
-          <StudentProfileMoneyTab student={student} studentId={studentId} />
+          <StudentProfileMoneyTab
+            student={student}
+            studentId={studentId}
+            onRecorded={refreshStudent}
+          />
         </TabsContent>
 
         <TabsContent value="access" className="mt-0">
@@ -745,7 +790,27 @@ export function StudentDetailsView({
         onRetry={() => void fetchCredentials()}
         copiedField={copiedField}
         onCopy={handleCopy}
+        phone={student.phone}
+        portalUrl={portalUrl}
+        onSend={handleSendCredentials}
+        sendingChannel={sendingCredentials}
       />
+
+      {showMpesaPrompt ? (
+        <StudentMpesaPromptDialog
+          open={showMpesaPrompt}
+          onOpenChange={setShowMpesaPrompt}
+          student={student}
+          onSettled={() => {
+            refetch();
+            onEnrollmentUpdated?.();
+          }}
+          onOpenMoney={() => {
+            setShowMpesaPrompt(false);
+            onTabChange("money");
+          }}
+        />
+      ) : null}
 
       <AssignGradeStreamDialog
         studentId={studentId}

@@ -12,9 +12,10 @@ interface ChatDetailPaneProps {
   subdomain: string
   selected: ChatConversation | null
   directRecipientId: string | null
+  directRecipientType?: string
   directRecipientLabel?: string
   onBack: () => void
-  onDirectSent: () => void
+  onDirectSent: (conversationId?: string) => void
 }
 
 type DetailProps = Omit<ChatDetailPaneProps, 'className'>
@@ -23,6 +24,7 @@ function renderDetail({
   subdomain,
   selected,
   directRecipientId,
+  directRecipientType,
   directRecipientLabel,
   onBack,
   onDirectSent,
@@ -41,6 +43,7 @@ function renderDetail({
     return (
       <StartDirectChat
         recipientId={directRecipientId}
+        recipientType={directRecipientType}
         recipientLabel={directRecipientLabel}
         subdomain={subdomain}
         onSent={onDirectSent}

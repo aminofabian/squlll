@@ -186,7 +186,7 @@ export default function RecordPaymentDrawer({
     toast({
       title: "Could not generate bill",
       description:
-        "No invoice was created. Confirm the fee structure is linked to this student's grade and includes the current term.",
+        "No invoice was created. Confirm the fee plan is linked to this student's class and includes the current term.",
       variant: "destructive",
     });
   };
@@ -273,7 +273,7 @@ export default function RecordPaymentDrawer({
     }
 
     setStkBusy(true);
-    setStkStatus("Sending STK prompt…");
+    setStkStatus("Sending request to phone…");
     try {
       const intent = await initiateStk({
         amount,
@@ -284,8 +284,8 @@ export default function RecordPaymentDrawer({
       });
       setStkStatus("Waiting for PIN on phone…");
       toast({
-        title: "STK sent",
-        description: `Prompt to ${intent.phone} · PartyB ${intent.partyB}`,
+        title: "Payment request sent",
+        description: `Request sent to ${intent.phone}. Enter the M-Pesa PIN to approve.`,
       });
 
       const started = Date.now();
@@ -302,7 +302,7 @@ export default function RecordPaymentDrawer({
             title: "Payment received",
             description: latest.mpesaReceipt
               ? `M-Pesa ${latest.mpesaReceipt}`
-              : "Fee payment settled from STK callback",
+              : "Fee payment confirmed by M-Pesa",
           });
           onPaymentSuccess?.();
           onClose();
@@ -311,7 +311,7 @@ export default function RecordPaymentDrawer({
         if (latest.status === "FAILED") {
           setStkStatus(latest.resultDesc || "Customer cancelled or failed");
           toast({
-            title: "STK failed",
+            title: "Payment request failed",
             description: latest.resultDesc || "Payment was not completed",
             variant: "destructive",
           });
@@ -332,8 +332,8 @@ export default function RecordPaymentDrawer({
     } catch (e) {
       setStkStatus(null);
       toast({
-        title: "Could not send STK",
-        description: e instanceof Error ? e.message : "STK push failed",
+        title: "Could not send the request",
+        description: e instanceof Error ? e.message : "The payment request could not be sent",
         variant: "destructive",
       });
     } finally {
@@ -346,7 +346,7 @@ export default function RecordPaymentDrawer({
       ? [
           {
             value: "CUSTODY_MPESA",
-            label: "Till / paybill (M-Pesa Express)",
+            label: "M-Pesa payment request",
           },
         ]
       : []),
@@ -524,7 +524,7 @@ export default function RecordPaymentDrawer({
                     <span className="font-semibold tabular-nums">
                       KES {balanceDue.toLocaleString()}
                     </span>{" "}
-                    from linked fee structures, but no bill has been generated yet.
+                    from linked fee plans, but no bill has been generated yet.
                   </p>
                   <p className="text-xs text-amber-800">
                     Linking grades assigns fees to students. Billing (generating
@@ -626,7 +626,7 @@ export default function RecordPaymentDrawer({
               {isCustodyStk ? (
                 <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
                   <p className="text-xs text-emerald-900">
-                    M-Pesa Express · PartyB = your till · PIN only · no B2B
+                    Parent gets an M-Pesa request · they enter their PIN · money goes to the school account
                     {custodyDestination?.type === "till"
                       ? ` · till ${custodyDestination.tillNumber}`
                       : custodyDestination?.businessNumber
@@ -794,7 +794,7 @@ export default function RecordPaymentDrawer({
                   Loading...
                 </>
               ) : isCustodyStk ? (
-                "Send STK prompt"
+                "Send M-Pesa request"
               ) : (
                 "Save & receipt"
               )}

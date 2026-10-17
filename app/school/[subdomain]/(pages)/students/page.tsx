@@ -7,7 +7,7 @@ import {
   type StudentProfileTab,
 } from "./components/student-profile-tabs";
 import { Button } from "@/components/ui/button";
-import { PanelLeftClose, PanelLeftOpen, Loader2, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Loader2, Users, X } from "lucide-react";
 import { CreateStudentDrawer } from "./components/CreateStudentDrawer";
 import { ImportStudentsDrawer } from "./components/ImportStudentsDrawer";
 import { StudentsEmptyHero } from "./components/StudentsEmptyHero";
@@ -27,7 +27,10 @@ import { useStudents, useStudentsFromStore } from "@/lib/hooks/useStudents";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { GraphQLStudent } from "@/types/student";
-import { formatGradeDisplayName } from "@/lib/utils/grade-display";
+import {
+  formatGradeDisplayName,
+  getGradeSortOrder,
+} from "@/lib/utils/grade-display";
 import { cn } from "@/lib/utils";
 import type { SchoolConfiguration } from "@/lib/types/school-config";
 import {
@@ -129,7 +132,7 @@ export default function StudentsPage() {
   const [profileTab, setProfileTab] = useState<StudentProfileTab>("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  const [displayedStudentsCount, setDisplayedStudentsCount] = useState(10);
+  const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
   const [studentFilter, setStudentFilter] = useState<StudentFilter>("all");
   const [gradeFilter, setGradeFilter] = useState("all");
   const [gradeIdFilter, setGradeIdFilter] = useState<string | null>(null);
@@ -151,15 +154,49 @@ export default function StudentsPage() {
       .map((s) => mapGraphQLStudent(s, config));
   }, [graphqlStudents, config]);
 
-  const grades = useMemo(() => {
-    const unique = new Set<string>();
+  const classOptions = useMemo(() => {
+    if (!config?.selectedLevels) return [];
+    const counts = new Map<string, number>();
     for (const student of students) {
-      if (student.grade && student.grade !== "—") {
-        unique.add(student.grade);
-      }
+      if (!student.gradeId) continue;
+      counts.set(student.gradeId, (counts.get(student.gradeId) ?? 0) + 1);
     }
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [students]);
+    return config.selectedLevels.flatMap((level) =>
+      [...(level.gradeLevels ?? [])]
+        .sort((a, b) => getGradeSortOrder(a.name) - getGradeSortOrder(b.name))
+        .map((grade) => ({
+          id: grade.id,
+          name: formatGradeDisplayName(grade.name),
+          levelName: level.name,
+          count: counts.get(grade.id) ?? 0,
+          streams: grade.streams ?? [],
+        })),
+    );
+  }, [config, students]);
+
+  const selectedClassOption = useMemo(
+    () => classOptions.find((option) => option.id === gradeIdFilter) ?? null,
+    [classOptions, gradeIdFilter],
+  );
+
+  const streamOptions = useMemo(() => {
+    if (!selectedClassOption) return [];
+    const counts = new Map<string, number>();
+    for (const student of students) {
+      if (
+        student.gradeId !== selectedClassOption.id ||
+        !student.streamId
+      ) {
+        continue;
+      }
+      counts.set(student.streamId, (counts.get(student.streamId) ?? 0) + 1);
+    }
+    return (selectedClassOption.streams ?? []).map((stream) => ({
+      id: stream.id,
+      name: stream.name,
+      count: counts.get(stream.id) ?? 0,
+    }));
+  }, [selectedClassOption, students]);
 
   const selectedStudent = useMemo(
     () => students.find((s) => s.id === selectedStudentId) ?? null,
@@ -186,6 +223,7 @@ export default function StudentsPage() {
     (studentId: string, tab: StudentProfileTab = "overview") => {
       setSelectedStudentId(studentId);
       setProfileTab(tab);
+      setIsDirectoryOpen(false);
       syncStudentUrl(studentId, tab);
     },
     [syncStudentUrl],
@@ -350,6 +388,41 @@ export default function StudentsPage() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [closeStudentProfile, pathname, router, searchParams]);
 
+  const applyClassFilter = useCallback(
+    (classId: string | null) => {
+      const option = classId
+        ? classOptions.find((item) => item.id === classId)
+        : null;
+      setGradeIdFilter(classId);
+      setStreamIdFilter(null);
+      setGradeFilter(option?.name ?? "all");
+
+      const params = new URLSearchParams(searchParams.toString());
+      if (classId) params.set("gradeId", classId);
+      else params.delete("gradeId");
+      params.delete("streamId");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, {
+        scroll: false,
+      });
+    },
+    [classOptions, pathname, router, searchParams],
+  );
+
+  const applyStreamFilter = useCallback(
+    (streamId: string | null) => {
+      setStreamIdFilter(streamId);
+      const params = new URLSearchParams(searchParams.toString());
+      if (streamId) params.set("streamId", streamId);
+      else params.delete("streamId");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
+
   const pageError = error || configError;
   const pageLoading = isLoading || configLoading;
 
@@ -379,10 +452,19 @@ export default function StudentsPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+      {isDirectoryOpen ? (
+        <button
+          type="button"
+          aria-label="Close student directory"
+          onClick={() => setIsDirectoryOpen(false)}
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+        />
+      ) : null}
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] transition-all duration-300 dark:border-white/10 dark:bg-[#0c1a17]",
           "md:relative md:translate-x-0",
+          isDirectoryOpen ? "translate-x-0" : "-translate-x-full",
           isSidebarMinimized ? "w-14" : "w-64",
         )}
       >
@@ -395,7 +477,7 @@ export default function StudentsPage() {
           <Button
             variant="ghost"
             size="sm"
-            className={studentsIconButton}
+            className={cn(studentsIconButton, "hidden md:inline-flex")}
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           >
             {isSidebarMinimized ? (
@@ -403,6 +485,15 @@ export default function StudentsPage() {
             ) : (
               <PanelLeftClose className="h-4 w-4" />
             )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(studentsIconButton, "md:hidden")}
+            onClick={() => setIsDirectoryOpen(false)}
+            aria-label="Close student directory"
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
         {!isSidebarMinimized ? (
@@ -413,10 +504,6 @@ export default function StudentsPage() {
               onSearchChange={setSearchTerm}
               selectedStudentId={selectedStudentId}
               onStudentSelect={selectStudent}
-              displayedStudentsCount={displayedStudentsCount}
-              onLoadMore={() =>
-                setDisplayedStudentsCount((prev) => prev + 10)
-              }
               isLoading={pageLoading}
             />
           </div>
@@ -445,6 +532,16 @@ export default function StudentsPage() {
               <div className="flex items-center gap-2">
                 {!selectedStudentId ? (
                   <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs md:hidden"
+                      onClick={() => setIsDirectoryOpen(true)}
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      Directory
+                    </Button>
                     <ImportStudentsDrawer
                       onImported={() => {
                         refetch();
@@ -533,7 +630,13 @@ export default function StudentsPage() {
                           rows={gradeMixRows}
                           total={students.length}
                           activeGrade={gradeFilter}
-                          onGradeSelect={setGradeFilter}
+                          onGradeSelect={(name) => {
+                            const option = classOptions.find(
+                              (item) => item.name === name,
+                            );
+                            if (option) applyClassFilter(option.id);
+                            else setGradeFilter(name);
+                          }}
                         />
                       </div>
                     ) : null}
@@ -542,71 +645,22 @@ export default function StudentsPage() {
 
                 {!pageLoading && students.length > 0 ? (
                   <div className={studentsControlShell}>
-                    {gradeIdFilter ? (
-                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-[#246a59]/25 bg-[#246a59]/[0.06] px-3 py-2.5 text-xs text-[#1a4d42]/70 dark:text-white/60">
-                        <span>
-                          Filtered to class{" "}
-                          <span className="font-semibold text-[#0a1f1a] dark:text-white">
-                            {gradeFilter !== "all" ? gradeFilter : "selected grade"}
-                          </span>
-                          {streamIdFilter
-                            ? (() => {
-                                for (const level of config?.selectedLevels ?? []) {
-                                  const grade = level.gradeLevels?.find(
-                                    (g) => g.id === gradeIdFilter,
-                                  );
-                                  const stream = grade?.streams?.find(
-                                    (s) => s.id === streamIdFilter,
-                                  );
-                                  if (stream) {
-                                    return (
-                                      <>
-                                        {" "}
-                                        · stream{" "}
-                                        <span className="font-semibold">
-                                          {stream.name}
-                                        </span>
-                                      </>
-                                    );
-                                  }
-                                }
-                                return null;
-                              })()
-                            : null}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 rounded-none text-[11px] text-[#246a59] hover:bg-[#246a59]/10 hover:text-[#1a4d42]"
-                          onClick={clearFilters}
-                        >
-                          Clear class filter
-                        </Button>
-                      </div>
-                    ) : null}
-
                     <StudentsFilterBar
                       filter={studentFilter}
                       onFilterChange={setStudentFilter}
                       counts={filterCounts}
-                      grades={grades}
-                      gradeFilter={gradeFilter}
-                      onGradeFilterChange={(grade) => {
-                        setGradeFilter(grade);
-                        setGradeIdFilter(null);
-                        setStreamIdFilter(null);
-                        const params = new URLSearchParams(
-                          searchParams.toString(),
-                        );
-                        params.delete("gradeId");
-                        params.delete("streamId");
-                        const qs = params.toString();
-                        router.replace(
-                          qs ? `${pathname}?${qs}` : pathname,
-                          { scroll: false },
-                        );
-                      }}
+                      classOptions={classOptions}
+                      classId={gradeIdFilter ?? "all"}
+                      onClassChange={(classId) =>
+                        applyClassFilter(classId === "all" ? null : classId)
+                      }
+                      streamOptions={streamOptions}
+                      streamId={streamIdFilter ?? "all"}
+                      onStreamChange={(streamId) =>
+                        applyStreamFilter(
+                          streamId === "all" ? null : streamId,
+                        )
+                      }
                     />
 
                     {searchTerm || tableStudents.length > 0 ? (

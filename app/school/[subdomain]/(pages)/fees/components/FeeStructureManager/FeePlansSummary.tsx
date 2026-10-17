@@ -27,7 +27,7 @@ export function FeePlansSummary({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-xl font-normal tracking-tight text-[#0a1f1a] sm:text-2xl">
-            {stats.totalPlans} fee structure
+            {stats.totalPlans} fee plan
             {stats.totalPlans === 1 ? "" : "s"}
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-[#1a4d42]/55">
@@ -64,7 +64,7 @@ export function FeePlansSummary({
           onClick={onCreateNew}
         >
           <Plus className="h-4 w-4" />
-          New structure
+          New fee plan
         </Button>
       </div>
 

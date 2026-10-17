@@ -71,7 +71,7 @@ export function FeeLetterContentPlanner({
         style={{ backgroundColor: `${FEES_BRAND.primary}06` }}
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-          Step 1 · Letter content
+          Letter content
         </p>
         <div className="hidden items-center gap-1 sm:flex">
           {[1, 2].map((n) => (

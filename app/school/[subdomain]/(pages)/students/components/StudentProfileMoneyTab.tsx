@@ -1,14 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
 import { Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { StudentDetailSummary } from "@/types/student";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { useStudentLedger } from "@/lib/hooks/use-student-ledger";
 import { StudentLedger } from "./StudentLedger";
+import { StudentPaymentDesk } from "./StudentPaymentDesk";
 import { studentsPanel } from "./students-ui";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +22,13 @@ function formatCurrency(amount: number) {
 interface StudentProfileMoneyTabProps {
   student: StudentDetailSummary;
   studentId: string;
+  onRecorded: () => void;
 }
 
 export function StudentProfileMoneyTab({
   student,
   studentId,
+  onRecorded,
 }: StudentProfileMoneyTabProps) {
   const { getActiveAcademicYear } = useCurrentAcademicYear();
   const activeYear = getActiveAcademicYear();
@@ -50,28 +51,27 @@ export function StudentProfileMoneyTab({
     ledgerData,
     loading: ledgerLoading,
     error: ledgerError,
+    refetch: refetchLedger,
   } = useStudentLedger({ studentId, dateRange });
 
   const balance = Math.max(0, student.feeSummary.balance);
 
   return (
     <div className="space-y-4">
+      <StudentPaymentDesk
+        student={student}
+        activeYear={activeYear}
+        onRecorded={() => {
+          refetchLedger();
+          onRecorded();
+        }}
+      />
       <div className={studentsPanel}>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-[#0a1f1a] dark:text-white">
             <Wallet className="h-4 w-4 text-[#1a4d42]/45" />
             Fee summary
           </h3>
-          {balance > 0 ? (
-            <Button
-              type="button"
-              size="sm"
-              className="h-8 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
-              asChild
-            >
-              <Link href="/fees?section=balances">Record payment</Link>
-            </Button>
-          ) : null}
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

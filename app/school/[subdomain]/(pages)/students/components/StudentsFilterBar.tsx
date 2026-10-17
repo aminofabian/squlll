@@ -8,6 +8,19 @@ import {
   studentsSelect,
 } from "./students-ui";
 
+export interface StudentClassOption {
+  id: string;
+  name: string;
+  levelName: string;
+  count: number;
+}
+
+export interface StudentStreamOption {
+  id: string;
+  name: string;
+  count: number;
+}
+
 interface StudentsFilterBarProps {
   filter: StudentFilter;
   onFilterChange: (filter: StudentFilter) => void;
@@ -17,9 +30,12 @@ interface StudentsFilterBarProps {
     inactive: number;
     missingClass: number;
   };
-  grades: string[];
-  gradeFilter: string;
-  onGradeFilterChange: (grade: string) => void;
+  classOptions: StudentClassOption[];
+  classId: string;
+  onClassChange: (classId: string) => void;
+  streamOptions: StudentStreamOption[];
+  streamId: string;
+  onStreamChange: (streamId: string) => void;
 }
 
 const filters: { id: StudentFilter; label: string }[] = [
@@ -33,9 +49,12 @@ export function StudentsFilterBar({
   filter,
   onFilterChange,
   counts,
-  grades,
-  gradeFilter,
-  onGradeFilterChange,
+  classOptions,
+  classId,
+  onClassChange,
+  streamOptions,
+  streamId,
+  onStreamChange,
 }: StudentsFilterBarProps) {
   const countFor = (id: StudentFilter) => {
     switch (id) {
@@ -51,6 +70,8 @@ export function StudentsFilterBar({
         return 0;
     }
   };
+
+  const streamDisabled = classId === "all" || streamOptions.length === 0;
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -78,22 +99,25 @@ export function StudentsFilterBar({
         })}
       </div>
 
-      {grades.length > 0 ? (
-        <div className="flex items-center gap-2">
-          <label htmlFor="student-grade-filter" className="text-xs text-slate-400">
-            Grade
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <label
+            htmlFor="student-class-filter"
+            className="text-xs text-slate-400"
+          >
+            Class
           </label>
           <div className="relative">
             <select
-              id="student-grade-filter"
-              value={gradeFilter}
-              onChange={(e) => onGradeFilterChange(e.target.value)}
-              className={studentsSelect}
+              id="student-class-filter"
+              value={classId}
+              onChange={(event) => onClassChange(event.target.value)}
+              className={cn(studentsSelect, "max-w-[13rem]")}
             >
-              <option value="all">All grades</option>
-              {grades.map((grade) => (
-                <option key={grade} value={grade}>
-                  {grade}
+              <option value="all">All classes</option>
+              {classOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name} · {option.levelName} ({option.count})
                 </option>
               ))}
             </select>
@@ -103,7 +127,42 @@ export function StudentsFilterBar({
             />
           </div>
         </div>
-      ) : null}
+
+        <div className="flex items-center gap-1.5">
+          <label
+            htmlFor="student-stream-filter"
+            className="text-xs text-slate-400"
+          >
+            Stream
+          </label>
+          <div className="relative">
+            <select
+              id="student-stream-filter"
+              value={streamId}
+              onChange={(event) => onStreamChange(event.target.value)}
+              disabled={streamDisabled}
+              className={cn(
+                studentsSelect,
+                "max-w-[11rem]",
+                streamDisabled && "cursor-not-allowed opacity-55",
+              )}
+            >
+              <option value="all">
+                {classId === "all" ? "Pick a class first" : "All streams"}
+              </option>
+              {streamOptions.map((stream) => (
+                <option key={stream.id} value={stream.id}>
+                  {stream.name} ({stream.count})
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400"
+              aria-hidden
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

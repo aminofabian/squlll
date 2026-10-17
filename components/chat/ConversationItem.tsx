@@ -1,6 +1,8 @@
 import { cn } from '@/lib/utils'
 import type { ChatConversation } from '@/lib/chat/types'
+import { LifeBuoy } from 'lucide-react'
 import { formatParticipantLabel, formatRelativeTime } from '@/lib/chat/utils'
+import { formatParticipantType } from '@/lib/chat/formatParticipantType'
 import { ChatAvatar } from './ChatAvatar'
 import { ChatUnreadBadge } from './ChatUnreadBadge'
 
@@ -18,6 +20,11 @@ export function ConversationItem({
   onSelect,
 }: ConversationItemProps) {
   const label = formatParticipantLabel(conversation, currentUserId)
+  const peerType =
+    conversation.participant1Id === currentUserId
+      ? conversation.participant2Type
+      : conversation.participant1Type
+  const roleLabel = formatParticipantType(peerType)
   const unread = conversation.unreadCount ?? 0
   const hasUnread = unread > 0
 
@@ -37,13 +44,25 @@ export function ConversationItem({
       <ChatAvatar label={label} />
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
-          <span
-            className={cn(
-              'truncate text-sm text-foreground',
-              hasUnread ? 'font-semibold' : 'font-medium',
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className={cn(
+                'truncate text-sm text-foreground',
+                hasUnread ? 'font-semibold' : 'font-medium',
+              )}
+            >
+              {label}
+            </span>
+            {peerType.trim().toLowerCase() === 'superadmin' ? (
+              <LifeBuoy
+                className="h-3 w-3 shrink-0 text-primary"
+                aria-label="Squl technical support conversation"
+              />
+            ) : (
+              <span className="shrink-0 border border-border bg-muted px-1 py-0.5 text-[9px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
+                {roleLabel}
+              </span>
             )}
-          >
-            {label}
           </span>
           <time
             dateTime={conversation.updatedAt}

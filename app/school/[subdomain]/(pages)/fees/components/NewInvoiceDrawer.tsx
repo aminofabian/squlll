@@ -149,7 +149,7 @@ export default function NewInvoiceDrawer({
       } else {
         toast({
           title: "No Invoice Generated",
-          description: "No invoices were generated. The student may not have fee structures assigned. Please assign fee structures to the student first.",
+          description: "No invoices were generated. The student may not have fee plans assigned. Please link a fee plan to the student's class first.",
           variant: "destructive",
         })
       }
@@ -238,11 +238,11 @@ export default function NewInvoiceDrawer({
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-blue-900">Before Generating Invoice</h4>
                   <p className="text-xs text-blue-700">
-                    Make sure the student has fee structures assigned. If no invoice is generated, 
-                    you may need to assign fee structures to this student first.
+                    Make sure the student has a fee plan linked to their class. If no invoice is generated,
+                    you may need to link a fee plan to this student&apos;s class first.
                   </p>
                   <p className="text-xs text-blue-600 font-medium">
-                    💡 Tip: Go to Fee Assignments to assign fee structures to students.
+                    💡 Tip: Go to Class links to link a fee plan to classes.
                   </p>
                 </div>
               </div>

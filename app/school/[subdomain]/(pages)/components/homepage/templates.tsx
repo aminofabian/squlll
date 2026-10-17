@@ -42,10 +42,13 @@ type VariantMap = Partial<Record<HomepageSectionType, string>>
 
 const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
   'campus-dawn': {
+    nav: 'dawn',
     hero: 'dawn',
-    stats: 'band',
-    offerings: 'grid',
-    cta: 'primary',
+    stats: 'dawn',
+    offerings: 'dawn',
+    gallery: 'dawn',
+    testimonials: 'dawn',
+    cta: 'dawn',
   },
   'assembly-hall': {
     nav: 'notebook',
@@ -83,7 +86,7 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
   },
   'skyline-cbc': {
     nav: 'glass',
-    hero: 'dawn',
+    hero: 'skyline',
     stats: 'band',
     offerings: 'numbered',
     cta: 'block',
@@ -127,6 +130,7 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
 }
 
 const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
+  'campus-dawn': 'campus-dawn-shell bg-[var(--school-paper)]',
   'assembly-hall': 'assembly-hall-shell bg-[var(--school-paper)]',
   playfield: 'playfield-shell bg-[var(--school-paper)]',
   'garden-court': 'garden-court-shell bg-[var(--school-paper)]',

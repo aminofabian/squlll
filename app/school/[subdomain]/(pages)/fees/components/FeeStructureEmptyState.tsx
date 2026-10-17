@@ -2,18 +2,18 @@
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, Sparkles, ArrowRight, Zap, Calendar, BookOpen, AlertCircle } from 'lucide-react'
+import { AlertCircle, ArrowRight, BookOpen, Calendar, Check, FileText, Link2, Sparkles } from 'lucide-react'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useQuery } from '@tanstack/react-query'
 import { ViewAcademicYearsDrawer } from '@/app/school/[subdomain]/(pages)/dashboard/components/ViewAcademicYearsDrawer'
+import { formatAcademicYearDisplay } from '../lib/feePlanStats'
 
 interface FeeStructureEmptyStateProps {
     onCreateNew: () => void
     onGuidedSetup?: () => void
-    onViewSample?: () => void
 }
 
-export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup, onViewSample }: FeeStructureEmptyStateProps) => {
+export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup }: FeeStructureEmptyStateProps) => {
     const { academicYears, loading: academicYearsLoading } = useAcademicYears()
     
     // Check if any academic year has terms
@@ -80,7 +80,7 @@ export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup, onViewSampl
                         Setup Required
                     </h3>
                     <p className="text-slate-700 max-w-md mx-auto mb-6 leading-relaxed">
-                        Before creating fee structures, you need to set up your academic calendar.
+                        Before creating fee plans, you need to set up your academic calendar.
                     </p>
 
                     {/* Prerequisites List */}
@@ -132,86 +132,132 @@ export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup, onViewSampl
 
                     {/* Info */}
                     <p className="text-xs text-slate-500 mt-6">
-                        Once you've created an academic year and at least one term, you'll be able to create fee structures.
+                        Once you&apos;ve created an academic year and at least one term, you&apos;ll be able to create fee plans.
                     </p>
                 </div>
             </Card>
         )
     }
 
-    // Original empty state if prerequisites are met
+    // Empty state when the school is ready to create its first fee plan.
+    const activeYear =
+        academicYears.find((year) => year.isActive) ?? academicYears[0]
+    const yearLabel = activeYear
+        ? formatAcademicYearDisplay(activeYear.name)
+        : "Academic year"
+    const termCount = activeYear?.terms?.length ?? 0
+
+    const steps = [
+        {
+            title: "Set the fee plan",
+            description:
+                "Choose the grades and the total each student pays in one term.",
+        },
+        {
+            title: "Split into fee lines",
+            description:
+                "Break the total into tuition, lunch, transport and any other charges.",
+        },
+        {
+            title: "Preview and save",
+            description:
+                "Check the term totals and the fee letter, then save the plan.",
+        },
+    ]
+
     return (
-        <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-white via-primary/5 to-primary/10 overflow-hidden">
-            <div className="relative p-12 text-center">
-                {/* Decorative Background Elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary-light/5 rounded-full blur-3xl -z-10" />
-
-                {/* Icon */}
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 mb-6 relative">
-                    <FileText className="h-10 w-10 text-primary" />
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                        <Sparkles className="h-4 w-4 text-white" />
-                    </div>
-                </div>
-
-                {/* Content */}
-                <h3 className="text-2xl font-bold text-primary mb-3">
-                    Set this year&apos;s fees
-                </h3>
-                <p className="text-slate-600 max-w-md mx-auto mb-8 leading-relaxed">
-                    Three quick steps: term totals, break them into fee lines, then
-                    preview the letter and save.
-                </p>
-
-                {/* CTAs */}
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Button
-                        onClick={onCreateNew}
-                        size="lg"
-                        className="bg-primary hover:bg-primary-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
-                    >
-                        <Sparkles className="h-5 w-5 mr-2" />
+        <Card className="overflow-hidden border border-primary/15 bg-white shadow-sm">
+            <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="p-6 sm:p-8">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-primary/[0.07] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                        <Sparkles className="h-3 w-3" />
+                        Fee plans
+                    </span>
+                    <h3 className="mt-3 font-display text-2xl font-normal tracking-tight text-primary sm:text-3xl">
                         Set this year&apos;s fees
-                        <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                    </Button>
-                    {onViewSample && (
+                    </h3>
+                    <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-600">
+                        Three quick steps: set the term total, split it into fee
+                        lines, then preview the letter and save.
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-800">
+                            <Check className="h-3 w-3" />
+                            {yearLabel}
+                        </span>
+                        {termCount > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-800">
+                                <Check className="h-3 w-3" />
+                                {termCount} term{termCount === 1 ? "" : "s"}
+                            </span>
+                        ) : null}
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-500">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                            No fee plans yet
+                        </span>
+                    </div>
+
+                    <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
                         <Button
-                            onClick={onViewSample}
-                            variant="outline"
+                            onClick={onGuidedSetup ?? onCreateNew}
                             size="lg"
-                            className="border-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300"
+                            className="h-10 bg-primary text-white shadow-none transition-colors hover:bg-primary-dark"
                         >
-                            <Zap className="h-4 w-4 mr-2" />
-                            View Sample Structure
+                            <FileText className="mr-2 h-4 w-4" />
+                            Start fee setup
+                            <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
-                    )}
+                    </div>
+
+                    <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
+                        You can change grades, terms and fee lines at any time before
+                        you start billing.
+                    </p>
                 </div>
 
-                {/* Quick Info Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 max-w-3xl mx-auto">
-                    <div className="p-4 bg-white shadow-sm border-2 border-primary/10">
-                        <div className="w-10 h-10 bg-primary/10 flex items-center justify-center mb-3 mx-auto">
-                            <span className="text-xl">📝</span>
-                        </div>
-                        <h4 className="font-semibold text-sm text-slate-900 mb-1">Easy Setup</h4>
-                        <p className="text-xs text-primary/70">Simple wizard to create fee structures in minutes</p>
-                    </div>
-
-                    <div className="p-4 bg-white shadow-sm border-2 border-primary/10">
-                        <div className="w-10 h-10 bg-primary/10 flex items-center justify-center mb-3 mx-auto">
-                            <span className="text-xl">🎯</span>
-                        </div>
-                        <h4 className="font-semibold text-sm text-slate-900 mb-1">Flexible</h4>
-                        <p className="text-xs text-primary/70">Customize fees for different grades and terms</p>
-                    </div>
-
-                    <div className="p-4 bg-white shadow-sm border-2 border-primary/10">
-                        <div className="w-10 h-10 bg-primary/10 flex items-center justify-center mb-3 mx-auto">
-                            <span className="text-xl">⚡</span>
-                        </div>
-                        <h4 className="font-semibold text-sm text-slate-900 mb-1">Automated</h4>
-                        <p className="text-xs text-primary/70">Generate invoices automatically from structures</p>
+                <div className="border-t border-primary/10 bg-[#f7faf8] p-6 sm:p-8 lg:border-l lg:border-t-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        How it works
+                    </p>
+                    <ol className="mt-4 space-y-4">
+                        {steps.map((step, index) => (
+                            <li key={step.title} className="flex gap-3">
+                                <span
+                                    className={
+                                        index === 0
+                                            ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white"
+                                            : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-400"
+                                    }
+                                >
+                                    {index + 1}
+                                </span>
+                                <div className="min-w-0">
+                                    <p
+                                        className={
+                                            index === 0
+                                                ? "flex flex-wrap items-center gap-1.5 text-sm font-semibold text-slate-900"
+                                                : "text-sm font-semibold text-slate-600"
+                                        }
+                                    >
+                                        {step.title}
+                                        {index === 0 ? (
+                                            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary">
+                                                Start here
+                                            </span>
+                                        ) : null}
+                                    </p>
+                                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                                        {step.description}
+                                    </p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                    <div className="mt-5 flex items-center gap-2 border-t border-slate-200/70 pt-4 text-[11px] text-slate-500">
+                        <Link2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        After saving, link the plan to classes and create student
+                        invoices for the term.
                     </div>
                 </div>
             </div>

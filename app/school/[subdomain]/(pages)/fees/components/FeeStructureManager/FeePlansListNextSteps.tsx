@@ -23,7 +23,7 @@ export function FeePlansListNextSteps({
 
   const headline = hasUnbilledPlans
     ? "Ready to bill linked classes"
-    : "Fee structures look good";
+    : "Fee plans look good";
 
   const body = hasUnbilledPlans
     ? "Generate term invoices on Overview when you are ready to charge students."
@@ -46,7 +46,7 @@ export function FeePlansListNextSteps({
         >
           <Link href={feesOverviewHref()} scroll={false}>
             <LayoutDashboard className="h-3.5 w-3.5" />
-            Bill on Overview
+            Create invoices
           </Link>
         </Button>
       ) : (
@@ -58,7 +58,7 @@ export function FeePlansListNextSteps({
         >
           <Link href={feesSectionHref("assignments")} scroll={false}>
             <Link2 className="h-3.5 w-3.5" />
-            Review Linked
+            Review class links
           </Link>
         </Button>
       )}

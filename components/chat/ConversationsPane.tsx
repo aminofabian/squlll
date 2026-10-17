@@ -2,6 +2,8 @@
 
 import { cn } from '@/lib/utils'
 import { RealtimeLiveIndicator } from '@/lib/realtime/RealtimeLiveIndicator'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { ChatConversation } from '@/lib/chat/types'
 import { ConversationList } from './ConversationList'
 
@@ -10,6 +12,7 @@ interface ConversationsPaneProps {
   conversations: ChatConversation[]
   selectedId: string | null
   onSelect: (conversation: ChatConversation) => void
+  onNewConversation: () => void
   loading: boolean
 }
 
@@ -18,6 +21,7 @@ export function ConversationsPane({
   conversations,
   selectedId,
   onSelect,
+  onNewConversation,
   loading,
 }: ConversationsPaneProps) {
   return (
@@ -31,7 +35,20 @@ export function ConversationsPane({
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Conversations
         </p>
-        <RealtimeLiveIndicator />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px]"
+            onClick={onNewConversation}
+            aria-label="New message"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New
+          </Button>
+          <RealtimeLiveIndicator />
+        </div>
       </div>
       <ConversationList
         conversations={conversations}

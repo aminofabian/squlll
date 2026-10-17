@@ -307,7 +307,7 @@ function getBlockingMessage(
     classesAvailable: boolean
   },
 ): string | null {
-  if (!flow.hasPlan) return 'Choose a fee structure and term to continue'
+  if (!flow.hasPlan) return 'Choose a fee plan and term to continue'
   if (!flow.classesAvailable) return 'Link classes to this structure before billing'
   if (!flow.hasClasses) return 'Select at least one class to bill'
   if (!flow.hasBuckets) return 'This term has no fee items on the structure'
@@ -857,18 +857,18 @@ export const BulkInvoiceGenerator = ({
                 {isLoadingStructures ? (
                   <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-600">
                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    Loading fee structures…
+                    Loading fee plans…
                   </div>
                 ) : feeStructures.length === 0 ? (
                   <p className="py-4 text-sm text-slate-500">
-                    Create a fee structure first, then return here to bill students.
+                    Create a fee plan first, then return here to bill students.
                   </p>
                 ) : (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <Label className="text-xs font-medium text-slate-700">
-                          Fee structure
+                          Fee plan
                         </Label>
                         <Select
                           value={formData.feeStructureId || undefined}
