@@ -2693,7 +2693,7 @@ export default function SmartTimetableNew() {
                     onClick={() =>
                       autoGenerateOpen
                         ? closeAutoGenerate()
-                        : openAutoGenerate()
+                        : openAutoGenerate(allocations.length > 0 ? 2 : 0)
                     }
                     aria-pressed={autoGenerateOpen}
                   >
@@ -3157,7 +3157,10 @@ export default function SmartTimetableNew() {
                     onAddLessons={() => setBulkLessonEntryOpen(true)}
                     onAutoGenerate={
                       hasScheduleStructure
-                        ? () => openAutoGenerate()
+                        ? () =>
+                            openAutoGenerate(
+                              allocations.length > 0 ? 2 : 0,
+                            )
                         : undefined
                     }
                     showConflicts={showConflicts}
@@ -3233,7 +3236,7 @@ export default function SmartTimetableNew() {
                     onSetWeeklyLessons={() => openAutoGenerate(0)}
                     onCheckWorkload={() => openAutoGenerate(1)}
                     onGenerate={() =>
-                      openAutoGenerate()
+                      openAutoGenerate(allocations.length > 0 ? 2 : 0)
                     }
                     onFillManually={startBuildingByHand}
                     onReviewIssues={handleHighlightProblems}
@@ -3770,7 +3773,7 @@ export default function SmartTimetableNew() {
               setShowTimetableWizard(true);
             }}
             onGenerate={generateTimetable}
-            onGenerated={(result) => {
+            onGenerated={(result, generatedScope) => {
               if (result?.entries?.length) {
                 const slots = useTimetableStore.getState().timeSlots;
                 for (const row of result.entries) {
@@ -3799,21 +3802,9 @@ export default function SmartTimetableNew() {
               closeAutoGenerate();
               setInspectorTab("issues");
 
-              const created = result?.createdCount ?? 0;
-              const unresolved = result?.unresolvedCount ?? 0;
-              toast({
-                title: created
-                  ? `${created} lesson${created === 1 ? "" : "s"} added to the timetable`
-                  : "Nothing placed yet",
-                description: created
-                  ? unresolved > 0
-                    ? `${unresolved} left empty for you to fill later.`
-                    : "Review the grid, then share with teachers."
-                  : "Subjects without a teacher, or lessons that could not fit, stay empty for later.",
-              });
               const snapshot = result?.replacedEntries ?? [];
               if (snapshot.length > 0) {
-                const scope = {
+                const scope = generatedScope ?? {
                   gradeLevelId: selectedGradeId ?? undefined,
                   streamId: selectedStreamId ?? undefined,
                 };

@@ -52,6 +52,10 @@ import {
 } from "../utils/suggestedWeeklyLessons";
 import { abbreviateGradeShort } from "@/lib/utils/grade-display";
 import { lessonsAfterDoubleChange } from "../utils/doubleLessonCount";
+import {
+  plannerTeacherRows,
+  type PlannerTeacherRow,
+} from "../utils/plannerTeacherRows";
 
 interface PlannerRow {
   key: string;
@@ -94,6 +98,8 @@ interface TimetableWeeklyLessonsPlannerProps {
   onSetUpSchoolDay?: () => void;
   /** True while lesson counts differ from what is stored. */
   onDirtyChange?: (dirty: boolean) => void;
+  /** Every class's rows with a teacher, as currently shown (saved or not). */
+  onTeacherRowsChange?: (rows: PlannerTeacherRow[]) => void;
 }
 
 /**
@@ -109,6 +115,12 @@ export interface TimetableWeeklyLessonsPlannerHandle {
   save: () => Promise<boolean>;
   /** True while any class has unsaved lesson-count edits. */
   hasUnsavedChanges: () => boolean;
+  /** Edit one row from outside (the By teacher list); saved with the rest. */
+  patchRow: (
+    gradeId: string,
+    key: string,
+    patch: { lessonsPerWeek: number; doubleLessons: number },
+  ) => void;
 }
 
 const normalize = (value: string) =>
@@ -203,6 +215,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     onDeleteAllocation,
     onSetUpSchoolDay,
     onDirtyChange,
+    onTeacherRowsChange,
   }: TimetableWeeklyLessonsPlannerProps,
   ref,
 ) {
@@ -384,6 +397,24 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
 
   const setRows = (gradeId: string, next: PlannerRow[]) =>
     setDrafts((prev) => ({ ...prev, [gradeId]: next }));
+
+  const teacherRows = useMemo(() => {
+    const teacherName = (id: string) =>
+      teachers.find((t) => t.id === id)?.name ?? "";
+    return plannerTeacherRows(
+      grades.map((g) => ({
+        gradeId: g.id,
+        gradeName: g.displayName || g.name,
+        unsaved: Boolean(drafts[g.id]),
+        rows: rowsFor(g.id),
+      })),
+      teacherName,
+    );
+  }, [grades, teachers, drafts, rowsFor]);
+
+  useEffect(() => {
+    onTeacherRowsChange?.(teacherRows);
+  }, [teacherRows, onTeacherRowsChange]);
 
   const patchRow = (key: string, patch: Partial<PlannerRow>) => {
     if (!activeGradeId) return;
@@ -690,8 +721,15 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     () => ({
       save: () => handleSave(),
       hasUnsavedChanges: () => Object.keys(drafts).length > 0,
+      patchRow: (gradeId, key, patch) =>
+        setDrafts((prev) => ({
+          ...prev,
+          [gradeId]: (prev[gradeId] ?? rowsFor(gradeId)).map((r) =>
+            r.key === key ? { ...r, ...patch } : r,
+          ),
+        })),
     }),
-    [drafts, handleSave],
+    [drafts, handleSave, rowsFor],
   );
 
   if (!grades.length) {

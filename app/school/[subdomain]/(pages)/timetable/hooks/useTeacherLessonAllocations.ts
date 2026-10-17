@@ -249,6 +249,7 @@ export function useTeacherLessonAllocations(termId: string | null | undefined) {
             gradeLevelId: options.gradeLevelId,
             streamId: options.streamId,
             seed: options.seed,
+            allowDoubleSplit: options.allowDoubleSplit ?? false,
           },
         },
       );

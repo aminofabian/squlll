@@ -77,6 +77,7 @@ export interface GenerateTimetableOptions {
   gradeLevelId?: string;
   streamId?: string;
   seed?: number;
+  allowDoubleSplit?: boolean;
 }
 
 export type TimetableCreationMode = "manual" | "automatic" | null;
