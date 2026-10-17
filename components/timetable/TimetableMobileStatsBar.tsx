@@ -33,7 +33,7 @@ function StatCell({
       >
         {value}
       </span>
-      <span className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      <span className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/40 dark:text-white/35">
         {label}
       </span>
     </div>
@@ -160,7 +160,7 @@ export function TimetableMobileStatsBar({
   return (
     <footer
       className={cn(
-        "flex w-full shrink-0 border-t border-slate-100/90 bg-white/95 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] backdrop-blur-md pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] dark:border-slate-800/90 dark:bg-slate-950/95 dark:shadow-[0_-4px_16px_rgba(0,0,0,0.25)]",
+        "flex w-full shrink-0 border-t border-[#1a4d42]/8 bg-white/95 pr-14 shadow-[0_-6px_24px_-18px_rgba(10,31,26,0.35)] backdrop-blur-md pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] dark:border-white/8 dark:bg-[#071411]/95",
         className,
       )}
       aria-label="Timetable summary"
@@ -171,7 +171,7 @@ export function TimetableMobileStatsBar({
               key={index}
               className={cn(
                 "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5",
-                index < 3 && "border-r border-slate-100 dark:border-slate-800",
+                index < 3 && "border-r border-[#1a4d42]/8 dark:border-white/8",
               )}
             >
               <Skeleton className="h-3.5 w-7 rounded-none" />
@@ -184,7 +184,7 @@ export function TimetableMobileStatsBar({
               className={cn(
                 "min-w-0 flex-1",
                 index < items.length - 1 &&
-                  "border-r border-slate-100/80 dark:border-slate-800/60",
+                  "border-r border-[#1a4d42]/8 dark:border-white/8",
               )}
             >
               <StatCell

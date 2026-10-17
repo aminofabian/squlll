@@ -373,13 +373,13 @@ export function TimetableJourney({
   return (
     <section
       className={cn(
-        "overflow-hidden border-b bg-white dark:bg-[#0c1a17]",
+        "mx-3 mt-3 overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04)] dark:bg-[#0c1a17]",
         tt.border.soft,
         !started && "border-l-[3px] border-l-[#246a59]",
       )}
       aria-label="Timetable progress"
     >
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3.5 py-2.5 sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           {current ? (
             <span
@@ -482,7 +482,7 @@ export function TimetableJourney({
           tt.border.hair,
         )}
       >
-        <div className="mb-1.5 sm:hidden">
+        <div className="mb-1.5">
           <button
             type="button"
             onClick={() => setShowAllSteps((v) => !v)}
@@ -494,10 +494,10 @@ export function TimetableJourney({
             )}
             aria-expanded={showAllSteps}
           >
-            {showAllSteps ? "Hide steps" : "Show all steps"}
+            {showAllSteps ? "Hide setup steps" : "View setup steps"}
           </button>
         </div>
-        <div className={cn(!showAllSteps && "hidden sm:block")}>{spine}</div>
+        <div className={cn(!showAllSteps && "hidden")}>{spine}</div>
       </div>
     </section>
   );

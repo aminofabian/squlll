@@ -43,7 +43,7 @@ const DOUBLE_ROW_H = "min-h-[104px]";
 const TIME_COL_W = "max-md:w-[108px]";
 const TIME_RAIL_MIN = "min-h-[52px]";
 const TD_PAD = "p-1";
-const CARD_RADIUS = "rounded-md";
+const CARD_RADIUS = "rounded-lg";
 const DOUBLE_ROW_SPAN = 2;
 const TRIPLE_ROW_SPAN = 3;
 
@@ -826,8 +826,8 @@ export function AdminTimetableGrid({
       className={cn(
         "overflow-hidden border border-zinc-200/90 dark:border-zinc-800",
         schoolCombined
-          ? "rounded-none bg-zinc-50/40 dark:bg-zinc-950/40"
-          : "rounded-xl bg-white p-2 shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:bg-zinc-900/60",
+          ? "rounded-2xl bg-white/70 dark:bg-zinc-950/40"
+          : "rounded-2xl bg-white p-2.5 shadow-[0_1px_2px_rgba(10,31,26,0.04),0_18px_40px_-30px_rgba(10,31,26,0.22)] dark:bg-zinc-900/60",
         className,
       )}
     >
@@ -1937,7 +1937,7 @@ function AdminLessonCell({
     <div
       ref={cellRef}
       className={cn(
-        "group/lesson relative flex h-full flex-col justify-between gap-1 border border-l-[3px] px-2 shadow-[0_1px_0_rgba(15,23,42,0.03)] transition-shadow hover:shadow-md",
+        "group/lesson relative flex h-full flex-col justify-between gap-1 border border-l-[3px] px-2.5 shadow-[0_1px_0_rgba(15,23,42,0.03)] transition-all duration-150 hover:-translate-y-px hover:shadow-[0_8px_20px_-14px_rgba(10,31,26,0.35)]",
         CARD_RADIUS,
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         isDragging && "opacity-40 ring-2 ring-[#246a59]/40",
@@ -2067,7 +2067,7 @@ function LessonCardBadges({
       ) : null}
       {doubleLabel ? (
         <span
-          className="self-start rounded-full border bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.06em] dark:bg-black/20"
+          className="shrink-0 self-start whitespace-nowrap rounded-full border bg-white/80 px-2 py-1 text-[9px] font-semibold uppercase leading-none tracking-[0.04em] dark:bg-black/20"
           style={{ borderColor: accent.border, color: accent.text }}
         >
           {doubleLabel}
@@ -2098,33 +2098,33 @@ function FreeSlotCell({
       className={cn(
         ROW_H,
         CARD_RADIUS,
-        "group/empty flex w-full flex-col items-start justify-center gap-1 border border-dashed px-2 transition-colors",
+        "group/empty flex w-full items-center justify-center border border-transparent px-1.5 transition-colors",
         hasSuggestion
-          ? "border-[#246a59]/45 bg-[repeating-linear-gradient(135deg,rgba(36,106,89,0.05)_0_6px,transparent_6px_12px)]"
-          : "border-zinc-200 bg-zinc-50/60 dark:border-zinc-700/70 dark:bg-zinc-900/30",
+          ? "border-[#246a59]/35 bg-[#246a59]/[0.045]"
+          : "hover:border-[#246a59]/20 hover:bg-[#246a59]/[0.035]",
         isActive && "border-solid border-[#246a59] bg-[#246a59]/10 ring-2 ring-[#0a1f1a]",
         isFaded && "opacity-40",
       )}
       data-editing-slot={isActive ? "" : undefined}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500">
-        Free slot
-      </span>
       <button
         type="button"
         disabled={disabled}
         onClick={hasSuggestion ? onPlaceSuggested : onAdd}
         aria-current={isActive ? "true" : undefined}
+        aria-label={
+          hasSuggestion ? `Place ${suggestedSubject} here` : "Add a lesson here"
+        }
         className={cn(
-          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors",
+          "inline-flex items-center justify-center gap-1 rounded-full border text-[11px] font-semibold transition-all",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/30 disabled:cursor-not-allowed disabled:opacity-50",
           hasSuggestion
-            ? "border-[#246a59]/50 bg-white text-[#1a4d42] hover:bg-[#246a59] hover:text-white dark:bg-transparent dark:text-[#7eb8a8]"
-            : "border-transparent text-zinc-500 hover:border-[#246a59]/40 hover:bg-white hover:text-[#246a59]",
+            ? "border-[#246a59]/40 bg-white px-2.5 py-1 text-[#1a4d42] shadow-sm hover:bg-[#246a59] hover:text-white dark:bg-[#0c1a17] dark:text-[#9dcec1]"
+            : "h-7 w-7 border-transparent text-[#1a4d42]/25 hover:border-[#246a59]/25 hover:bg-white hover:text-[#246a59] hover:shadow-sm focus-visible:border-[#246a59]/30 focus-visible:bg-white focus-visible:text-[#246a59] dark:text-white/20 dark:hover:bg-white/5 dark:hover:text-[#9dcec1]",
         )}
       >
-        <Plus className="h-3 w-3" />
-        {hasSuggestion ? `Place ${suggestedSubject}` : "Add lesson"}
+        <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+        {hasSuggestion ? <span>Place {suggestedSubject}</span> : null}
       </button>
     </div>
   );

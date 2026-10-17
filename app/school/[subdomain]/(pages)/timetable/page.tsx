@@ -1086,7 +1086,7 @@ export default function SmartTimetableNew() {
     periodNumbers,
     getSlotFor,
   });
-  const [classPanelOpen, setClassPanelOpen] = useState(true);
+  const [classPanelOpen, setClassPanelOpen] = useState(false);
   const [highlightSubjectId, setHighlightSubjectId] = useState<string | null>(null);
   const classNeighbours = useMemo(
     () => getClassNeighbours(grades, { gradeId: selectedGradeId, streamId: selectedStreamId }),
@@ -2478,7 +2478,7 @@ export default function SmartTimetableNew() {
         <header
           data-timetable-no-print
           className={cn(
-            "hidden shrink-0 border-b bg-[#f8fbfa]/95 px-3 py-2 backdrop-blur-md dark:bg-[#071411]/95 sm:px-4 lg:block",
+            "hidden shrink-0 border-b border-[#1a4d42]/8 bg-white/85 px-4 py-3 shadow-[0_1px_0_rgba(10,31,26,0.03)] backdrop-blur-xl dark:border-white/8 dark:bg-[#071411]/90 sm:px-6 lg:block",
             tt.border.soft,
           )}
         >
@@ -2502,7 +2502,7 @@ export default function SmartTimetableNew() {
               )}
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <h1 className={cn("truncate font-display", tt.text.display, tt.ink.strong)}>
+                  <h1 className={cn("truncate font-display text-[19px] font-semibold tracking-[-0.035em]", tt.ink.strong)}>
                     {selectedGradeId
                       ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
                       : schoolWideView
@@ -2516,17 +2516,6 @@ export default function SmartTimetableNew() {
                         neighbours={classNeighbours}
                         onGo={goToClass}
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-1.5 rounded-lg px-2.5 text-[12.5px]"
-                        onClick={handlePrintClassTimetable}
-                        aria-label="Print or download this timetable as an A4 PDF"
-                      >
-                        <Printer className="h-3.5 w-3.5" />
-                        Print / PDF
-                      </Button>
                     </>
                   ) : null}
                 </div>
@@ -2572,7 +2561,7 @@ export default function SmartTimetableNew() {
                       schoolWideActive ? exitWholeSchoolView : openWholeSchoolView
                     }
                     className={cn(
-                      "h-8 shrink-0 gap-1.5 rounded-none font-medium",
+                      "h-8 shrink-0 gap-1.5 rounded-lg font-medium",
                       tt.text.small,
                       schoolWideActive
                         ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
@@ -2614,7 +2603,7 @@ export default function SmartTimetableNew() {
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "h-8 gap-1.5 font-medium",
+                      "h-9 gap-1.5 rounded-lg font-medium",
                       tt.text.small,
                       tt.numeral,
                       conflictCount > 0
@@ -2668,7 +2657,7 @@ export default function SmartTimetableNew() {
                   <Button
                     size="sm"
                     className={cn(
-                      "hidden h-8 gap-1.5 rounded-md font-medium lg:inline-flex",
+                      "hidden h-9 gap-1.5 rounded-lg font-medium shadow-sm lg:inline-flex",
                       tt.text.small,
                       isLastLesson
                         ? "border border-[#1a4d42]/20 bg-white text-[#0a1f1a] hover:bg-[#e8f2ef]"
@@ -2700,7 +2689,7 @@ export default function SmartTimetableNew() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="hidden h-8 gap-1.5 border-slate-200 bg-white text-xs text-slate-600 hover:text-slate-800 lg:inline-flex dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                      className="hidden h-9 gap-1.5 rounded-lg border-[#1a4d42]/12 bg-white text-xs text-[#1a4d42]/65 hover:border-[#1a4d42]/20 hover:text-[#0a1f1a] lg:inline-flex dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/60"
                     >
                       <Shuffle className="h-3.5 w-3.5" />
                       {AUTO_BUILD_COPY.rebuild}
@@ -2744,7 +2733,7 @@ export default function SmartTimetableNew() {
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "hidden h-8 gap-1.5 rounded-none border-[#246a59]/30 font-medium text-[#246a59] hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42] lg:inline-flex",
+                      "hidden h-9 gap-1.5 rounded-lg border-[#246a59]/25 bg-white font-medium text-[#246a59] hover:border-[#246a59]/45 hover:bg-[#246a59]/5 hover:text-[#1a4d42] lg:inline-flex dark:bg-[#0c1a17]",
                       tt.text.small,
                     )}
                     onClick={() => setBulkLessonEntryOpen(true)}
@@ -2761,7 +2750,7 @@ export default function SmartTimetableNew() {
                       variant="ghost"
                       size="sm"
                       className={cn(
-                        "h-8 gap-1.5 hover:text-[#0a1f1a] dark:hover:text-white",
+                        "h-9 gap-1.5 rounded-lg hover:bg-[#f3f7f5] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white",
                         tt.text.small,
                         tt.ink.muted,
                       )}
@@ -2878,7 +2867,7 @@ export default function SmartTimetableNew() {
                       variant="outline"
                       size="sm"
                     className={cn(
-                      "hidden h-8 gap-1.5 text-xs lg:inline-flex",
+                      "hidden h-9 gap-1.5 rounded-lg text-xs lg:inline-flex",
                       shareDrawerOpen
                         ? "border-[#0a1f1a] bg-[#0a1f1a] text-white hover:bg-[#246a59]"
                         : changesSinceShare
@@ -2904,7 +2893,7 @@ export default function SmartTimetableNew() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="hidden h-8 w-8 border-slate-200 bg-white text-slate-500 hover:text-slate-700 lg:inline-flex dark:border-slate-700 dark:bg-slate-900"
+                      className="hidden h-9 w-9 rounded-lg border-[#1a4d42]/12 bg-white text-[#1a4d42]/55 hover:text-[#0a1f1a] lg:inline-flex dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/50"
                       aria-label="More timetable actions"
                       title="Lesson times, breaks, export, print, and reset"
                     >
@@ -3141,7 +3130,7 @@ export default function SmartTimetableNew() {
                     moreMenu={renderMobileOverflowMenu(
                       <button
                         type="button"
-                        className="flex h-full w-full items-center justify-center gap-2 py-4 text-[13px] font-medium text-slate-600 transition-colors active:bg-slate-50 dark:text-slate-400 dark:active:bg-slate-900"
+                        className="flex h-full w-full items-center justify-center gap-1.5 py-3 text-[12px] font-medium text-slate-600 transition-colors active:bg-slate-50 dark:text-slate-400 dark:active:bg-slate-900"
                       >
                         <MoreHorizontal
                           className="h-4 w-4 opacity-80"
@@ -3178,7 +3167,7 @@ export default function SmartTimetableNew() {
               !editingLesson &&
               !shareDrawerOpen &&
               !(hasAnyLessons && sharedAt && !changesSinceShare) && (
-                <div data-timetable-no-print className="shrink-0">
+                <div data-timetable-no-print className="hidden shrink-0 lg:block">
                   <TimetableJourney
                     hasSchoolDay={hasScheduleStructure}
                     periodCount={Math.max(
@@ -3220,6 +3209,7 @@ export default function SmartTimetableNew() {
               )}
 
             {autoBuildOffer &&
+              journeyHidden &&
               hasScheduleStructure &&
               !autoBuildBanner.dismissed &&
               !showTimetableWizard &&
@@ -3227,7 +3217,7 @@ export default function SmartTimetableNew() {
               !autoGenerateOpen &&
               !editingLesson &&
               !shareDrawerOpen && (
-                <div data-timetable-no-print className="shrink-0 px-3 pt-3 lg:px-4">
+                <div data-timetable-no-print className="hidden shrink-0 px-3 pt-3 lg:block lg:px-4">
                   <TimetableAutoBuildBanner
                     offer={autoBuildOffer}
                     filledSlots={termOverview.totalFilled}
@@ -3344,14 +3334,12 @@ export default function SmartTimetableNew() {
                       <div className="flex h-full min-h-[320px] items-center justify-center p-4">
                         <div
                           className={cn(
-                            "w-full max-w-md border bg-[#f8fbfa] p-6 text-center dark:bg-[#0c1a17]",
-                            tt.border.hair,
+                            "w-full max-w-lg rounded-2xl border border-[#1a4d42]/10 bg-white p-6 text-center shadow-[0_1px_2px_rgba(10,31,26,0.04),0_24px_60px_-42px_rgba(10,31,26,0.28)] dark:border-white/10 dark:bg-[#0c1a17] sm:p-8",
                           )}
                         >
                           <div
                             className={cn(
-                              "mx-auto flex h-10 w-10 items-center justify-center border bg-[#f3f7f5] dark:bg-[#071411]",
-                              tt.border.hair,
+                              "mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8f2ef] text-[#246a59] dark:bg-[#246a59]/15 dark:text-[#9dcec1]",
                             )}
                           >
                             {hasScheduleStructure ? (
@@ -3396,11 +3384,9 @@ export default function SmartTimetableNew() {
                                           setSelectedGrade(grade.id);
                                         }}
                                         className={cn(
-                                          "rounded-none border px-2.5 py-1.5 font-medium transition-colors",
+                                          "rounded-lg border border-[#1a4d42]/12 bg-white px-3 py-1.5 font-medium text-[#1a4d42]/75 transition-all",
                                           tt.text.small,
-                                          tt.border.hair,
-                                          tt.ink.base,
-                                          "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#1a4d42]",
+                                          "hover:-translate-y-px hover:border-[#246a59]/35 hover:bg-[#246a59]/5 hover:text-[#0a1f1a] hover:shadow-sm dark:border-white/10 dark:bg-[#071411] dark:text-white/60",
                                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
                                         )}
                                       >
@@ -3421,7 +3407,7 @@ export default function SmartTimetableNew() {
                                   variant="outline"
                                   size="sm"
                                   className={cn(
-                                    "mt-2 h-8 gap-1.5 rounded-none font-medium",
+                                    "mt-2 h-9 gap-1.5 rounded-lg font-medium",
                                     tt.text.small,
                                   )}
                                   onClick={() => setSchoolWideView(true)}
@@ -3435,7 +3421,7 @@ export default function SmartTimetableNew() {
                             <Button
                               size="sm"
                               className={cn(
-                                "mt-4 h-9 gap-1.5 rounded-none bg-[#0a1f1a] px-3 font-medium text-white hover:bg-[#246a59]",
+                                "mt-4 h-9 gap-1.5 rounded-lg bg-[#0a1f1a] px-3 font-medium text-white hover:bg-[#246a59]",
                                 tt.text.small,
                               )}
                               onClick={() => setShowTimetableWizard(true)}

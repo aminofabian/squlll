@@ -43,9 +43,9 @@ export function TimetableWeekProgress({
       >
         <div className="h-full rounded-full bg-[#0a1f1a] transition-[width] dark:bg-[#7eb8a8]" style={{ width: `${percent}%` }} />
       </div>
-      <p className={cn(tt.text.small, tt.numeral, "font-semibold text-slate-900 dark:text-white")}>
+      <p className={cn(tt.text.small, tt.numeral, tt.ink.strong, "font-semibold")}>
         {lessonsPlaced} of {lessonsTarget} lessons placed
-        <span className="font-normal text-slate-600 dark:text-slate-300"> · {plural(slotsFree, "slot")} free</span>
+        <span className={cn("font-normal", tt.ink.muted)}> · {plural(slotsFree, "slot")} free</span>
       </p>
       {headsUpCount > 0 ? (
         <button
@@ -57,8 +57,8 @@ export function TimetableWeekProgress({
           {plural(headsUpCount, "heads-up")} to review
         </button>
       ) : null}
-      <p className={cn(tt.text.caption, "text-slate-600 dark:text-slate-400")}>
-        Click a subject on the right to highlight it · drag a lesson to move or swap it
+      <p className={cn(tt.text.caption, tt.ink.faint, "hidden xl:block")}>
+        Drag a lesson to move · drop on another to swap
       </p>
       {onShowPanel ? (
         <button

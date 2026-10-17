@@ -37,7 +37,7 @@ export function TimetableStatusMeter({
       }
     >
       <div
-        className="h-1 w-16 overflow-hidden bg-[#1a4d42]/10 dark:bg-white/10 sm:w-20"
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-[#1a4d42]/8 dark:bg-white/10"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
@@ -46,7 +46,7 @@ export function TimetableStatusMeter({
       >
         <div
           className={cn(
-            "h-full transition-[width]",
+            "h-full rounded-full transition-[width]",
             verdict === "clashes"
               ? "bg-red-500"
               : verdict === "ready"

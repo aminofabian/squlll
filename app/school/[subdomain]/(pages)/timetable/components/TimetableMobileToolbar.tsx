@@ -29,7 +29,7 @@ export function TimetableMobileActionStrip({
   return (
     <div
       className={cn(
-        "flex items-stretch border-t border-b bg-white px-2 lg:hidden dark:bg-[#0c1a17]",
+        "mx-3 flex items-stretch overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-white shadow-sm lg:hidden dark:border-white/10 dark:bg-[#0c1a17]",
         tt.border.hair,
         className,
       )}
@@ -43,7 +43,7 @@ export function TimetableMobileActionStrip({
               tt.text.body,
               tt.focus,
               tt.ink.base,
-              "flex min-w-0 flex-1 items-center justify-center gap-2 py-4 font-medium transition-colors active:bg-[#e8f2ef] dark:active:bg-white/5",
+              "flex min-w-0 flex-1 items-center justify-center gap-1.5 py-3 text-[12px] font-medium transition-colors active:bg-[#e8f2ef] dark:active:bg-white/5",
             )}
           >
             <Plus className="h-4 w-4 opacity-80" strokeWidth={1.75} />
@@ -64,7 +64,7 @@ export function TimetableMobileActionStrip({
             className={cn(
               tt.text.body,
               tt.focus,
-              "flex min-w-0 flex-1 items-center justify-center gap-2 py-4 font-medium text-[#246a59] transition-colors active:bg-[#246a59]/10",
+              "flex min-w-0 flex-1 items-center justify-center gap-1.5 py-3 text-[12px] font-medium text-[#246a59] transition-colors active:bg-[#246a59]/10",
             )}
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.75} />
@@ -84,7 +84,7 @@ export function TimetableMobileActionStrip({
         className={cn(
           tt.text.body,
           tt.focus,
-          "flex min-w-0 flex-1 items-center justify-center gap-2 py-4 font-medium transition-colors",
+          "flex min-w-0 flex-1 items-center justify-center gap-1.5 py-3 text-[12px] font-medium transition-colors",
           showConflicts
             ? conflictCount > 0
               ? "bg-red-600 text-white dark:bg-red-500"

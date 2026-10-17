@@ -35,11 +35,12 @@ const text = {
 } as const;
 
 export const tt = {
-  pageBg: "bg-[#f3f7f5] dark:bg-[#071411]",
+  pageBg:
+    "bg-[#f2f7f4] bg-[radial-gradient(1100px_520px_at_100%_-12%,#e3efe9_0%,transparent_62%),radial-gradient(760px_420px_at_-8%_108%,#eaf3ee_0%,transparent_58%)] dark:bg-[#071411]",
   panel:
-    "rounded-none border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]",
+    "rounded-2xl border border-[#1a4d42]/10 bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04),0_12px_32px_-24px_rgba(10,31,26,0.18)] dark:border-white/10 dark:bg-[#0c1a17]",
   panelMuted:
-    "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]",
+    "rounded-2xl border border-[#1a4d42]/10 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]",
   label:
     "text-[11px] font-medium uppercase tracking-[0.08em] text-[#1a4d42]/55 dark:text-white/45",
   body: "text-[13px] leading-snug text-[#0a1f1a]/80 dark:text-white/70",
@@ -51,9 +52,9 @@ export const tt = {
   accentHover: "#1a4d42",
   accentSoft: "bg-[#246a59]/10 text-[#246a59]",
   accentBtn:
-    "rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59] focus-visible:ring-[#246a59]/40",
+    "rounded-lg bg-[#0a1f1a] text-white shadow-[0_1px_2px_rgba(10,31,26,0.18)] hover:bg-[#246a59] focus-visible:ring-[#246a59]/40",
   chip:
-    "inline-flex items-center rounded-none border border-[#1a4d42]/15 bg-white px-2.5 py-1 text-[11px] font-medium text-[#1a4d42]/70 transition dark:border-white/15 dark:bg-[#071411] dark:text-white/60",
+    "inline-flex items-center rounded-lg border border-[#1a4d42]/12 bg-white px-2.5 py-1 text-[11px] font-medium text-[#1a4d42]/70 transition hover:border-[#1a4d42]/20 dark:border-white/15 dark:bg-[#071411] dark:text-white/60",
   chipOn:
     "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white",
   chipDanger:
@@ -65,7 +66,7 @@ export const tt = {
     "text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/45 dark:text-white/40",
   /** Status tones — sharp rectangles, never pills */
   pill: {
-    base: "inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-semibold",
+    base: "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
     neutral:
       "bg-[#e8f2ef] text-[#1a4d42]/70 dark:bg-white/10 dark:text-white/60",
     info: "bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#7eb8a8]",

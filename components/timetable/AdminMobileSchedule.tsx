@@ -92,11 +92,11 @@ export function AdminMobileSchedule({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden bg-slate-50/60 dark:bg-slate-950",
+        "flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden bg-[#f2f7f4] dark:bg-[#071411]",
         className,
       )}
     >
-      <div className="shrink-0 bg-white dark:bg-slate-950">
+      <div className="shrink-0 bg-[#f2f7f4] dark:bg-[#071411]">
         <AdminMobileClassBar
           classLabel={classLabel}
           streamName={streamName}
@@ -111,7 +111,7 @@ export function AdminMobileSchedule({
       </div>
 
       <section
-        className="mt-4 flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-t-[1.25rem] bg-white px-1.5 pt-2 shadow-[0_-1px_0_rgba(0,0,0,0.04)] dark:bg-slate-950 dark:shadow-[0_-1px_0_rgba(255,255,255,0.04)]"
+        className="mt-1 flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-2xl border border-[#1a4d42]/10 bg-white px-1.5 pt-2 shadow-[0_1px_2px_rgba(10,31,26,0.03)] dark:border-white/10 dark:bg-[#0c1a17]"
         aria-label="Weekly class timetable"
       >
         <TeacherMobileWeekTable
@@ -131,12 +131,12 @@ export function AdminMobileSchedule({
       </section>
 
       {teacherLessons.length > 0 ? (
-        <div className="shrink-0 border-t border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-950">
+        <div className="shrink-0 border-t border-[#1a4d42]/8 bg-white px-2 dark:border-white/8 dark:bg-[#0c1a17]">
           <TimetableTeacherWorkload
             teachers={teacherLessons}
             highlightTeacherId={highlightTeacherId}
             onTeacherClick={onTeacherClick}
-            maxHeightClass="max-h-36"
+            maxHeightClass="max-h-28"
           />
         </div>
       ) : null}

@@ -30,15 +30,15 @@ export function TimetableAutoBuildBanner({
   return (
     <section
       aria-label={isStart ? copy.startTitle : copy.finishTitle}
-      className="relative overflow-hidden border border-[#246a59]/40 bg-gradient-to-r from-[#0a1f1a] via-[#123a31] to-[#246a59] text-white"
+      className="relative overflow-hidden rounded-2xl border border-[#246a59]/30 bg-gradient-to-r from-[#0a1f1a] via-[#123a31] to-[#246a59] text-white shadow-[0_14px_38px_-24px_rgba(10,31,26,0.6)]"
     >
       <Sparkles
         aria-hidden
         className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 text-white/[0.06]"
         strokeWidth={1}
       />
-      <div className="relative flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-5">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-white/10 ring-1 ring-white/20">
+      <div className="relative flex flex-col gap-3.5 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-5 sm:px-5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
           <Sparkles className="h-5 w-5 text-amber-200" strokeWidth={1.75} />
         </span>
 
@@ -62,7 +62,7 @@ export function TimetableAutoBuildBanner({
             className={cn(
               tt.text.small,
               tt.focus,
-              "group inline-flex h-10 items-center gap-2 bg-white px-4 font-semibold text-[#0a1f1a] shadow-sm transition hover:bg-amber-50",
+              "group inline-flex h-9 items-center gap-2 rounded-lg bg-white px-4 font-semibold text-[#0a1f1a] shadow-sm transition hover:bg-amber-50",
             )}
           >
             <Sparkles className="h-4 w-4 text-[#246a59]" />
@@ -85,7 +85,7 @@ export function TimetableAutoBuildBanner({
         type="button"
         onClick={onDismiss}
         aria-label={copy.dismissLabel}
-        className={cn(tt.focus, "absolute right-2 top-2 flex h-7 w-7 items-center justify-center text-white/50 hover:bg-white/10 hover:text-white")}
+        className={cn(tt.focus, "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-white/50 hover:bg-white/10 hover:text-white")}
       >
         <X className="h-3.5 w-3.5" />
       </button>
