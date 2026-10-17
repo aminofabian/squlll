@@ -205,10 +205,12 @@ function SchoolLayoutContent({
   // If not configured, show full-width layout without sidebar
   if (!isConfigured && !isConfigLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Toaster position="top-right" closeButton richColors />
-        {children}
-      </div>
+      <TermProvider>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+          <Toaster position="top-right" closeButton richColors />
+          {children}
+        </div>
+      </TermProvider>
     )
   }
 
