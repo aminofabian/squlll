@@ -42,6 +42,12 @@ import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { TimetableJourney } from "./components/TimetableJourney";
 import { TimetableAutoBuildBanner } from "./components/TimetableAutoBuildBanner";
+import { TimetableClassStepper } from "./components/TimetableClassStepper";
+import { TimetableClassWeekPanel } from "./components/TimetableClassWeekPanel";
+import { TimetableWeekProgress } from "./components/TimetableWeekProgress";
+import { useClassStepperKeys } from "./hooks/useClassStepperKeys";
+import { useClassWeekInsights } from "./hooks/useClassWeekInsights";
+import { getClassNeighbours, type ClassStop } from "./utils/classSequence";
 import { usePersistentDismissal } from "./hooks/usePersistentDismissal";
 import { AUTO_BUILD_COPY } from "./utils/autoBuildCopy";
 import { getAutoBuildOffer } from "./utils/getAutoBuildOffer";
@@ -1063,6 +1069,54 @@ export default function SmartTimetableNew() {
   const totalIssueCount =
     conflictCount + quotaIssues.length + workloadBreaches.length;
 
+  const classWeek = useClassWeekInsights({
+    allocations,
+    conflictLessonIds,
+    totalSlots: stats.totalSlots || availableSlotsPerClass,
+    daysPerWeek,
+    dayLabels: days,
+    periodNumbers,
+    getSlotFor,
+  });
+  const [classPanelOpen, setClassPanelOpen] = useState(true);
+  const [highlightSubjectId, setHighlightSubjectId] = useState<string | null>(null);
+  const classNeighbours = useMemo(
+    () => getClassNeighbours(grades, { gradeId: selectedGradeId, streamId: selectedStreamId }),
+    [grades, selectedGradeId, selectedStreamId],
+  );
+  const goToClass = useCallback(
+    (stop: ClassStop) => {
+      setSchoolWideView(false);
+      setHighlightSubjectId(null);
+      setSelectedGrade(stop.gradeId);
+      setSelectedStream(stop.streamId);
+    },
+    [setSelectedGrade, setSelectedStream],
+  );
+  useClassStepperKeys({
+    enabled: Boolean(selectedGradeId),
+    onPrevious: classNeighbours.previous
+      ? () => goToClass(classNeighbours.previous as ClassStop)
+      : undefined,
+    onNext: classNeighbours.next
+      ? () => goToClass(classNeighbours.next as ClassStop)
+      : undefined,
+  });
+  const suggestedLesson = classWeek?.suggestion ?? null;
+  const placeSuggestedLesson = useCallback(() => {
+    if (!suggestedLesson?.slot || !selectedGradeId) return;
+    openLessonEditor({
+      gradeId: selectedGradeId,
+      dayOfWeek: suggestedLesson.slot.dayOfWeek,
+      timeSlotId: suggestedLesson.slot.timeSlotId,
+      subjectId: suggestedLesson.subject.subjectId,
+      teacherId: suggestedLesson.subject.teacherId,
+      isNew: true,
+    });
+  }, [suggestedLesson, selectedGradeId, openLessonEditor]);
+  const isLastLesson =
+    !!suggestedLesson?.slot && classWeek?.plan.lessonsRemaining === 1;
+
   const { getCombinedEntriesFor } = useSchoolCombinedEntries();
   const termOverview = useTimetableTermOverview();
   const autoBuildOffer = getAutoBuildOffer({
@@ -1646,7 +1700,9 @@ export default function SmartTimetableNew() {
         await reloadTimetableData();
       } catch (err) {
         toast({
-          title: "Could not move lesson",
+          title: target.targetEntryId
+            ? "Could not swap lessons"
+            : "Could not move lesson",
           description: sanitizeTimetableUserMessage(err),
           variant: "destructive",
         });
@@ -2315,6 +2371,12 @@ export default function SmartTimetableNew() {
                         : "Timetable"}
                   </h1>
                   <RealtimeLiveIndicator />
+                  {selectedGradeId ? (
+                    <TimetableClassStepper
+                      neighbours={classNeighbours}
+                      onGo={goToClass}
+                    />
+                  ) : null}
                 </div>
                 <p
                   className={cn(
@@ -2377,7 +2439,7 @@ export default function SmartTimetableNew() {
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-1.5 lg:flex-nowrap">
-              {hasScheduleStructure ? (
+              {hasScheduleStructure && !classWeek ? (
                 <TimetableStatusMeter
                   filled={
                     selectedGradeId
@@ -2416,16 +2478,32 @@ export default function SmartTimetableNew() {
                 </ToolbarHint>
               )}
 
+              {isLastLesson ? (
+                <ToolbarHint text="Open the last missing lesson in its free slot, ready to save.">
+                  <Button
+                    size="sm"
+                    className={cn(
+                      "hidden h-8 gap-1.5 rounded-md bg-[#0a1f1a] font-semibold text-white hover:bg-[#246a59] lg:inline-flex",
+                      tt.text.small,
+                    )}
+                    onClick={placeSuggestedLesson}
+                  >
+                    Place last lesson
+                  </Button>
+                </ToolbarHint>
+              ) : null}
               {hasScheduleStructure && (
                 <ToolbarHint text={AUTO_BUILD_COPY.toolbarHint}>
                   <Button
                     size="sm"
                     className={cn(
-                      "hidden h-8 gap-1.5 rounded-none font-medium lg:inline-flex",
+                      "hidden h-8 gap-1.5 rounded-md font-medium lg:inline-flex",
                       tt.text.small,
-                      autoGenerateOpen
-                        ? "bg-[#0a1f1a] text-white ring-2 ring-[#246a59]/40 ring-offset-1 ring-offset-[#f8fbfa] hover:bg-[#246a59]"
-                        : "bg-[#0a1f1a] text-white hover:bg-[#246a59]",
+                      isLastLesson
+                        ? "border border-[#1a4d42]/20 bg-white text-[#0a1f1a] hover:bg-[#e8f2ef]"
+                        : autoGenerateOpen
+                          ? "bg-[#0a1f1a] text-white ring-2 ring-[#246a59]/40 ring-offset-1 ring-offset-[#f8fbfa] hover:bg-[#246a59]"
+                          : "bg-[#0a1f1a] text-white hover:bg-[#246a59]",
                     )}
                     onClick={() =>
                       autoGenerateOpen
@@ -2779,6 +2857,25 @@ export default function SmartTimetableNew() {
                 </DropdownMenu>
             </div>
           </div>
+          {classWeek && hasScheduleStructure ? (
+            <div className="mt-2.5">
+              <TimetableWeekProgress
+                lessonsPlaced={classWeek.plan.lessonsPlaced}
+                lessonsTarget={classWeek.plan.lessonsTarget}
+                slotsFree={classWeek.plan.slotsFree}
+                headsUpCount={classWeek.headsUps.length}
+                onReviewHeadsUps={() => {
+                  setClassPanelOpen(true);
+                  requestAnimationFrame(() =>
+                    document
+                      .getElementById("timetable-heads-ups")
+                      ?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+                  );
+                }}
+                onShowPanel={classPanelOpen ? undefined : () => setClassPanelOpen(true)}
+              />
+            </div>
+          ) : null}
         </header>
 
         {hasScheduleStructure && !showAdminMobilePanel ? (
@@ -3221,6 +3318,18 @@ export default function SmartTimetableNew() {
                         onDeleteLesson={setDeleteEntryConfirm}
                         onAddLesson={handleAddLesson}
                         onMoveLesson={handleMoveLesson}
+                        runLessonIds={classWeek?.runLessonIds}
+                        highlightSubjectId={highlightSubjectId}
+                        suggestedSlot={
+                          suggestedLesson?.slot
+                            ? {
+                                dayOfWeek: suggestedLesson.slot.dayOfWeek,
+                                timeSlotId: suggestedLesson.slot.timeSlotId,
+                                subjectName: suggestedLesson.subject.subjectName,
+                              }
+                            : null
+                        }
+                        onPlaceSuggested={placeSuggestedLesson}
                         onEditBreak={setEditingBreak}
                         onAddBreak={handleAddBreak}
                         onMoveBreak={handleMoveBreak}
@@ -3313,6 +3422,28 @@ export default function SmartTimetableNew() {
               </div>
             ) : null}
           </div>
+
+          {classWeek &&
+          classPanelOpen &&
+          hasScheduleStructure &&
+          inspectorTab === null &&
+          !autoGenerateOpen &&
+          !editingLesson &&
+          !shareDrawerOpen ? (
+            <TimetableClassWeekPanel
+              plan={classWeek.plan}
+              suggestion={classWeek.suggestion}
+              headsUps={classWeek.headsUps}
+              dayLabels={days}
+              accentFor={getSubjectAccentForGrid}
+              highlightSubjectId={highlightSubjectId}
+              onHighlightSubject={setHighlightSubjectId}
+              onPlaceSuggestion={placeSuggestedLesson}
+              onBuild={() => openAutoGenerate()}
+              onShare={() => openShareDrawer()}
+              onClose={() => setClassPanelOpen(false)}
+            />
+          ) : null}
 
           {hasScheduleStructure &&
           !autoGenerateOpen &&

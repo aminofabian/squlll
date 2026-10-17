@@ -34,14 +34,16 @@ import {
   type SubjectAccentStyle,
 } from "../utils/timetableSubjectColors";
 /** Compact row sizing — min-height only on lessons so wrapped names can grow */
-const T_CELL = "text-[11px] leading-snug";
 const T_CELL_SM = "text-[10px] leading-tight";
-const ROW_H = "h-9 min-h-[36px]";
-const LESSON_CELL_MIN = "min-h-[36px] py-1";
-const DOUBLE_ROW_H = "min-h-[72px]";
+const T_SUBJECT = "text-[12.5px] font-semibold leading-tight";
+const T_TEACHER = "text-[11px] leading-tight";
+const ROW_H = "h-full min-h-[52px]";
+const LESSON_CELL_MIN = "min-h-[52px] py-1.5";
+const DOUBLE_ROW_H = "min-h-[104px]";
 const TIME_COL_W = "max-md:w-[108px]";
-const TIME_RAIL_MIN = "min-h-[36px]";
-const TD_PAD = "p-0.5";
+const TIME_RAIL_MIN = "min-h-[52px]";
+const TD_PAD = "p-1";
+const CARD_RADIUS = "rounded-md";
 const DOUBLE_ROW_SPAN = 2;
 
 // Resizable column widths (desktop). Widths are persisted per school.
@@ -272,9 +274,17 @@ function formatHHMM(totalMinutes: number): string {
   return `${h}:${String(m).padStart(2, "0")}`;
 }
 
+const RANGE_SEPARATOR = "–";
+
 function formatCompactRange(start: string, end: string): string {
   const trim = (t: string) => t.replace(/^0(\d)/, "$1").trim();
-  return `${trim(start)}–${trim(end)}`;
+  return `${trim(start)}${RANGE_SEPARATOR}${trim(end)}`;
+}
+
+function minutesBetween(start?: string, end?: string): number | null {
+  if (!start || !end) return null;
+  const minutes = parseHHMM(end) - parseHHMM(start);
+  return minutes > 0 ? minutes : null;
 }
 
 function slotTimeRange(slot: TimeSlotInfo | null | undefined): string | null {
@@ -522,6 +532,17 @@ interface AdminTimetableGridProps {
       targetEntryId?: string;
     },
   ) => void | Promise<void>;
+  /** Lessons in a run of one subject on the same day ("3 in a row"). */
+  runLessonIds?: Set<string>;
+  /** Dim every lesson except this subject's. */
+  highlightSubjectId?: string | null;
+  /** A free slot SQUL recommends filling, shown as "+ Place {subject}". */
+  suggestedSlot?: {
+    dayOfWeek: number;
+    timeSlotId: string;
+    subjectName: string;
+  } | null;
+  onPlaceSuggested?: () => void;
 }
 
 // ─── Component ─────────────────────────────────────────────────
@@ -559,6 +580,10 @@ export function AdminTimetableGrid({
   getCombinedEntriesFor,
   onCombinedLessonClick,
   onMoveLesson,
+  runLessonIds,
+  highlightSubjectId,
+  suggestedSlot,
+  onPlaceSuggested,
 }: AdminTimetableGridProps) {
   const cleanName = getCleanBreakName || ((name: string) => name);
   const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null);
@@ -784,7 +809,10 @@ export function AdminTimetableGrid({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-none border border-zinc-200/90 bg-zinc-50/40 dark:border-zinc-800 dark:bg-zinc-950/40",
+        "overflow-hidden border border-zinc-200/90 dark:border-zinc-800",
+        schoolCombined
+          ? "rounded-none bg-zinc-50/40 dark:bg-zinc-950/40"
+          : "rounded-xl bg-white p-2 shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:bg-zinc-900/60",
         className,
       )}
     >
@@ -845,14 +873,12 @@ export function AdminTimetableGrid({
             <tr className="border-b border-zinc-200/90 dark:border-zinc-800">
               <th
                 className={cn(
-                  "group/col sticky left-0 z-20 border-r border-zinc-200/90 bg-zinc-100/95 px-1.5 py-1.5 text-left dark:border-zinc-800 dark:bg-zinc-900/95",
+                  "group/col sticky left-0 z-20 bg-white px-1.5 py-2.5 text-left dark:bg-zinc-900/95",
                   TIME_COL_W,
                 )}
                 scope="col"
               >
-                <span className={cn(T_CELL_SM, "font-semibold text-zinc-500")}>
-                  When
-                </span>
+                <span className="sr-only">Time</span>
                 <ColumnResizeHandle
                   label="time"
                   width={timeColWidth}
@@ -872,10 +898,10 @@ export function AdminTimetableGrid({
                     scope="col"
                     aria-current={isToday ? "date" : undefined}
                     className={cn(
-                      "group/col relative border-r border-zinc-200/60 px-1 py-1.5 text-center last:border-r-0 dark:border-zinc-800",
+                      "group/col relative border-b-2 px-1 py-2.5 text-center dark:border-zinc-600",
                       isToday
-                        ? "bg-[#246a59]/10 dark:bg-[#246a59]/15"
-                        : "bg-zinc-100/70 dark:bg-zinc-900/70",
+                        ? "border-[#246a59] bg-[#246a59]/[0.06] dark:bg-[#246a59]/15"
+                        : "border-[#0a1f1a]/70 bg-white dark:bg-zinc-900/70",
                       schoolCombined
                         ? "max-md:min-w-[68px]"
                         : "max-md:min-w-[80px]",
@@ -883,8 +909,7 @@ export function AdminTimetableGrid({
                   >
                     <span
                       className={cn(
-                        T_CELL,
-                        "block font-semibold",
+                        "block text-[13px] font-semibold",
                         isToday
                           ? "text-[#246a59] dark:text-[#7eb8a8]"
                           : "text-zinc-800 dark:text-zinc-100",
@@ -1050,9 +1075,12 @@ export function AdminTimetableGrid({
                   return (
                     <React.Fragment key={`period-${period}`}>
                       <tr
-                        className="group/row border-b border-zinc-200/70 bg-white dark:border-zinc-800/80 dark:bg-zinc-900/30"
+                        className={cn(
+                          "group/row bg-white dark:bg-zinc-900/30",
+                          schoolCombined && "border-b border-zinc-200/70 dark:border-zinc-800/80",
+                        )}
                       >
-                        <td className="sticky left-0 z-10 border-r border-zinc-200/90 bg-white p-0 align-middle dark:border-zinc-800 dark:bg-zinc-900">
+                        <td className="sticky left-0 z-10 bg-white p-0 align-top dark:bg-zinc-900">
                           <TimeColumnCell
                             slot={rowSlot}
                             period={period}
@@ -1127,14 +1155,36 @@ export function AdminTimetableGrid({
                               period,
                             );
 
+                          const doubleBlocked =
+                            !!isDoubleStart &&
+                            (!!nextEntry ||
+                              nextPeriodNumber == null ||
+                              breakBlocksDoubleSpan(
+                                getBreaksAfterPeriod,
+                                dayOfWeek,
+                                period,
+                              ));
                           const hasConflict =
-                            displayEntry &&
-                            conflictLessonIds?.has(displayEntry.id);
+                            !!doubleBlocked ||
+                            !!(
+                              displayEntry &&
+                              conflictLessonIds?.has(displayEntry.id)
+                            );
                           const isTeacherDimmed = !!(
                             displayEntry &&
-                            highlightTeacherId &&
-                            displayEntry.teacher.id !== highlightTeacherId
+                            ((highlightTeacherId &&
+                              displayEntry.teacher.id !== highlightTeacherId) ||
+                              (highlightSubjectId &&
+                                displayEntry.subject.id !== highlightSubjectId))
                           );
+                          const doubleMinutes = isDoubleStart
+                            ? minutesBetween(
+                                daySlot?.startTime,
+                                nextPeriodNumber != null
+                                  ? getSlotFor(dayIndex, nextPeriodNumber)?.endTime
+                                  : undefined,
+                              )
+                            : null;
 
                           const isActiveLesson = !!(
                             displayEntry &&
@@ -1214,6 +1264,7 @@ export function AdminTimetableGrid({
                                     displayEntry.subject.name,
                                   )}
                                   hasConflict={!!hasConflict}
+                                  doubleBlocked={doubleBlocked}
                                   isDimmed={isTeacherDimmed}
                                   isActive={isActiveLesson}
                                   isFaded={
@@ -1233,47 +1284,27 @@ export function AdminTimetableGrid({
                                   onDragStart={handleDragStart(displayEntry.id)}
                                   onDragEnd={clearDrag}
                                   dropHint={!!onMoveLesson}
+                                  doubleMinutes={doubleMinutes}
+                                  inARow={!!runLessonIds?.has(displayEntry.id)}
                                 />
                               ) : (
-                                <button
-                                  type="button"
+                                <FreeSlotCell
                                   disabled={!daySlot?.id}
-                                  onClick={() => {
+                                  isActive={isActiveEmpty}
+                                  isFaded={isEditingSomething && !isActiveEmpty}
+                                  suggestedSubject={
+                                    suggestedSlot &&
+                                    suggestedSlot.dayOfWeek === dayOfWeek &&
+                                    suggestedSlot.timeSlotId === daySlot?.id
+                                      ? suggestedSlot.subjectName
+                                      : null
+                                  }
+                                  onPlaceSuggested={onPlaceSuggested}
+                                  onAdd={() => {
                                     if (!daySlot?.id) return;
-                                    onAddLesson?.(
-                                      dayOfWeek,
-                                      daySlot.id,
-                                      daySlot.id,
-                                    );
+                                    onAddLesson?.(dayOfWeek, daySlot.id, daySlot.id);
                                   }}
-                                  className={cn(
-                                    ROW_H,
-                                    "group/empty flex w-full items-center justify-center gap-1 rounded-none border border-dashed border-zinc-200 bg-zinc-50/50 text-zinc-300 transition-colors dark:border-zinc-700/70 dark:bg-zinc-900/30 dark:text-zinc-600",
-                                    "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#246a59]",
-                                    "focus-visible:border-[#246a59] focus-visible:bg-[#246a59]/5 focus-visible:text-[#246a59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
-                                    "disabled:cursor-not-allowed disabled:opacity-50",
-                                    isActiveEmpty &&
-                                      "relative z-[1] border-solid border-[#246a59] bg-[#246a59]/10 text-[#246a59] ring-2 ring-[#0a1f1a] ring-offset-1 ring-offset-white dark:ring-[#7eb8a8] dark:ring-offset-[#071411]",
-                                    isEditingSomething &&
-                                      !isActiveEmpty &&
-                                      "opacity-40",
-                                  )}
-                                  title="Add a lesson"
-                                  aria-label="Add a lesson"
-                                  aria-current={isActiveEmpty ? "true" : undefined}
-                                  data-editing-slot={isActiveEmpty ? "" : undefined}
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                  <span
-                                    className={cn(
-                                      "hidden text-[10px] font-medium group-hover/empty:inline group-focus-visible/empty:inline max-sm:inline",
-                                      periodIndex === 0 && "inline",
-                                      isActiveEmpty && "inline",
-                                    )}
-                                  >
-                                    Add lesson
-                                  </span>
-                                </button>
+                                />
                               )}
                             </td>
                           );
@@ -1395,6 +1426,7 @@ function TimeColumnCell({
       getBreaksAfterPeriod,
       getBreaksBeforeFirstPeriod,
     ) ?? "—";
+  const [startLabel, endLabel] = timeLabel.split(RANGE_SEPARATOR);
 
   return (
     <div
@@ -1412,14 +1444,14 @@ function TimeColumnCell({
         className="w-full rounded-none px-1 py-0.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
         title={`Edit times · ${timeLabel}`}
       >
-        <p
-          className={cn(
-            T_CELL,
-            "whitespace-nowrap font-mono font-medium tabular-nums text-slate-700 dark:text-slate-200",
-          )}
-        >
-          {timeLabel}
+        <p className="whitespace-nowrap text-[12.5px] font-semibold tabular-nums leading-tight text-slate-900 dark:text-slate-100">
+          {startLabel}
         </p>
+        {endLabel ? (
+          <p className="whitespace-nowrap text-[11px] tabular-nums leading-tight text-slate-500 dark:text-slate-400">
+            {endLabel}
+          </p>
+        ) : null}
       </button>
 
       {onAddBreak ? (
@@ -1770,6 +1802,7 @@ function AdminLessonCell({
   entry,
   accent,
   hasConflict,
+  doubleBlocked,
   isDimmed,
   isActive,
   isFaded,
@@ -1784,10 +1817,15 @@ function AdminLessonCell({
   onDragStart,
   onDragEnd,
   dropHint,
+  doubleMinutes,
+  inARow,
 }: {
+  doubleMinutes?: number | null;
+  inARow?: boolean;
   entry: LessonEntry;
   accent: SubjectAccentStyle;
   hasConflict: boolean;
+  doubleBlocked?: boolean;
   isDimmed?: boolean;
   isActive?: boolean;
   isFaded?: boolean;
@@ -1827,12 +1865,11 @@ function AdminLessonCell({
     <div
       ref={cellRef}
       className={cn(
-        "group/lesson relative flex items-start gap-0.5 rounded-none border px-2",
+        "group/lesson relative flex h-full flex-col justify-between gap-1 border border-l-[3px] px-2 shadow-[0_1px_0_rgba(15,23,42,0.03)] transition-shadow hover:shadow-md",
+        CARD_RADIUS,
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         isDragging && "opacity-40 ring-2 ring-[#246a59]/40",
         LESSON_CELL_MIN,
-        spansBothPeriods && "h-full border-l-[3px]",
-        (isDoubleStart || isDoubleContinuation) && "pr-6",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
         isFaded && !isActive
           ? "opacity-45"
@@ -1855,6 +1892,7 @@ function AdminLessonCell({
           : {
               backgroundColor: accent.background,
               borderColor: isActive ? "#0a1f1a" : accent.border,
+              borderLeftColor: accent.accent,
             }
       }
       role="button"
@@ -1867,7 +1905,7 @@ function AdminLessonCell({
       title={
         isActive
           ? `Editing · ${lessonTooltip(entry, tooltipExtra)}`
-          : `${dropHint ? "Drag to move · drop on another lesson to swap · " : ""}${lessonTooltip(entry, tooltipExtra)}`
+          : `${doubleBlocked ? "Double lesson needs the next period free · " : ""}${dropHint ? "Drag to move · drop on another lesson to swap · " : ""}${lessonTooltip(entry, tooltipExtra)}`
       }
       onClick={() => onEdit?.(entry)}
       onKeyDown={(e) => {
@@ -1877,11 +1915,11 @@ function AdminLessonCell({
         }
       }}
     >
-      <div className="min-w-0 flex-1 py-px">
+      <div className={cn("min-w-0", (inARow || hasConflict) && "pr-14")}>
         <p
           className={cn(
-            T_CELL,
-            "min-w-0 font-medium leading-tight",
+            T_SUBJECT,
+            "min-w-0",
             showFullSubjectName ? "whitespace-normal break-words" : "truncate",
           )}
           style={{ color: hasConflict ? undefined : accent.text }}
@@ -1889,24 +1927,127 @@ function AdminLessonCell({
           {entry.subject.name}
         </p>
         {entry.teacher.fullName?.trim() || entry.teacher.name?.trim() ? (
-          <p className={cn(T_CELL, "truncate leading-tight opacity-70")}>
+          <p className={cn(T_TEACHER, "mt-0.5 truncate text-zinc-600 dark:text-zinc-300")}>
             {entry.teacher.fullName?.trim() || entry.teacher.name?.trim()}
           </p>
         ) : null}
       </div>
-      {isDoubleStart ? (
-        <span className="absolute right-0.5 top-0.5 rounded-none bg-violet-100/90 px-1 py-0.5 text-[8px] font-semibold leading-none text-violet-700 ring-1 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60">
-          {spansBothPeriods ? "Double" : "2×"}
+      <LessonCardBadges
+        accent={accent}
+        hasConflict={hasConflict}
+        inARow={inARow}
+        doubleLabel={doublePillLabel({
+          isDoubleStart,
+          isDoubleContinuation,
+          spansBothPeriods,
+          doubleMinutes,
+        })}
+      />
+    </div>
+  );
+}
+
+function doublePillLabel({
+  isDoubleStart,
+  isDoubleContinuation,
+  spansBothPeriods,
+  doubleMinutes,
+}: {
+  isDoubleStart?: boolean;
+  isDoubleContinuation?: boolean;
+  spansBothPeriods?: boolean;
+  doubleMinutes?: number | null;
+}): string | null {
+  if (isDoubleContinuation) return "Double · 2nd half";
+  if (!isDoubleStart) return null;
+  if (!spansBothPeriods) return "Double · 1st half";
+  return doubleMinutes ? `Double · ${doubleMinutes} min` : "Double";
+}
+
+function LessonCardBadges({
+  accent,
+  hasConflict,
+  inARow,
+  doubleLabel,
+}: {
+  accent: SubjectAccentStyle;
+  hasConflict: boolean;
+  inARow?: boolean;
+  doubleLabel: string | null;
+}) {
+  return (
+    <>
+      {hasConflict ? (
+        <span className="absolute right-1 top-1 inline-flex items-center gap-1 rounded-sm bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+          <AlertCircle className="h-2.5 w-2.5" aria-hidden />
+          Clash
+        </span>
+      ) : inARow ? (
+        <span className="absolute right-1 top-1 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-900 ring-1 ring-amber-300/70 dark:bg-amber-950/60 dark:text-amber-200">
+          In a row
         </span>
       ) : null}
-      {isDoubleContinuation ? (
-        <span className="absolute right-0.5 top-0.5 px-1 py-0.5 text-[8px] font-medium leading-none text-violet-600/75 dark:text-violet-400/75">
-          2/2
+      {doubleLabel ? (
+        <span
+          className="self-start rounded-full border bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.06em] dark:bg-black/20"
+          style={{ borderColor: accent.border, color: accent.text }}
+        >
+          {doubleLabel}
         </span>
       ) : null}
-      {hasConflict && (
-        <AlertCircle className="h-3 w-3 shrink-0 text-red-500" aria-hidden />
+    </>
+  );
+}
+
+function FreeSlotCell({
+  disabled,
+  isActive,
+  isFaded,
+  suggestedSubject,
+  onPlaceSuggested,
+  onAdd,
+}: {
+  disabled: boolean;
+  isActive: boolean;
+  isFaded: boolean;
+  suggestedSubject: string | null;
+  onPlaceSuggested?: () => void;
+  onAdd: () => void;
+}) {
+  const hasSuggestion = !!suggestedSubject && !!onPlaceSuggested;
+  return (
+    <div
+      className={cn(
+        ROW_H,
+        CARD_RADIUS,
+        "group/empty flex w-full flex-col items-start justify-center gap-1 border border-dashed px-2 transition-colors",
+        hasSuggestion
+          ? "border-[#246a59]/45 bg-[repeating-linear-gradient(135deg,rgba(36,106,89,0.05)_0_6px,transparent_6px_12px)]"
+          : "border-zinc-200 bg-zinc-50/60 dark:border-zinc-700/70 dark:bg-zinc-900/30",
+        isActive && "border-solid border-[#246a59] bg-[#246a59]/10 ring-2 ring-[#0a1f1a]",
+        isFaded && "opacity-40",
       )}
+      data-editing-slot={isActive ? "" : undefined}
+    >
+      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500">
+        Free slot
+      </span>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={hasSuggestion ? onPlaceSuggested : onAdd}
+        aria-current={isActive ? "true" : undefined}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/30 disabled:cursor-not-allowed disabled:opacity-50",
+          hasSuggestion
+            ? "border-[#246a59]/50 bg-white text-[#1a4d42] hover:bg-[#246a59] hover:text-white dark:bg-transparent dark:text-[#7eb8a8]"
+            : "border-transparent text-zinc-500 hover:border-[#246a59]/40 hover:bg-white hover:text-[#246a59]",
+        )}
+      >
+        <Plus className="h-3 w-3" />
+        {hasSuggestion ? `Place ${suggestedSubject}` : "Add lesson"}
+      </button>
     </div>
   );
 }

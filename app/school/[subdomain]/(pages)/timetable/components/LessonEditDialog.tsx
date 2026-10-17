@@ -219,11 +219,11 @@ export function LessonEditDialog({
         isDoublePeriod: !!(lesson as any).isDoublePeriod,
       });
     } else {
-      // No prefill — a suggestion chip is offered instead, so the user always
-      // makes the choice deliberately.
+      // Only prefilled when the user picked a suggested lesson ("Place Biology
+      // on Friday 12:05"); a blank cell starts empty.
       setFormData({
-        subjectId: "",
-        teacherId: "",
+        subjectId: lesson.subjectId ?? "",
+        teacherId: lesson.teacherId ?? "",
         roomNumber: "",
         isDoublePeriod: false,
       });
