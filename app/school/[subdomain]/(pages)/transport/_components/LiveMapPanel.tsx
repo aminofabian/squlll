@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import { fetchAccessToken } from "@/lib/realtime/getAccessToken";
+import { SOCKET_TRANSPORTS } from "@/lib/realtime/socketTransports";
 import {
   fetchLiveBuses,
   fetchTransportMapConfig,
@@ -73,7 +74,7 @@ export function LiveMapPanel() {
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3001";
       client = io(`${wsUrl}/transport`, {
         auth: { token },
-        transports: ["websocket", "polling"],
+        transports: SOCKET_TRANSPORTS,
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 2000,

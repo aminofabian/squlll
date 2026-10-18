@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, type Socket } from "socket.io-client";
 import { fetchAccessToken } from "@/lib/realtime/getAccessToken";
+import { SOCKET_TRANSPORTS } from "@/lib/realtime/socketTransports";
 import {
   fetchLiveTripPosition,
   type DriverLivePosition,
@@ -50,7 +51,7 @@ export function useDriverLiveTrip(
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3001";
       socket = io(`${wsUrl}/transport`, {
         auth: { token },
-        transports: ["websocket", "polling"],
+        transports: SOCKET_TRANSPORTS,
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 2000,

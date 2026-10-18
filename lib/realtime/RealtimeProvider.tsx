@@ -11,6 +11,7 @@ import {
 import { io, type Socket } from 'socket.io-client'
 import { useParams, usePathname } from 'next/navigation'
 import { fetchAccessToken, hasSessionCookie } from './getAccessToken'
+import { SOCKET_TRANSPORTS } from './socketTransports'
 
 interface RealtimeContextValue {
   socket: Socket | null
@@ -64,7 +65,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001'
       client = io(`${wsUrl}/chat`, {
         auth: { token },
-        transports: ['websocket', 'polling'],
+        transports: SOCKET_TRANSPORTS,
         reconnection: true,
         reconnectionAttempts: 10,
         reconnectionDelay: 2000,
