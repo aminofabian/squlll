@@ -244,7 +244,11 @@ export function pickGradeTimetable(
       : options;
 
   const { tenantStreamId, streamName, fallbackToGradeWide } = opts;
-  const forGrade = timetables.filter((t) => t.gradeLevelId === gradeId);
+  const exactGrade = timetables.filter((t) => t.gradeLevelId === gradeId);
+  // The API accepts either the tenant grade id or the master curriculum id;
+  // it can echo back the other form. The query is already scoped to one class,
+  // so fall back to the returned rows rather than discarding a valid timetable.
+  const forGrade = exactGrade.length > 0 ? exactGrade : timetables;
   if (forGrade.length === 0) return null;
 
   const wantsStream = Boolean(tenantStreamId || streamName);
@@ -262,7 +266,7 @@ export function pickGradeTimetable(
       if (byName) return byName;
     }
     if (fallbackToGradeWide) {
-      return forGrade.find((t) => !t.streamId) ?? null;
+      return forGrade.find((t) => !t.streamId) ?? forGrade[0] ?? null;
     }
     return null;
   }

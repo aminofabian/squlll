@@ -193,7 +193,10 @@ export async function POST(request: Request) {
     // platform host (for example .squl.co.ke) and are never sent to a custom
     // domain. Using the custom URL would land on that domain's login page.
     const apex = isProduction ? 'squl.co.ke' : 'localhost'
-    const port = requestUrl.port
+    // Public production URLs never carry the internal Next.js port. Appending
+    // request.url's port behind a proxy produces URLs such as
+    // https://school.squl.co.ke:3000/dashboard, which time out in the browser.
+    const port = isProduction ? '' : requestUrl.port
     const subdomain = payload.subdomain.trim().toLowerCase()
     const portalUrl = `${isProduction ? 'https' : 'http'}://${subdomain}.${apex}${
       port ? `:${port}` : ''
