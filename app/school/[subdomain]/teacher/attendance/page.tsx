@@ -27,29 +27,29 @@ const STATUS_META: Record<
   AttendanceStatus,
   { label: string; dot: string; chip: string }
 > = {
-  present: {
+  PRESENT: {
     label: 'Present',
     dot: 'bg-emerald-500',
     chip: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300',
   },
-  late: {
+  LATE: {
     label: 'Late',
     dot: 'bg-amber-500',
     chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300',
   },
-  absent: {
+  ABSENT: {
     label: 'Absent',
     dot: 'bg-rose-500',
     chip: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300',
   },
-  suspended: {
+  SUSPENDED: {
     label: 'Suspended',
     dot: 'bg-slate-400',
     chip: 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
   },
 };
 
-const STATUS_ORDER: AttendanceStatus[] = ['present', 'late', 'absent', 'suspended'];
+const STATUS_ORDER: AttendanceStatus[] = ['PRESENT', 'LATE', 'ABSENT', 'SUSPENDED'];
 
 function todayYmd(): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -165,7 +165,7 @@ export default function TeacherAttendancePage() {
         Object.fromEntries(
           roster.map((student) => [
             student.id,
-            fromExisting.get(student.id) ?? 'present',
+            fromExisting.get(student.id) ?? 'PRESENT',
           ]),
         ),
       );
@@ -194,13 +194,13 @@ export default function TeacherAttendancePage() {
 
   const counts = useMemo(() => {
     const base: Record<AttendanceStatus, number> = {
-      present: 0,
-      late: 0,
-      absent: 0,
-      suspended: 0,
+      PRESENT: 0,
+      LATE: 0,
+      ABSENT: 0,
+      SUSPENDED: 0,
     };
     for (const student of students) {
-      const status = marks[student.id] ?? 'present';
+      const status = marks[student.id] ?? 'PRESENT';
       base[status] += 1;
     }
     return base;
@@ -220,7 +220,7 @@ export default function TeacherAttendancePage() {
   }, [students, query]);
 
   const handleMarkAllPresent = () => {
-    setMarks(Object.fromEntries(students.map((student) => [student.id, 'present'])));
+    setMarks(Object.fromEntries(students.map((student) => [student.id, 'PRESENT'])));
     setSavedAt(null);
   };
 
@@ -234,7 +234,7 @@ export default function TeacherAttendancePage() {
         gradeId,
         attendanceRecords: students.map((student) => ({
           studentId: student.id,
-          status: marks[student.id] ?? 'present',
+          status: marks[student.id] ?? 'PRESENT',
         })),
       });
       const saved = await fetchAttendanceByDate(subdomain, date, gradeId);
@@ -429,7 +429,7 @@ export default function TeacherAttendancePage() {
         ) : (
           <ul className="divide-y divide-border">
             {visibleStudents.map((student) => {
-              const status = marks[student.id] ?? 'present';
+              const status = marks[student.id] ?? 'PRESENT';
               const meta = STATUS_META[status];
               return (
                 <li
@@ -456,10 +456,10 @@ export default function TeacherAttendancePage() {
                     aria-label={`Attendance for ${displayName(student)}`}
                     className={cn(
                       'h-8 w-[112px] shrink-0 rounded-md border border-input bg-background px-1.5 text-xs',
-                      status === 'present' && 'text-emerald-700 dark:text-emerald-300',
-                      status === 'late' && 'text-amber-700 dark:text-amber-300',
-                      status === 'absent' && 'text-rose-700 dark:text-rose-300',
-                      status === 'suspended' && 'text-slate-600 dark:text-slate-300',
+                      status === 'PRESENT' && 'text-emerald-700 dark:text-emerald-300',
+                      status === 'LATE' && 'text-amber-700 dark:text-amber-300',
+                      status === 'ABSENT' && 'text-rose-700 dark:text-rose-300',
+                      status === 'SUSPENDED' && 'text-slate-600 dark:text-slate-300',
                     )}
                     value={status}
                     onChange={(event) =>

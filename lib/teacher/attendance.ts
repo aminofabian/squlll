@@ -1,6 +1,6 @@
 import { graphqlFetch } from '@/app/school/[subdomain]/teacher/utils/graphqlFetch'
 
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'suspended'
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'SUSPENDED'
 
 export interface AttendanceStudent {
   id: string
@@ -22,7 +22,6 @@ const GET_STUDENTS_BY_GRADE = `
     getStudentsByGrade(gradeId: $gradeId) {
       id
       admission_number
-      gender
       isActive
       stream { id name }
       user { id name }
