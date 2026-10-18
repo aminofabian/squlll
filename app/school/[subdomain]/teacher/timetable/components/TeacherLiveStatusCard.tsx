@@ -29,7 +29,7 @@ export function TeacherLiveStatusCard({ status, formattedTime }: TeacherLiveStat
   const isLive = description.tone === "live";
 
   return (
-    <section className="rounded-[24px] bg-white/70 px-5 py-4 ring-1 ring-[#1a4d42]/10 backdrop-blur-sm dark:bg-white/[0.03] dark:ring-white/10">
+    <section className="rounded-xl border border-[#1a4d42]/10 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]">
       <div className="flex items-center gap-2">
         <span className="relative flex h-2 w-2">
           {isLive ? <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" /> : null}
@@ -42,14 +42,14 @@ export function TeacherLiveStatusCard({ status, formattedTime }: TeacherLiveStat
           {formattedTime}
         </span>
       </div>
-      <p className="mt-2 font-display text-[20px] leading-tight tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+      <p className="mt-1 truncate font-display text-[17px] leading-tight tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
         {description.headline}
       </p>
       {description.detail ? (
-        <p className="mt-1 text-[11.5px] leading-relaxed text-[#1a4d42]/55 dark:text-white/45">{description.detail}</p>
+        <p className="mt-0.5 truncate text-[11px] leading-snug text-[#1a4d42]/55 dark:text-white/45">{description.detail}</p>
       ) : null}
       {description.showProgress ? (
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#1a4d42]/8 dark:bg-white/10">
+        <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-[#1a4d42]/8 dark:bg-white/10">
           <div
             className={cn("h-full rounded-full bg-gradient-to-r transition-[width] duration-1000 ease-linear", TONE_BAR[description.tone])}
             style={{ width: `${progress}%` }}

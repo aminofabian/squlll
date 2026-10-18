@@ -237,9 +237,9 @@ const TeacherTimetable = () => {
       : null;
 
   const emptyLessons = (
-    <div className="relative overflow-hidden rounded-[24px] border border-[#1a4d42]/10 bg-[#fbfaf6] px-6 py-14 text-center dark:border-white/10 dark:bg-white/[0.03]">
+    <div className="relative overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-[#fbfaf6] px-6 py-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#c49a52]/10 blur-3xl" aria-hidden />
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0a2620] text-[#d9c49a]">
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#0a2620] text-[#d9c49a]">
         <BookOpen className="h-5 w-5" />
       </div>
       <p className="mt-4 font-display text-[20px] text-[#0a1f1a] dark:text-white">
@@ -300,7 +300,7 @@ const TeacherTimetable = () => {
         className="min-h-screen overflow-x-hidden bg-[#f4f1e9] lg:bg-[radial-gradient(1200px_420px_at_70%_-80px,rgba(196,154,82,0.14),transparent_70%),radial-gradient(900px_500px_at_0%_100%,rgba(36,106,89,0.07),transparent_70%)] dark:bg-[#071411]"
         data-timetable-no-print
       >
-      <div className="mx-auto w-full max-w-[1380px] max-lg:overflow-hidden max-lg:p-0 lg:px-7 lg:py-6">
+      <div className="mx-auto w-full max-w-[1440px] max-lg:overflow-hidden max-lg:p-0 lg:px-5 lg:py-4">
         {/* Mobile — full-bleed between header and tab bar */}
         <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
           {hasNoLessons ? (
@@ -374,16 +374,13 @@ const TeacherTimetable = () => {
         </div>
 
         {/* Desktop */}
-        <div className="hidden flex-col gap-6 lg:flex">
+        <div className="hidden flex-col gap-3 lg:flex">
           <TeacherTimetableHero
             greeting={getGreeting(
               core.currentTime.getHours(),
               graphqlData?.teacherName,
             )}
             formattedDate={core.formattedDate}
-            todayName={core.currentTime.toLocaleDateString("en-GB", {
-              weekday: "long",
-            })}
             weekRangeLabel={weekLayout.weekRangeLabel}
             termName={selectedTerm?.name}
             classesToday={isWeekend ? null : classesToday}
@@ -394,7 +391,7 @@ const TeacherTimetable = () => {
             showPrint={canPrint}
             onPrint={handlePrint}
           />
-          <div className="grid grid-cols-[minmax(0,296px)_1fr] items-start gap-6 xl:grid-cols-[minmax(0,316px)_1fr]">
+          <div className="grid grid-cols-[minmax(0,260px)_1fr] items-start gap-3 xl:grid-cols-[minmax(0,280px)_1fr]">
             <TeacherTimetableSidebar
               nextLesson={core.nextLesson}
               currentStatus={core.currentStatus}

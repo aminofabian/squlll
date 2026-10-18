@@ -1,7 +1,7 @@
 "use client";
 
-const RING_SIZE = 84;
-const STROKE_WIDTH = 6;
+const RING_SIZE = 40;
+const STROKE_WIDTH = 3.5;
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const MAX_PERCENT = 100;
@@ -40,9 +40,9 @@ export function TeacherProgressRing({ percent }: { percent: number }) {
           className="transition-[stroke-dashoffset] duration-700 ease-out"
         />
       </svg>
-      <span className="absolute font-display text-[22px] leading-none tracking-[-0.03em] text-[#fbf8ef]">
+      <span className="absolute text-[10px] font-semibold tabular-nums leading-none text-[#fbf8ef]">
         {clamped}
-        <span className="text-[12px] text-white/50">%</span>
+        <span className="text-[8px] text-white/50">%</span>
       </span>
     </div>
   );

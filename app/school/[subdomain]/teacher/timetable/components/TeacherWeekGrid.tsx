@@ -17,8 +17,8 @@ import { TeacherWeekLessonCard } from "./TeacherWeekLessonCard";
 import { TeacherWeekBreakBand } from "./TeacherWeekBreakBand";
 import { TeacherWeekLegend } from "./TeacherWeekLegend";
 
-const RAIL_WIDTH_PX = 92;
-const PERIOD_ROW_MIN_PX = 92;
+const RAIL_WIDTH_PX = 76;
+const PERIOD_ROW_MIN_PX = 54;
 const HEADER_ROW = 1;
 const FIRST_BODY_ROW = 2;
 const FIRST_DAY_COLUMN = 2;
@@ -70,20 +70,20 @@ export function TeacherWeekGrid({
   };
 
   return (
-    <section className="overflow-hidden rounded-[26px] bg-[#fffdf8] shadow-[0_1px_0_rgba(10,38,32,0.04),0_40px_80px_-56px_rgba(10,38,32,0.55)] ring-1 ring-[#1a4d42]/10 dark:bg-[#0c1a17] dark:ring-white/10">
+    <section className="overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] shadow-[0_20px_40px_-36px_rgba(10,38,32,0.5)] dark:border-white/10 dark:bg-[#0c1a17]">
       <TeacherWeekLegend
         weekRangeLabel={weekRangeLabel}
         totalLessons={totalLessons}
         completedLessons={completedLessons}
       />
-      <div className="overflow-x-auto px-3 pb-4 pt-3">
+      <div className="overflow-x-auto px-2 pb-2 pt-2">
         <div className="relative grid min-w-[760px]" style={gridStyle}>
           {todayIndex >= 0 ? (
             <TodayColumnWash column={dayColumn(todayIndex)} rowCount={rows.length} />
           ) : null}
           <div style={{ gridRow: HEADER_ROW, gridColumn: 1 }} aria-hidden />
           {dayDates.map((date, index) => (
-            <div key={date.dayOfWeek} className="relative z-10 pb-2" style={{ gridRow: HEADER_ROW, gridColumn: dayColumn(index) }}>
+            <div key={date.dayOfWeek} className="relative z-10 pb-1" style={{ gridRow: HEADER_ROW, gridColumn: dayColumn(index) }}>
               <TeacherWeekDayHeader
                 date={date}
                 lessonCount={lessonCounts[date.dayOfWeek] ?? 0}
@@ -108,7 +108,7 @@ function TodayColumnWash({ column, rowCount }: { column: number; rowCount: numbe
   return (
     <div
       aria-hidden
-      className="pointer-events-none mx-0.5 rounded-[20px] bg-gradient-to-b from-[#0a2620]/[0.06] via-[#0a2620]/[0.03] to-[#0a2620]/[0.015] dark:from-white/[0.06] dark:via-white/[0.03] dark:to-transparent"
+      className="pointer-events-none rounded-lg bg-gradient-to-b from-[#0a2620]/[0.06] via-[#0a2620]/[0.03] to-[#0a2620]/[0.015] dark:from-white/[0.06] dark:via-white/[0.03] dark:to-transparent"
       style={{ gridColumn: column, gridRow: `${HEADER_ROW} / ${rowCount + FIRST_BODY_ROW}` }}
     />
   );
@@ -165,7 +165,7 @@ function PeriodCell({
   const placement: CSSProperties = { gridRow: `${gridRow} / span ${span}`, gridColumn: column };
 
   return (
-    <div className="relative z-10 p-1" style={placement}>
+    <div className="relative z-10 p-[3px]" style={placement}>
       {cell.kind === "lesson" ? (
         <LessonSlot cell={cell} row={row} context={context} />
       ) : cell.kind === "break" ? (
@@ -212,7 +212,7 @@ function LessonSlot({
 
 function FreeSlot() {
   return (
-    <div className="group/free relative flex h-full min-h-[76px] items-center justify-center rounded-[14px] transition-colors hover:bg-[#1a4d42]/[0.03] dark:hover:bg-white/[0.02]">
+    <div className="group/free relative flex h-full min-h-[46px] items-center justify-center rounded-md transition-colors hover:bg-[#1a4d42]/[0.03] dark:hover:bg-white/[0.02]">
       <span className="h-1 w-1 rounded-full bg-[#1a4d42]/15 transition-opacity group-hover/free:opacity-0 dark:bg-white/15" aria-hidden />
       <span className="absolute text-[9.5px] font-semibold uppercase tracking-[0.2em] text-[#1a4d42]/30 opacity-0 transition-opacity group-hover/free:opacity-100 dark:text-white/25">
         Free
@@ -229,12 +229,12 @@ function BreakRow({ row, gridRow }: { row: TeacherWeekBreakRow; gridRow: number 
         <TeacherWeekTimeRail periodNumber={null} startTime={labelBreak.startTime} endTime={labelBreak.endTime} />
       </div>
       {row.isUniform ? (
-        <div className="relative z-10 p-1" style={{ gridRow, gridColumn: `${FIRST_DAY_COLUMN} / -1` }}>
+        <div className="relative z-10 p-[3px]" style={{ gridRow, gridColumn: `${FIRST_DAY_COLUMN} / -1` }}>
           <TeacherWeekBreakBand breakItem={labelBreak} />
         </div>
       ) : (
         row.perDay.map((item, index) => (
-          <div key={index} className={cn("relative z-10 p-1", !item && "opacity-0")} style={{ gridRow, gridColumn: dayColumn(index) }}>
+          <div key={index} className={cn("relative z-10 p-[3px]", !item && "opacity-0")} style={{ gridRow, gridColumn: dayColumn(index) }}>
             {item ? <TeacherWeekBreakBand breakItem={item} variant="chip" /> : null}
           </div>
         ))

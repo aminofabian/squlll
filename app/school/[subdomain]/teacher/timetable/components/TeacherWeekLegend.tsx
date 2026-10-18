@@ -19,18 +19,18 @@ export function TeacherWeekLegend({
   const taughtPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * PERCENT) : 0;
 
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#1a4d42]/8 px-6 pb-4 pt-5 dark:border-white/8">
-      <div>
-        <p className="text-[9.5px] font-semibold uppercase tracking-[0.26em] text-[#a07a3a] dark:text-[#d9c49a]/70">
-          Week of {weekRangeLabel}
-        </p>
-        <h2 className="mt-1 font-display text-[26px] leading-none tracking-[-0.025em] text-[#0a1f1a] dark:text-white">
+    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1a4d42]/8 px-4 py-2.5 dark:border-white/8">
+      <div className="flex items-baseline gap-3">
+        <h2 className="font-display text-[19px] leading-none tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
           Your week at a glance
         </h2>
+        <p className="text-[9.5px] font-semibold uppercase tracking-[0.22em] text-[#a07a3a] dark:text-[#d9c49a]/70">
+          {weekRangeLabel}
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <LegendItem swatch={<span className="h-2.5 w-2.5 rounded-[4px] bg-[#0a2620] ring-1 ring-[#c49a52]/50" />} label="Now" />
-        <LegendItem swatch={<span className="h-2.5 w-2.5 rounded-[4px] bg-[#fffaf0] ring-2 ring-[#c49a52]/70" />} label="Up next" />
+        <LegendItem swatch={<span className="h-2.5 w-2.5 rounded-sm bg-[#0a2620]" />} label="Now" />
+        <LegendItem swatch={<span className="h-2.5 w-2.5 rounded-sm border border-[#c49a52] bg-[#fffaf0]" />} label="Up next" />
         <LegendItem
           swatch={
             <span className="flex h-3 w-3 items-center justify-center rounded-full bg-emerald-600 text-white">
@@ -39,7 +39,7 @@ export function TeacherWeekLegend({
           }
           label="Taught"
         />
-        <span className="hidden h-6 w-px bg-[#1a4d42]/10 xl:block dark:bg-white/10" aria-hidden />
+        <span className="hidden h-5 w-px bg-[#1a4d42]/10 xl:block dark:bg-white/10" aria-hidden />
         <TaughtMeter percent={taughtPercent} completed={completedLessons} total={totalLessons} />
       </div>
     </header>

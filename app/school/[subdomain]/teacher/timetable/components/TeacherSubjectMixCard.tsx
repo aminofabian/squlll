@@ -19,19 +19,19 @@ export function TeacherSubjectMixCard({ subjectDistribution }: TeacherSubjectMix
   if (subjects.length === 0) return null;
 
   return (
-    <section className="rounded-[24px] bg-[#fffdf8] px-5 py-5 shadow-[0_24px_50px_-42px_rgba(10,38,32,0.55)] ring-1 ring-[#1a4d42]/10 dark:bg-[#0c1a17] dark:ring-white/10">
+    <section className="rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
       <p className="text-[9.5px] font-semibold uppercase tracking-[0.24em] text-[#1a4d42]/45 dark:text-white/40">Subject mix</p>
-      <ul className="mt-3.5 space-y-3">
+      <ul className="mt-2 space-y-1.5">
         {subjects.map(([name, count]) => {
           const accent = getSubjectPaletteColor(name).accent;
           return (
             <li key={name}>
-              <div className="flex items-center gap-2 text-[11.5px]">
+              <div className="flex items-center gap-2 text-[11px]">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: accent }} aria-hidden />
                 <span className="min-w-0 flex-1 truncate font-medium text-[#0a1f1a] dark:text-white/85">{name}</span>
                 <span className="tabular-nums text-[#1a4d42]/50 dark:text-white/40">{count}</span>
               </div>
-              <div className="ml-4 mt-1.5 h-[3px] overflow-hidden rounded-full bg-[#1a4d42]/[0.06] dark:bg-white/[0.06]">
+              <div className="ml-4 mt-1 h-[2px] overflow-hidden rounded-full bg-[#1a4d42]/[0.06] dark:bg-white/[0.06]">
                 <div className="h-full rounded-full" style={{ width: `${(count / busiest) * PERCENT}%`, backgroundColor: accent }} />
               </div>
             </li>

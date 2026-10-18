@@ -30,7 +30,7 @@ export function TeacherTimetableSidebar({
   const hasLessons = (stats?.totalLessons ?? 0) > 0;
 
   return (
-    <aside className="sticky top-4 z-0 space-y-4">
+    <aside className="sticky top-4 z-0 space-y-3">
       <TeacherUpNextCard nextLesson={nextLesson} />
       <TeacherLiveStatusCard status={currentStatus} formattedTime={formattedTime} />
       {hasLessons ? (

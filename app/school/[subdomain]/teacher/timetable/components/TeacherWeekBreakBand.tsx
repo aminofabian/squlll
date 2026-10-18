@@ -62,7 +62,7 @@ export function TeacherWeekBreakBand({
   return (
     <div
       className={cn(
-        "flex h-full min-h-[34px] items-center justify-center gap-2.5 rounded-xl px-3",
+        "flex h-full min-h-[22px] items-center justify-center gap-2 rounded-md px-3",
         theme.surface,
         theme.ink,
       )}

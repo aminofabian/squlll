@@ -11,10 +11,10 @@ const MAX_PROGRESS_PERCENT = 100;
 
 const CARD_STATE_CLASSES: Record<LessonCardState, string> = {
   scheduled:
-    "bg-[color-mix(in_srgb,var(--subject)_6%,white)] ring-[color-mix(in_srgb,var(--subject)_20%,transparent)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_color-mix(in_srgb,var(--subject)_70%,transparent)] dark:bg-[color-mix(in_srgb,var(--subject)_12%,#0c1a17)]",
-  next: "bg-[#fffaf0] ring-2 ring-[#c49a52]/60 shadow-[0_14px_30px_-18px_rgba(196,154,82,0.7)] hover:-translate-y-0.5 dark:bg-[#c49a52]/10",
+    "bg-[color-mix(in_srgb,var(--subject)_6%,white)] ring-[color-mix(in_srgb,var(--subject)_18%,transparent)] hover:bg-[color-mix(in_srgb,var(--subject)_11%,white)] dark:bg-[color-mix(in_srgb,var(--subject)_12%,#0c1a17)]",
+  next: "bg-[#fffaf0] ring-[#c49a52] hover:bg-[#fdf3e0] dark:bg-[#c49a52]/10",
   current:
-    "bg-[#0a2620] text-white ring-[#c49a52]/45 shadow-[0_20px_40px_-20px_rgba(10,38,32,0.85)] dark:bg-[#123b31]",
+    "bg-[#0a2620] text-white ring-[#0a2620] dark:bg-[#123b31]",
   completed:
     "bg-[#f4f3ed] ring-[#1a4d42]/8 hover:bg-[#efeee6] dark:bg-white/[0.03] dark:ring-white/8",
   cancelled:
@@ -67,8 +67,8 @@ export function TeacherWeekLessonCard({
       aria-label={accessibleLabel}
       style={{ "--subject": palette.accent } as CSSProperties}
       className={cn(
-        "group/lesson relative flex h-full w-full flex-col overflow-hidden rounded-[14px] py-2.5 pl-4 pr-2.5 text-left ring-1 transition-all duration-200 ease-out",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c49a52]",
+        "group/lesson relative flex h-full w-full flex-col overflow-hidden rounded-md py-1.5 pl-3 pr-1.5 text-left ring-1 transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-[#c49a52]",
         CARD_STATE_CLASSES[state],
       )}
     >
@@ -76,7 +76,7 @@ export function TeacherWeekLessonCard({
       <div className="flex items-start justify-between gap-1.5">
         <p
           className={cn(
-            "line-clamp-2 text-[12.5px] font-semibold leading-[1.25] tracking-[-0.01em]",
+            "truncate text-[11.5px] font-semibold leading-tight tracking-[-0.01em]",
             TITLE_STATE_CLASSES[state],
           )}
         >
@@ -96,7 +96,7 @@ function AccentRail({ state }: { state: LessonCardState }) {
     <span
       aria-hidden
       className={cn(
-        "absolute inset-y-2.5 left-[7px] w-[3px] rounded-full",
+        "absolute inset-y-1.5 left-1 w-[2px] rounded-full",
         state === "current" && "bg-gradient-to-b from-[#f0dfb8] to-[#c49a52]",
         state === "next" && "bg-[#c49a52]",
         state === "completed" && "bg-[var(--subject)] opacity-30",
@@ -118,10 +118,10 @@ function LessonMeta({
 }) {
   const isCurrent = state === "current";
   return (
-    <div className="mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pt-2">
+    <div className="mt-auto flex min-w-0 items-center gap-1.5 overflow-hidden pt-1">
       <span
         className={cn(
-          "max-w-full truncate rounded-md px-1.5 py-[3px] text-[10px] font-semibold leading-none",
+          "min-w-0 truncate rounded-sm px-1 py-[2px] text-[9.5px] font-semibold leading-none",
           isCurrent
             ? "bg-white/10 text-white/85"
             : "bg-[color-mix(in_srgb,var(--subject)_12%,transparent)] text-[#1a4d42]/80 dark:text-white/65",
@@ -132,7 +132,7 @@ function LessonMeta({
       {room ? (
         <span
           className={cn(
-            "inline-flex items-center gap-0.5 text-[10px] font-medium",
+            "inline-flex shrink-0 items-center gap-0.5 text-[9.5px] font-medium",
             isCurrent ? "text-white/55" : "text-[#1a4d42]/45 dark:text-white/40",
           )}
         >
@@ -147,7 +147,7 @@ function LessonMeta({
 function StateBadge({ state }: { state: LessonCardState }) {
   if (state === "current") {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#c49a52]/20 px-1.5 py-[3px] text-[8.5px] font-bold uppercase tracking-[0.14em] text-[#f0dfb8]">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-[#c49a52]/20 px-1 py-[2px] text-[8px] font-bold uppercase tracking-[0.14em] text-[#f0dfb8]">
         <span className="relative flex h-1.5 w-1.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#f0dfb8] opacity-70" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#f0dfb8]" />
@@ -158,21 +158,21 @@ function StateBadge({ state }: { state: LessonCardState }) {
   }
   if (state === "next") {
     return (
-      <span className="shrink-0 rounded-full bg-[#c49a52] px-1.5 py-[3px] text-[8.5px] font-bold uppercase tracking-[0.14em] text-white">
+      <span className="shrink-0 rounded-sm bg-[#c49a52] px-1 py-[2px] text-[8px] font-bold uppercase tracking-[0.14em] text-white">
         Next
       </span>
     );
   }
   if (state === "completed") {
     return (
-      <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-[0_2px_6px_-2px_rgba(5,150,105,0.6)]">
-        <Check className="h-2.5 w-2.5" strokeWidth={3.5} aria-hidden />
+      <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+        <Check className="h-2 w-2" strokeWidth={4} aria-hidden />
       </span>
     );
   }
   if (state === "cancelled") {
     return (
-      <span className="shrink-0 rounded-full bg-rose-100 px-1.5 py-[3px] text-[8.5px] font-bold uppercase tracking-[0.12em] text-rose-700">
+      <span className="shrink-0 rounded-sm bg-rose-100 px-1 py-[2px] text-[8px] font-bold uppercase tracking-[0.12em] text-rose-700">
         Off
       </span>
     );
@@ -184,7 +184,7 @@ function DoubleTag({ state }: { state: LessonCardState }) {
   return (
     <span
       className={cn(
-        "mt-2 inline-flex w-fit items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.16em]",
+        "mt-1 inline-flex w-fit items-center gap-1 text-[8.5px] font-semibold uppercase tracking-[0.16em]",
         state === "current" ? "text-[#f0dfb8]/70" : "text-[#1a4d42]/40 dark:text-white/35",
       )}
     >
@@ -197,7 +197,7 @@ function DoubleTag({ state }: { state: LessonCardState }) {
 function LiveProgress({ percent }: { percent: number }) {
   const width = Math.min(Math.max(percent, 0), MAX_PROGRESS_PERCENT);
   return (
-    <span aria-hidden className="absolute inset-x-0 bottom-0 h-[3px] bg-white/10">
+    <span aria-hidden className="absolute inset-x-0 bottom-0 h-[2px] bg-white/10">
       <span
         className="block h-full bg-gradient-to-r from-[#c49a52] to-[#f0dfb8] transition-[width] duration-1000 ease-linear"
         style={{ width: `${width}%` }}

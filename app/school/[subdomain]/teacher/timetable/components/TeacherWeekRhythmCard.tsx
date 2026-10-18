@@ -20,7 +20,7 @@ export function TeacherWeekRhythmCard({ dayDates, lessonCounts, currentDayOfWeek
   const busiestDay = counts.some((count) => count > 0) ? dayDates[counts.indexOf(busiest)] : undefined;
 
   return (
-    <section className="rounded-[24px] bg-[#fffdf8] px-5 py-5 shadow-[0_24px_50px_-42px_rgba(10,38,32,0.55)] ring-1 ring-[#1a4d42]/10 dark:bg-[#0c1a17] dark:ring-white/10">
+    <section className="rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
       <div className="flex items-baseline justify-between">
         <p className="text-[9.5px] font-semibold uppercase tracking-[0.24em] text-[#1a4d42]/45 dark:text-white/40">Week rhythm</p>
         {busiestDay ? (
@@ -29,7 +29,7 @@ export function TeacherWeekRhythmCard({ dayDates, lessonCounts, currentDayOfWeek
           </p>
         ) : null}
       </div>
-      <div className="mt-4 flex h-28 items-end gap-2">
+      <div className="mt-2.5 flex h-16 items-end gap-1.5">
         {dayDates.map((date, index) => (
           <RhythmBar
             key={date.dayOfWeek}
@@ -46,21 +46,21 @@ export function TeacherWeekRhythmCard({ dayDates, lessonCounts, currentDayOfWeek
 
 function RhythmBar({ initial, count, heightPercent, isToday }: { initial: string; count: number; heightPercent: number; isToday: boolean }) {
   return (
-    <div className="flex h-full min-w-0 flex-1 flex-col items-center gap-1.5">
-      <div className="relative flex w-full flex-1 items-end overflow-hidden rounded-xl bg-[#1a4d42]/[0.05] dark:bg-white/[0.05]">
+    <div className="flex h-full min-w-0 flex-1 flex-col items-center gap-1">
+      <div className="relative flex w-full flex-1 items-end overflow-hidden rounded-md bg-[#1a4d42]/[0.05] dark:bg-white/[0.05]">
         <div
           className={cn(
-            "relative w-full rounded-xl transition-[height] duration-500",
+            "relative w-full rounded-md transition-[height] duration-500",
             isToday ? "bg-gradient-to-t from-[#0a2620] to-[#246a59]" : "bg-gradient-to-t from-[#246a59]/45 to-[#9dcec1]/45",
           )}
           style={{ height: `${heightPercent}%` }}
         >
-          {isToday ? <span aria-hidden className="absolute inset-x-1.5 top-1 h-[3px] rounded-full bg-[#d9c49a]" /> : null}
+          {isToday ? <span aria-hidden className="absolute inset-x-1 top-0.5 h-[2px] rounded-full bg-[#d9c49a]" /> : null}
         </div>
         <span
           className={cn(
-            "absolute inset-x-0 top-1.5 text-center text-[10px] font-semibold tabular-nums",
-            isToday && heightPercent > 70 ? "text-white/85" : "text-[#1a4d42]/55 dark:text-white/50",
+            "absolute inset-x-0 top-1 text-center text-[9.5px] font-semibold tabular-nums",
+            isToday && heightPercent > 60 ? "text-white/85" : "text-[#1a4d42]/55 dark:text-white/50",
           )}
         >
           {count}

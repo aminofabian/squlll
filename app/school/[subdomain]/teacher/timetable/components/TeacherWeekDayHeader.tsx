@@ -11,7 +11,6 @@ type TeacherWeekDayHeaderProps = {
 };
 
 function lessonCountLabel(count: number): string {
-  if (count === 0) return "No classes";
   return count === 1 ? "1 class" : `${count} classes`;
 }
 
@@ -23,31 +22,28 @@ export function TeacherWeekDayHeader({
   return (
     <div
       className={cn(
-        "relative mx-1 flex flex-col items-center rounded-2xl px-2 pb-2.5 pt-2 transition-colors",
-        isToday
-          ? "bg-[#0a2620] text-white shadow-[0_14px_28px_-18px_rgba(10,38,32,0.9)]"
-          : "text-[#0a1f1a] dark:text-white",
+        "flex items-baseline justify-center gap-1.5 rounded-md px-2 py-1.5",
+        isToday ? "bg-[#0a2620] text-white" : "text-[#0a1f1a] dark:text-white",
       )}
     >
       <span
         className={cn(
-          "text-[9.5px] font-semibold uppercase tracking-[0.24em]",
+          "text-[9.5px] font-semibold uppercase tracking-[0.2em]",
           isToday ? "text-[#d9c49a]" : "text-[#1a4d42]/45 dark:text-white/40",
         )}
       >
-        {isToday ? "Today" : DAY_SHORT_NAMES[date.dayOfWeek]}
+        {DAY_SHORT_NAMES[date.dayOfWeek]}
       </span>
-      <span className="mt-1 font-display text-[28px] leading-none tracking-[-0.03em]">
+      <span className="font-display text-[19px] leading-none tracking-[-0.03em]">
         {date.dayOfMonth}
       </span>
       <span
         className={cn(
-          "mt-1.5 text-[10px] font-medium",
+          "truncate text-[9.5px] font-medium",
           isToday ? "text-white/55" : "text-[#1a4d42]/40 dark:text-white/35",
         )}
       >
-        {isToday ? DAY_SHORT_NAMES[date.dayOfWeek] : date.monthShort} ·{" "}
-        {lessonCountLabel(lessonCount)}
+        · {lessonCountLabel(lessonCount)}
       </span>
     </div>
   );
