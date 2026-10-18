@@ -130,7 +130,7 @@ const LANDING_PLATFORM_MODULES: {
 
 function LandingPlatformIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center bg-[#1d5547] shadow-md ring-1 ring-[#1d5547]/30">
+    <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-sm ring-1 ring-[#1d5547]/30">
       <Icon size={22} strokeWidth={2} className="text-white" aria-hidden />
     </div>
   )
@@ -184,7 +184,7 @@ const LANDING_WORKFLOW_BLOCKS: {
 
 function LandingWorkflowIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="flex h-14 w-14 shrink-0 items-center justify-center bg-[#1d5547] shadow-md ring-1 ring-[#1d5547]/25">
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#1d5547] shadow-sm ring-1 ring-[#1d5547]/25">
       <Icon size={26} strokeWidth={2} className="text-white" aria-hidden />
     </div>
   )
@@ -199,22 +199,22 @@ function LandingWorkflowCard({
 }: (typeof LANDING_WORKFLOW_BLOCKS)[number]) {
   return (
     <div className="group relative h-full">
-      <div className="relative flex h-full flex-col border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1d5547]/20 hover:shadow-md">
-        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
+      <div className="relative flex h-full flex-col rounded-2xl border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1d5547]/20 hover:shadow-md">
+        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
           {num}
         </div>
         <div className="mb-6 flex items-start gap-5">
           <LandingWorkflowIcon icon={icon} />
           <div className="min-w-0 pt-1">
             <h3 className="font-display text-2xl leading-snug text-slate-900">{title}</h3>
-            <div className="mt-2 h-0.5 w-10 bg-gradient-to-r from-[#1d5547]/60 to-transparent" />
+            <div className="mt-2 h-0.5 w-10 rounded-full bg-gradient-to-r from-[#1d5547]/60 to-transparent" />
           </div>
         </div>
         <p className="mb-6 text-sm leading-relaxed text-slate-600">{description}</p>
         <ul className="mt-auto grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {bullets.map((item) => (
             <li key={item} className="flex items-center gap-2 text-sm text-slate-600">
-              <span className="h-1.5 w-1.5 shrink-0 bg-emerald-600/70" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600/70" />
               {item}
             </li>
           ))}
@@ -359,7 +359,7 @@ const LANDING_APP_DOWNLOAD_URL =
 
 function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1d5547] shadow-sm">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-sm">
       <Icon size={18} strokeWidth={2} className="text-white" aria-hidden />
     </div>
   )
@@ -367,7 +367,7 @@ function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
 
 function LandingFaqCard({ icon, question, answer }: (typeof LANDING_FAQ_ITEMS)[number]) {
   return (
-    <div className="h-full border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
+    <div className="h-full rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
       <div className="flex gap-4">
         <LandingFaqIcon icon={icon} />
         <div className="min-w-0">
@@ -443,11 +443,11 @@ function LandingSectionHeader({
     <Reveal>
       <div className="relative mb-12 sm:mb-14">
         <div
-          className={`relative overflow-hidden border border-emerald-900/10 px-6 py-8 sm:px-8 sm:py-9 ${
-            tone === "soft" ? "bg-[#f6faf8]" : "bg-white shadow-sm"
+          className={`relative overflow-hidden rounded-3xl border border-emerald-900/10 px-6 py-8 sm:px-8 sm:py-9 ${
+            tone === "soft" ? "bg-[#f7f6f2]" : "bg-white shadow-sm"
           }`}
         >
-          <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
+          <div className="absolute left-0 top-0 hidden h-full w-1 rounded-full bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
           <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
             {kicker}
           </p>
@@ -455,8 +455,8 @@ function LandingSectionHeader({
             {title}
           </h2>
           <p
-            className={`mx-auto mt-5 text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left ${
-              wide ? "max-w-3xl" : "max-w-2xl"
+            className={`mt-5 max-w-3xl text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left ${
+              wide ? "" : "max-w-2xl"
             }`}
           >
             {description}
@@ -489,7 +489,7 @@ function LandingDeepDiveBlock({
         {items.map((item) => (
           <div
             key={item.title}
-            className="border border-emerald-900/10 bg-white px-5 py-4 shadow-sm"
+            className="rounded-2xl border border-emerald-900/10 bg-white px-5 py-4 shadow-sm"
           >
             <h4 className="font-ui text-sm font-semibold text-[#1d5547]">{item.title}</h4>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.description}</p>
@@ -500,7 +500,7 @@ function LandingDeepDiveBlock({
   )
 
   const visual = (
-    <div className="relative overflow-hidden border border-emerald-900/10 shadow-[0_20px_50px_rgba(10,31,26,0.12)]">
+    <div className="relative overflow-hidden rounded-3xl border border-emerald-900/10 shadow-[0_30px_70px_-40px_rgba(10,31,26,0.25)]">
       <Image
         src={image}
         alt={imageAlt}
@@ -550,8 +550,8 @@ function LandingBursarSnapshot({
 
   return (
     <div className="group relative">
-      <div className="relative overflow-hidden border border-[#1d5547]/15 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-md">
-        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl border border-[#1d5547]/15 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
           03
         </div>
         <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-start">
@@ -569,7 +569,7 @@ function LandingBursarSnapshot({
             return (
               <div
                 key={tile.label}
-                className="border border-emerald-900/8 bg-emerald-50/50 px-4 py-4 transition-colors group-hover:bg-emerald-50"
+                className="rounded-xl border border-emerald-900/8 bg-[#f7f6f2] px-4 py-4 transition-colors group-hover:bg-[#f1ede4]"
               >
                 <div className="mb-2 flex items-center gap-2">
                   <Icon className={`h-4 w-4 ${tile.tone}`} strokeWidth={2} />
@@ -588,12 +588,12 @@ function LandingBursarSnapshot({
 function LandingTermReadyBadge() {
   return (
     <div
-      className="relative flex h-28 w-28 shrink-0 items-center justify-center sm:h-[7.75rem] sm:w-[7.75rem]"
+      className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full sm:h-[7.75rem] sm:w-[7.75rem]"
       role="img"
       aria-label="Term ready for 2026"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5f0] via-white to-[#dceee6] shadow-[0_10px_40px_rgba(29,85,71,0.14)] ring-1 ring-[#1d5547]/20" />
-      <div className="absolute inset-[5px] border border-[#1d5547]/12" />
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#e8f5f0] via-white to-[#dceee6] shadow-[0_16px_40px_-18px_rgba(29,85,71,0.25)] ring-1 ring-[#1d5547]/20" />
+      <div className="absolute inset-[5px] rounded-full border border-[#1d5547]/12" />
       <div className="relative text-center">
         <p className="font-ui text-[8px] font-semibold uppercase tracking-[0.22em] text-[#1d5547]/65">
           Term
@@ -1567,7 +1567,7 @@ function HeroLiveDemoStrip({
 
 function HeroTrustBar() {
   return (
-    <div className="overflow-hidden border border-white/15 bg-[#0a1f1a]/92 shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg">
+    <div className="overflow-hidden rounded-2xl border border-white/15 bg-[#0a1f1a]/80 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.6)] backdrop-blur-lg">
       <div className="border-b border-white/10 px-4 py-3 text-center sm:px-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70">
           Trusted across Kenya
@@ -1794,6 +1794,13 @@ export default function Home() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [demoPaused, setDemoPaused] = useState(false)
   const [previewMode, setPreviewMode] = useState<HeroPreviewMode>("phone")
+
+  // Desktop gets the full product view; phones keep the app frame.
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setPreviewMode("desktop")
+    }
+  }, [])
   const [walkthroughOpen, setWalkthroughOpen] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const studentsMetric = useAnimatedNumber(HERO_DEMO_STATS.students.target, { delay: 400 })
@@ -1890,20 +1897,27 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-7 sm:gap-8 lg:grid-cols-12 lg:items-center lg:gap-8 lg:pt-3 xl:gap-10">
             {/* Left — pitch */}
             <div
-              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center border border-white/15 bg-[#0a1f1a]/92 px-6 py-8 text-center shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg sm:px-8 sm:py-10 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:text-left"
+              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center overflow-hidden rounded-3xl border border-white/20 bg-[#0a1f1a]/88 px-6 py-9 text-center shadow-[0_24px_80px_-32px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-9 sm:py-11 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:p-10 lg:text-left"
               onMouseEnter={() => setDemoPaused(true)}
               onMouseLeave={() => setDemoPaused(false)}
             >
-              <h1 className="font-display w-full leading-[1.08] tracking-tight text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.9)]">
-                <span className="block text-[1.7rem] tracking-[0.01em] sm:text-[2rem] lg:text-[2.3rem] xl:text-[2.35rem]">
+              <div className="mb-4 flex items-center justify-center gap-2 lg:justify-start">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+                <span className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                  School operations, connected
+                </span>
+              </div>
+
+              <h1 className="font-display w-full text-balance leading-[1.04] tracking-[-0.02em] text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.9)]">
+                <span className="block text-[2rem] sm:text-[2.4rem] lg:text-[2.75rem] xl:text-[3rem]">
                   School management software
                 </span>
-                <span className="mt-1.5 block text-[1.7rem] italic text-emerald-200 drop-shadow-[0_2px_20px_rgba(0,0,0,0.85)] sm:text-[2rem] lg:text-[2.3rem] xl:text-[2.35rem]">
+                <span className="mt-1 block text-[2rem] italic text-emerald-200 drop-shadow-[0_2px_20px_rgba(0,0,0,0.85)] sm:text-[2.4rem] lg:text-[2.75rem] xl:text-[3rem]">
                   built for Kenyan schools
                 </span>
               </h1>
 
-              <p className="mt-3 font-sans text-sm leading-relaxed text-pretty text-white/95 sm:mt-3.5 sm:text-[15px] lg:text-[15px] xl:text-base">
+              <p className="mx-auto mt-4 max-w-xl font-sans text-[15px] leading-relaxed text-pretty text-white/85 sm:text-base lg:mx-0">
                 Stop running your school through WhatsApp, Excel &amp; paper — admissions, M-Pesa fees, CBC marks, and parent SMS in one system trusted by schools across Kenya.
               </p>
 
@@ -1917,7 +1931,7 @@ export default function Home() {
                 <Link href="/register" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="rounded-lg h-12 w-full border-0 bg-emerald-500 px-8 text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
+                    className="h-12 w-full rounded-xl border-0 bg-[#f7f6f2] px-8 text-sm font-semibold text-[#14201c] shadow-lg shadow-black/20 hover:bg-white sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
                   >
                     Start Your Free Term
                   </Button>
@@ -1927,31 +1941,27 @@ export default function Home() {
                   variant="outline"
                   size="lg"
                   onClick={() => setDemoOpen(true)}
-                  className="rounded-lg h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
+                  className="h-12 w-full rounded-xl border-white/25 bg-white/5 px-6 text-sm font-semibold text-white shadow-none backdrop-blur-sm hover:bg-white/10 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
                 >
                   <Play className="mr-2 h-3.5 w-3.5 fill-white" />
                   See a demo
                 </Button>
+              </div>
+
+              <div className="mt-5 flex flex-col items-center gap-1.5 sm:items-start">
+                <p className="text-xs leading-relaxed text-white/65 sm:text-sm">
+                  90-day free trial · Full term access · No credit card
+                </p>
                 <a
                   href={LANDING_APP_DOWNLOAD_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full sm:w-auto"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-white/65 underline-offset-4 transition-colors hover:text-white hover:underline sm:text-sm"
                 >
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="rounded-lg h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
-                  >
-                    <Smartphone className="mr-2 h-3.5 w-3.5" />
-                    Download the app
-                  </Button>
+                  <Smartphone className="h-3.5 w-3.5" />
+                  Download the Android app
                 </a>
               </div>
-
-              <p className="mt-4 text-xs leading-relaxed text-white/90 sm:text-sm">
-                90-Day Free Trial · Full School Term Access · No Credit Card Required
-              </p>
             </div>
 
             {/* Right — dashboard preview */}
@@ -2031,8 +2041,8 @@ export default function Home() {
           <div className="relative z-10 mx-auto max-w-7xl px-4 pt-12 sm:px-6 sm:pt-14 lg:px-8 lg:pt-16">
             <Reveal>
             <div className="relative mb-12 sm:mb-14">
-              <div className="overflow-hidden border border-white/30 bg-white/95 shadow-[0_24px_64px_rgba(10,31,26,0.18)] backdrop-blur-md">
-                <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-emerald-700/40 sm:block" />
+              <div className="overflow-hidden rounded-3xl border border-white/40 bg-white/95 shadow-[0_32px_80px_-48px_rgba(10,31,26,0.35)] backdrop-blur-md">
+                <div className="absolute left-0 top-0 hidden h-full w-1 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700/40 sm:block" />
                 <div className="px-6 py-8 sm:px-8 sm:py-9 lg:pl-10">
                   <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:text-left">
                     Beyond the dashboard
@@ -2060,8 +2070,8 @@ export default function Home() {
                   <Reveal key={feature.title} delay={index * 60}>
                   <div className="group relative h-full">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="relative flex h-full flex-col border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#1d5547]/25 group-hover:shadow-md">
-                      <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
+                    <div className="relative flex h-full flex-col rounded-2xl border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#1d5547]/25 group-hover:shadow-md">
+                      <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
                         {String(index + 1).padStart(2, "0")}
                       </div>
                       <LandingPlatformIcon icon={feature.icon} />
@@ -2071,7 +2081,7 @@ export default function Home() {
                       <p className="mb-6 flex-grow text-sm leading-relaxed text-slate-600">
                         {feature.description}
                       </p>
-                      <span className="font-ui w-fit bg-emerald-50 px-3 py-1 text-xs font-semibold text-[#1d5547] ring-1 ring-emerald-100">
+                      <span className="font-ui w-fit rounded-full bg-[#f1ede4] px-3 py-1 text-xs font-semibold text-[#1d5547] ring-1 ring-[#e7e5dd]">
                         {feature.highlight}
                       </span>
                     </div>
@@ -2085,7 +2095,7 @@ export default function Home() {
         </section>
 
         {/* Third screen — day-to-day workflows */}
-        <section className="relative border-t border-emerald-900/8 bg-gradient-to-b from-white via-[#f6faf8] to-white py-20 sm:py-24">
+        <section className="relative border-t border-emerald-900/8 bg-gradient-to-b from-[#fbfaf6] via-[#f7f6f2] to-[#fbfaf6] py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <LandingSectionHeader
               kicker="How schools run day to day"
@@ -2129,10 +2139,10 @@ export default function Home() {
         </section>
 
         {/* Testimonial */}
-        <section className="relative border-t border-emerald-900/10 bg-[#f6faf8] py-20 sm:py-24">
+        <section className="relative border-t border-emerald-900/10 bg-[#f7f6f2] py-20 sm:py-24">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <Reveal>
-            <figure className="text-center">
+            <figure className="rounded-3xl border border-emerald-900/10 bg-[#fbfaf6] px-6 py-12 text-center shadow-sm sm:px-12">
               <div className="mb-8 flex items-center justify-center gap-4">
                 <span className="h-px w-10 bg-[#1d5547]/30" aria-hidden />
                 <span className="font-ui text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547]">
@@ -2159,7 +2169,7 @@ export default function Home() {
         </section>
 
         {/* Fourth screen — in the schoolroom */}
-        <section className="relative border-t border-emerald-900/10 bg-white py-20 sm:py-24">
+        <section className="relative border-t border-emerald-900/10 bg-[#fbfaf6] py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <LandingSectionHeader
               tone="soft"
@@ -2187,7 +2197,7 @@ export default function Home() {
         {/* Custom domains — the school's own web address */}
         <section
           id="custom-domains"
-          className="relative border-t border-emerald-900/10 bg-white py-20 sm:py-24"
+          className="relative border-t border-emerald-900/10 bg-[#fbfaf6] py-20 sm:py-24"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <LandingSectionHeader
@@ -2213,7 +2223,7 @@ export default function Home() {
                 <ul className="space-y-6">
                   {DOMAIN_HOME_HIGHLIGHTS.map((item) => (
                     <li key={item.title} className="flex gap-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1d5547] shadow-sm">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-sm">
                         <item.icon
                           size={18}
                           strokeWidth={2}
@@ -2255,7 +2265,7 @@ export default function Home() {
         </section>
 
         {/* Fifth screen — questions principals & bursars ask */}
-        <section className="relative border-t border-emerald-900/10 bg-gradient-to-b from-[#f6faf8] to-white py-20 sm:py-24">
+        <section className="relative border-t border-emerald-900/10 bg-gradient-to-b from-[#f7f6f2] to-[#fbfaf6] py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <LandingSectionHeader
               kicker="Before you sign up"
@@ -2277,7 +2287,7 @@ export default function Home() {
             </div>
 
             <Reveal>
-            <div className="relative mt-14 overflow-hidden bg-[#0a1f1a] sm:mt-16">
+            <div className="relative mt-14 overflow-hidden rounded-3xl bg-[#0a1f1a] sm:mt-16">
               <div
                 className="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px]"
                 aria-hidden
@@ -2299,7 +2309,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="rounded-lg h-12 w-full border-0 bg-emerald-500 px-8 font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:w-auto sm:px-10 sm:text-base"
+                      className="h-12 w-full rounded-xl border-0 bg-[#f7f6f2] px-8 font-semibold text-[#14201c] shadow-lg shadow-black/25 hover:bg-white sm:w-auto sm:px-10 sm:text-base"
                     >
                       Start Your Free Term
                     </Button>
@@ -2308,7 +2318,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="rounded-lg h-12 w-full border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
+                      className="h-12 w-full rounded-xl border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
                     >
                       <Play className="mr-2 h-3.5 w-3.5 fill-white" />
                       See a demo
