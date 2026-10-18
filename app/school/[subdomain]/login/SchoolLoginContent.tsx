@@ -177,6 +177,9 @@ export default function SchoolLoginContent({
             required
             autoComplete="current-password"
           />
+          <p className="text-[11px] leading-relaxed text-[var(--school-ink)]/45">
+            Students: your initial password is your admission number.
+          </p>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
