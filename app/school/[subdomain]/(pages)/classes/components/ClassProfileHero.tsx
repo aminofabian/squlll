@@ -7,9 +7,8 @@ import {
   ChevronRight,
   CircleDollarSign,
   GraduationCap,
-  Sparkles,
-  UserPlus,
   Users,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,7 +19,7 @@ import {
   type ClassHealth,
 } from "../utils/classPulse";
 import { classHealthMeta } from "./classHealth";
-import { classesDotGrid } from "./classes-ui";
+import { classesDotGrid, classesInkPanel } from "./classes-ui";
 
 export interface ClassNeighbour {
   gradeId: string;
@@ -50,13 +49,18 @@ interface ClassProfileHeroProps {
 }
 
 function ReadinessRing({ value }: { value: number }) {
-  const size = 76;
-  const stroke = 6;
+  const size = 64;
+  const stroke = 5;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
+  const offset =
+    circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
   const tone =
-    value >= 85 ? "text-[#8fe3c8]" : value >= 50 ? "text-amber-300" : "text-rose-300";
+    value >= 85
+      ? "text-[#8fe3c8]"
+      : value >= 50
+        ? "text-amber-300"
+        : "text-rose-300";
 
   return (
     <div
@@ -89,10 +93,10 @@ function ReadinessRing({ value }: { value: number }) {
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-lg font-semibold leading-none tabular-nums text-white">
+        <span className="text-base font-semibold leading-none tabular-nums text-white">
           {value}
         </span>
-        <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-white/45">
+        <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-white/45">
           ready
         </span>
       </div>
@@ -125,55 +129,47 @@ export function ClassProfileHero({
   const title = streamName ? `${displayName} · ${streamName}` : displayName;
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-[#0a1f1a] bg-[#0a1f1a] text-white shadow-[0_18px_40px_-28px_rgba(10,31,26,0.8)]">
+    <section className={classesInkPanel} aria-label="Class overview">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.12]"
+        className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={classesDotGrid}
       />
-      <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#246a59]/50 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-[#8fe3c8]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#246a59]/45 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-[#1a4d42]/40 blur-3xl" />
 
-      <div className="relative px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3.5">
-            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-base font-bold tracking-tight text-white ring-1 ring-white/15 sm:h-16 sm:w-16 sm:text-lg">
+      <div className="relative p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-sm font-bold tracking-tight text-white ring-1 ring-white/15 sm:h-14 sm:w-14 sm:text-base">
               {monogram}
-              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#0a1f1a] bg-[#8fe3c8] text-[9px] font-bold text-[#0a1f1a]">
-                <GraduationCap className="h-3 w-3" />
+              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-lg border-2 border-[#0a1f1a] bg-[#8fe3c8] text-[8px] font-bold text-[#0a1f1a]">
+                <GraduationCap className="h-2.5 w-2.5" />
               </span>
             </div>
 
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8fe3c8]/80">
-                {levelName}
-              </p>
-              <h2 className="mt-0.5 truncate font-display text-xl font-normal tracking-tight text-white sm:text-2xl">
-                {title}
-              </h2>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">
+                  {levelName}
+                </p>
                 <span
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                    health === "ready"
-                      ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
-                      : health === "partial"
-                        ? "border-amber-400/30 bg-amber-400/10 text-amber-200"
-                        : health === "no-teacher"
-                          ? "border-orange-400/30 bg-orange-400/10 text-orange-200"
-                          : health === "no-subjects"
-                            ? "border-violet-400/30 bg-violet-400/10 text-violet-200"
-                            : "border-white/15 bg-white/5 text-white/60",
-                  )}
+                  className="hidden items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-semibold text-white/65 sm:inline-flex"
                   title={meta.description}
                 >
-                  {health === "ready" ? <Sparkles className="h-3 w-3" /> : null}
+                  <span className={cn("h-1.5 w-1.5 rounded-lg", meta.dot)} />
                   {meta.label}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] tabular-nums text-white/70">
+              </div>
+              <h2 className="mt-1 truncate font-display text-xl tracking-tight text-white sm:text-2xl">
+                {title}
+              </h2>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] tabular-nums text-white/55">
+                <span className="inline-flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   {studentCount} learner{studentCount === 1 ? "" : "s"}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] tabular-nums text-white/70">
+                <span className="h-1 w-1 rounded-lg bg-white/25" />
+                <span>
                   {totalSubjects > 0
                     ? `${assignedSubjects}/${totalSubjects} subjects staffed`
                     : "No subjects yet"}
@@ -182,12 +178,12 @@ export function ClassProfileHero({
             </div>
           </div>
 
-          <div className="flex shrink-0 items-start gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/40">
                 Readiness
               </p>
-              <p className="mt-0.5 max-w-[9rem] text-[10px] leading-snug text-white/55">
+              <p className="mt-0.5 max-w-[9rem] text-[10px] leading-snug text-white/50">
                 {health === "ready"
                   ? "This class is ready to teach."
                   : readiness >= 50
@@ -203,7 +199,7 @@ export function ClassProfileHero({
           <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
             {classTeacherName ? (
               <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.05] py-1 pl-1 pr-1.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#8fe3c8]/20 text-[9px] font-bold text-[#8fe3c8]">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#8fe3c8]/20 text-[9px] font-bold text-[#8fe3c8]">
                   {initials(classTeacherName)}
                 </span>
                 <span className="min-w-0">
@@ -246,7 +242,7 @@ export function ClassProfileHero({
                   onClick={() => onStreamSelect("")}
                   aria-pressed={!selectedStreamId}
                   className={cn(
-                    "rounded-md border px-2 py-1 text-[10px] font-semibold transition-colors",
+                    "rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-colors",
                     !selectedStreamId
                       ? "border-[#8fe3c8]/50 bg-[#8fe3c8]/15 text-[#c9f4e5]"
                       : "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/10 hover:text-white",
@@ -261,7 +257,7 @@ export function ClassProfileHero({
                     onClick={() => onStreamSelect(stream.id)}
                     aria-pressed={selectedStreamId === stream.id}
                     className={cn(
-                      "rounded-md border px-2 py-1 text-[10px] font-semibold transition-colors",
+                      "rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-colors",
                       selectedStreamId === stream.id
                         ? "border-[#8fe3c8]/50 bg-[#8fe3c8]/15 text-[#c9f4e5]"
                         : "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/10 hover:text-white",

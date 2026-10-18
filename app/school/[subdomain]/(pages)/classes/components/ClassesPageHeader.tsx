@@ -24,6 +24,7 @@ import {
 
 interface ClassesPageHeaderProps {
   title: string;
+  eyebrow?: string;
   subtitle?: string;
   hasGradeSelected: boolean;
   onOpenGradePicker: () => void;
@@ -35,6 +36,7 @@ interface ClassesPageHeaderProps {
 
 export function ClassesPageHeader({
   title,
+  eyebrow,
   subtitle,
   hasGradeSelected,
   onOpenGradePicker,
@@ -51,11 +53,16 @@ export function ClassesPageHeader({
     <div className="sticky top-0 z-20 shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-1.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
       <div className="mx-auto flex max-w-6xl items-center gap-2">
         <div className="min-w-0 flex-1">
+          {eyebrow ? (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59] dark:text-[#8fe3c8]">
+              {eyebrow}
+            </p>
+          ) : null}
           <h1 className="truncate font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
             {title}
           </h1>
           {subtitle ? (
-            <p className="hidden truncate text-[11px] text-[#1a4d42]/50 sm:block">
+            <p className="truncate text-[11px] text-[#1a4d42]/50 dark:text-white/45">
               {subtitle}
             </p>
           ) : null}
@@ -71,7 +78,7 @@ export function ClassesPageHeader({
             aria-label="Open class directory"
           >
             <LayoutGrid className="h-3.5 w-3.5" />
-            <span className="hidden min-[380px]:inline">Classes</span>
+            <span className="hidden min-[440px]:inline">Classes</span>
           </Button>
 
           <div className="hidden items-center gap-1 lg:flex">

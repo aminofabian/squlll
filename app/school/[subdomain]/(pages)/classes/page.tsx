@@ -32,13 +32,22 @@ import { AssignTeacherModal } from "../components/AssignTeacherModal";
 import { AddSubjectDialog } from "../components/AddSubjectDialog";
 import { type ClassAction } from "./components/ClassActionBar";
 import { toast } from "sonner";
-import { BookOpen, Layers, Plus, UserPlus } from "lucide-react";
+import {
+  BookOpen,
+  Layers,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  UserPlus,
+} from "lucide-react";
 import { formatGradeDisplayName } from "@/lib/utils/grade-display";
 import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 import { refreshAfterClassTeacherChange } from "./utils/class-teacher-cache";
 import { useCampusClassDirectory } from "./hooks/useCampusClassDirectory";
 import { useCampusDirectoryStaffing } from "./hooks/useCampusDirectoryStaffing";
 import { buildClassDirectory } from "./utils/classDirectory";
+import { cn } from "@/lib/utils";
+import { classesIconButton } from "./components/classes-ui";
 
 export default function ClassesPage() {
   const queryClient = useQueryClient();
@@ -412,8 +421,18 @@ export default function ClassesPage() {
       }`
     : "Classes";
 
+  const headerEyebrow = selectedGrade ? "Class profile" : "Class directory";
+
   const headerSubtitle = selectedGrade
-    ? selectedGrade.levelName
+    ? [
+        selectedGrade.levelName,
+        selectedRow ? `${selectedRow.studentCount} learners` : null,
+        selectedRow && selectedRow.totalSubjects > 0
+          ? `${selectedRow.assignedSubjects}/${selectedRow.totalSubjects} subjects staffed`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
     : "Browse every class by level";
 
   if (isLoading && !config) {
@@ -456,32 +475,65 @@ export default function ClassesPage() {
   );
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex min-h-0 flex-1 overflow-hidden bg-background dark:bg-[#071411]">
       <aside
-        className={`hidden w-[264px] shrink-0 border-r border-[#1a4d42]/10 dark:border-white/10 lg:flex lg:flex-col ${
-          isSidebarCollapsed ? "lg:hidden" : ""
-        }`}
+        className={cn(
+          "hidden shrink-0 flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] lg:flex",
+          isSidebarCollapsed ? "w-14" : "w-64",
+        )}
         aria-label="Class directory"
       >
-        {sidebar}
+        <div
+          className={cn(
+            "flex shrink-0 border-b border-[#1a4d42]/10 px-2 py-2 dark:border-white/10",
+            isSidebarCollapsed ? "justify-center" : "justify-end",
+          )}
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn(classesIconButton, "hidden lg:inline-flex")}
+            onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+            aria-label={
+              isSidebarCollapsed
+                ? "Show class directory"
+                : "Hide class directory"
+            }
+            title={
+              isSidebarCollapsed
+                ? "Show class directory"
+                : "Hide class directory"
+            }
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        {!isSidebarCollapsed ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3">
+            {sidebar}
+          </div>
+        ) : null}
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <ClassesPageHeader
           title={headerTitle}
+          eyebrow={headerEyebrow}
           subtitle={headerSubtitle}
           hasGradeSelected={Boolean(selectedGradeId)}
           onOpenGradePicker={() => setIsClassesDrawerOpen(true)}
           actions={pageActions}
-          showDesktopGradeToggle
-          isGradePanelOpen={!isSidebarCollapsed}
-          onToggleGradePanel={() => setIsSidebarCollapsed((prev) => !prev)}
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="mx-auto max-w-6xl p-3 sm:p-4">
             {!selectedGradeId ? (
-              <div className="space-y-3 animate-in fade-in duration-300 sm:space-y-5">
+              <div className="space-y-2.5 animate-in fade-in duration-300 sm:space-y-3">
                 <ClassesPulseHero
                   config={config}
                   isLoading={isLoading}
@@ -523,7 +575,7 @@ export default function ClassesPage() {
                 onGoToClass={handleGoToClass}
               />
             ) : (
-              <div className="rounded-xl border border-dashed border-[#1a4d42]/15 bg-white px-6 py-12 text-center dark:border-white/15 dark:bg-[#0c1a17]">
+              <div className="rounded-lg border border-dashed border-[#1a4d42]/15 bg-white px-6 py-12 text-center dark:border-white/15 dark:bg-[#0c1a17]">
                 <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                   This class is no longer available
                 </p>
@@ -566,6 +618,7 @@ export default function ClassesPage() {
               onSelectAll={handleSelectAll}
               isLoading={isLoading || staffingLoading || studentsQuery.isLoading}
               surface="drawer"
+              onClose={() => setIsClassesDrawerOpen(false)}
             />
           </div>
         </DrawerContent>

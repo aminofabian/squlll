@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { classesPanel, classesSectionHead } from "./classes-ui";
 import type { ClassRosterStudent } from "../utils/filterStudentsForClass";
 import { initials, type ClassLeadership, type PrefectRef } from "../utils/classPulse";
 
@@ -88,18 +89,18 @@ export function ClassLeadershipCard({
 
   return (
     <>
-      <section
-        className={cn(
-          "overflow-hidden rounded-xl border border-[#1a4d42]/12 bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04)] dark:border-white/10 dark:bg-[#0c1a17]",
-          className,
-        )}
-      >
-        <div className="flex items-center gap-2 border-b border-[#1a4d42]/10 px-3.5 py-3 dark:border-white/10">
+      <section className={cn(classesPanel, className)}>
+        <div
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-3",
+            classesSectionHead,
+          )}
+        >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
             <ShieldCheck className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <h3 className="font-display text-sm tracking-tight text-[#0a1f1a] dark:text-white">
+            <h3 className="text-sm font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
               Class leadership
             </h3>
             <p className="text-[10px] text-[#1a4d42]/50 dark:text-white/40">

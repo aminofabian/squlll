@@ -10,6 +10,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { classesActionButton, classesPanel, classesSectionHead } from "./classes-ui";
 import {
   initials,
   type ClassPerformance,
@@ -80,18 +81,20 @@ export function ClassMeritBoard({
 
   return (
     <section
-      className={cn(
-        "overflow-hidden rounded-xl border border-[#1a4d42]/12 bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04)] dark:border-white/10 dark:bg-[#0c1a17]",
-        className,
-      )}
+      className={cn(classesPanel, className)}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5",
+          classesSectionHead,
+        )}
+      >
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
             <Trophy className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="font-display text-sm tracking-tight text-[#0a1f1a] dark:text-white">
+            <h3 className="text-sm font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
               Merit board
             </h3>
             <p className="text-[10px] text-[#1a4d42]/50 dark:text-white/40">
@@ -103,7 +106,7 @@ export function ClassMeritBoard({
         </div>
         <Link
           href="/exams"
-          className="inline-flex items-center gap-1 rounded-md border border-[#1a4d42]/12 bg-white px-2 py-1 text-[10px] font-semibold text-[#1a4d42]/65 transition-colors hover:border-[#246a59]/35 hover:text-[#246a59] dark:border-white/10 dark:bg-[#071411] dark:text-white/55"
+          className={cn(classesActionButton, "h-7 px-2 text-[10px]")}
         >
           Exams
           <ArrowUpRight className="h-3 w-3" />
@@ -121,7 +124,7 @@ export function ClassMeritBoard({
         </div>
       ) : performance.top.length === 0 ? (
         <div className="flex flex-col items-center px-4 py-9 text-center">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
             <Trophy className="h-5 w-5" />
           </span>
           <p className="mt-3 text-sm font-semibold text-[#0a1f1a] dark:text-white">

@@ -31,6 +31,7 @@ import { ClassLeadershipCard } from "./ClassLeadershipCard";
 import { ClassFeeCard } from "./ClassFeeCard";
 import { ClassStudentsRoster } from "./ClassStudentsRoster";
 import { ClassDetailQuickLinks } from "./ClassDetailQuickLinks";
+import { classesPanel, classesSectionHead } from "./classes-ui";
 
 interface StudentLike {
   id?: string;
@@ -142,7 +143,7 @@ export function ClassProfile({
   };
 
   return (
-    <div className="space-y-3 animate-in fade-in duration-300">
+    <div className="space-y-2.5 animate-in fade-in duration-300">
       <ClassProfileHero
         displayName={displayName}
         levelName={levelName}
@@ -174,8 +175,8 @@ export function ClassProfile({
         classMean={performance.mean}
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_19rem] xl:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
-        <div className="min-w-0 space-y-3">
+      <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_19rem] xl:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+        <div className="min-w-0 space-y-2.5">
           <ClassSubjectStudio
             level={level}
             gradeId={grade.id}
@@ -205,7 +206,7 @@ export function ClassProfile({
           />
         </div>
 
-        <aside className="min-w-0 space-y-3 lg:sticky lg:top-3">
+        <aside className="min-w-0 space-y-2.5 lg:sticky lg:top-3">
           <TeacherCard
             name={classTeacher?.teacher.fullName}
             email={classTeacher?.teacher.email}
@@ -261,13 +262,18 @@ function TeacherCard({
   onAssign: () => void;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-[#1a4d42]/12 bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04)] dark:border-white/10 dark:bg-[#0c1a17]">
-      <div className="flex items-center gap-2 border-b border-[#1a4d42]/10 px-3.5 py-3 dark:border-white/10">
+    <section className={classesPanel}>
+      <div
+        className={cn(
+          "flex items-center gap-2 px-3.5 py-3",
+          classesSectionHead,
+        )}
+      >
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300">
           <UserRound className="h-4 w-4" />
         </span>
         <div>
-          <h3 className="font-display text-sm tracking-tight text-[#0a1f1a] dark:text-white">
+          <h3 className="text-sm font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
             {role}
           </h3>
           <p className="text-[10px] text-[#1a4d42]/50 dark:text-white/40">

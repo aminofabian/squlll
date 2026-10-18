@@ -9,6 +9,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { classesActionButton, classesPanel, classesSectionHead } from "./classes-ui";
 import { formatKes, type FeeHealth } from "../utils/classPulse";
 
 interface ClassFeeCardProps {
@@ -28,18 +29,20 @@ export function ClassFeeCard({
 
   return (
     <section
-      className={cn(
-        "overflow-hidden rounded-xl border border-[#1a4d42]/12 bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04)] dark:border-white/10 dark:bg-[#0c1a17]",
-        className,
-      )}
+      className={cn(classesPanel, className)}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-[#1a4d42]/10 px-3.5 py-3 dark:border-white/10">
+      <div
+        className={cn(
+          "flex items-center justify-between gap-2 px-3.5 py-3",
+          classesSectionHead,
+        )}
+      >
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
             <CircleDollarSign className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="font-display text-sm tracking-tight text-[#0a1f1a] dark:text-white">
+            <h3 className="text-sm font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
               Fee health
             </h3>
             <p className="text-[10px] text-[#1a4d42]/50 dark:text-white/40">
@@ -49,7 +52,7 @@ export function ClassFeeCard({
         </div>
         <Link
           href={feesHref}
-          className="inline-flex items-center gap-0.5 rounded-md border border-[#1a4d42]/12 px-2 py-1 text-[10px] font-semibold text-[#1a4d42]/60 transition-colors hover:border-[#246a59]/35 hover:text-[#246a59] dark:border-white/10 dark:text-white/50"
+          className={cn(classesActionButton, "h-7 px-2 text-[10px]")}
         >
           Fees
           <ArrowUpRight className="h-2.5 w-2.5" />
@@ -98,7 +101,7 @@ export function ClassFeeCard({
             </div>
           </div>
 
-          <div className="mt-2.5 flex h-2 overflow-hidden rounded-full bg-[#e8f2ef] dark:bg-white/10">
+          <div className="mt-2.5 flex h-2 overflow-hidden bg-[#e8f2ef] dark:bg-white/10">
             <span
               className="h-full bg-emerald-500 transition-[width] duration-500"
               style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}

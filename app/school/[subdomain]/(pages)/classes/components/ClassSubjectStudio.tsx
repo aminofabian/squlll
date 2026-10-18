@@ -28,6 +28,7 @@ import {
 import type { Level } from "@/lib/types/school-config";
 import type { TenantSubject } from "@/lib/hooks/useTenantSubjects";
 import { cn } from "@/lib/utils";
+import { classesPanel, classesPrimaryButton } from "./classes-ui";
 import { useClassSubjectsForLevel } from "../utils/useClassSubjectsForLevel";
 import {
   deleteTenantSubjects,
@@ -176,8 +177,8 @@ export function ClassSubjectStudio({
   };
 
   return (
-    <section className={cn("space-y-3", className)}>
-      <div className="overflow-hidden rounded-xl border border-[#1a4d42]/12 bg-white shadow-[0_1px_2px_rgba(10,31,26,0.04)] dark:border-white/10 dark:bg-[#0c1a17]">
+    <section className={cn("space-y-2.5", className)}>
+      <div className={classesPanel}>
         <div className="flex flex-wrap items-start gap-3 border-b border-[#1a4d42]/10 px-4 py-3.5 dark:border-white/10 sm:px-5">
           <ClassDetailProgressRing
             value={coverage}
@@ -189,7 +190,7 @@ export function ClassSubjectStudio({
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59] dark:text-[#8fe3c8]">
               Subject studio
             </p>
-            <h3 className="mt-0.5 font-display text-base tracking-tight text-[#0a1f1a] dark:text-white">
+            <h3 className="mt-0.5 text-sm font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
               Curriculum &amp; teachers
             </h3>
             <p className="mt-0.5 text-[11px] text-[#1a4d42]/55 dark:text-white/45">
@@ -206,7 +207,7 @@ export function ClassSubjectStudio({
           </div>
 
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            <div className="mr-auto flex items-center gap-1 rounded-lg bg-[#f3f7f5] p-0.5 dark:bg-white/5">
+            <div className="mr-auto flex items-center gap-0.5 border border-[#1a4d42]/10 bg-[#f8fbfa] p-0.5 dark:border-white/10 dark:bg-[#071411]">
               {(
                 [
                   ["all", "All"],
@@ -220,10 +221,10 @@ export function ClassSubjectStudio({
                   onClick={() => setFilter(id)}
                   aria-pressed={filter === id}
                   className={cn(
-                    "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                    "px-2.5 py-1 text-[11px] font-semibold transition-colors",
                     filter === id
-                      ? "bg-white text-[#0a1f1a] shadow-sm dark:bg-[#0c1a17] dark:text-white"
-                      : "text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/50 dark:hover:text-white",
+                      ? "bg-[#0a1f1a] text-white"
+                      : "text-[#1a4d42]/55 hover:bg-white hover:text-[#0a1f1a] dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white",
                   )}
                 >
                   {label}
@@ -237,7 +238,10 @@ export function ClassSubjectStudio({
               <Button
                 type="button"
                 size="sm"
-                className="h-8 gap-1.5 rounded-lg bg-[#0a1f1a] px-2.5 text-[11px] font-medium text-white hover:bg-[#246a59]"
+                className={cn(
+                  classesPrimaryButton,
+                  "h-8 shrink-0 gap-1.5 whitespace-nowrap px-2.5 text-[11px]",
+                )}
                 onClick={onAddSubject}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -248,7 +252,7 @@ export function ClassSubjectStudio({
         </div>
 
         <div className="flex items-center gap-1.5 border-b border-[#1a4d42]/10 px-4 py-2 dark:border-white/10 sm:px-5">
-          <div className="flex h-1.5 flex-1 items-center gap-0.5 overflow-hidden rounded-full bg-[#e8f2ef] dark:bg-white/10">
+          <div className="flex h-1.5 flex-1 items-center gap-0.5 overflow-hidden bg-[#e8f2ef] dark:bg-white/10">
             {subjects.length > 0
               ? subjects.map((subject) => {
                   const staffed = Boolean(
@@ -265,7 +269,7 @@ export function ClassSubjectStudio({
                         staffed ? "teacher assigned" : "needs a teacher"
                       }`}
                       className={cn(
-                        "h-full flex-1 rounded-full transition-colors",
+                        "h-full flex-1 transition-colors",
                         staffed
                           ? "bg-emerald-500/80"
                           : "bg-amber-400/90 dark:bg-amber-500/80",
@@ -280,7 +284,7 @@ export function ClassSubjectStudio({
           </span>
         </div>
 
-        <div className="px-3 py-2 sm:px-4">
+        <div className="px-3 py-2.5 sm:px-4">
           {isLoading ? (
             <div className="space-y-1.5 py-1">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -292,7 +296,7 @@ export function ClassSubjectStudio({
             </div>
           ) : visible.length === 0 ? (
             <div className="flex flex-col items-center px-3 py-10 text-center">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e8f2ef] text-[#246a59] dark:bg-white/5 dark:text-[#8fe3c8]">
+              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#e8f2ef] text-[#246a59] dark:bg-white/5 dark:text-[#8fe3c8]">
                 <BookOpen className="h-5 w-5" />
               </span>
               <p className="mt-3 text-sm font-semibold text-[#0a1f1a] dark:text-white">
@@ -309,7 +313,10 @@ export function ClassSubjectStudio({
                 <Button
                   type="button"
                   size="sm"
-                  className="mt-3 h-8 gap-1.5 rounded-lg bg-[#246a59] px-3 text-[11px] text-white hover:bg-[#1a4d42]"
+                  className={cn(
+                    classesPrimaryButton,
+                    "mt-3 h-8 shrink-0 gap-1.5 whitespace-nowrap px-3 text-[11px]",
+                  )}
                   onClick={onAddSubject}
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -318,7 +325,7 @@ export function ClassSubjectStudio({
               ) : null}
             </div>
           ) : (
-            <ul className="divide-y divide-[#1a4d42]/8 dark:divide-white/8">
+            <ul className="space-y-1.5">
               {visible.map((subject) => {
                 const teacher = getTeacherForSubject(
                   subject.tenantSubjectIds,
@@ -333,7 +340,7 @@ export function ClassSubjectStudio({
                 const isSaving = savingId === subject.id;
 
                 return (
-                  <li key={subject.id} className="py-1 first:pt-0 last:pb-0">
+                  <li key={subject.id}>
                     {isEditing ? (
                       <form
                         className="my-1 rounded-lg border border-[#246a59]/30 bg-[#f8fbfa] p-2.5 dark:border-[#246a59]/50 dark:bg-white/[0.03]"
@@ -368,8 +375,8 @@ export function ClassSubjectStudio({
                                 className={cn(
                                   "rounded-md px-2.5 py-1 text-[10px] font-semibold capitalize transition-colors",
                                   draftType === type
-                                    ? "bg-white text-[#0a1f1a] shadow-sm dark:bg-[#0c1a17] dark:text-white"
-                                    : "text-[#1a4d42]/55 dark:text-white/50",
+                                    ? "bg-[#0a1f1a] text-white"
+                                    : "text-[#1a4d42]/55 hover:bg-white dark:text-white/50 dark:hover:bg-white/5",
                                 )}
                               >
                                 {type}
@@ -404,20 +411,14 @@ export function ClassSubjectStudio({
                         </div>
                       </form>
                     ) : (
-                      <div className="group flex items-center gap-2.5 rounded-lg px-1.5 py-2 transition-colors hover:bg-[#f8fbfa] dark:hover:bg-white/[0.03]">
-                        <span
-                          className={cn(
-                            "h-8 w-[3px] shrink-0 rounded-full",
-                            subject.subjectType === "core"
-                              ? "bg-[#246a59]"
-                              : "bg-amber-400 dark:bg-amber-500",
-                          )}
-                          title={
-                            subject.subjectType === "core"
-                              ? "Core subject"
-                              : "Elective"
-                          }
-                        />
+                      <div
+                        className={cn(
+                          "group flex items-center gap-2.5 rounded-lg border border-l-[3px] bg-white px-2.5 py-2 transition-colors hover:border-[#246a59]/35 dark:bg-[#071411]",
+                          staffed
+                            ? "border-[#1a4d42]/12 border-l-[#246a59] dark:border-white/15 dark:border-l-[#246a59]"
+                            : "border-[#1a4d42]/12 border-l-amber-400 dark:border-white/15 dark:border-l-amber-500",
+                        )}
+                      >
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <p className="truncate text-[13px] font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
@@ -486,7 +487,7 @@ export function ClassSubjectStudio({
                               }
                               className={cn(
                                 "h-7 w-7 items-center justify-center rounded-md text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white",
-                                staffed ? "flex" : "flex sm:hidden",
+                                staffed ? "flex" : "hidden max-sm:flex",
                               )}
                             >
                               <UserPlus className="h-3.5 w-3.5" />
