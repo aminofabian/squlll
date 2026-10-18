@@ -12,6 +12,7 @@ const IMPERSONATE_MUTATION = `
       tenantName
       subdomain
       portalUrl
+      membershipId
       userId
       email
       userName
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
           tenantName: string
           subdomain: string
           portalUrl: string
+          membershipId: string
           userId: string
           email: string
           userName: string
@@ -110,17 +112,16 @@ export async function POST(request: Request) {
     // Cookie scope follows the host the browser is on.
     const { domain, sameSite, secure } = getAuthCookieOptions(request)
 
-    // Prefer the backend's portal URL when it targets a public host (e.g. a
-    // school's custom domain); otherwise rebuild against the platform subdomain
-    // so support sessions never bounce to localhost.
+    // Always redirect to the platform subdomain. The backend may prefer a
+    // school's custom domain, but the cookies set here belong to the current
+    // platform host (for example .squl.co.ke) and are never sent to a custom
+    // domain. Using the custom URL would land on that domain's login page.
     const apex = isProduction ? 'squl.co.ke' : 'localhost'
     const port = requestUrl.port
     const subdomain = payload.subdomain.trim().toLowerCase()
-    const portalUrl =
-      publicPortalUrl(payload.portalUrl) ??
-      `${isProduction ? 'https' : 'http'}://${subdomain}.${apex}${
-        port ? `:${port}` : ''
-      }/dashboard`
+    const portalUrl = `${isProduction ? 'https' : 'http'}://${subdomain}.${apex}${
+      port ? `:${port}` : ''
+    }/dashboard`
 
     const maxAge = 60 * 60 * 8 // 8 hours for support sessions
 
@@ -157,6 +158,14 @@ export async function POST(request: Request) {
       maxAge,
     })
     cookieStore.set('userName', payload.userName, {
+      httpOnly: false,
+      secure,
+      sameSite,
+      domain,
+      path: '/',
+      maxAge,
+    })
+    cookieStore.set('membershipId', payload.membershipId, {
       httpOnly: false,
       secure,
       sameSite,

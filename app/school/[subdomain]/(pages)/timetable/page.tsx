@@ -3271,6 +3271,43 @@ export default function SmartTimetableNew() {
                 </div>
               )}
 
+            {hasScheduleStructure &&
+              selectedTerm &&
+              schoolLessonCount > 0 &&
+              !sharedAt &&
+              !isPageLoading &&
+              !showTimetableWizard &&
+              !autoGenerateOpen &&
+              !editingLesson &&
+              !shareDrawerOpen ? (
+                <div data-timetable-no-print className="shrink-0 px-3 pt-3 lg:px-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/80 bg-amber-50/70 px-4 py-2.5 dark:border-amber-900/50 dark:bg-amber-950/25">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-semibold text-amber-900 dark:text-amber-200">
+                          Draft timetable
+                        </p>
+                        <p className="text-[11px] text-amber-800/70 dark:text-amber-300/60">
+                          Students and parents cannot see this timetable until you share it.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={openShareDrawer}
+                      className="h-8 shrink-0 rounded-lg bg-[#0a1f1a] px-3 text-[11px] font-semibold text-white hover:bg-[#246a59]"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      Share with teachers
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
             {(hasScheduleStructure || shouldLoadTimetableBundle) && (
               <section
                 data-timetable-print-root
