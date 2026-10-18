@@ -416,8 +416,15 @@ function LessonCell({
           onClick={() => onLessonClick?.(lesson, dayOfWeek, periodNumber)}
           aria-label={`${lesson.subject.name}, tap for details`}
           className={cn(
-            "flex min-h-[30px] w-full min-w-0 max-w-full items-center justify-center px-0 py-1.5 text-center active:opacity-80",
+            "relative flex min-h-[30px] w-full min-w-0 max-w-full items-center justify-center px-0 py-1.5 text-center active:opacity-80",
             isCurrent ? "bg-transparent" : palette.bg,
+            lesson.isDoublePeriod &&
+              !lesson.isDoubleContinuation &&
+              !isCurrent &&
+              "rounded-t-md ring-1 ring-inset ring-violet-400/60",
+            lesson.isDoubleContinuation &&
+              !isCurrent &&
+              "rounded-b-md border-l-2 border-violet-300/70",
             isCompleted && !isCurrent && "opacity-50",
             hasConflict && !isCurrent && "ring-1 ring-inset ring-red-400/80",
           )}
@@ -433,6 +440,16 @@ function LessonCell({
           >
             {shortCode}
           </span>
+          {lesson.isDoublePeriod && !lesson.isDoubleContinuation ? (
+            <span className="absolute right-0.5 top-0.5 text-[7px] font-bold leading-none text-violet-700 dark:text-violet-300">
+              2×
+            </span>
+          ) : null}
+          {lesson.isDoubleContinuation ? (
+            <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold leading-none text-violet-500/80">
+              ↳
+            </span>
+          ) : null}
         </button>
       );
     }

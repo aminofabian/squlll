@@ -43,6 +43,7 @@ const MINIMAL_TIMETABLE_QUERY = `
             roomName
             subjectName
             teacherName
+            isDoublePeriod
           }
         }
       }

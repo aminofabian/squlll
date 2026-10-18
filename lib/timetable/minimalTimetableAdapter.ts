@@ -27,6 +27,7 @@ export interface StudentTimetableGraphQL {
       roomNumber: string;
       subject: { name: string };
       teacher: { user: { name: string } | null };
+      isDoublePeriod?: boolean;
     } | null;
   }>;
   /** Break bands rendered as rows after periods (not as lesson cells). */
@@ -65,6 +66,7 @@ interface MinimalEntry {
   roomName?: string | null;
   subjectName: string;
   teacherName: string;
+  isDoublePeriod?: boolean;
 }
 
 interface MinimalDaySchedule {
@@ -447,6 +449,7 @@ export function minimalGradeTimetableToGraphQL(
               roomNumber: entry.roomName || "",
               subject: { name: entry.subjectName },
               teacher: { user: { name: entry.teacherName } },
+              isDoublePeriod: !!entry.isDoublePeriod,
             }
           : null,
       });

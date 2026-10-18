@@ -36,6 +36,7 @@ interface GraphQLEntryData {
   roomNumber: string;
   subject: { name: string };
   teacher: { user: { name: string } | null };
+  isDoublePeriod?: boolean;
 }
 
 interface GraphQLCell {
@@ -180,38 +181,59 @@ export function transformStudentTimetable(
     const dayCellMap = dayCellsMap.get(d) || new Map();
     const cells: (TimetableCell | null)[] = [];
 
-    for (const slot of sortedSlots) {
+    for (let slotIndex = 0; slotIndex < sortedSlots.length; slotIndex += 1) {
+      const slot = sortedSlots[slotIndex];
       const gqlCell = dayCellMap.get(slot.periodNumber);
+      let lessonCell = gqlCell;
+      let isDoubleContinuation = false;
 
-      if (!gqlCell) {
+      // The API stores a double once, on its first period. Expand the next
+      // period into a continuation cell when no break interrupts the block.
+      if ((!gqlCell || !gqlCell.entryData) && slotIndex > 0) {
+        const previousSlot = sortedSlots[slotIndex - 1];
+        const previousCell = dayCellMap.get(previousSlot.periodNumber);
+        const breakBetween = breaks.some(
+          (item) =>
+            item.afterPeriod === previousSlot.periodNumber &&
+            (item.applyToAllDays || item.dayOfWeek === d),
+        );
+        if (previousCell?.entryData?.isDoublePeriod && !breakBetween) {
+          lessonCell = previousCell;
+          isDoubleContinuation = true;
+        }
+      }
+
+      if (!lessonCell) {
         cells.push(null);
         continue;
       }
 
-      if (gqlCell.isBreak && gqlCell.breakData) {
+      if (lessonCell.isBreak && lessonCell.breakData) {
         // Legacy: breaks belonged in row bands, not period cells
         cells.push(null);
-      } else if (gqlCell.entryData) {
+      } else if (lessonCell.entryData) {
         // Lesson
         const lesson: TimetableLesson = {
-          id: gqlCell.entryData.id,
+          id: lessonCell.entryData.id,
           periodNumber: slot.periodNumber,
           dayOfWeek: d,
           subject: {
             id: "",
-            name: gqlCell.entryData.subject.name,
+            name: lessonCell.entryData.subject.name,
           },
           teacher: {
             id: "",
-            name: gqlCell.entryData.teacher?.user?.name || "TBA",
+            name: lessonCell.entryData.teacher?.user?.name || "TBA",
           },
-          room: gqlCell.entryData.roomNumber || "",
+          room: lessonCell.entryData.roomNumber || "",
           grade: {
             id: graphqlData.gradeId,
             name: graphqlData.gradeName,
             displayName: graphqlData.gradeName,
             level: 0,
           },
+          isDoublePeriod: !!lessonCell.entryData.isDoublePeriod,
+          isDoubleContinuation,
         };
 
         cells.push({
@@ -221,18 +243,20 @@ export function transformStudentTimetable(
           lesson,
         });
 
-        // Stats
-        totalLessons++;
-        subjectDistribution[lesson.subject.name] =
-          (subjectDistribution[lesson.subject.name] || 0) + 1;
-        dayDistribution[DAY_NAMES[d]] =
-          (dayDistribution[DAY_NAMES[d]] || 0) + 1;
-        if (lesson.teacher.name !== "TBA") {
-          teacherDistribution[lesson.teacher.name] =
-            (teacherDistribution[lesson.teacher.name] || 0) + 1;
-        }
-        if (completedLessonIds.includes(lesson.id)) {
-          completedCount++;
+        // Stats count the double block once, not as two separate lessons.
+        if (!isDoubleContinuation) {
+          totalLessons++;
+          subjectDistribution[lesson.subject.name] =
+            (subjectDistribution[lesson.subject.name] || 0) + 1;
+          dayDistribution[DAY_NAMES[d]] =
+            (dayDistribution[DAY_NAMES[d]] || 0) + 1;
+          if (lesson.teacher.name !== "TBA") {
+            teacherDistribution[lesson.teacher.name] =
+              (teacherDistribution[lesson.teacher.name] || 0) + 1;
+          }
+          if (completedLessonIds.includes(lesson.id)) {
+            completedCount++;
+          }
         }
       } else {
         cells.push(null);

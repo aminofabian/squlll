@@ -146,6 +146,38 @@ export function TimetableGrid({
     ? 'min-w-[92px] w-[92px]'
     : 'min-w-[150px] w-[150px]';
 
+  const doubleSpan = useMemo(() => {
+    const starts = new Set<string>();
+    const covered = new Set<string>();
+    if (!isStudentCompact) return { starts, covered };
+
+    for (const day of days) {
+      for (let index = 0; index < timeSlots.length - 1; index += 1) {
+        const cell = day.cells[index];
+        if (cell?.type !== 'lesson' || !cell.lesson?.isDoublePeriod) continue;
+        if (cell.lesson.isDoubleContinuation) continue;
+        const next = day.cells[index + 1];
+        if (
+          next?.type !== 'lesson' ||
+          next.lesson?.id !== cell.lesson.id ||
+          !next.lesson.isDoubleContinuation
+        ) {
+          continue;
+        }
+        const breakBetween = breaks.some(
+          (item) =>
+            item.afterPeriod === timeSlots[index].periodNumber &&
+            (item.applyToAllDays || item.dayOfWeek === day.dayOfWeek),
+        );
+        if (breakBetween) continue;
+        starts.add(`${day.dayOfWeek}-${index}`);
+        covered.add(`${day.dayOfWeek}-${index + 1}`);
+      }
+    }
+
+    return { starts, covered };
+  }, [breaks, days, isStudentCompact, timeSlots]);
+
   const scrollToDayIndex = useCallback((index: number, behavior: ScrollBehavior = 'smooth') => {
     const clamped = Math.min(4, Math.max(0, index));
     setActiveDayIndex(clamped);
@@ -192,6 +224,7 @@ export function TimetableGrid({
     thPad,
     tdPad,
     timeMinW,
+    doubleSpan,
   };
 
   return (
@@ -342,6 +375,7 @@ type TimetableGridTableProps = {
   tdPad: string;
   timeMinW: string;
   mobileLayout?: boolean;
+  doubleSpan: { starts: Set<string>; covered: Set<string> };
 };
 
 function TimetableGridTable({
@@ -366,6 +400,7 @@ function TimetableGridTable({
   tdPad,
   timeMinW,
   mobileLayout = false,
+  doubleSpan,
 }: TimetableGridTableProps) {
   return (
         <table
@@ -519,6 +554,9 @@ function TimetableGridTable({
 
                     {/* Day columns */}
                     {daysToShow.map(dayOfWeek => {
+                      const spansDouble = doubleSpan.starts.has(
+                        `${dayOfWeek}-${slotIndex}`,
+                      );
                       const day = dayMap.get(dayOfWeek);
                       const cell = day?.cells[slotIndex] ?? null;
                       const isCurrentCell = isCurrentPeriod && currentDayOfWeek === dayOfWeek;
@@ -566,6 +604,7 @@ function TimetableGridTable({
                               isCompleted={isCompleted}
                               isNext={isNextLesson}
                               hasConflict={hasConflict}
+                              doubleSpan={spansDouble}
                               viewType={viewType}
                               compact={compact}
                               connectsDoubleBelow={connectsDoubleBelow}
@@ -619,6 +658,7 @@ function LessonCell({
   isCompleted,
   isNext,
   hasConflict,
+  doubleSpan = false,
   viewType,
   compact,
   connectsDoubleBelow,
@@ -629,6 +669,7 @@ function LessonCell({
   isCompleted: boolean;
   isNext: boolean;
   hasConflict: boolean;
+  doubleSpan?: boolean;
   viewType: TimetableViewType;
   compact?: boolean;
   connectsDoubleBelow?: boolean;
@@ -662,7 +703,11 @@ function LessonCell({
           ? cn(
               'min-h-[36px] p-1',
               isStudentCompact
-                ? 'rounded-none'
+                ? isDoubleStart
+                  ? 'rounded-t-lg rounded-b-none border-b-0 p-1.5'
+                  : isDoubleContinuation
+                    ? 'rounded-b-lg rounded-t-none border-t-0 p-1.5'
+                    : 'rounded-lg p-1.5'
                 : isTeacherCompact
                   ? 'min-h-[58px] rounded-xl border border-l-[3px] border-[#1a4d42]/8 p-2 shadow-[0_1px_0_rgba(10,38,32,0.03)]'
                   : 'rounded-sm',
@@ -683,7 +728,9 @@ function LessonCell({
                 : `${palette.bg} ring-1 ring-primary/20`
               : isTeacherCompact
                 ? 'bg-white hover:-translate-y-0.5 hover:border-[#246a59]/25 hover:shadow-[0_10px_22px_-16px_rgba(10,38,32,0.45)] dark:bg-white/[0.035]'
-                : palette.bg,
+                : isStudentCompact && isDoubleBlock
+                  ? 'bg-gradient-to-br from-violet-50 via-white to-violet-50/60 ring-1 ring-inset ring-violet-300/60 dark:from-violet-950/25 dark:via-slate-900 dark:to-violet-950/15 dark:ring-violet-700/40'
+                  : palette.bg,
         hasConflict && 'ring-2 ring-red-400',
         !hasConflict &&
           isDoubleBlock &&
@@ -707,6 +754,7 @@ function LessonCell({
     >
       <div className={cn(
         'flex items-start gap-1 min-w-0',
+        doubleSpan && 'pr-1',
         isStudentCompact && 'items-center justify-center',
         compact ? '' : 'mb-0.5',
       )}>
@@ -731,13 +779,13 @@ function LessonCell({
         )}>
         {subjectLabel}
         {lesson.isDoublePeriod && !lesson.isDoubleContinuation && (
-          <span className="ml-0.5 text-[9px] font-medium text-violet-600/80 dark:text-violet-400/80">
-            2×
+          <span className="ml-1 rounded bg-violet-600 px-1 py-px text-[7px] font-bold uppercase tracking-wide text-white">
+            {doubleSpan ? "Double · 2 periods" : "Double"}
           </span>
         )}
         {lesson.isDoubleContinuation && (
-          <span className="ml-0.5 text-[9px] font-normal text-violet-500/70 dark:text-violet-400/60">
-            2/2
+          <span className="ml-1 rounded bg-violet-500/15 px-1 py-px text-[7px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-400/15 dark:text-violet-300">
+            cont.
           </span>
         )}
         </div>
@@ -779,13 +827,22 @@ function LessonCell({
         </div>
       )}
 
+      {isStudentCompact && isDoubleBlock && !isCurrent ? (
+        <span
+          className={cn(
+            'pointer-events-none absolute bottom-0 left-0 top-0 w-[3px] bg-gradient-to-b from-violet-500/70 via-violet-400/50 to-violet-500/70',
+            isDoubleStart ? 'rounded-tl-lg' : 'rounded-bl-lg',
+          )}
+          aria-hidden
+        />
+      ) : null}
       <div className="absolute top-0.5 right-0.5 flex items-center gap-0.5">
         {isCurrent && (
           <span className="text-[9px] bg-white/20 text-white px-1 py-0.5 rounded font-bold animate-pulse">
             NOW
           </span>
         )}
-        {isNext && !isCurrent && (
+        {isNext && !isCurrent && !isDoubleContinuation && (
           <span className="text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded font-bold">
             NEXT
           </span>

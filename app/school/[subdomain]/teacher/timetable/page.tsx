@@ -20,11 +20,11 @@ import {
   TeacherMobileSchedule,
   TimetablePrintStyles,
 } from "@/components/timetable";
-import {
-  TeacherTimetableHero,
-  StatusNote,
-} from "./components/TeacherTimetableHero";
+import { TeacherTimetableHero } from "./components/TeacherTimetableHero";
 import { TeacherTimetableSidebar } from "./components/TeacherTimetableSidebar";
+import { TeacherWeekGrid } from "./components/TeacherWeekGrid";
+import { useTeacherWeekLayout } from "./hooks/useTeacherWeekLayout";
+import { getGreeting } from "./lib/getGreeting";
 import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
 import {
   TeacherLessonDetailSheet,
@@ -180,12 +180,12 @@ const TeacherTimetable = () => {
     },
   });
 
+  const weekLayout = useTeacherWeekLayout(
+    unifiedTimetable,
+    core.sortedTimeSlots,
+  );
   const stats = unifiedTimetable?.stats as TimetableStats | undefined;
   const isWeekend = core.currentDayOfWeek === null;
-  const showLiveBanner =
-    core.currentStatus.status === "lesson" ||
-    core.currentStatus.status === "break" ||
-    core.currentStatus.status === "free";
 
   const hasNoLessons =
     !loading &&
@@ -254,49 +254,27 @@ const TeacherTimetable = () => {
 
   const scheduleGrid =
     unifiedTimetable && !hasNoLessons ? (
-      <>
-        {/* Mobile: floating schedule shell */}
-        <section className="overflow-hidden rounded-[24px] bg-white shadow-[0_2px_0_rgba(10,38,32,0.03),0_28px_70px_-48px_rgba(10,38,32,0.45)] ring-1 ring-[#1a4d42]/10 dark:bg-[#0c1a17] dark:ring-white/10 lg:rounded-[24px]">
-          <div className="hidden items-center justify-between gap-3 border-b border-[#1a4d42]/8 bg-[#fbfaf6] px-5 py-4 dark:border-white/8 dark:bg-white/[0.025] lg:flex">
-            <div>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#1a4d42]/40 dark:text-white/35">
-                Term schedule
-              </p>
-              <h2 className="mt-0.5 font-display text-[20px] tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
-                Your week at a glance
-              </h2>
-            </div>
-            <div className="flex items-center gap-4 text-[10px] font-medium text-[#1a4d42]/50 dark:text-white/40">
-              <span className="hidden items-center gap-1.5 xl:inline-flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#c49a52]" />
-                {stats?.totalLessons ?? 0} lessons
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#246a59]" />
-                Today
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700">
-                  <span className="h-1 w-1 rounded-full bg-emerald-600" />
-                </span>
-                Taught
-              </span>
-            </div>
-          </div>
-          <TimetableGrid
-            days={unifiedTimetable.days}
-            timeSlots={core.sortedTimeSlots}
-            breaks={unifiedTimetable.breaks}
-            viewType="teacher"
-            compact
-            className="rounded-none border-0 bg-transparent ring-0 shadow-none"
-            currentDayOfWeek={core.currentDayOfWeek}
-            currentPeriodIndex={core.currentPeriodIndex}
-            completedLessonIds={core.completedLessonIds}
-            onLessonClick={handleLessonClick}
-          />
-        </section>
-      </>
+      <TeacherWeekGrid
+        rows={weekLayout.rows}
+        dayDates={weekLayout.dayDates}
+        lessonCounts={weekLayout.lessonCounts}
+        weekRangeLabel={weekLayout.weekRangeLabel}
+        totalLessons={stats?.totalLessons ?? 0}
+        completedLessons={stats?.completedLessons ?? 0}
+        currentDayOfWeek={core.currentDayOfWeek}
+        currentPeriodIndex={core.currentPeriodIndex}
+        progressPercent={core.currentStatus.progressPercent}
+        completedLessonIds={core.completedLessonIds}
+        nextLesson={
+          core.nextLesson
+            ? {
+                id: core.nextLesson.lesson.id,
+                dayOfWeek: core.nextLesson.lesson.dayOfWeek,
+              }
+            : null
+        }
+        onLessonClick={handleLessonClick}
+      />
     ) : null;
 
   return (
@@ -319,7 +297,7 @@ const TeacherTimetable = () => {
         }}
       />
       <div
-        className="min-h-screen overflow-x-hidden bg-[#f4f1e9] dark:bg-[#071411]"
+        className="min-h-screen overflow-x-hidden bg-[#f4f1e9] lg:bg-[radial-gradient(1200px_420px_at_70%_-80px,rgba(196,154,82,0.14),transparent_70%),radial-gradient(900px_500px_at_0%_100%,rgba(36,106,89,0.07),transparent_70%)] dark:bg-[#071411]"
         data-timetable-no-print
       >
       <div className="mx-auto w-full max-w-[1380px] max-lg:overflow-hidden max-lg:p-0 lg:px-7 lg:py-6">
@@ -330,52 +308,101 @@ const TeacherTimetable = () => {
               {emptyLessons}
             </div>
           ) : unifiedTimetable ? (
-            <TeacherMobileSchedule
-              days={unifiedTimetable.days}
-              timeSlots={core.sortedTimeSlots}
-              breaks={unifiedTimetable.breaks}
-              currentDayOfWeek={core.currentDayOfWeek}
-              currentPeriodIndex={core.currentPeriodIndex}
-              completedLessonIds={core.completedLessonIds}
-              nextLesson={core.nextLesson}
-              stats={stats}
-              classesToday={classesToday}
-              isWeekend={isWeekend}
-              onRefresh={() => refetch()}
-              onLessonClick={handleLessonClick}
-            />
+            <>
+              <div className="relative shrink-0 overflow-hidden bg-[#0a2620] px-4 pb-4 pt-3.5 text-white">
+                <div
+                  className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-[radial-gradient(circle_at_center,rgba(196,154,82,0.28),transparent_65%)]"
+                  aria-hidden
+                />
+                <div className="relative">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-[#d9c49a]">
+                    Teaching studio
+                  </p>
+                  <h1 className="mt-1 font-display text-[23px] leading-none tracking-[-0.03em] text-[#fbf8ef]">
+                    My Teaching Timetable
+                  </h1>
+                  <p className="mt-1.5 text-[10px] text-white/55">
+                    {core.formattedDate}
+                    {selectedTerm?.name ? ` · ${selectedTerm.name}` : ""}
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-1.5">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2">
+                      <p className="text-[7.5px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                        Today
+                      </p>
+                      <p className="mt-0.5 font-display text-[17px] leading-none">
+                        {isWeekend ? "—" : classesToday ?? 0}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2">
+                      <p className="text-[7.5px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                        This week
+                      </p>
+                      <p className="mt-0.5 font-display text-[17px] leading-none">
+                        {stats?.totalLessons ?? 0}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#d9c49a]/20 bg-[#d9c49a]/10 px-2.5 py-2">
+                      <p className="text-[7.5px] font-semibold uppercase tracking-[0.14em] text-[#d9c49a]/70">
+                        Up next
+                      </p>
+                      <p className="mt-0.5 truncate text-[9.5px] font-semibold leading-tight text-[#f4e7c8]">
+                        {core.nextLesson?.lesson.subject.name ?? "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="min-h-0 flex-1">
+                <TeacherMobileSchedule
+                  days={unifiedTimetable.days}
+                  timeSlots={core.sortedTimeSlots}
+                  breaks={unifiedTimetable.breaks}
+                  currentDayOfWeek={core.currentDayOfWeek}
+                  currentPeriodIndex={core.currentPeriodIndex}
+                  completedLessonIds={core.completedLessonIds}
+                  nextLesson={core.nextLesson}
+                  stats={stats}
+                  classesToday={classesToday}
+                  isWeekend={isWeekend}
+                  onRefresh={() => refetch()}
+                  onLessonClick={handleLessonClick}
+                />
+              </div>
+            </>
           ) : null}
         </div>
 
         {/* Desktop */}
-        <div className="hidden flex-col gap-5 lg:flex">
+        <div className="hidden flex-col gap-6 lg:flex">
           <TeacherTimetableHero
+            greeting={getGreeting(
+              core.currentTime.getHours(),
+              graphqlData?.teacherName,
+            )}
             formattedDate={core.formattedDate}
+            todayName={core.currentTime.toLocaleDateString("en-GB", {
+              weekday: "long",
+            })}
+            weekRangeLabel={weekLayout.weekRangeLabel}
             termName={selectedTerm?.name}
-            teacherName={graphqlData?.teacherName}
             classesToday={isWeekend ? null : classesToday}
-            totalClasses={stats?.totalLessons ?? 0}
-            totalSubjects={stats?.totalSubjects ?? 0}
-            nextLessonLabel={core.nextLesson?.lesson.subject.name}
-            nextLessonTime={core.nextLesson?.time}
+            totalLessons={stats?.totalLessons ?? 0}
+            completedLessons={stats?.completedLessons ?? 0}
+            teachingTimeLabel={weekLayout.summary?.teachingTimeLabel ?? "—"}
+            distinctClasses={weekLayout.summary?.distinctClasses ?? 0}
             showPrint={canPrint}
             onPrint={handlePrint}
           />
-          {core.currentStatus.status === "outside" && !isWeekend && (
-            <StatusNote>
-              Outside school hours — your next class is in Up Next below.
-            </StatusNote>
-          )}
-          <div className="grid grid-cols-[minmax(0,286px)_1fr] items-start gap-5 xl:grid-cols-[minmax(0,304px)_1fr]">
+          <div className="grid grid-cols-[minmax(0,296px)_1fr] items-start gap-6 xl:grid-cols-[minmax(0,316px)_1fr]">
             <TeacherTimetableSidebar
               nextLesson={core.nextLesson}
               currentStatus={core.currentStatus}
               formattedTime={core.formattedTime}
-              showLiveBanner={showLiveBanner}
               stats={stats}
+              dayDates={weekLayout.dayDates}
+              lessonCounts={weekLayout.lessonCounts}
               currentDayOfWeek={core.currentDayOfWeek}
-              classesToday={classesToday}
-              isWeekend={isWeekend}
             />
             <div className="min-w-0">
               {hasNoLessons ? emptyLessons : scheduleGrid}
