@@ -16,6 +16,7 @@ export const ACTIVATE_TEACHER_MUTATION = `
       success
       message
       email
+      temporaryPassword
     }
   }
 `;

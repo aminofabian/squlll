@@ -40,6 +40,8 @@ import { requestInviteTeacher } from "@/lib/api/invite-teacher";
 import { splitFullName } from "@/lib/utils/teacher-import";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { InvitationSuccessModal } from "./InvitationSuccessModal";
+import { findTeacherIdByEmail } from "../utils/invitationActions";
+import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
 
 const DEPARTMENTS = [
   "English",
@@ -145,6 +147,7 @@ export function CreateTeacherDrawer({
   defaultOpen = false,
 }: CreateTeacherDrawerProps) {
   const queryClient = useQueryClient();
+  const { activateTeacherRecord } = useTeacherAdminActions();
   const isSubmittingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultOpen);
@@ -155,6 +158,7 @@ export function CreateTeacherDrawer({
     status: string;
     createdAt: string;
     emailSent?: boolean;
+    initialPassword?: string;
   } | null>(null);
   const { data: schoolConfig } = useSchoolConfig();
 
@@ -180,6 +184,7 @@ export function CreateTeacherDrawer({
       status: string;
       createdAt: string;
       emailSent?: boolean;
+      initialPassword?: string;
     }) => {
       setInvitationData(inviteData);
       setShowSuccessModal(true);
@@ -197,6 +202,21 @@ export function CreateTeacherDrawer({
       }
     },
     [form, onTeacherCreated, queryClient],
+  );
+
+  const tryActivateTeacher = useCallback(
+    async (email: string): Promise<string | undefined> => {
+      try {
+        const teacherId = await findTeacherIdByEmail(email);
+        if (!teacherId) return undefined;
+        const activated = await activateTeacherRecord(teacherId);
+        return activated.temporaryPassword;
+      } catch (error) {
+        console.warn("Teacher account activation pending", error);
+        return undefined;
+      }
+    },
+    [activateTeacherRecord],
   );
 
   const onSubmit = useCallback(
@@ -226,22 +246,29 @@ export function CreateTeacherDrawer({
           phoneNumber: data.phoneNumber.trim(),
         });
 
+        const initialPassword = await tryActivateTeacher(data.email.trim());
+
         await finishInvitation({
           ...invited,
           emailSent: invited.emailSent !== false,
+          initialPassword,
         });
 
-        toast.success("Invitation sent", {
-          description: `${fullName} will receive an email to set up their account.`,
+        toast.success(initialPassword ? "Teacher account ready" : "Invitation sent", {
+          description: initialPassword
+            ? `${fullName} can sign in now with the password shown here.`
+            : `${fullName} will receive an email to set up their account.`,
         });
       } catch (error) {
         if ((error as { code?: string }).code === "EMAIL_SEND_FAILED") {
+          const initialPassword = await tryActivateTeacher(data.email.trim());
           await finishInvitation({
             email: data.email.trim(),
             fullName,
-            status: "PENDING",
+            status: initialPassword ? "ACTIVE" : "PENDING",
             createdAt: new Date().toISOString(),
             emailSent: false,
+            initialPassword,
           });
           return;
         }
@@ -258,7 +285,7 @@ export function CreateTeacherDrawer({
         setIsLoading(false);
       }
     },
-    [finishInvitation, schoolConfig?.tenant?.id],
+    [finishInvitation, schoolConfig?.tenant?.id, tryActivateTeacher],
   );
 
   return (

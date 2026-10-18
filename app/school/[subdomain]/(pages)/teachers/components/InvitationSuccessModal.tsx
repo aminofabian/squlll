@@ -18,6 +18,7 @@ import {
   Mail,
   Sparkles,
   ShieldAlert,
+  KeyRound,
   Clock,
   ExternalLink,
   BookOpen,
@@ -35,6 +36,7 @@ interface InvitationSuccessModalProps {
     status: string;
     createdAt: string;
     emailSent?: boolean;
+    initialPassword?: string;
   };
   schoolSubdomain?: string;
 }
@@ -67,7 +69,10 @@ export function InvitationSuccessModal({
   schoolSubdomain = "school",
 }: InvitationSuccessModalProps) {
   const [copied, setCopied] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const emailFailed = invitationData.emailSent === false;
+  const initialPassword = invitationData.initialPassword;
+  const accountReady = Boolean(initialPassword);
   const portalUrl = schoolPortalUrl(schoolSubdomain, '/teacher');
 
   const copyEmail = async () => {
@@ -75,6 +80,14 @@ export function InvitationSuccessModal({
     setCopied(true);
     toast.success("Email copied");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyPassword = async () => {
+    if (!initialPassword) return;
+    await navigator.clipboard.writeText(initialPassword);
+    setPasswordCopied(true);
+    toast.success("Password copied");
+    setTimeout(() => setPasswordCopied(false), 2000);
   };
 
   return (
@@ -96,10 +109,21 @@ export function InvitationSuccessModal({
               )}
             </div>
             <DialogTitle className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
-              {emailFailed ? "Teacher registered" : "Invitation sent"}
+              {accountReady
+                ? "Teacher account ready"
+                : emailFailed
+                  ? "Teacher registered"
+                  : "Invitation sent"}
             </DialogTitle>
             <DialogDescription className="mt-1 max-w-xs text-sm text-[#1a4d42]/55 dark:text-white/45">
-              {emailFailed ? (
+              {accountReady ? (
+                <>
+                  <span className="font-medium text-[#0a1f1a] dark:text-white/80">
+                    {invitationData.fullName}
+                  </span>{" "}
+                  can sign in now with the password below.
+                </>
+              ) : emailFailed ? (
                 <>
                   <span className="font-medium text-[#0a1f1a] dark:text-white/80">
                     {invitationData.fullName}
@@ -151,6 +175,56 @@ export function InvitationSuccessModal({
               </div>
             </div>
           </div>
+
+          {initialPassword ? (
+            <div className="overflow-hidden rounded-none border-2 border-[#246a59]/35 bg-white dark:border-[#3fae8f]/30 dark:bg-[#0c1a17]">
+              <div className="flex items-center justify-between border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-none bg-[#246a59] text-white">
+                    <KeyRound className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+                      Initial password
+                    </p>
+                    <p className="text-[11px] text-[#1a4d42]/55">
+                      Shown once — copy it before closing
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void copyPassword()}
+                  className="h-8 gap-1.5 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
+                >
+                  {passwordCopied ? (
+                    <>
+                      <Check className="h-3 w-3" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="space-y-2 p-3">
+                <p className="select-all rounded-none bg-[#f8fbfa] px-3 py-2.5 font-mono text-base font-semibold tracking-wide text-[#0a1f1a] ring-1 ring-inset ring-[#246a59]/20 dark:bg-[#071411] dark:text-white dark:ring-[#3fae8f]/25">
+                  {initialPassword}
+                </p>
+                <p className="text-[11px] leading-relaxed text-[#1a4d42]/60 dark:text-white/45">
+                  Sign in at{" "}
+                  <span className="font-medium text-[#246a59]">{portalUrl}</span>{" "}
+                  with <span className="font-medium">{invitationData.email}</span>.
+                  Ask them to change this password after their first sign-in.
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {/* Email copy */}
           <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
@@ -206,7 +280,22 @@ export function InvitationSuccessModal({
               What happens next
             </p>
             <ul className="space-y-2.5 text-xs text-[#1a4d42]/70 dark:text-white/55">
-              {emailFailed ? (
+              {accountReady ? (
+                <>
+                  <li className="flex items-start gap-2">
+                    <KeyRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
+                    They can sign in immediately with the email and initial password above.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
+                    Share the password privately and ask them to change it after signing in.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
+                    Assign grades and subjects from their profile.
+                  </li>
+                </>
+              ) : emailFailed ? (
                 <>
                   <li className="flex items-start gap-2">
                     <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
@@ -259,7 +348,7 @@ export function InvitationSuccessModal({
             onClick={onClose}
             className="h-11 w-full rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
           >
-            {emailFailed ? "Got it — I'll resend later" : "Done"}
+            {accountReady ? "Done — password saved" : emailFailed ? "Got it — I'll resend later" : "Done"}
           </Button>
         </div>
       </DialogContent>

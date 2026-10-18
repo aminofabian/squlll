@@ -71,7 +71,12 @@ export function useTeacherAdminActions() {
     setIsActivating(true);
     try {
       const data = await graphqlRequest<{
-        activateTeacher: { success: boolean; message: string; email?: string };
+        activateTeacher: {
+          success: boolean;
+          message: string;
+          email?: string;
+          temporaryPassword?: string;
+        };
       }>(ACTIVATE_TEACHER_MUTATION, {
         input: { teacherId: teacherId.trim() },
       });

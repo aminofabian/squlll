@@ -40,7 +40,12 @@ export function useTimetableShareStatus(
     [termId],
   );
 
-  const sharedAt = publishedAt ?? record?.sharedAt ?? null;
+  // The server is authoritative. A stale localStorage record must not make an
+  // unpublished term look published (which also hides the draft banner).
+  const hasServerPublishedAt = serverPublishedAt !== undefined;
+  const sharedAt = hasServerPublishedAt
+    ? serverPublishedAt ?? null
+    : record?.sharedAt ?? null;
 
   const hasChangesSinceShare = useCallback(
     (lastUpdatedIso: string | null | undefined) => {
@@ -55,6 +60,8 @@ export function useTimetableShareStatus(
     markShared,
     hasChangesSinceShare,
     sharedAt,
-    isPublished: Boolean(publishedAt),
+    isPublished: hasServerPublishedAt
+      ? Boolean(serverPublishedAt)
+      : Boolean(record?.sharedAt),
   };
 }

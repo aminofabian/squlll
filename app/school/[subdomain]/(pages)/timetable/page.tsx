@@ -3863,6 +3863,36 @@ export default function SmartTimetableNew() {
                 });
               }
 
+              // A generated timetable is meant to be used. Publish the term so
+              // students and parents can see it immediately instead of leaving
+              // them on "No timetable published yet" after a successful build.
+              if (result?.entries?.length || schoolLessonCount > 0) {
+                void markShared()
+                  .then((publishedAt) => {
+                    if (selectedTerm && publishedAt) {
+                      setSelectedTerm({
+                        ...selectedTerm,
+                        timetablePublishedAt: publishedAt,
+                      });
+                    }
+                    toast({
+                      title: "Timetable published",
+                      description:
+                        "Students and teachers can now see this timetable.",
+                    });
+                  })
+                  .catch((err) => {
+                    toast({
+                      title: "Timetable saved as draft",
+                      description:
+                        err instanceof Error
+                          ? `${err.message} Use “Share with teachers” to publish it.`
+                          : "Use “Share with teachers” to publish it.",
+                      variant: "destructive",
+                    });
+                  });
+              }
+
             }}
           />
 
