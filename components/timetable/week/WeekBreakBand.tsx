@@ -44,16 +44,16 @@ function toTitleCase(value: string): string {
   return value.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-type TeacherWeekBreakBandProps = {
+type WeekBreakBandProps = {
   breakItem: TimetableBreak;
   /** Single-day chip instead of a full-width ruled band. */
   variant?: "band" | "chip";
 };
 
-export function TeacherWeekBreakBand({
+export function WeekBreakBand({
   breakItem,
   variant = "band",
-}: TeacherWeekBreakBandProps) {
+}: WeekBreakBandProps) {
   const theme = BREAK_THEMES[breakItem.type] ?? BREAK_THEMES.BREAK;
   const { Icon } = theme;
   const label = toTitleCase(breakItem.name || breakItem.type);

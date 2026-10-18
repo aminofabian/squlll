@@ -4,13 +4,20 @@ import type { CSSProperties } from "react";
 import { MapPin, PartyPopper } from "lucide-react";
 import type { NextLessonInfo } from "@/lib/timetable/types";
 import { getLessonSubjectPalette } from "@/lib/timetable/constants";
-import { useSecondsUntil } from "../hooks/useSecondsUntil";
-import { formatStartsIn } from "../lib/formatStartsIn";
+import { useSecondsUntil } from "@/lib/timetable/weekView/useSecondsUntil";
+import { formatStartsIn } from "@/lib/timetable/weekView/formatStartsIn";
+import { getLessonCounterpartLabel } from "@/lib/timetable/weekView/getLessonCounterpartLabel";
+import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 
 const CARD_SHELL =
   "relative overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] dark:border-white/10 dark:bg-[#0c1a17]";
 
-export function TeacherUpNextCard({ nextLesson }: { nextLesson: NextLessonInfo | null }) {
+type WeekUpNextCardProps = {
+  nextLesson: NextLessonInfo | null;
+  viewType: WeekViewerType;
+};
+
+export function WeekUpNextCard({ nextLesson, viewType }: WeekUpNextCardProps) {
   if (!nextLesson) {
     return (
       <section className={`${CARD_SHELL} px-4 py-4 text-center`}>
@@ -25,7 +32,7 @@ export function TeacherUpNextCard({ nextLesson }: { nextLesson: NextLessonInfo |
 
   const { lesson } = nextLesson;
   const palette = getLessonSubjectPalette(lesson.subject);
-  const classLabel = [lesson.grade.displayName || lesson.grade.name, lesson.stream].filter(Boolean).join(" · ");
+  const classLabel = getLessonCounterpartLabel(lesson, viewType);
 
   return (
     <section className={CARD_SHELL} style={{ "--subject": palette.accent } as CSSProperties}>

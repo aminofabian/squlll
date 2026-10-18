@@ -9,7 +9,7 @@ const SINGLE_ROW_SPAN = 1;
 const DOUBLE_ROW_SPAN = 2;
 const BEFORE_FIRST_PERIOD = 0;
 
-export type TeacherWeekCell =
+export type WeekCell =
   | {
       kind: "lesson";
       dayOfWeek: number;
@@ -20,15 +20,15 @@ export type TeacherWeekCell =
   | { kind: "break"; dayOfWeek: number; breakItem: TimetableBreak }
   | { kind: "free"; dayOfWeek: number };
 
-export type TeacherWeekPeriodRow = {
+export type WeekPeriodRow = {
   kind: "period";
   key: string;
   slot: TimetableSlot;
   slotIndex: number;
-  cells: TeacherWeekCell[];
+  cells: WeekCell[];
 };
 
-export type TeacherWeekBreakRow = {
+export type WeekBreakRow = {
   kind: "break";
   key: string;
   afterPeriod: number;
@@ -37,9 +37,9 @@ export type TeacherWeekBreakRow = {
   isUniform: boolean;
 };
 
-export type TeacherWeekRow = TeacherWeekPeriodRow | TeacherWeekBreakRow;
+export type WeekRow = WeekPeriodRow | WeekBreakRow;
 
-type BuildTeacherWeekRowsInput = {
+type BuildWeekRowsInput = {
   days: TimetableDay[];
   timeSlots: TimetableSlot[];
   breaks: TimetableBreak[];
@@ -69,7 +69,7 @@ function buildBreakRow(
   breaks: TimetableBreak[],
   afterPeriod: number,
   dayNumbers: readonly number[],
-): TeacherWeekBreakRow | null {
+): WeekBreakRow | null {
   const rowBreaks = breaks.filter((item) => item.afterPeriod === afterPeriod);
   if (rowBreaks.length === 0) return null;
 
@@ -111,7 +111,7 @@ function buildCell(
   slotIndex: number,
   canSpanBelow: boolean,
   covered: Set<string>,
-): TeacherWeekCell {
+): WeekCell {
   if (covered.has(coverKey(dayOfWeek, slotIndex))) {
     return { kind: "covered", dayOfWeek };
   }
@@ -140,15 +140,15 @@ function buildCell(
  * break row wherever the school schedule inserts a break. Double periods
  * that are not split by a break collapse into a single two-row cell.
  */
-export function buildTeacherWeekRows({
+export function buildWeekRows({
   days,
   timeSlots,
   breaks,
   dayNumbers,
-}: BuildTeacherWeekRowsInput): TeacherWeekRow[] {
+}: BuildWeekRowsInput): WeekRow[] {
   const dayMap = new Map(days.map((day) => [day.dayOfWeek, day]));
   const covered = new Set<string>();
-  const rows: TeacherWeekRow[] = [];
+  const rows: WeekRow[] = [];
 
   const leadingBreak = buildBreakRow(breaks, BEFORE_FIRST_PERIOD, dayNumbers);
   if (leadingBreak) rows.push(leadingBreak);

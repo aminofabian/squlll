@@ -5,7 +5,9 @@ import { Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TimetableLesson } from "@/lib/timetable/types";
 import { getLessonSubjectPalette } from "@/lib/timetable/constants";
-import type { LessonCardState } from "../lib/getLessonCardState";
+import type { LessonCardState } from "@/lib/timetable/weekView/getLessonCardState";
+import { getLessonCounterpartLabel } from "@/lib/timetable/weekView/getLessonCounterpartLabel";
+import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 
 const MAX_PROGRESS_PERCENT = 100;
 
@@ -33,29 +35,29 @@ const STATE_LABELS: Record<LessonCardState, string> = {
   scheduled: "",
   next: "up next",
   current: "happening now",
-  completed: "taught",
+  completed: "completed",
   cancelled: "cancelled",
 };
 
-type TeacherWeekLessonCardProps = {
+type WeekLessonCardProps = {
   lesson: TimetableLesson;
+  viewType: WeekViewerType;
   state: LessonCardState;
   isDoubleBlock: boolean;
   progressPercent: number;
   onSelect: () => void;
 };
 
-export function TeacherWeekLessonCard({
+export function WeekLessonCard({
   lesson,
+  viewType,
   state,
   isDoubleBlock,
   progressPercent,
   onSelect,
-}: TeacherWeekLessonCardProps) {
+}: WeekLessonCardProps) {
   const palette = getLessonSubjectPalette(lesson.subject);
-  const classLabel = [lesson.grade.displayName || lesson.grade.name, lesson.stream]
-    .filter(Boolean)
-    .join(" · ");
+  const classLabel = getLessonCounterpartLabel(lesson, viewType);
   const accessibleLabel = [lesson.subject.name, classLabel, STATE_LABELS[state]]
     .filter(Boolean)
     .join(", ");

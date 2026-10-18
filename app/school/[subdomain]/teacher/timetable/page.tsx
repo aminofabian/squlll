@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useTeacherTimetable } from "../hooks/useTeacherTimetable";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Printer } from "lucide-react";
 
 import {
   useTimetableCore,
@@ -20,11 +20,13 @@ import {
   TeacherMobileSchedule,
   TimetablePrintStyles,
 } from "@/components/timetable";
-import { TeacherTimetableHero } from "./components/TeacherTimetableHero";
-import { TeacherTimetableSidebar } from "./components/TeacherTimetableSidebar";
-import { TeacherWeekGrid } from "./components/TeacherWeekGrid";
-import { useTeacherWeekLayout } from "./hooks/useTeacherWeekLayout";
-import { getGreeting } from "./lib/getGreeting";
+import { WeekHeroBar } from "@/components/timetable/week/WeekHeroBar";
+import { WeekSidebar } from "@/components/timetable/week/WeekSidebar";
+import { WeekGrid } from "@/components/timetable/week/WeekGrid";
+import { WeekHeroButton } from "@/components/timetable/week/WeekHeroButton";
+import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
+import { useWeekLayout } from "@/lib/timetable/weekView/useWeekLayout";
+import { getGreeting } from "@/lib/timetable/weekView/getGreeting";
 import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
 import {
   TeacherLessonDetailSheet,
@@ -180,7 +182,7 @@ const TeacherTimetable = () => {
     },
   });
 
-  const weekLayout = useTeacherWeekLayout(
+  const weekLayout = useWeekLayout(
     unifiedTimetable,
     core.sortedTimeSlots,
   );
@@ -254,7 +256,8 @@ const TeacherTimetable = () => {
 
   const scheduleGrid =
     unifiedTimetable && !hasNoLessons ? (
-      <TeacherWeekGrid
+      <WeekGrid
+        viewType="teacher"
         rows={weekLayout.rows}
         dayDates={weekLayout.dayDates}
         lessonCounts={weekLayout.lessonCounts}
@@ -375,24 +378,51 @@ const TeacherTimetable = () => {
 
         {/* Desktop */}
         <div className="hidden flex-col gap-3 lg:flex">
-          <TeacherTimetableHero
+          <WeekHeroBar
             greeting={getGreeting(
               core.currentTime.getHours(),
               graphqlData?.teacherName,
             )}
-            formattedDate={core.formattedDate}
-            weekRangeLabel={weekLayout.weekRangeLabel}
-            termName={selectedTerm?.name}
-            classesToday={isWeekend ? null : classesToday}
+            eyebrow={
+              selectedTerm?.name
+                ? `Teaching timetable · ${selectedTerm.name}`
+                : "Teaching timetable"
+            }
+            subtitle={`${core.formattedDate} · Week of ${weekLayout.weekRangeLabel}`}
+            metrics={[
+              {
+                label: "Today",
+                value: isWeekend ? "—" : String(classesToday ?? 0),
+              },
+              { label: "This week", value: String(stats?.totalLessons ?? 0) },
+              {
+                label: "Contact",
+                value: weekLayout.summary?.contactTimeLabel ?? "—",
+              },
+              {
+                label: "Classes",
+                value: String(weekLayout.summary?.distinctClasses ?? 0),
+              },
+            ]}
             totalLessons={stats?.totalLessons ?? 0}
             completedLessons={stats?.completedLessons ?? 0}
-            teachingTimeLabel={weekLayout.summary?.teachingTimeLabel ?? "—"}
-            distinctClasses={weekLayout.summary?.distinctClasses ?? 0}
-            showPrint={canPrint}
-            onPrint={handlePrint}
+            completedLabel="Taught"
+            actions={
+              <>
+                <RealtimeLiveIndicator showLabel={false} />
+                {canPrint ? (
+                  <WeekHeroButton
+                    icon={Printer}
+                    label="Print"
+                    onClick={handlePrint}
+                  />
+                ) : null}
+              </>
+            }
           />
           <div className="grid grid-cols-[minmax(0,260px)_1fr] items-start gap-3 xl:grid-cols-[minmax(0,280px)_1fr]">
-            <TeacherTimetableSidebar
+            <WeekSidebar
+              viewType="teacher"
               nextLesson={core.nextLesson}
               currentStatus={core.currentStatus}
               formattedTime={core.formattedTime}

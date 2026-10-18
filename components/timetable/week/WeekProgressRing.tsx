@@ -6,9 +6,9 @@ const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const MAX_PERCENT = 100;
 const CENTER = RING_SIZE / 2;
-const GRADIENT_ID = "teacher-progress-ring-gold";
+const GRADIENT_ID = "week-progress-ring-gold";
 
-export function TeacherProgressRing({ percent }: { percent: number }) {
+export function WeekProgressRing({ percent }: { percent: number }) {
   const clamped = Math.min(Math.max(percent, 0), MAX_PERCENT);
   const dashOffset = CIRCUMFERENCE * (1 - clamped / MAX_PERCENT);
 
@@ -17,7 +17,7 @@ export function TeacherProgressRing({ percent }: { percent: number }) {
       className="relative flex shrink-0 items-center justify-center"
       style={{ width: RING_SIZE, height: RING_SIZE }}
       role="img"
-      aria-label={`${clamped}% of this week's lessons taught`}
+      aria-label={`${clamped}% of this week's lessons complete`}
     >
       <svg width={RING_SIZE} height={RING_SIZE} className="-rotate-90">
         <defs>

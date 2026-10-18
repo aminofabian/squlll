@@ -1,4 +1,5 @@
 import type { CurrentLessonStatus } from "@/lib/timetable/types";
+import type { WeekViewerType } from "./weekViewerType";
 
 export type LiveStatusTone = "live" | "break" | "calm";
 
@@ -18,15 +19,20 @@ function minutesLeft(minutes: number): string {
   return minutes === 1 ? "1 min left" : `${minutes} min left`;
 }
 
-function describeLesson(status: CurrentLessonStatus): LiveStatusDescription {
+function describeLesson(
+  status: CurrentLessonStatus,
+  viewType: WeekViewerType,
+): LiveStatusDescription {
   const lesson = status.lesson;
-  const classLabel = lesson
-    ? [lesson.grade.displayName || lesson.grade.name, lesson.room && `Room ${lesson.room}`]
-        .filter(Boolean)
-        .join(" · ")
-    : "";
+  const who =
+    viewType === "teacher"
+      ? lesson?.grade.displayName || lesson?.grade.name
+      : lesson?.teacher.name;
+  const classLabel = [who, lesson?.room && `Room ${lesson.room}`]
+    .filter(Boolean)
+    .join(" · ");
   return {
-    eyebrow: "Teaching now",
+    eyebrow: viewType === "teacher" ? "Teaching now" : "In class now",
     headline: lesson?.subject.name ?? "Lesson in progress",
     detail: [classLabel, minutesLeft(status.remainingMinutes)].filter(Boolean).join(" · "),
     tone: "live",
@@ -37,10 +43,11 @@ function describeLesson(status: CurrentLessonStatus): LiveStatusDescription {
 /** Copy and tone for the teacher's live status card. */
 export function describeLiveStatus(
   status: CurrentLessonStatus,
+  viewType: WeekViewerType,
 ): LiveStatusDescription {
   switch (status.status) {
     case "lesson":
-      return describeLesson(status);
+      return describeLesson(status, viewType);
     case "break":
       return {
         eyebrow: "On break",
@@ -52,7 +59,8 @@ export function describeLiveStatus(
     case "free":
       return {
         eyebrow: "Free period",
-        headline: "Time to plan or mark",
+        headline:
+          viewType === "teacher" ? "Time to plan or mark" : "Time to revise",
         detail: `${status.remainingMinutes} min until the next bell`,
         tone: "calm",
         showProgress: true,

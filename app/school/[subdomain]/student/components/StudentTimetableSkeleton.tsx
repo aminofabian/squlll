@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { TimetableGridSkeleton } from "@/app/school/[subdomain]/(pages)/timetable/components/TimetableGridSkeleton";
 import { StudentNextLessonBarSkeleton } from "./StudentNextLessonBar";
 import { StudentTimetableStatsBarSkeleton } from "./StudentTimetableStatsBar";
+import { WeekDesktopSkeleton } from "@/components/timetable/week/WeekDesktopSkeleton";
 
 function StatCardsSkeleton() {
   return (
@@ -69,16 +70,6 @@ function ScheduleGridSkeleton({ flex }: { flex?: boolean }) {
   );
 }
 
-function SidebarSkeleton() {
-  return (
-    <div className="space-y-3">
-      <NextLessonSkeleton />
-      <BannerSkeleton />
-      <StatCardsSkeleton />
-    </div>
-  );
-}
-
 interface StudentTimetableSkeletonProps {
   onBack?: () => void;
   layout?: "embedded" | "page";
@@ -93,7 +84,7 @@ export function StudentTimetableSkeleton({
   return (
     <div
       className={cn(
-        "overflow-x-hidden bg-gradient-to-b from-primary/[0.04] via-background to-background",
+        "overflow-x-hidden bg-gradient-to-b from-primary/[0.04] via-background to-background lg:bg-none lg:bg-[#f4f1e9] dark:lg:bg-[#071411]",
         isPage
           ? cn(
               "mb-0 w-full min-w-0 max-w-full",
@@ -106,10 +97,10 @@ export function StudentTimetableSkeleton({
     >
       <div
         className={cn(
-          "mx-auto max-w-7xl",
+          "mx-auto max-w-[1440px]",
           isPage
-            ? "max-lg:p-0 lg:px-6 lg:py-5"
-            : "px-4 py-4 lg:px-6",
+            ? "max-lg:p-0 lg:px-5 lg:py-4"
+            : "px-4 py-4 lg:px-5",
         )}
       >
         {isPage ? (
@@ -120,20 +111,12 @@ export function StudentTimetableSkeleton({
               <StudentTimetableStatsBarSkeleton />
             </div>
             <div className="hidden lg:block">
-              <div className="mb-3 flex justify-end">
-                <Skeleton className="h-8 w-20 rounded-lg" />
-              </div>
-              <div className="grid grid-cols-[minmax(0,300px)_1fr] items-start gap-4 xl:grid-cols-[minmax(0,340px)_1fr]">
-                <div className="sticky top-4">
-                  <SidebarSkeleton />
-                </div>
-                <ScheduleGridSkeleton />
-              </div>
+              <WeekDesktopSkeleton />
             </div>
           </>
         ) : (
           <>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4 lg:hidden">
               <div className="flex items-center gap-3">
                 {onBack ? (
                   <Button
@@ -161,11 +144,8 @@ export function StudentTimetableSkeleton({
               <StatCardsSkeleton />
               <ScheduleGridSkeleton />
             </div>
-            <div className="hidden grid-cols-[minmax(0,300px)_1fr] items-start gap-4 xl:grid-cols-[minmax(0,340px)_1fr] lg:grid">
-              <div className="sticky top-4">
-                <SidebarSkeleton />
-              </div>
-              <ScheduleGridSkeleton />
+            <div className="hidden lg:block">
+              <WeekDesktopSkeleton />
             </div>
           </>
         )}

@@ -2,9 +2,9 @@ import type { TimetableDay, TimetableSlot } from "@/lib/timetable/types";
 
 const MINUTES_PER_HOUR = 60;
 
-export type TeachingWeekSummary = {
-  teachingMinutes: number;
-  teachingTimeLabel: string;
+export type WeekScheduleSummary = {
+  contactMinutes: number;
+  contactTimeLabel: string;
   distinctClasses: number;
 };
 
@@ -22,7 +22,7 @@ function slotDuration(slot: TimetableSlot | undefined): number {
   return end - start;
 }
 
-function formatTeachingTime(totalMinutes: number): string {
+function formatContactTime(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
   const minutes = totalMinutes % MINUTES_PER_HOUR;
   if (hours === 0) return `${minutes}m`;
@@ -30,24 +30,24 @@ function formatTeachingTime(totalMinutes: number): string {
 }
 
 /** Contact time and number of distinct classes across the teacher's week. */
-export function summarizeTeachingWeek(
+export function summarizeWeekSchedule(
   days: TimetableDay[],
   timeSlots: TimetableSlot[],
-): TeachingWeekSummary {
-  let teachingMinutes = 0;
+): WeekScheduleSummary {
+  let contactMinutes = 0;
   const classKeys = new Set<string>();
 
   for (const day of days) {
     day.cells.forEach((cell, slotIndex) => {
       if (cell?.type !== "lesson" || !cell.lesson) return;
-      teachingMinutes += slotDuration(timeSlots[slotIndex]);
+      contactMinutes += slotDuration(timeSlots[slotIndex]);
       classKeys.add(`${cell.lesson.grade.id}:${cell.lesson.stream ?? ""}`);
     });
   }
 
   return {
-    teachingMinutes,
-    teachingTimeLabel: formatTeachingTime(teachingMinutes),
+    contactMinutes,
+    contactTimeLabel: formatContactTime(contactMinutes),
     distinctClasses: classKeys.size,
   };
 }

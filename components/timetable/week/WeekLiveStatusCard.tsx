@@ -2,7 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import type { CurrentLessonStatus } from "@/lib/timetable/types";
-import { describeLiveStatus, type LiveStatusTone } from "../lib/describeLiveStatus";
+import { describeLiveStatus, type LiveStatusTone } from "@/lib/timetable/weekView/describeLiveStatus";
+import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 
 const MAX_PERCENT = 100;
 
@@ -18,13 +19,14 @@ const TONE_BAR: Record<LiveStatusTone, string> = {
   calm: "from-[#1a4d42]/40 to-[#1a4d42]/20",
 };
 
-type TeacherLiveStatusCardProps = {
+type WeekLiveStatusCardProps = {
   status: CurrentLessonStatus;
   formattedTime: string;
+  viewType: WeekViewerType;
 };
 
-export function TeacherLiveStatusCard({ status, formattedTime }: TeacherLiveStatusCardProps) {
-  const description = describeLiveStatus(status);
+export function WeekLiveStatusCard({ status, formattedTime, viewType }: WeekLiveStatusCardProps) {
+  const description = describeLiveStatus(status, viewType);
   const progress = Math.min(Math.max(status.progressPercent, 0), MAX_PERCENT);
   const isLive = description.tone === "live";
 

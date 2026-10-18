@@ -8,7 +8,7 @@ function trimLeadingZero(time: string): string {
   return time.replace(/^0(\d)/, "$1");
 }
 
-type TeacherWeekTimeRailProps = {
+type WeekTimeRailProps = {
   /** Period number, or null for break rows. */
   periodNumber: number | null;
   startTime?: string;
@@ -16,12 +16,12 @@ type TeacherWeekTimeRailProps = {
   isCurrent?: boolean;
 };
 
-export function TeacherWeekTimeRail({
+export function WeekTimeRail({
   periodNumber,
   startTime,
   endTime,
   isCurrent = false,
-}: TeacherWeekTimeRailProps) {
+}: WeekTimeRailProps) {
   const range =
     startTime && endTime
       ? `${trimLeadingZero(startTime)} – ${trimLeadingZero(endTime)}`

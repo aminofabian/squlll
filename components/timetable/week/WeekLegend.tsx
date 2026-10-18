@@ -2,20 +2,24 @@
 
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
+import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 
 const PERCENT = 100;
 
-type TeacherWeekLegendProps = {
+type WeekLegendProps = {
   weekRangeLabel: string;
   totalLessons: number;
   completedLessons: number;
+  viewType: WeekViewerType;
 };
 
-export function TeacherWeekLegend({
+export function WeekLegend({
   weekRangeLabel,
   totalLessons,
   completedLessons,
-}: TeacherWeekLegendProps) {
+  viewType,
+}: WeekLegendProps) {
+  const completedLabel = viewType === "teacher" ? "Taught" : "Done";
   const taughtPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * PERCENT) : 0;
 
   return (
@@ -37,10 +41,10 @@ export function TeacherWeekLegend({
               <Check className="h-2 w-2" strokeWidth={4} />
             </span>
           }
-          label="Taught"
+          label={completedLabel}
         />
         <span className="hidden h-5 w-px bg-[#1a4d42]/10 xl:block dark:bg-white/10" aria-hidden />
-        <TaughtMeter percent={taughtPercent} completed={completedLessons} total={totalLessons} />
+        <TaughtMeter label={`${completedLabel} this week`} percent={taughtPercent} completed={completedLessons} total={totalLessons} />
       </div>
     </header>
   );
@@ -55,11 +59,11 @@ function LegendItem({ swatch, label }: { swatch: ReactNode; label: string }) {
   );
 }
 
-function TaughtMeter({ percent, completed, total }: { percent: number; completed: number; total: number }) {
+function TaughtMeter({ label, percent, completed, total }: { label: string; percent: number; completed: number; total: number }) {
   return (
     <div className="hidden min-w-[132px] xl:block">
       <div className="flex items-baseline justify-between text-[10px] font-medium text-[#1a4d42]/55 dark:text-white/45">
-        <span>Taught this week</span>
+        <span>{label}</span>
         <span className="tabular-nums text-[#0a1f1a] dark:text-white">
           {completed}/{total}
         </span>

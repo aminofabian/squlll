@@ -5,11 +5,11 @@ import { getSubjectPaletteColor } from "@/lib/timetable/constants";
 const MAX_SUBJECTS_SHOWN = 6;
 const PERCENT = 100;
 
-type TeacherSubjectMixCardProps = {
+type WeekSubjectMixCardProps = {
   subjectDistribution: Record<string, number>;
 };
 
-export function TeacherSubjectMixCard({ subjectDistribution }: TeacherSubjectMixCardProps) {
+export function WeekSubjectMixCard({ subjectDistribution }: WeekSubjectMixCardProps) {
   const subjects = Object.entries(subjectDistribution)
     .filter(([, count]) => count > 0)
     .sort(([, a], [, b]) => b - a)

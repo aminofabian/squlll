@@ -6,15 +6,16 @@ import type {
   TimetableLesson,
   TimetableSlot,
 } from "@/lib/timetable/types";
-import { buildTeacherWeekRows } from "./buildTeacherWeekRows";
+import { buildWeekRows } from "./buildWeekRows";
 import { countLessonsPerDay } from "./countLessonsPerDay";
 import { getWeekDayDates } from "./getWeekDayDates";
 import { formatWeekRangeLabel } from "./formatWeekRangeLabel";
-import { summarizeTeachingWeek } from "./summarizeTeachingWeek";
+import { summarizeWeekSchedule } from "./summarizeWeekSchedule";
 import { getGreeting } from "./getGreeting";
 import { formatStartsIn } from "./formatStartsIn";
 import { getLessonCardState } from "./getLessonCardState";
 import { describeLiveStatus } from "./describeLiveStatus";
+import { getLessonCounterpartLabel } from "./getLessonCounterpartLabel";
 
 const WEEKDAYS = [1, 2, 3, 4, 5] as const;
 
@@ -68,11 +69,11 @@ function breakAfter(afterPeriod: number, extra: Partial<TimetableBreak> = {}): T
 
 const SLOTS = [slot(1, "08:00", "08:40"), slot(2, "08:40", "09:20"), slot(3, "09:20", "10:00")];
 
-describe("buildTeacherWeekRows", () => {
+describe("buildWeekRows", () => {
   it("merges an unbroken double period into one two-row cell", () => {
     const first = lesson({ isDoublePeriod: true });
     const second = lesson({ isDoublePeriod: true, isDoubleContinuation: true });
-    const rows = buildTeacherWeekRows({
+    const rows = buildWeekRows({
       days: [day(1, [first, second, null])],
       timeSlots: SLOTS,
       breaks: [],
@@ -87,7 +88,7 @@ describe("buildTeacherWeekRows", () => {
   it("keeps a double period split when a break falls between its halves", () => {
     const first = lesson({ isDoublePeriod: true });
     const second = lesson({ isDoublePeriod: true, isDoubleContinuation: true });
-    const rows = buildTeacherWeekRows({
+    const rows = buildWeekRows({
       days: [day(1, [first, second, null])],
       timeSlots: SLOTS,
       breaks: [breakAfter(1, { dayOfWeek: 1 })],
@@ -100,13 +101,13 @@ describe("buildTeacherWeekRows", () => {
   });
 
   it("marks a break row uniform only when every day shares the same break", () => {
-    const allDays = buildTeacherWeekRows({
+    const allDays = buildWeekRows({
       days: [],
       timeSlots: SLOTS,
       breaks: [breakAfter(2)],
       dayNumbers: WEEKDAYS,
     });
-    const mondayOnly = buildTeacherWeekRows({
+    const mondayOnly = buildWeekRows({
       days: [],
       timeSlots: SLOTS,
       breaks: [breakAfter(2, { dayOfWeek: 1 })],
@@ -118,7 +119,7 @@ describe("buildTeacherWeekRows", () => {
   });
 
   it("places breaks scheduled before the first period at the top", () => {
-    const rows = buildTeacherWeekRows({
+    const rows = buildWeekRows({
       days: [],
       timeSlots: SLOTS,
       breaks: [breakAfter(0, { type: "ASSEMBLY", name: "Assembly" })],
@@ -132,7 +133,7 @@ describe("countLessonsPerDay", () => {
   it("counts a merged double period as one lesson", () => {
     const first = lesson({ isDoublePeriod: true });
     const second = lesson({ isDoublePeriod: true, isDoubleContinuation: true });
-    const rows = buildTeacherWeekRows({
+    const rows = buildWeekRows({
       days: [day(1, [first, second, lesson({ id: "l9" })]), day(2, [null, null, null])],
       timeSlots: SLOTS,
       breaks: [],
@@ -155,21 +156,21 @@ describe("week dates", () => {
   });
 });
 
-describe("summarizeTeachingWeek", () => {
+describe("summarizeWeekSchedule", () => {
   it("adds up contact time and counts distinct classes", () => {
     const other = lesson({ id: "l2", grade: { id: "g8", name: "Grade 8", displayName: "Grade 8", level: 8 } });
-    const summary = summarizeTeachingWeek(
+    const summary = summarizeWeekSchedule(
       [day(1, [lesson(), lesson({ id: "l3" }), other])],
       SLOTS,
     );
-    expect(summary.teachingMinutes).toBe(120);
-    expect(summary.teachingTimeLabel).toBe("2h");
+    expect(summary.contactMinutes).toBe(120);
+    expect(summary.contactTimeLabel).toBe("2h");
     expect(summary.distinctClasses).toBe(2);
   });
 
   it("formats partial hours", () => {
-    const summary = summarizeTeachingWeek([day(1, [lesson()])], SLOTS);
-    expect(summary.teachingTimeLabel).toBe("40m");
+    const summary = summarizeWeekSchedule([day(1, [lesson()])], SLOTS);
+    expect(summary.contactTimeLabel).toBe("40m");
   });
 });
 
@@ -210,7 +211,7 @@ describe("describeLiveStatus", () => {
   };
 
   it("describes a live lesson with class, room and time left", () => {
-    const result = describeLiveStatus({ ...base, lesson: lesson() });
+    const result = describeLiveStatus({ ...base, lesson: lesson() }, "teacher");
     expect(result).toMatchObject({
       eyebrow: "Teaching now",
       headline: "Mathematics",
@@ -220,8 +221,24 @@ describe("describeLiveStatus", () => {
     });
   });
 
+  it("shows the teacher's name to students", () => {
+    const result = describeLiveStatus({ ...base, lesson: lesson() }, "student");
+    expect(result).toMatchObject({
+      eyebrow: "In class now",
+      detail: "Jane Doe · Room 4B · 12 min left",
+    });
+  });
+
   it("hides progress outside school hours", () => {
-    const result = describeLiveStatus({ ...base, status: "outside", message: "See you tomorrow" });
+    const result = describeLiveStatus({ ...base, status: "outside", message: "See you tomorrow" }, "teacher");
     expect(result).toMatchObject({ showProgress: false, detail: "See you tomorrow" });
+  });
+});
+
+describe("getLessonCounterpartLabel", () => {
+  it("shows the class to teachers and the teacher to students", () => {
+    const item = lesson({ stream: "East" });
+    expect(getLessonCounterpartLabel(item, "teacher")).toBe("Grade 7 · East");
+    expect(getLessonCounterpartLabel(item, "student")).toBe("Jane Doe");
   });
 });

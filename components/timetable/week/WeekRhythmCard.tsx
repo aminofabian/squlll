@@ -2,22 +2,23 @@
 
 import { cn } from "@/lib/utils";
 import { DAY_NAMES } from "@/lib/timetable/constants";
-import type { WeekDayDate } from "../lib/getWeekDayDates";
+import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
 
 const DAY_INITIALS: Record<number, string> = { 1: "M", 2: "T", 3: "W", 4: "T", 5: "F" };
 const MIN_VISIBLE_BAR_PERCENT = 12;
 const PERCENT = 100;
 
-type TeacherWeekRhythmCardProps = {
+type WeekRhythmCardProps = {
   dayDates: WeekDayDate[];
   lessonCounts: Record<number, number>;
   currentDayOfWeek: number | null;
 };
 
-export function TeacherWeekRhythmCard({ dayDates, lessonCounts, currentDayOfWeek }: TeacherWeekRhythmCardProps) {
+export function WeekRhythmCard({ dayDates, lessonCounts, currentDayOfWeek }: WeekRhythmCardProps) {
   const counts = dayDates.map((d) => lessonCounts[d.dayOfWeek] ?? 0);
   const busiest = Math.max(...counts, 1);
-  const busiestDay = counts.some((count) => count > 0) ? dayDates[counts.indexOf(busiest)] : undefined;
+  const hasSingleBusiestDay = counts.filter((count) => count === busiest).length === 1;
+  const busiestDay = hasSingleBusiestDay ? dayDates[counts.indexOf(busiest)] : undefined;
 
   return (
     <section className="rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">

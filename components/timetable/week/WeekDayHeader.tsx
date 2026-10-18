@@ -2,9 +2,9 @@
 
 import { cn } from "@/lib/utils";
 import { DAY_SHORT_NAMES } from "@/lib/timetable/constants";
-import type { WeekDayDate } from "../lib/getWeekDayDates";
+import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
 
-type TeacherWeekDayHeaderProps = {
+type WeekDayHeaderProps = {
   date: WeekDayDate;
   lessonCount: number;
   isToday: boolean;
@@ -14,11 +14,11 @@ function lessonCountLabel(count: number): string {
   return count === 1 ? "1 class" : `${count} classes`;
 }
 
-export function TeacherWeekDayHeader({
+export function WeekDayHeader({
   date,
   lessonCount,
   isToday,
-}: TeacherWeekDayHeaderProps) {
+}: WeekDayHeaderProps) {
   return (
     <div
       className={cn(

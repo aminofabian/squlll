@@ -1,8 +1,8 @@
-import type { TeacherWeekRow } from "./buildTeacherWeekRows";
+import type { WeekRow } from "./buildWeekRows";
 
 /** Number of distinct lessons per weekday (a double period counts once). */
 export function countLessonsPerDay(
-  rows: TeacherWeekRow[],
+  rows: WeekRow[],
   dayNumbers: readonly number[],
 ): Record<number, number> {
   const counts = Object.fromEntries(dayNumbers.map((day) => [day, 0]));

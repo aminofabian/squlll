@@ -31,6 +31,7 @@ import {
 } from "@/components/timetable";
 import { StudentTimetableSkeleton } from "./StudentTimetableSkeleton";
 import { StudentMobileSchedule } from "./StudentMobileSchedule";
+import { StudentWeekDesktopView } from "./StudentWeekDesktopView";
 import {
   StudentLessonDetailSheet,
   type StudentLessonSelection,
@@ -58,7 +59,7 @@ function PageShell({
   return (
     <div
       className={cn(
-        "overflow-x-clip bg-gradient-to-b from-primary/[0.04] via-background to-background",
+        "overflow-x-clip bg-gradient-to-b from-primary/[0.04] via-background to-background lg:bg-none lg:bg-[#f4f1e9] dark:lg:bg-[#071411]",
         layout === "page"
           ? cn(
               "mb-0 w-full min-w-0 max-w-full",
@@ -69,10 +70,10 @@ function PageShell({
     >
       <div
         className={cn(
-          "mx-auto w-full min-w-0 max-w-7xl",
+          "mx-auto w-full min-w-0 max-w-[1440px]",
           layout === "page"
-            ? "max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5"
-            : "px-4 py-4 lg:px-6",
+            ? "max-lg:overflow-hidden max-lg:p-0 lg:px-5 lg:py-4"
+            : "px-4 py-4 lg:px-5",
         )}
       >
         {children}
@@ -215,6 +216,33 @@ const StudentTimetableComponent = ({
     </div>
   );
 
+  const emptySchedule = (
+    <Section padded={false}>
+      <EmptyState
+        icon={Calendar}
+        title="No lessons on your timetable yet"
+        description={
+          student?.streamName
+            ? `Your school has not added lessons for ${gradeName} · ${student.streamName} this term yet. Check back later.`
+            : `Your school has not added lessons for ${gradeName} this term yet. Check back later.`
+        }
+      />
+    </Section>
+  );
+
+  const desktopView = (
+    <StudentWeekDesktopView
+      timetable={unifiedTimetable}
+      core={core}
+      studentName={student.name}
+      classLabel={[gradeName, student.streamName].filter(Boolean).join(" · ")}
+      termName={activeTerm?.name}
+      emptyState={emptySchedule}
+      onRefresh={() => refetchTimetable()}
+      onLessonClick={handleLessonClick}
+    />
+  );
+
   const scheduleGrid = unifiedTimetable ? (
     <section
       className={cn(
@@ -239,17 +267,7 @@ const StudentTimetableComponent = ({
       />
     </section>
   ) : (
-    <Section padded={false}>
-      <EmptyState
-        icon={Calendar}
-        title="No lessons on your timetable yet"
-        description={
-          student?.streamName
-            ? `Your school has not added lessons for ${gradeName} · ${student.streamName} this term yet. Check back later.`
-            : `Your school has not added lessons for ${gradeName} this term yet. Check back later.`
-        }
-      />
-    </Section>
+    emptySchedule
   );
 
   const statsBlock =
@@ -270,18 +288,6 @@ const StudentTimetableComponent = ({
         <StatTile icon={BookOpen} label="Subjects" value={stats.totalSubjects} />
       </div>
     ) : null;
-
-  const sidebarBlock = (
-    <div className="space-y-3">
-      <CurrentLessonBanner
-        status={core.currentStatus}
-        formattedTime={core.formattedTime}
-        viewType="student"
-        showClock={false}
-      />
-      {statsBlock}
-    </div>
-  );
 
   return (
     <PageShell layout={layout}>
@@ -322,33 +328,11 @@ const StudentTimetableComponent = ({
             )}
           </div>
 
-          {/* Desktop */}
-          <div className="hidden lg:block">
-            <div className="mb-3 flex items-center justify-end gap-2">
-              {activeTerm ? (
-                <span className="text-xs text-muted-foreground">
-                  {activeTerm.name}
-                </span>
-              ) : null}
-              <Button
-                onClick={() => refetchTimetable()}
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span className="text-xs">Refresh</span>
-              </Button>
-            </div>
-            <div className="grid grid-cols-[minmax(0,300px)_1fr] items-start gap-4 xl:grid-cols-[minmax(0,340px)_1fr]">
-              <div className="sticky top-4 z-0">{sidebarBlock}</div>
-              <div className="min-w-0">{scheduleGrid}</div>
-            </div>
-          </div>
+          <div className="hidden lg:block">{desktopView}</div>
         </>
       ) : (
         <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4 lg:hidden">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               {backButton}
               <div className="min-w-0 flex-1 lg:max-w-sm">
@@ -394,9 +378,9 @@ const StudentTimetableComponent = ({
             {statsBlock}
           </div>
 
-          <div className="hidden grid-cols-[minmax(0,300px)_1fr] items-start gap-4 xl:grid-cols-[minmax(0,340px)_1fr] lg:grid">
-            <div className="sticky top-4 space-y-3">{sidebarBlock}</div>
-            <div className="min-w-0">{scheduleGrid}</div>
+          <div className="hidden lg:block">
+            <div className="mb-2">{backButton}</div>
+            {desktopView}
           </div>
         </>
       )}

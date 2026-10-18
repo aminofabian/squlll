@@ -4,18 +4,19 @@ import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import type { TimetableLesson } from "@/lib/timetable/types";
 import type {
-  TeacherWeekBreakRow,
-  TeacherWeekCell,
-  TeacherWeekPeriodRow,
-  TeacherWeekRow,
-} from "../lib/buildTeacherWeekRows";
-import type { WeekDayDate } from "../lib/getWeekDayDates";
-import { getLessonCardState } from "../lib/getLessonCardState";
-import { TeacherWeekDayHeader } from "./TeacherWeekDayHeader";
-import { TeacherWeekTimeRail } from "./TeacherWeekTimeRail";
-import { TeacherWeekLessonCard } from "./TeacherWeekLessonCard";
-import { TeacherWeekBreakBand } from "./TeacherWeekBreakBand";
-import { TeacherWeekLegend } from "./TeacherWeekLegend";
+  WeekBreakRow,
+  WeekCell,
+  WeekPeriodRow,
+  WeekRow,
+} from "@/lib/timetable/weekView/buildWeekRows";
+import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
+import { getLessonCardState } from "@/lib/timetable/weekView/getLessonCardState";
+import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
+import { WeekDayHeader } from "./WeekDayHeader";
+import { WeekTimeRail } from "./WeekTimeRail";
+import { WeekLessonCard } from "./WeekLessonCard";
+import { WeekBreakBand } from "./WeekBreakBand";
+import { WeekLegend } from "./WeekLegend";
 
 const RAIL_WIDTH_PX = 76;
 const PERIOD_ROW_MIN_PX = 54;
@@ -26,6 +27,7 @@ const FIRST_DAY_COLUMN = 2;
 type LessonTarget = { id: string; dayOfWeek: number } | null;
 
 type GridContext = {
+  viewType: WeekViewerType;
   currentDayOfWeek: number | null;
   currentPeriodIndex: number;
   progressPercent: number;
@@ -34,8 +36,8 @@ type GridContext = {
   onLessonClick: (lesson: TimetableLesson, dayOfWeek: number, periodNumber: number) => void;
 };
 
-type TeacherWeekGridProps = GridContext & {
-  rows: TeacherWeekRow[];
+type WeekGridProps = GridContext & {
+  rows: WeekRow[];
   dayDates: WeekDayDate[];
   lessonCounts: Record<number, number>;
   weekRangeLabel: string;
@@ -43,7 +45,7 @@ type TeacherWeekGridProps = GridContext & {
   completedLessons: number;
 };
 
-function buildRowTemplate(rows: TeacherWeekRow[]): string {
+function buildRowTemplate(rows: WeekRow[]): string {
   const body = rows.map((row) =>
     row.kind === "period" ? `minmax(${PERIOD_ROW_MIN_PX}px, auto)` : "auto",
   );
@@ -54,7 +56,7 @@ function dayColumn(dayIndex: number): number {
   return dayIndex + FIRST_DAY_COLUMN;
 }
 
-export function TeacherWeekGrid({
+export function WeekGrid({
   rows,
   dayDates,
   lessonCounts,
@@ -62,7 +64,7 @@ export function TeacherWeekGrid({
   totalLessons,
   completedLessons,
   ...context
-}: TeacherWeekGridProps) {
+}: WeekGridProps) {
   const todayIndex = dayDates.findIndex((d) => d.dayOfWeek === context.currentDayOfWeek);
   const gridStyle: CSSProperties = {
     gridTemplateColumns: `${RAIL_WIDTH_PX}px repeat(${dayDates.length}, minmax(0, 1fr))`,
@@ -71,10 +73,11 @@ export function TeacherWeekGrid({
 
   return (
     <section className="overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] shadow-[0_20px_40px_-36px_rgba(10,38,32,0.5)] dark:border-white/10 dark:bg-[#0c1a17]">
-      <TeacherWeekLegend
+      <WeekLegend
         weekRangeLabel={weekRangeLabel}
         totalLessons={totalLessons}
         completedLessons={completedLessons}
+        viewType={context.viewType}
       />
       <div className="overflow-x-auto px-2 pb-2 pt-2">
         <div className="relative grid min-w-[760px]" style={gridStyle}>
@@ -84,7 +87,7 @@ export function TeacherWeekGrid({
           <div style={{ gridRow: HEADER_ROW, gridColumn: 1 }} aria-hidden />
           {dayDates.map((date, index) => (
             <div key={date.dayOfWeek} className="relative z-10 pb-1" style={{ gridRow: HEADER_ROW, gridColumn: dayColumn(index) }}>
-              <TeacherWeekDayHeader
+              <WeekDayHeader
                 date={date}
                 lessonCount={lessonCounts[date.dayOfWeek] ?? 0}
                 isToday={index === todayIndex}
@@ -119,7 +122,7 @@ function PeriodRow({
   gridRow,
   context,
 }: {
-  row: TeacherWeekPeriodRow;
+  row: WeekPeriodRow;
   gridRow: number;
   context: GridContext;
 }) {
@@ -132,7 +135,7 @@ function PeriodRow({
         style={{ gridRow, gridColumn: "1 / -1" }}
       />
       <div className="relative z-10" style={{ gridRow, gridColumn: 1 }}>
-        <TeacherWeekTimeRail
+        <WeekTimeRail
           periodNumber={row.slot.periodNumber}
           startTime={row.slot.startTime}
           endTime={row.slot.endTime}
@@ -153,8 +156,8 @@ function PeriodCell({
   column,
   context,
 }: {
-  cell: TeacherWeekCell;
-  row: TeacherWeekPeriodRow;
+  cell: WeekCell;
+  row: WeekPeriodRow;
   gridRow: number;
   column: number;
   context: GridContext;
@@ -169,7 +172,7 @@ function PeriodCell({
       {cell.kind === "lesson" ? (
         <LessonSlot cell={cell} row={row} context={context} />
       ) : cell.kind === "break" ? (
-        <TeacherWeekBreakBand breakItem={cell.breakItem} variant="chip" />
+        <WeekBreakBand breakItem={cell.breakItem} variant="chip" />
       ) : (
         <FreeSlot />
       )}
@@ -182,8 +185,8 @@ function LessonSlot({
   row,
   context,
 }: {
-  cell: Extract<TeacherWeekCell, { kind: "lesson" }>;
-  row: TeacherWeekPeriodRow;
+  cell: Extract<WeekCell, { kind: "lesson" }>;
+  row: WeekPeriodRow;
   context: GridContext;
 }) {
   const { lesson, dayOfWeek, rowSpan } = cell;
@@ -200,8 +203,9 @@ function LessonSlot({
   });
 
   return (
-    <TeacherWeekLessonCard
+    <WeekLessonCard
       lesson={lesson}
+      viewType={context.viewType}
       state={state}
       isDoubleBlock={rowSpan > 1}
       progressPercent={context.progressPercent}
@@ -221,21 +225,21 @@ function FreeSlot() {
   );
 }
 
-function BreakRow({ row, gridRow }: { row: TeacherWeekBreakRow; gridRow: number }) {
+function BreakRow({ row, gridRow }: { row: WeekBreakRow; gridRow: number }) {
   const { labelBreak } = row;
   return (
     <>
       <div className="relative z-10" style={{ gridRow, gridColumn: 1 }}>
-        <TeacherWeekTimeRail periodNumber={null} startTime={labelBreak.startTime} endTime={labelBreak.endTime} />
+        <WeekTimeRail periodNumber={null} startTime={labelBreak.startTime} endTime={labelBreak.endTime} />
       </div>
       {row.isUniform ? (
         <div className="relative z-10 p-[3px]" style={{ gridRow, gridColumn: `${FIRST_DAY_COLUMN} / -1` }}>
-          <TeacherWeekBreakBand breakItem={labelBreak} />
+          <WeekBreakBand breakItem={labelBreak} />
         </div>
       ) : (
         row.perDay.map((item, index) => (
           <div key={index} className={cn("relative z-10 p-[3px]", !item && "opacity-0")} style={{ gridRow, gridColumn: dayColumn(index) }}>
-            {item ? <TeacherWeekBreakBand breakItem={item} variant="chip" /> : null}
+            {item ? <WeekBreakBand breakItem={item} variant="chip" /> : null}
           </div>
         ))
       )}
