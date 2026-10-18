@@ -15,7 +15,10 @@ import { getGreeting } from "./getGreeting";
 import { formatStartsIn } from "./formatStartsIn";
 import { getLessonCardState } from "./getLessonCardState";
 import { describeLiveStatus } from "./describeLiveStatus";
-import { getLessonCounterpartLabel } from "./getLessonCounterpartLabel";
+import { getClassLabel, getLessonCounterpartLabel } from "./getLessonCounterpartLabel";
+import { buildLessonTints } from "./buildLessonTints";
+import { describeLessonCard } from "./describeLessonCard";
+import { describeNextLessonStart } from "./describeNextLessonStart";
 
 const WEEKDAYS = [1, 2, 3, 4, 5] as const;
 
@@ -82,7 +85,8 @@ describe("buildWeekRows", () => {
 
     expect(rows[0]).toMatchObject({ kind: "period", cells: [{ kind: "lesson", rowSpan: 2 }] });
     expect(rows[1]).toMatchObject({ kind: "period", cells: [{ kind: "covered" }] });
-    expect(rows[2]).toMatchObject({ kind: "period", cells: [{ kind: "free" }] });
+    expect(rows[2]).toMatchObject({ kind: "period", cells: [{ kind: "free" }], isEmpty: true });
+    expect(rows[0]).toMatchObject({ isEmpty: false });
   });
 
   it("keeps a double period split when a break falls between its halves", () => {
@@ -240,5 +244,63 @@ describe("getLessonCounterpartLabel", () => {
     const item = lesson({ stream: "East" });
     expect(getLessonCounterpartLabel(item, "teacher")).toBe("Grade 7 · East");
     expect(getLessonCounterpartLabel(item, "student")).toBe("Jane Doe");
+  });
+});
+
+describe("getClassLabel", () => {
+  const grade = { id: "g10", name: "Grade 10", displayName: "Grade 10 · A", level: 10 };
+
+  it("does not repeat a stream the grade label already ends with", () => {
+    expect(getClassLabel(lesson({ grade, stream: "A" }))).toBe("Grade 10 · A");
+  });
+
+  it("appends the stream when it is missing", () => {
+    expect(getClassLabel(lesson({ stream: "A" }))).toBe("Grade 7 · A");
+    expect(getClassLabel(lesson({ stream: undefined }))).toBe("Grade 7");
+  });
+});
+
+describe("buildLessonTints", () => {
+  const classB = { id: "g7b", name: "Grade 7", displayName: "Grade 7", level: 7 };
+  const oneSubjectTwoClasses = [day(1, [lesson({ id: "a" }), lesson({ id: "b", grade: classB, stream: "B" })])];
+
+  it("tints by class for a single-subject teacher and hides the repeated subject", () => {
+    const tints = buildLessonTints(oneSubjectTwoClasses, "teacher");
+    const [first, second] = oneSubjectTwoClasses[0].cells.map((c) => c!.lesson!);
+    expect(tints.mode).toBe("class");
+    expect(tints.showSubject).toBe(false);
+    expect(tints.accentFor(first)).not.toBe(tints.accentFor(second));
+  });
+
+  it("always tints by subject for students", () => {
+    expect(buildLessonTints(oneSubjectTwoClasses, "student").mode).toBe("subject");
+  });
+});
+
+describe("describeLessonCard", () => {
+  const item = lesson({ stream: "East" });
+
+  it("leads with the class when tinting by class", () => {
+    expect(describeLessonCard(item, "teacher", "class", false)).toEqual({ title: "Grade 7 · East", detail: "" });
+    expect(describeLessonCard(item, "teacher", "class", true)).toEqual({ title: "Grade 7 · East", detail: "Mathematics" });
+  });
+
+  it("leads with the subject otherwise", () => {
+    expect(describeLessonCard(item, "teacher", "subject", true)).toEqual({ title: "Mathematics", detail: "Grade 7 · East" });
+    expect(describeLessonCard(item, "student", "subject", true)).toEqual({ title: "Mathematics", detail: "Jane Doe" });
+  });
+});
+
+describe("describeNextLessonStart", () => {
+  it("counts down when the lesson is later today", () => {
+    expect(describeNextLessonStart(18 * 60 + 5, "10:20 – 11:00", null)).toEqual({
+      caption: "Starts in", value: "18m 05s", isCountdown: true,
+    });
+  });
+
+  it("names the day once the lesson is on another day", () => {
+    expect(describeNextLessonStart(86_400, "11:25 – 12:05", "Tomorrow")).toEqual({
+      caption: "Starts", value: "Tomorrow, 11:25", isCountdown: false,
+    });
   });
 });

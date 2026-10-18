@@ -14,6 +14,8 @@ type WeekTimeRailProps = {
   startTime?: string;
   endTime?: string;
   isCurrent?: boolean;
+  /** Period has no lessons all week. */
+  isEmpty?: boolean;
 };
 
 export function WeekTimeRail({
@@ -21,6 +23,7 @@ export function WeekTimeRail({
   startTime,
   endTime,
   isCurrent = false,
+  isEmpty = false,
 }: WeekTimeRailProps) {
   const range =
     startTime && endTime
@@ -29,14 +32,14 @@ export function WeekTimeRail({
 
   if (periodNumber == null) {
     return (
-      <div className="flex h-full items-center whitespace-nowrap pl-3.5 pr-1 text-[9px] font-medium tabular-nums tracking-[-0.01em] text-[#1a4d42]/35 dark:text-white/30">
+      <div className="flex h-full items-center whitespace-nowrap pl-3.5 pr-1 text-[11px] font-medium tabular-nums tracking-[-0.01em] text-[#1a4d42]/75 dark:text-white/60">
         {range ?? ""}
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-full flex-col justify-center pl-3.5 pr-1">
+    <div className={cn("relative flex h-full flex-col justify-center pl-3.5 pr-1", isEmpty && "opacity-45")}>
       {isCurrent ? (
         <span
           aria-hidden
@@ -45,14 +48,14 @@ export function WeekTimeRail({
       ) : null}
       <span
         className={cn(
-          "font-display text-[17px] leading-none tracking-[-0.03em]",
-          isCurrent ? "text-[#8a6427] dark:text-[#e5cf9f]" : "text-[#0a1f1a]/80 dark:text-white/80",
+          "font-display text-[18px] leading-none tracking-[-0.03em]",
+          isCurrent ? "text-[#7d5a22] dark:text-[#e5cf9f]" : "text-[#0a1f1a] dark:text-white/85",
         )}
       >
         {String(periodNumber).padStart(PERIOD_DIGITS, "0")}
       </span>
       {range ? (
-        <span className="mt-0.5 whitespace-nowrap text-[9px] font-medium tabular-nums text-[#1a4d42]/45 dark:text-white/35">
+        <span className="mt-0.5 whitespace-nowrap text-[11px] font-medium tabular-nums text-[#1a4d42]/75 dark:text-white/60">
           {range}
         </span>
       ) : null}

@@ -11,31 +11,31 @@ const BREAK_THEMES: Record<BreakType, BreakTheme> = {
   BREAK: {
     Icon: Coffee,
     surface: "bg-[#f1efe6] dark:bg-white/[0.04]",
-    ink: "text-[#1a4d42]/60 dark:text-white/50",
+    ink: "text-[#1a4d42] dark:text-white/70",
     rule: "via-[#1a4d42]/15",
   },
   RECESS: {
     Icon: Sun,
     surface: "bg-[#eef2ea] dark:bg-emerald-950/20",
-    ink: "text-[#246a59]/80 dark:text-emerald-200/60",
+    ink: "text-[#1d5a4b] dark:text-emerald-200/80",
     rule: "via-[#246a59]/20",
   },
   LUNCH: {
     Icon: UtensilsCrossed,
     surface: "bg-[#f8efdc] dark:bg-[#c49a52]/10",
-    ink: "text-[#8a6427] dark:text-[#e5cf9f]",
+    ink: "text-[#73531f] dark:text-[#e5cf9f]",
     rule: "via-[#c49a52]/35",
   },
   ASSEMBLY: {
     Icon: Flag,
     surface: "bg-[#e9efec] dark:bg-white/[0.05]",
-    ink: "text-[#0a2620]/70 dark:text-white/60",
+    ink: "text-[#0a2620] dark:text-white/75",
     rule: "via-[#0a2620]/20",
   },
   EXAM: {
     Icon: PenLine,
     surface: "bg-rose-50 dark:bg-rose-950/20",
-    ink: "text-rose-800/80 dark:text-rose-200/70",
+    ink: "text-rose-800 dark:text-rose-200/80",
     rule: "via-rose-300/50",
   },
 };
@@ -62,17 +62,17 @@ export function WeekBreakBand({
   return (
     <div
       className={cn(
-        "flex h-full min-h-[22px] items-center justify-center gap-2 rounded-md px-3",
+        "flex h-full min-h-[24px] items-center justify-center gap-2 rounded-md px-3",
         theme.surface,
         theme.ink,
       )}
     >
       {isBand ? <Rule className={theme.rule} direction="left" /> : null}
       <Icon className="h-3 w-3 shrink-0" aria-hidden />
-      <span className="truncate text-[10px] font-semibold uppercase tracking-[0.2em]">
+      <span className="truncate text-[11px] font-semibold uppercase tracking-[0.16em]">
         {label}
       </span>
-      <span className="shrink-0 text-[10px] font-medium tabular-nums opacity-70">
+      <span className="shrink-0 text-[11px] font-medium tabular-nums opacity-85">
         {breakItem.durationMinutes} min
       </span>
       {isBand ? <Rule className={theme.rule} direction="right" /> : null}

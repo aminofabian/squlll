@@ -11,6 +11,8 @@ import type {
 } from "@/lib/timetable/weekView/buildWeekRows";
 import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
 import { getLessonCardState } from "@/lib/timetable/weekView/getLessonCardState";
+import { describeLessonCard } from "@/lib/timetable/weekView/describeLessonCard";
+import type { LessonTints } from "@/lib/timetable/weekView/buildLessonTints";
 import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 import { WeekDayHeader } from "./WeekDayHeader";
 import { WeekTimeRail } from "./WeekTimeRail";
@@ -18,8 +20,9 @@ import { WeekLessonCard } from "./WeekLessonCard";
 import { WeekBreakBand } from "./WeekBreakBand";
 import { WeekLegend } from "./WeekLegend";
 
-const RAIL_WIDTH_PX = 76;
-const PERIOD_ROW_MIN_PX = 54;
+const RAIL_WIDTH_PX = 90;
+const PERIOD_ROW_MIN_PX = 58;
+const EMPTY_PERIOD_ROW_MIN_PX = 30;
 const HEADER_ROW = 1;
 const FIRST_BODY_ROW = 2;
 const FIRST_DAY_COLUMN = 2;
@@ -28,6 +31,7 @@ type LessonTarget = { id: string; dayOfWeek: number } | null;
 
 type GridContext = {
   viewType: WeekViewerType;
+  tints: LessonTints;
   currentDayOfWeek: number | null;
   currentPeriodIndex: number;
   progressPercent: number;
@@ -47,7 +51,9 @@ type WeekGridProps = GridContext & {
 
 function buildRowTemplate(rows: WeekRow[]): string {
   const body = rows.map((row) =>
-    row.kind === "period" ? `minmax(${PERIOD_ROW_MIN_PX}px, auto)` : "auto",
+    row.kind !== "period"
+      ? "auto"
+      : `minmax(${row.isEmpty ? EMPTY_PERIOD_ROW_MIN_PX : PERIOD_ROW_MIN_PX}px, auto)`,
   );
   return ["auto", ...body].join(" ");
 }
@@ -111,7 +117,7 @@ function TodayColumnWash({ column, rowCount }: { column: number; rowCount: numbe
   return (
     <div
       aria-hidden
-      className="pointer-events-none rounded-lg bg-gradient-to-b from-[#0a2620]/[0.06] via-[#0a2620]/[0.03] to-[#0a2620]/[0.015] dark:from-white/[0.06] dark:via-white/[0.03] dark:to-transparent"
+      className="pointer-events-none rounded-lg bg-[#0a2620]/[0.06] ring-1 ring-inset ring-[#0a2620]/12 dark:bg-white/[0.06] dark:ring-white/10"
       style={{ gridColumn: column, gridRow: `${HEADER_ROW} / ${rowCount + FIRST_BODY_ROW}` }}
     />
   );
@@ -140,6 +146,7 @@ function PeriodRow({
           startTime={row.slot.startTime}
           endTime={row.slot.endTime}
           isCurrent={isCurrentPeriod}
+          isEmpty={row.isEmpty}
         />
       </div>
       {row.cells.map((cell, index) => (
@@ -202,10 +209,14 @@ function LessonSlot({
     isNext: context.nextLesson?.id === lesson.id && context.nextLesson.dayOfWeek === dayOfWeek,
   });
 
+  const text = describeLessonCard(lesson, context.viewType, context.tints.mode, context.tints.showSubject);
+
   return (
     <WeekLessonCard
-      lesson={lesson}
-      viewType={context.viewType}
+      title={text.title}
+      detail={text.detail}
+      room={lesson.room}
+      accent={context.tints.accentFor(lesson)}
       state={state}
       isDoubleBlock={rowSpan > 1}
       progressPercent={context.progressPercent}
@@ -216,9 +227,8 @@ function LessonSlot({
 
 function FreeSlot() {
   return (
-    <div className="group/free relative flex h-full min-h-[46px] items-center justify-center rounded-md transition-colors hover:bg-[#1a4d42]/[0.03] dark:hover:bg-white/[0.02]">
-      <span className="h-1 w-1 rounded-full bg-[#1a4d42]/15 transition-opacity group-hover/free:opacity-0 dark:bg-white/15" aria-hidden />
-      <span className="absolute text-[9.5px] font-semibold uppercase tracking-[0.2em] text-[#1a4d42]/30 opacity-0 transition-opacity group-hover/free:opacity-100 dark:text-white/25">
+    <div className="group/free flex h-full min-h-[24px] items-center justify-center rounded-md transition-colors hover:bg-[#1a4d42]/[0.04] dark:hover:bg-white/[0.03]">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/80 opacity-0 transition-opacity group-hover/free:opacity-100 dark:text-white/55">
         Free
       </span>
     </div>

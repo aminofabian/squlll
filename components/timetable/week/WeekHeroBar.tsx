@@ -34,34 +34,36 @@ export function WeekHeroBar({
     <header className="relative isolate flex items-center gap-6 overflow-hidden rounded-xl bg-[#0a2620] px-5 py-3 text-white">
       <div aria-hidden className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(196,154,82,0.25),transparent_62%)]" />
       <div className="relative min-w-0 flex-1">
-        <p className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.26em] text-[#d9c49a]">
+        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e5cf9f]">
           <span className="h-1 w-1 rotate-45 bg-[#d9c49a]" aria-hidden />
           {eyebrow}
         </p>
         <h1 className="mt-0.5 truncate font-display text-[24px] leading-tight tracking-[-0.03em] text-[#fbf8ef]">
           {greeting}
           <span className="text-[#d9c49a]">.</span>
-          <span className="ml-3 align-middle font-sans text-[11.5px] tracking-normal text-white/45">{subtitle}</span>
+          <span className="ml-3 align-middle font-sans text-[12.5px] tracking-normal text-white/70">{subtitle}</span>
         </h1>
       </div>
       <dl className="relative hidden items-center divide-x divide-white/10 xl:flex">
         {metrics.map((metric) => (
           <div key={metric.label} className="px-4 leading-tight">
-            <dt className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/40">{metric.label}</dt>
+            <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">{metric.label}</dt>
             <dd className="mt-0.5 font-display text-[20px] tracking-[-0.02em] text-[#fbf8ef]">{metric.value}</dd>
           </div>
         ))}
       </dl>
-      <div className="relative flex items-center gap-2.5 border-l border-white/10 pl-5">
-        <WeekProgressRing percent={completedPercent} />
-        <div className="leading-tight">
-          <p className="font-display text-[17px] text-[#fbf8ef]">
-            {completedLessons}
-            <span className="text-white/35">/{totalLessons}</span>
-          </p>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/40">{completedLabel}</p>
+      {completedLessons > 0 ? (
+        <div className="relative flex items-center gap-2.5 border-l border-white/10 pl-5">
+          <WeekProgressRing percent={completedPercent} />
+          <div className="leading-tight">
+            <p className="font-display text-[18px] text-[#fbf8ef]">
+              {completedLessons}
+              <span className="text-white/60">/{totalLessons}</span>
+            </p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">{completedLabel}</p>
+          </div>
         </div>
-      </div>
+      ) : null}
       {actions ? <div className="relative flex items-center gap-2">{actions}</div> : null}
     </header>
   );

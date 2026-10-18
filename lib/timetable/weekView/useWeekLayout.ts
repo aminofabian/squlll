@@ -8,6 +8,8 @@ import { getWeekDayDates } from "./getWeekDayDates";
 import { formatWeekRangeLabel } from "./formatWeekRangeLabel";
 import { summarizeWeekSchedule } from "./summarizeWeekSchedule";
 import { countLessonsPerDay } from "./countLessonsPerDay";
+import { buildLessonTints } from "./buildLessonTints";
+import type { WeekViewerType } from "./weekViewerType";
 
 const SCHOOL_WEEKDAYS = [1, 2, 3, 4, 5] as const;
 
@@ -15,6 +17,7 @@ const SCHOOL_WEEKDAYS = [1, 2, 3, 4, 5] as const;
 export function useWeekLayout(
   timetable: CompleteTimetable | null,
   timeSlots: TimetableSlot[],
+  viewType: WeekViewerType,
 ) {
   return useMemo(() => {
     const dayDates = getWeekDayDates(getWeekStartDate(), SCHOOL_WEEKDAYS);
@@ -33,6 +36,8 @@ export function useWeekLayout(
       ? summarizeWeekSchedule(timetable.days, timeSlots)
       : null;
 
-    return { rows, dayDates, weekRangeLabel, lessonCounts, summary };
-  }, [timetable, timeSlots]);
+    const tints = buildLessonTints(timetable?.days ?? [], viewType);
+
+    return { rows, dayDates, weekRangeLabel, lessonCounts, summary, tints };
+  }, [timetable, timeSlots, viewType]);
 }

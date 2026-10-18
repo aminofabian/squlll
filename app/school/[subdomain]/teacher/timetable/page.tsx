@@ -185,6 +185,7 @@ const TeacherTimetable = () => {
   const weekLayout = useWeekLayout(
     unifiedTimetable,
     core.sortedTimeSlots,
+    "teacher",
   );
   const stats = unifiedTimetable?.stats as TimetableStats | undefined;
   const isWeekend = core.currentDayOfWeek === null;
@@ -247,7 +248,7 @@ const TeacherTimetable = () => {
       <p className="mt-4 font-display text-[20px] text-[#0a1f1a] dark:text-white">
         No lessons for {selectedTerm?.name || "this term"}
       </p>
-      <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-[#1a4d42]/50 dark:text-white/40">
+      <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-[#1a4d42]/80 dark:text-white/65">
         Ask your administrator to add you to the school timetable, or check that
         the correct term is selected.
       </p>
@@ -258,6 +259,7 @@ const TeacherTimetable = () => {
     unifiedTimetable && !hasNoLessons ? (
       <WeekGrid
         viewType="teacher"
+        tints={weekLayout.tints}
         rows={weekLayout.rows}
         dayDates={weekLayout.dayDates}
         lessonCounts={weekLayout.lessonCounts}
@@ -390,10 +392,6 @@ const TeacherTimetable = () => {
             }
             subtitle={`${core.formattedDate} · Week of ${weekLayout.weekRangeLabel}`}
             metrics={[
-              {
-                label: "Today",
-                value: isWeekend ? "—" : String(classesToday ?? 0),
-              },
               { label: "This week", value: String(stats?.totalLessons ?? 0) },
               {
                 label: "Contact",
@@ -423,6 +421,7 @@ const TeacherTimetable = () => {
           <div className="grid grid-cols-[minmax(0,260px)_1fr] items-start gap-3 xl:grid-cols-[minmax(0,280px)_1fr]">
             <WeekSidebar
               viewType="teacher"
+              tints={weekLayout.tints}
               nextLesson={core.nextLesson}
               currentStatus={core.currentStatus}
               formattedTime={core.formattedTime}

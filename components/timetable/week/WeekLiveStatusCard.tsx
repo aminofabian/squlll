@@ -37,7 +37,7 @@ export function WeekLiveStatusCard({ status, formattedTime, viewType }: WeekLive
           {isLive ? <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" /> : null}
           <span className={cn("relative inline-flex h-2 w-2 rounded-full", TONE_DOT[description.tone])} />
         </span>
-        <span className="text-[9.5px] font-semibold uppercase tracking-[0.24em] text-[#1a4d42]/55 dark:text-white/45">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1a4d42]/85 dark:text-white/70">
           {description.eyebrow}
         </span>
         <span className="ml-auto text-[11px] font-semibold tabular-nums text-[#0a1f1a]/70 dark:text-white/60">
@@ -48,7 +48,7 @@ export function WeekLiveStatusCard({ status, formattedTime, viewType }: WeekLive
         {description.headline}
       </p>
       {description.detail ? (
-        <p className="mt-0.5 truncate text-[11px] leading-snug text-[#1a4d42]/55 dark:text-white/45">{description.detail}</p>
+        <p className="mt-0.5 truncate text-[11.5px] leading-snug text-[#1a4d42]/80 dark:text-white/65">{description.detail}</p>
       ) : null}
       {description.showProgress ? (
         <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-[#1a4d42]/8 dark:bg-white/10">

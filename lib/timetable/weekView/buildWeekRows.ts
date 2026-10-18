@@ -26,6 +26,8 @@ export type WeekPeriodRow = {
   slot: TimetableSlot;
   slotIndex: number;
   cells: WeekCell[];
+  /** No lesson on any day in this period. */
+  isEmpty: boolean;
 };
 
 export type WeekBreakRow = {
@@ -158,7 +160,8 @@ export function buildWeekRows({
     const cells = dayNumbers.map((dayOfWeek) =>
       buildCell(dayMap.get(dayOfWeek), dayOfWeek, slotIndex, !breakRow, covered),
     );
-    rows.push({ kind: "period", key: slot.id, slot, slotIndex, cells });
+    const isEmpty = cells.every((cell) => cell.kind === "free");
+    rows.push({ kind: "period", key: slot.id, slot, slotIndex, cells, isEmpty });
     if (breakRow) rows.push(breakRow);
   });
 

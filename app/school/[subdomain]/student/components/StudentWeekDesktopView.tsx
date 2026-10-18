@@ -38,11 +38,9 @@ export function StudentWeekDesktopView({
   onRefresh,
   onLessonClick,
 }: StudentWeekDesktopViewProps) {
-  const layout = useWeekLayout(timetable, core.sortedTimeSlots);
+  const layout = useWeekLayout(timetable, core.sortedTimeSlots, "student");
   const stats = timetable?.stats as TimetableStats | undefined;
   const totalLessons = stats?.totalLessons ?? 0;
-  const lessonsToday =
-    core.currentDayOfWeek == null ? null : (layout.lessonCounts[core.currentDayOfWeek] ?? 0);
 
   return (
     <div className="flex flex-col gap-3">
@@ -51,7 +49,6 @@ export function StudentWeekDesktopView({
         greeting={getGreeting(core.currentTime.getHours(), studentName)}
         subtitle={`${core.formattedDate} · Week of ${layout.weekRangeLabel}`}
         metrics={[
-          { label: "Today", value: lessonsToday == null ? "—" : String(lessonsToday) },
           { label: "This week", value: String(totalLessons) },
           { label: "In class", value: layout.summary?.contactTimeLabel ?? "—" },
           { label: "Subjects", value: String(stats?.totalSubjects ?? 0) },
@@ -69,6 +66,7 @@ export function StudentWeekDesktopView({
       <div className="grid grid-cols-[minmax(0,260px)_1fr] items-start gap-3 xl:grid-cols-[minmax(0,280px)_1fr]">
         <WeekSidebar
           viewType="student"
+          tints={layout.tints}
           nextLesson={core.nextLesson}
           currentStatus={core.currentStatus}
           formattedTime={core.formattedTime}
@@ -81,6 +79,7 @@ export function StudentWeekDesktopView({
           {timetable && totalLessons > 0 ? (
             <WeekGrid
               viewType="student"
+              tints={layout.tints}
               rows={layout.rows}
               dayDates={layout.dayDates}
               lessonCounts={layout.lessonCounts}

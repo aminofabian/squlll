@@ -20,7 +20,7 @@ export function WeekSubjectMixCard({ subjectDistribution }: WeekSubjectMixCardPr
 
   return (
     <section className="rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
-      <p className="text-[9.5px] font-semibold uppercase tracking-[0.24em] text-[#1a4d42]/45 dark:text-white/40">Subject mix</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1a4d42]/85 dark:text-white/70">Subject mix</p>
       <ul className="mt-2 space-y-1.5">
         {subjects.map(([name, count]) => {
           const accent = getSubjectPaletteColor(name).accent;
@@ -29,7 +29,7 @@ export function WeekSubjectMixCard({ subjectDistribution }: WeekSubjectMixCardPr
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: accent }} aria-hidden />
                 <span className="min-w-0 flex-1 truncate font-medium text-[#0a1f1a] dark:text-white/85">{name}</span>
-                <span className="tabular-nums text-[#1a4d42]/50 dark:text-white/40">{count}</span>
+                <span className="tabular-nums text-[#1a4d42]/80 dark:text-white/65">{count}</span>
               </div>
               <div className="ml-4 mt-1 h-[2px] overflow-hidden rounded-full bg-[#1a4d42]/[0.06] dark:bg-white/[0.06]">
                 <div className="h-full rounded-full" style={{ width: `${(count / busiest) * PERCENT}%`, backgroundColor: accent }} />

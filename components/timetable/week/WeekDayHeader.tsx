@@ -28,19 +28,19 @@ export function WeekDayHeader({
     >
       <span
         className={cn(
-          "text-[9.5px] font-semibold uppercase tracking-[0.2em]",
-          isToday ? "text-[#d9c49a]" : "text-[#1a4d42]/45 dark:text-white/40",
+          "text-[11px] font-semibold uppercase tracking-[0.16em]",
+          isToday ? "text-[#f0dfb8]" : "text-[#1a4d42]/80 dark:text-white/65",
         )}
       >
         {DAY_SHORT_NAMES[date.dayOfWeek]}
       </span>
-      <span className="font-display text-[19px] leading-none tracking-[-0.03em]">
+      <span className="font-display text-[20px] leading-none tracking-[-0.03em]">
         {date.dayOfMonth}
       </span>
       <span
         className={cn(
-          "truncate text-[9.5px] font-medium",
-          isToday ? "text-white/55" : "text-[#1a4d42]/40 dark:text-white/35",
+          "truncate text-[11px] font-medium",
+          isToday ? "text-white/75" : "text-[#1a4d42]/75 dark:text-white/60",
         )}
       >
         · {lessonCountLabel(lessonCount)}

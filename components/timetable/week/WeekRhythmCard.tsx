@@ -23,9 +23,9 @@ export function WeekRhythmCard({ dayDates, lessonCounts, currentDayOfWeek }: Wee
   return (
     <section className="rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
       <div className="flex items-baseline justify-between">
-        <p className="text-[9.5px] font-semibold uppercase tracking-[0.24em] text-[#1a4d42]/45 dark:text-white/40">Week rhythm</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1a4d42]/85 dark:text-white/70">Week rhythm</p>
         {busiestDay ? (
-          <p className="text-[10.5px] text-[#1a4d42]/50 dark:text-white/40">
+          <p className="text-[11px] text-[#1a4d42]/80 dark:text-white/65">
             Busiest: <span className="font-semibold text-[#0a1f1a] dark:text-white">{DAY_NAMES[busiestDay.dayOfWeek]}</span>
           </p>
         ) : null}
@@ -60,14 +60,14 @@ function RhythmBar({ initial, count, heightPercent, isToday }: { initial: string
         </div>
         <span
           className={cn(
-            "absolute inset-x-0 top-1 text-center text-[9.5px] font-semibold tabular-nums",
-            isToday && heightPercent > 60 ? "text-white/85" : "text-[#1a4d42]/55 dark:text-white/50",
+            "absolute inset-x-0 top-1 text-center text-[11px] font-semibold tabular-nums",
+            isToday && heightPercent > 60 ? "text-white/85" : "text-[#1a4d42]/85 dark:text-white/70",
           )}
         >
           {count}
         </span>
       </div>
-      <span className={cn("text-[10px] font-semibold", isToday ? "text-[#8a6427] dark:text-[#d9c49a]" : "text-[#1a4d42]/40 dark:text-white/35")}>
+      <span className={cn("text-[11px] font-semibold", isToday ? "text-[#7d5a22] dark:text-[#e5cf9f]" : "text-[#1a4d42]/80 dark:text-white/65")}>
         {initial}
       </span>
     </div>
