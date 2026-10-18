@@ -445,7 +445,7 @@ export function CreateParentDrawer({
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="parent@example.com"
+                        placeholder="parent@squl.co.ke"
                         {...field}
                         className={fieldShell}
                       />

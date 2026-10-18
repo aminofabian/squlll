@@ -96,7 +96,7 @@ export default function SuperAdminSignupPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="admin@squl.co.ke"
                 className="h-11"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

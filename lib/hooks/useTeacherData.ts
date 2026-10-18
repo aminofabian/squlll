@@ -153,7 +153,7 @@ export function useTeacherData() {
             const partialTeacher = {
               id: 'unknown',
               fullName: 'Teacher',
-              email: 'unknown@example.com',
+              email: 'unknown@squl.co.ke',
               tenantSubjects: [],
               tenantGradeLevels: [],
               tenantStreams: [],
@@ -252,7 +252,7 @@ export function useTeacherData() {
                 const partialTeacher = {
                   id: 'unknown',
                   fullName: 'Teacher',
-                  email: 'unknown@example.com',
+                  email: 'unknown@squl.co.ke',
                   tenantSubjects: [],
                   tenantGradeLevels: [],
                   tenantStreams: [],

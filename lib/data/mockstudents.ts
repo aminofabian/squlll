@@ -83,7 +83,7 @@ export const students: Student[] = [
       contacts: {
         primaryGuardian: "James Kamau",
         guardianPhone: "+254722123456",
-        guardianEmail: "james.kamau@example.com",
+        guardianEmail: "james.kamau@squl.co.ke",
         homeAddress: "456 Moi Avenue, Nairobi"
       },
       academicDetails: {
@@ -181,7 +181,7 @@ export const students: Student[] = [
       contacts: {
         primaryGuardian: "Hassan Mohamed",
         guardianPhone: "+254711789012",
-        guardianEmail: "hassan.mohamed@example.com"
+        guardianEmail: "hassan.mohamed@squl.co.ke"
       },
       academicDetails: {
         averageGrade: "A",
@@ -262,7 +262,7 @@ export const students: Student[] = [
       contacts: {
         primaryGuardian: "Peter Njeri",
         guardianPhone: "+254722987123",
-        guardianEmail: "peter.njeri@example.com",
+        guardianEmail: "peter.njeri@squl.co.ke",
         homeAddress: "789 Tom Mboya Street, Nakuru"
       },
       academicDetails: {

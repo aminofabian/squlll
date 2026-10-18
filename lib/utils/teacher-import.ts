@@ -46,7 +46,7 @@ export const TEACHER_IMPORT_COLUMNS: TeacherColumnMeta[] = [
     label: "Email",
     required: true,
     aliases: ["e_mail", "email_address", "work_email"],
-    example: "grace@example.com",
+    example: "grace@squl.co.ke",
     help: "Where we send the invitation to set up their account.",
   },
   {
@@ -233,8 +233,8 @@ export function buildTeacherInviteRequest(
 export function csvTeacherTemplate(): string {
   const header = TEACHER_IMPORT_COLUMNS.map((c) => c.key).join(",")
   const rows = [
-    "Grace Mwangi,grace@example.com,+254712345678,Mathematics,female",
-    "Peter Kamau,peter@example.com,+254701234567,,male",
+    "Grace Mwangi,grace@squl.co.ke,+254712345678,Mathematics,female",
+    "Peter Kamau,peter@squl.co.ke,+254701234567,,male",
   ]
   return [header, ...rows].join("\n")
 }
@@ -244,14 +244,14 @@ export function jsonTeacherTemplate(): string {
     [
       {
         name: "Grace Mwangi",
-        email: "grace@example.com",
+        email: "grace@squl.co.ke",
         phone: "+254712345678",
         department: "Mathematics",
         gender: "female",
       },
       {
         name: "Peter Kamau",
-        email: "peter@example.com",
+        email: "peter@squl.co.ke",
         phone: "+254701234567",
       },
     ],

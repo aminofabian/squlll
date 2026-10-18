@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, ChevronLeft, ChevronRight, GraduationCap, User } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, GraduationCap, Pencil, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { studentsEnrollLinkLg, studentsPanel, studentsTh } from "./students-ui";
 
@@ -12,6 +12,7 @@ export interface StudentRow {
   id: string;
   name: string;
   admissionNumber: string;
+  email?: string | null;
   grade: string;
   gradeId?: string;
   stream: string;
@@ -26,6 +27,7 @@ interface StudentsTableProps {
   isLoading?: boolean;
   onStudentClick?: (studentId: string) => void;
   onAssignClass?: (student: StudentRow) => void;
+  onEditIdentity?: (student: StudentRow) => void;
   title?: string;
   description?: string;
   hideGradeColumn?: boolean;
@@ -47,6 +49,7 @@ export function StudentsTable({
   isLoading,
   onStudentClick,
   onAssignClass,
+  onEditIdentity,
   title = "All students",
   description,
   hideGradeColumn = false,
@@ -158,6 +161,11 @@ export function StudentsTable({
                       <p className="truncate font-medium text-slate-800 dark:text-slate-100">
                         {student.name}
                       </p>
+                      {student.email ? (
+                        <p className="mt-0.5 max-w-[15rem] truncate text-[10.5px] text-slate-400 dark:text-slate-500">
+                          {student.email}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="hidden px-4 py-3 text-xs text-slate-500 sm:table-cell">
                       {student.admissionNumber}
@@ -207,7 +215,25 @@ export function StudentsTable({
                       </td>
                     ) : null}
                     <td className="px-2 py-3">
-                      <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
+                      <div className="flex items-center justify-end gap-1">
+                        {onEditIdentity ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 rounded-md p-0 text-slate-400 opacity-70 transition-opacity hover:bg-slate-100 hover:text-[#246a59] group-hover:opacity-100 dark:hover:bg-slate-800"
+                            aria-label={`Edit admission number and email for ${student.name}`}
+                            title="Edit admission number & email"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onEditIdentity(student);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        ) : null}
+                        <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
+                      </div>
                     </td>
                   </tr>
                 ))}

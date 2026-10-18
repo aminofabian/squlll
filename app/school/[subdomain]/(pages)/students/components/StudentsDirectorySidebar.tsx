@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, User, X } from "lucide-react";
+import { Pencil, Search, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StudentRow } from "./StudentsTable";
 import {
@@ -18,6 +18,7 @@ interface StudentsDirectorySidebarProps {
   onSearchChange: (term: string) => void;
   selectedStudentId: string | null;
   onStudentSelect: (studentId: string) => void;
+  onEditIdentity?: (student: StudentRow) => void;
   isLoading?: boolean;
 }
 
@@ -54,6 +55,7 @@ export function StudentsDirectorySidebar({
   onSearchChange,
   selectedStudentId,
   onStudentSelect,
+  onEditIdentity,
   isLoading = false,
 }: StudentsDirectorySidebarProps) {
   const filtered = useMemo(() => {
@@ -126,46 +128,63 @@ export function StudentsDirectorySidebar({
           filtered.map((student) => {
             const isSelected = student.id === selectedStudentId;
             return (
-              <button
-                key={student.id}
-                type="button"
-                onClick={() => onStudentSelect(student.id)}
-                className={studentsSidebarItem(
-                  isSelected,
-                  student.missingStream,
-                )}
-              >
-                <div className="flex items-center gap-2.5">
-                  <StudentInitials
-                    name={student.name}
-                    selected={isSelected}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white">
-                        {student.name}
-                      </span>
-                      <span
-                        className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-none",
-                          student.status === "active"
-                            ? "bg-[#246a59]"
-                            : "bg-amber-500",
-                        )}
-                        aria-label={
-                          student.status === "active" ? "Active" : "Inactive"
-                        }
-                      />
+              <div key={student.id} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => onStudentSelect(student.id)}
+                  className={studentsSidebarItem(
+                    isSelected,
+                    student.missingStream,
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <StudentInitials
+                      name={student.name}
+                      selected={isSelected}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white">
+                          {student.name}
+                        </span>
+                        <span
+                          className={cn(
+                            "h-1.5 w-1.5 shrink-0 rounded-none",
+                            student.status === "active"
+                              ? "bg-[#246a59]"
+                              : "bg-amber-500",
+                          )}
+                          aria-label={
+                            student.status === "active" ? "Active" : "Inactive"
+                          }
+                        />
+                      </div>
+                      <p className="truncate text-[11px] text-[#1a4d42]/45">
+                        {student.grade}
+                        {student.admissionNumber
+                          ? ` · ${student.admissionNumber}`
+                          : ""}
+                      </p>
+                      {student.email ? (
+                        <p className="mt-0.5 truncate text-[10px] text-[#1a4d42]/35 dark:text-white/25">
+                          {student.email}
+                        </p>
+                      ) : null}
                     </div>
-                    <p className="truncate text-[11px] text-[#1a4d42]/45">
-                      {student.grade}
-                      {student.admissionNumber
-                        ? ` · ${student.admissionNumber}`
-                        : ""}
-                    </p>
                   </div>
-                </div>
-              </button>
+                </button>
+                {onEditIdentity ? (
+                  <button
+                    type="button"
+                    onClick={() => onEditIdentity(student)}
+                    className="absolute right-1.5 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-[#f8fbfa]/95 text-[#1a4d42]/35 shadow-sm transition-opacity hover:text-[#246a59] focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 dark:bg-[#0c1a17]/95 dark:text-white/30"
+                    aria-label={`Edit admission number and email for ${student.name}`}
+                    title="Edit admission number & email"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                ) : null}
+              </div>
             );
           })
         )}

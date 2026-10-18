@@ -105,7 +105,7 @@ export const IMPORT_COLUMNS: ImportColumnMeta[] = [
     label: "Email",
     required: false,
     aliases: ["student_email", "portal_email", "email_address"],
-    example: "jane@example.com",
+    example: "jane@squl.co.ke",
     help: "Portal login. We generate one from the name when blank.",
   },
 ]
@@ -351,7 +351,7 @@ export function csvTemplate(): string {
   const header = IMPORT_COLUMNS.map((c) => c.key).join(",")
   const rows = [
     "Jane Wanjiku,Grade 4,A,,female,+254712345678,",
-    "Brian Otieno,Grade 4,B,KPS/2026/001,male,+254701234567,brian@example.com",
+    "Brian Otieno,Grade 4,B,KPS/2026/001,male,+254701234567,brian@squl.co.ke",
     "Amina Yusuf,Grade 5,,,female,,",
   ]
   return [header, ...rows].join("\n")
@@ -374,7 +374,7 @@ export function jsonTemplate(): string {
         admission_number: "KPS/2026/001",
         gender: "male",
         phone: "+254701234567",
-        email: "brian@example.com",
+        email: "brian@squl.co.ke",
       },
     ],
     null,

@@ -20,6 +20,10 @@ import {
 } from "./components/StudentsRecentlyEnrolled";
 import { StudentsTable, type StudentRow } from "./components/StudentsTable";
 import { AssignGradeStreamDialog } from "./components/AssignGradeStreamDialog";
+import {
+  EditStudentIdentityDialog,
+  type StudentIdentityTarget,
+} from "./components/EditStudentIdentityDialog";
 import { StudentsDirectorySidebar } from "./components/StudentsDirectorySidebar";
 import { StudentsFilterBar } from "./components/StudentsFilterBar";
 import { StudentsBulkActions } from "./components/StudentsBulkActions";
@@ -106,6 +110,7 @@ function mapGraphQLStudent(
     id: student.id,
     name,
     admissionNumber: student.admission_number,
+    email: student.user?.email,
     grade: formatGradeDisplayName(gradeName),
     gradeId,
     stream: missingStream ? "Not assigned" : resolvedStream,
@@ -138,6 +143,8 @@ export default function StudentsPage() {
   const [gradeIdFilter, setGradeIdFilter] = useState<string | null>(null);
   const [streamIdFilter, setStreamIdFilter] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<StudentRow | null>(null);
+  const [identityTarget, setIdentityTarget] =
+    useState<StudentIdentityTarget | null>(null);
 
   const {
     students: graphqlStudents,
@@ -504,6 +511,14 @@ export default function StudentsPage() {
               onSearchChange={setSearchTerm}
               selectedStudentId={selectedStudentId}
               onStudentSelect={selectStudent}
+              onEditIdentity={(student) =>
+                setIdentityTarget({
+                  id: student.id,
+                  name: student.name,
+                  admissionNumber: student.admissionNumber,
+                  email: student.email,
+                })
+              }
               isLoading={pageLoading}
             />
           </div>
@@ -732,6 +747,14 @@ export default function StudentsPage() {
                   isLoading={pageLoading}
                   onStudentClick={selectStudent}
                   onAssignClass={setAssignTarget}
+                  onEditIdentity={(student) =>
+                    setIdentityTarget({
+                      id: student.id,
+                      name: student.name,
+                      admissionNumber: student.admissionNumber,
+                      email: student.email,
+                    })
+                  }
                   title={
                     gradeFilter !== "all" || studentFilter !== "all"
                       ? "Filtered roster"
@@ -764,6 +787,16 @@ export default function StudentsPage() {
           onSuccess={() => refetch()}
         />
       ) : null}
+      <EditStudentIdentityDialog
+        student={identityTarget}
+        open={Boolean(identityTarget)}
+        onOpenChange={(open) => {
+          if (!open) setIdentityTarget(null);
+        }}
+        onSaved={() => {
+          void refetch();
+        }}
+      />
     </div>
   );
 }

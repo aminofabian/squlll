@@ -498,7 +498,7 @@ export function CreateStudentDrawer({
                         <FormItem className="space-y-1">
                           <FormControl>
                             <Input
-                              placeholder="custom@example.com"
+                              placeholder="custom@squl.co.ke"
                               {...field}
                               className={fieldShell}
                             />
