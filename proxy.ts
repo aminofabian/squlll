@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { resolveHostViaBackend } from '@/lib/host-resolution'
 import { cookieHasRole, parseRoleCookieValues, SUPER_ADMIN_ROLE } from '@/lib/auth/role-cookie'
+import { resolveCookieDomain } from '@/lib/auth/cookie-domain'
 import {
   canAccessAdminShell,
   getPostLoginPath,
@@ -23,6 +24,28 @@ function roleFromAccessToken(token: string | undefined): string | undefined {
   } catch {
     return undefined
   }
+}
+
+function claimsFromAccessToken(
+  token: string | undefined,
+): { sub?: string; email?: string; globalRole?: string } {
+  if (!token) return {}
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return {}
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(base64)) as {
+      sub?: string
+      email?: string
+      globalRole?: string
+    }
+  } catch {
+    return {}
+  }
+}
+
+function isSuperAdminToken(token: string | undefined): boolean {
+  return claimsFromAccessToken(token).globalRole === 'SUPER_ADMIN'
 }
 
 /** Top-level segments that belong to the admin (pages) shell. */
@@ -89,6 +112,55 @@ export async function proxy(request: NextRequest) {
     !host.startsWith('www.') &&
     host !== apexDomain
   const isWWW = host.startsWith('www.')
+
+  // A tenant impersonation replaces the shared `accessToken` cookie with a
+  // SCHOOL_ADMIN token. Keep the platform token separately and restore it when
+  // the super admin returns to the apex dashboard, otherwise they are bounced
+  // to the super-admin login screen even though their session is still valid.
+  if (!isSubdomain && url.pathname.startsWith('/dashboard')) {
+    const accessToken = request.cookies.get('accessToken')?.value
+    const platformToken = request.cookies.get('platformAccessToken')?.value
+    if (
+      platformToken &&
+      isSuperAdminToken(platformToken) &&
+      !isSuperAdminToken(accessToken)
+    ) {
+      const claims = claimsFromAccessToken(platformToken)
+      const domain = resolveCookieDomain(host)
+      const secure = isProd
+      const sameSite = domain ? ('none' as const) : ('lax' as const)
+      const restoreUrl = new URL(url.pathname + url.search, request.url)
+      const response = NextResponse.redirect(restoreUrl)
+      const cookieOptions = {
+        path: '/',
+        domain,
+        secure,
+        sameSite,
+        maxAge: 60 * 60 * 8,
+      }
+      response.cookies.set('accessToken', platformToken, {
+        ...cookieOptions,
+        httpOnly: true,
+      })
+      response.cookies.set('userRole', 'SUPER_ADMIN', {
+        ...cookieOptions,
+        httpOnly: false,
+      })
+      if (claims.sub) {
+        response.cookies.set('userId', claims.sub, {
+          ...cookieOptions,
+          httpOnly: false,
+        })
+      }
+      if (claims.email) {
+        response.cookies.set('email', claims.email, {
+          ...cookieOptions,
+          httpOnly: false,
+        })
+      }
+      return response
+    }
+  }
 
   // Protect super admin dashboard routes on the apex domain only.
   // School subdomains also use /dashboard but rewrite to /school/[subdomain]/dashboard.

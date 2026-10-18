@@ -49,16 +49,30 @@ function publicPortalUrl(raw: unknown): string | null {
   }
 }
 
-function membershipIdFromToken(token: string): string | null {
+interface TokenClaims {
+  membershipId?: string
+  role?: string
+  globalRole?: string
+}
+
+function claimsFromToken(token: string): TokenClaims {
   try {
     const payload = token.split('.')[1]
-    if (!payload) return null
+    if (!payload) return {}
     const json = Buffer.from(payload, 'base64url').toString('utf8')
-    const claims = JSON.parse(json) as { membershipId?: unknown }
-    return typeof claims.membershipId === 'string' ? claims.membershipId : null
+    return JSON.parse(json) as TokenClaims
   } catch {
-    return null
+    return {}
   }
+}
+
+function membershipIdFromToken(token: string): string | null {
+  const claims = claimsFromToken(token)
+  return typeof claims.membershipId === 'string' ? claims.membershipId : null
+}
+
+function isSuperAdminToken(token: string): boolean {
+  return claimsFromToken(token).globalRole === 'SUPER_ADMIN'
 }
 
 export async function POST(request: Request) {
@@ -71,8 +85,27 @@ export async function POST(request: Request) {
 
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('accessToken')?.value
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Not signed in as super admin' }, { status: 401 })
+    const platformToken = cookieStore.get('platformAccessToken')?.value
+
+    // Tenant and platform sessions share the same cookie name across
+    // *.squl.co.ke. After one impersonation the shared `accessToken` becomes a
+    // SCHOOL_ADMIN token, so keep the super-admin token separately and use it
+    // for subsequent "Enter portal" clicks.
+    let superAdminToken: string | null = null
+    if (accessToken && isSuperAdminToken(accessToken)) {
+      superAdminToken = accessToken
+    } else if (platformToken && isSuperAdminToken(platformToken)) {
+      superAdminToken = platformToken
+    }
+
+    if (!superAdminToken) {
+      return NextResponse.json(
+        {
+          error:
+            'Your super-admin session has been replaced by a school session. Sign in to the super-admin dashboard again, then retry.',
+        },
+        { status: 401 },
+      )
     }
 
     const graphqlController = new AbortController()
@@ -83,7 +116,7 @@ export async function POST(request: Request) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${superAdminToken}`,
         },
         body: JSON.stringify({
           query: IMPERSONATE_MUTATION,
@@ -167,6 +200,18 @@ export async function POST(request: Request) {
     }/dashboard`
 
     const maxAge = 60 * 60 * 8 // 8 hours for support sessions
+    clearSessionCookies(cookieStore, { domain, sameSite, secure })
+
+    // Keep the platform identity so returning to the super-admin dashboard and
+    // entering another school still works after the tenant cookie takes over.
+    // Host-scoped: the tenant subdomain must not receive a super-admin token.
+    cookieStore.set('platformAccessToken', superAdminToken, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      path: '/',
+      maxAge,
+    })
 
     cookieStore.set('accessToken', payload.accessToken, {
       httpOnly: true,

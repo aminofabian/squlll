@@ -20,6 +20,7 @@ export type CookieStore = ReadonlyRequestCookies;
 
 const SESSION_COOKIE_NAMES = [
   "accessToken",
+  "platformAccessToken",
   "refreshToken",
   "userId",
   "email",
