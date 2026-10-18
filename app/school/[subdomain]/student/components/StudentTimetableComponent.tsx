@@ -2,9 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  CheckCircle2,
-  Clock,
-  BookOpen,
   Calendar,
   RefreshCw,
   ArrowLeft,
@@ -24,13 +21,9 @@ import {
   type TimetableLesson,
 } from "@/lib/timetable";
 
-import {
-  CurrentLessonBanner,
-  TimetableGrid,
-  NextLessonPreview,
-} from "@/components/timetable";
+import { WeekMobileView } from "@/components/timetable/week/WeekMobileView";
+import { WeekIconButton } from "@/components/timetable/week/WeekIconButton";
 import { StudentTimetableSkeleton } from "./StudentTimetableSkeleton";
-import { StudentMobileSchedule } from "./StudentMobileSchedule";
 import { StudentWeekDesktopView } from "./StudentWeekDesktopView";
 import {
   StudentLessonDetailSheet,
@@ -40,7 +33,6 @@ import {
   EmptyState,
   Section,
   StateMessage,
-  StatTile,
 } from "../_ui";
 
 interface StudentTimetableComponentProps {
@@ -59,11 +51,11 @@ function PageShell({
   return (
     <div
       className={cn(
-        "overflow-x-clip bg-gradient-to-b from-primary/[0.04] via-background to-background lg:bg-none lg:bg-[#eef0eb] dark:lg:bg-[#0a110e]",
+        "overflow-x-clip bg-[#eef0eb] dark:bg-[#0a110e]",
         layout === "page"
           ? cn(
               "mb-0 w-full min-w-0 max-w-full",
-              "min-h-0 max-lg:overflow-hidden lg:min-h-[calc(100dvh-4rem)]",
+              "min-h-[calc(100dvh-4rem)]",
             )
           : "min-h-[60vh] w-full min-w-0 max-w-full",
       )}
@@ -72,7 +64,7 @@ function PageShell({
         className={cn(
           "mx-auto w-full min-w-0 max-w-[1440px]",
           layout === "page"
-            ? "max-lg:overflow-hidden max-lg:p-0 lg:px-5 lg:py-4"
+            ? "max-lg:p-0 lg:px-5 lg:py-4"
             : "px-4 py-4 lg:px-5",
         )}
       >
@@ -205,17 +197,6 @@ const StudentTimetableComponent = ({
     );
   }
 
-  const scheduleGridHeader = (
-    <div className="border-b border-border px-2 py-1.5">
-      <NextLessonPreview
-        nextLesson={core.nextLesson}
-        viewType="student"
-        minimal
-        className="border-0 bg-transparent px-0 py-0 shadow-none"
-      />
-    </div>
-  );
-
   const emptySchedule = (
     <Section padded={false}>
       <EmptyState
@@ -243,51 +224,25 @@ const StudentTimetableComponent = ({
     />
   );
 
-  const scheduleGrid = unifiedTimetable ? (
-    <section
-      className={cn(
-        "w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card",
-        "lg:shadow-sm",
-        "min-h-[320px] lg:min-h-0",
-      )}
-    >
-      {scheduleGridHeader}
-      <TimetableGrid
-        days={unifiedTimetable.days}
-        timeSlots={core.sortedTimeSlots}
-        breaks={unifiedTimetable.breaks}
-        viewType="student"
-        compact
-        className="rounded-none border-0 bg-transparent ring-0 shadow-none"
-        currentDayOfWeek={core.currentDayOfWeek}
-        currentPeriodIndex={core.currentPeriodIndex}
-        completedLessonIds={core.completedLessonIds}
-        nextLessonId={core.nextLesson?.lesson.id ?? null}
-        onLessonClick={handleLessonClick}
-      />
-    </section>
-  ) : (
-    emptySchedule
+  const mobileView = (
+    <WeekMobileView
+      viewType="student"
+      timetable={unifiedTimetable}
+      core={core}
+      personName={student.name}
+      eyebrow={[gradeName, student.streamName, activeTerm?.name].filter(Boolean).join(" · ")}
+      actions={
+        <WeekIconButton
+          icon={RefreshCw}
+          label="Refresh timetable"
+          onClick={() => void refetchTimetable()}
+        />
+      }
+      emptyState={emptySchedule}
+      showEmptyState={(stats?.totalLessons ?? 0) === 0}
+      onLessonClick={handleLessonClick}
+    />
   );
-
-  const statsBlock =
-    stats && stats.totalLessons > 0 ? (
-      <div className="grid grid-cols-2 gap-3">
-        <StatTile
-          icon={Calendar}
-          label="Total lessons"
-          value={stats.totalLessons}
-        />
-        <StatTile
-          icon={CheckCircle2}
-          label="Completed"
-          value={`${stats.completedLessons}/${stats.totalLessons}`}
-          hint={`${stats.completionPercentage}%`}
-        />
-        <StatTile icon={Clock} label="Upcoming" value={stats.upcomingLessons} />
-        <StatTile icon={BookOpen} label="Subjects" value={stats.totalSubjects} />
-      </div>
-    ) : null;
 
   return (
     <PageShell layout={layout}>
@@ -307,75 +262,15 @@ const StudentTimetableComponent = ({
       />
       {isPage ? (
         <>
-          {/* Mobile — timetable fills viewport between header and tab bar */}
-          <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-background lg:hidden">
-            {unifiedTimetable ? (
-              <StudentMobileSchedule
-                days={unifiedTimetable.days}
-                timeSlots={core.sortedTimeSlots}
-                breaks={unifiedTimetable.breaks}
-                currentDayOfWeek={core.currentDayOfWeek}
-                currentPeriodIndex={core.currentPeriodIndex}
-                completedLessonIds={core.completedLessonIds}
-                nextLesson={core.nextLesson}
-                nextLessonLoading={core.isLoading}
-                stats={stats}
-                onRefresh={() => refetchTimetable()}
-                onLessonClick={handleLessonClick}
-              />
-            ) : (
-              scheduleGrid
-            )}
-          </div>
+          <div className="lg:hidden">{mobileView}</div>
 
           <div className="hidden lg:block">{desktopView}</div>
         </>
       ) : (
         <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4 lg:hidden">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              {backButton}
-              <div className="min-w-0 flex-1 lg:max-w-sm">
-                <NextLessonPreview
-                  nextLesson={core.nextLesson}
-                  viewType="student"
-                  minimal
-                  className="lg:hidden"
-                />
-                <p className="hidden truncate text-sm text-muted-foreground lg:block">
-                  {gradeName}
-                  {student?.streamName ? ` · ${student.streamName}` : ""}
-                  {" · "}
-                  {core.formattedDate}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {activeTerm ? (
-                <span className="hidden text-xs text-muted-foreground sm:inline">
-                  {activeTerm.name}
-                </span>
-              ) : null}
-              <Button
-                onClick={() => refetchTimetable()}
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span className="text-xs">Refresh</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-4 lg:hidden">
-            {scheduleGrid}
-            <CurrentLessonBanner
-              status={core.currentStatus}
-              formattedTime={core.formattedTime}
-              viewType="student"
-            />
-            {statsBlock}
+          <div className="-mx-4 -mt-4 lg:hidden">
+            <div className="px-4 pt-3">{backButton}</div>
+            {mobileView}
           </div>
 
           <div className="hidden lg:block">

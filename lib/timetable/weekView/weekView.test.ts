@@ -21,6 +21,10 @@ import { getDisplayWeek } from "./getDisplayWeek";
 import { findBusiestDay } from "./findBusiestDay";
 import { formatTimeRange } from "./formatTimeRange";
 import { describeUpNext } from "./describeUpNext";
+import { buildDayAgenda } from "./buildDayAgenda";
+import { resolveLessonState } from "./resolveLessonState";
+import { buildHeroMetrics } from "./buildHeroMetrics";
+import { isSchoolOpen } from "./isSchoolOpen";
 import { describeLessonCard } from "./describeLessonCard";
 import { describeNextLessonStart } from "./describeNextLessonStart";
 
@@ -364,5 +368,64 @@ describe("describeNextLessonStart", () => {
     expect(describeNextLessonStart(86_400, "11:25 – 12:05", "Tomorrow")).toEqual({
       caption: "Starts", value: "Tomorrow, 11:25", isCountdown: false,
     });
+  });
+});
+
+describe("buildDayAgenda", () => {
+  const FOUR_SLOTS = [...SLOTS, slot(4, "10:20", "11:00")];
+
+  it("collapses free runs and keeps breaks and double periods in order", () => {
+    const first = lesson({ id: "d", isDoublePeriod: true });
+    const second = lesson({ id: "d", isDoublePeriod: true, isDoubleContinuation: true });
+    const rows = buildWeekRows({
+      days: [day(1, [null, null, first, second])],
+      timeSlots: FOUR_SLOTS,
+      breaks: [breakAfter(1)],
+      dayNumbers: [1],
+    });
+    const agenda = buildDayAgenda(rows, 0);
+    expect(agenda.map((item) => item.kind)).toEqual(["free", "break", "free", "lesson"]);
+    expect(agenda[3]).toMatchObject({ rowSpan: 2, startTime: "09:20", endTime: "11:00" });
+  });
+
+  it("merges consecutive free periods into one stretch", () => {
+    const rows = buildWeekRows({ days: [day(1, [null, null, lesson()])], timeSlots: SLOTS, breaks: [], dayNumbers: [1] });
+    expect(buildDayAgenda(rows, 0)[0]).toMatchObject({ kind: "free", startTime: "08:00", endTime: "09:20", periodCount: 2 });
+  });
+});
+
+describe("resolveLessonState", () => {
+  const context = { isUpcomingWeek: false, currentDayOfWeek: 1, currentPeriodIndex: 1, completedLessonIds: ["done"], nextLesson: { id: "n", dayOfWeek: 2 } };
+
+  it("marks a double period current while either half is running", () => {
+    expect(resolveLessonState({ lesson: lesson(), dayOfWeek: 1, slotIndex: 0, rowSpan: 2 }, context)).toBe("current");
+  });
+
+  it("ignores live and completed state when previewing next week", () => {
+    const upcoming = { ...context, isUpcomingWeek: true };
+    expect(resolveLessonState({ lesson: lesson({ id: "done" }), dayOfWeek: 1, slotIndex: 1, rowSpan: 1 }, upcoming)).toBe("scheduled");
+    expect(resolveLessonState({ lesson: lesson({ id: "n" }), dayOfWeek: 2, slotIndex: 0, rowSpan: 1 }, upcoming)).toBe("next");
+  });
+});
+
+describe("buildHeroMetrics", () => {
+  it("shows classes to teachers and subjects to students", () => {
+    const summary = { contactMinutes: 720, contactTimeLabel: "12h", distinctClasses: 3 };
+    expect(buildHeroMetrics("teacher", undefined, summary).map((m) => m.label)).toEqual(["Periods", "Contact time", "Classes"]);
+    expect(buildHeroMetrics("student", undefined, null)).toEqual([
+      { label: "Periods", value: "0" },
+      { label: "In class", value: "—" },
+      { label: "Subjects", value: "0" },
+    ]);
+  });
+});
+
+describe("isSchoolOpen", () => {
+  it("is closed at weekends and outside hours only", () => {
+    const status = (value: CurrentLessonStatus["status"]): CurrentLessonStatus => ({ status: value, message: "", remainingMinutes: 0, progressPercent: 0 });
+    expect(isSchoolOpen(status("lesson"))).toBe(true);
+    expect(isSchoolOpen(status("free"))).toBe(true);
+    expect(isSchoolOpen(status("weekend"))).toBe(false);
+    expect(isSchoolOpen(status("outside"))).toBe(false);
   });
 });

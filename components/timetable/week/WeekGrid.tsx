@@ -7,7 +7,7 @@ import type { WeekBreakRow, WeekCell, WeekPeriodRow, WeekRow } from "@/lib/timet
 import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
 import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 import type { LessonGroups } from "@/lib/timetable/weekView/buildLessonGroups";
-import { getLessonCardState } from "@/lib/timetable/weekView/getLessonCardState";
+import { resolveLessonState } from "@/lib/timetable/weekView/resolveLessonState";
 import { describeLessonCard } from "@/lib/timetable/weekView/describeLessonCard";
 import { formatTimeRange } from "@/lib/timetable/weekView/formatTimeRange";
 import { WeekLessonCard } from "./WeekLessonCard";
@@ -159,14 +159,7 @@ function doublePeriodLabel(context: CellContext, row: WeekPeriodRow, rowSpan: nu
 
 function LessonSlot({ cell, row, context }: { cell: Extract<WeekCell, { kind: "lesson" }>; row: WeekPeriodRow; context: CellContext }) {
   const { lesson, dayOfWeek, rowSpan } = cell;
-  const isLiveWeek = !context.isUpcomingWeek;
-  const coversCurrentPeriod = context.currentPeriodIndex >= row.slotIndex && context.currentPeriodIndex <= row.slotIndex + rowSpan - 1;
-  const state = getLessonCardState({
-    isCancelled: lesson.isCancelled === true,
-    isCurrent: isLiveWeek && context.currentDayOfWeek === dayOfWeek && coversCurrentPeriod,
-    isCompleted: isLiveWeek && context.completedLessonIds.includes(lesson.id),
-    isNext: context.nextLesson?.id === lesson.id && context.nextLesson.dayOfWeek === dayOfWeek,
-  });
+  const state = resolveLessonState({ lesson, dayOfWeek, slotIndex: row.slotIndex, rowSpan }, context);
   const group = context.lessonGroups.groupFor(lesson);
   const text = describeLessonCard(lesson, context.viewType, context.lessonGroups.mode, group);
 

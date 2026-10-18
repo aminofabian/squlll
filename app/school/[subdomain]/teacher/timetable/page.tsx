@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useTeacherTimetable } from "../hooks/useTeacherTimetable";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
-import { BookOpen, Printer } from "lucide-react";
+import { BookOpen, Printer, RefreshCw } from "lucide-react";
 
 import {
   useTimetableCore,
@@ -12,15 +12,15 @@ import {
   transformTeacherTimetableMerged,
   type CompleteTimetable,
   type TimetableLesson,
-  type TimetableStats,
 } from "@/lib/timetable";
 
 import {
   TimetableGrid,
-  TeacherMobileSchedule,
   TimetablePrintStyles,
 } from "@/components/timetable";
 import { WeekDesktopView } from "@/components/timetable/week/WeekDesktopView";
+import { WeekMobileView } from "@/components/timetable/week/WeekMobileView";
+import { WeekIconButton } from "@/components/timetable/week/WeekIconButton";
 import { WeekHeroButton } from "@/components/timetable/week/WeekHeroButton";
 import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
 import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
@@ -182,9 +182,6 @@ const TeacherTimetable = () => {
     },
   });
 
-  const stats = unifiedTimetable?.stats as TimetableStats | undefined;
-  const isWeekend = core.currentDayOfWeek === null;
-
   const hasNoLessons =
     !loading &&
     !error &&
@@ -228,11 +225,6 @@ const TeacherTimetable = () => {
       </div>
     );
   }
-
-  const classesToday =
-    !isWeekend && stats
-      ? stats.dayDistribution[core.currentDayName] ?? 0
-      : null;
 
   const emptyLessons = (
     <div className="rounded-xl border border-[#e3e7e1] bg-white px-6 py-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
@@ -284,83 +276,36 @@ const TeacherTimetable = () => {
         onCreated={() => void refetch()}
       />
       <div
-        className="min-h-screen overflow-x-hidden bg-[#f4f1e9] lg:bg-[#eef0eb] dark:bg-[#071411] lg:dark:bg-[#0a110e]"
+        className="min-h-screen overflow-x-hidden bg-[#eef0eb] dark:bg-[#0a110e]"
         data-timetable-no-print
       >
-      <div className="mx-auto w-full max-w-[1440px] max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5">
-        {/* Mobile — full-bleed between header and tab bar */}
-        <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
-          {hasNoLessons ? (
-            <div className="flex min-h-[50dvh] items-center justify-center px-4">
-              {emptyLessons}
-            </div>
-          ) : unifiedTimetable ? (
-            <>
-              <div className="relative shrink-0 overflow-hidden bg-[#0a2620] px-4 pb-4 pt-3.5 text-white">
-                <div
-                  className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-[radial-gradient(circle_at_center,rgba(196,154,82,0.28),transparent_65%)]"
-                  aria-hidden
+      <div className="mx-auto w-full max-w-[1440px] lg:px-6 lg:py-5">
+        <div className="lg:hidden">
+          <WeekMobileView
+            viewType="teacher"
+            timetable={unifiedTimetable}
+            core={core}
+            personName={graphqlData?.teacherName}
+            eyebrow={
+              selectedTerm?.name
+                ? `Teaching timetable · ${selectedTerm.name}`
+                : "Teaching timetable"
+            }
+            actions={
+              <>
+                <RealtimeLiveIndicator showLabel={false} />
+                <WeekIconButton
+                  icon={RefreshCw}
+                  label="Refresh timetable"
+                  onClick={() => void refetch()}
                 />
-                <div className="relative">
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-[#d9c49a]">
-                    Teaching studio
-                  </p>
-                  <h1 className="mt-1 font-display text-[23px] leading-none tracking-[-0.03em] text-[#fbf8ef]">
-                    My Teaching Timetable
-                  </h1>
-                  <p className="mt-1.5 text-[10px] text-white/55">
-                    {core.formattedDate}
-                    {selectedTerm?.name ? ` · ${selectedTerm.name}` : ""}
-                  </p>
-                  <div className="mt-3 grid grid-cols-3 gap-1.5">
-                    <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2">
-                      <p className="text-[7.5px] font-semibold uppercase tracking-[0.14em] text-white/35">
-                        Today
-                      </p>
-                      <p className="mt-0.5 font-display text-[17px] leading-none">
-                        {isWeekend ? "—" : classesToday ?? 0}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2">
-                      <p className="text-[7.5px] font-semibold uppercase tracking-[0.14em] text-white/35">
-                        This week
-                      </p>
-                      <p className="mt-0.5 font-display text-[17px] leading-none">
-                        {stats?.totalLessons ?? 0}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-[#d9c49a]/20 bg-[#d9c49a]/10 px-2.5 py-2">
-                      <p className="text-[7.5px] font-semibold uppercase tracking-[0.14em] text-[#d9c49a]/70">
-                        Up next
-                      </p>
-                      <p className="mt-0.5 truncate text-[9.5px] font-semibold leading-tight text-[#f4e7c8]">
-                        {core.nextLesson?.lesson.subject.name ?? "—"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="shrink-0 px-3 pt-3">
-                <LessonSwapInbox />
-              </div>
-              <div className="min-h-0 flex-1">
-                <TeacherMobileSchedule
-                  days={unifiedTimetable.days}
-                  timeSlots={core.sortedTimeSlots}
-                  breaks={unifiedTimetable.breaks}
-                  currentDayOfWeek={core.currentDayOfWeek}
-                  currentPeriodIndex={core.currentPeriodIndex}
-                  completedLessonIds={core.completedLessonIds}
-                  nextLesson={core.nextLesson}
-                  stats={stats}
-                  classesToday={classesToday}
-                  isWeekend={isWeekend}
-                  onRefresh={() => refetch()}
-                  onLessonClick={handleLessonClick}
-                />
-              </div>
-            </>
-          ) : null}
+              </>
+            }
+            extra={<LessonSwapInbox />}
+            emptyState={emptyLessons}
+            showEmptyState={hasNoLessons}
+            onLessonClick={handleLessonClick}
+          />
         </div>
 
         {/* Desktop */}

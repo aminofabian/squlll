@@ -1,6 +1,7 @@
 "use client";
 
-import type { CurrentLessonStatus, LessonStatus, NextLessonInfo, TimetableSlot } from "@/lib/timetable/types";
+import type { CurrentLessonStatus, NextLessonInfo, TimetableSlot } from "@/lib/timetable/types";
+import { isSchoolOpen } from "@/lib/timetable/weekView/isSchoolOpen";
 import type { LessonGroups } from "@/lib/timetable/weekView/buildLessonGroups";
 import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
 import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
@@ -9,7 +10,6 @@ import { WeekLiveStatusCard } from "./WeekLiveStatusCard";
 import { WeekPeriodsPerDayCard } from "./WeekPeriodsPerDayCard";
 import { WeekGroupsCard } from "./WeekGroupsCard";
 
-const SCHOOL_CLOSED_STATUSES: LessonStatus[] = ["weekend", "outside"];
 const MIN_GROUPS_TO_FOCUS = 2;
 
 type WeekSidebarProps = {
@@ -29,13 +29,12 @@ type WeekSidebarProps = {
 
 export function WeekSidebar(props: WeekSidebarProps) {
   const { viewType, currentStatus, lessonGroups } = props;
-  const isSchoolOpen = !SCHOOL_CLOSED_STATUSES.includes(currentStatus.status);
   const hasLessons = lessonGroups.groups.length > 0;
 
   return (
     <aside className="sticky top-4 z-0 space-y-3">
       <WeekUpNextCard nextLesson={props.nextLesson} viewType={viewType} lessonGroups={lessonGroups} timeSlots={props.timeSlots} />
-      {isSchoolOpen ? (
+      {isSchoolOpen(currentStatus) ? (
         <WeekLiveStatusCard status={currentStatus} formattedTime={props.formattedTime} viewType={viewType} />
       ) : null}
       {hasLessons ? (

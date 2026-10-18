@@ -2,17 +2,15 @@
 
 import type { ReactNode } from "react";
 import type { CompleteTimetable, TimetableLesson, TimetableStats } from "@/lib/timetable/types";
+import { buildHeroMetrics } from "@/lib/timetable/weekView/buildHeroMetrics";
 import type { UseTimetableCoreResult } from "@/lib/timetable/useTimetableCore";
 import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
-import type { WeekScheduleSummary } from "@/lib/timetable/weekView/summarizeWeekSchedule";
 import { useWeekLayout } from "@/lib/timetable/weekView/useWeekLayout";
 import { useGroupFocus } from "@/lib/timetable/weekView/useGroupFocus";
 import { getGreeting } from "@/lib/timetable/weekView/getGreeting";
-import { WeekHeroBar, type WeekHeroMetric } from "./WeekHeroBar";
+import { WeekHeroBar } from "./WeekHeroBar";
 import { WeekSidebar } from "./WeekSidebar";
 import { WeekGrid } from "./WeekGrid";
-
-const MISSING_VALUE = "—";
 
 type WeekDesktopViewProps = {
   viewType: WeekViewerType;
@@ -25,19 +23,6 @@ type WeekDesktopViewProps = {
   showEmptyState: boolean;
   onLessonClick: (lesson: TimetableLesson, dayOfWeek: number, periodNumber: number) => void;
 };
-
-function buildHeroMetrics(
-  viewType: WeekViewerType,
-  stats: TimetableStats | undefined,
-  summary: WeekScheduleSummary | null,
-): WeekHeroMetric[] {
-  const periods = { label: "Periods", value: String(stats?.totalLessons ?? 0) };
-  const time = summary?.contactTimeLabel ?? MISSING_VALUE;
-  if (viewType === "student") {
-    return [periods, { label: "In class", value: time }, { label: "Subjects", value: String(stats?.totalSubjects ?? 0) }];
-  }
-  return [periods, { label: "Contact time", value: time }, { label: "Classes", value: String(summary?.distinctClasses ?? 0) }];
-}
 
 /** Desktop week view shared by the teacher and student timetables: header, sidebar and grid. */
 export function WeekDesktopView({ viewType, timetable, core, personName, eyebrow, actions, emptyState, showEmptyState, onLessonClick }: WeekDesktopViewProps) {

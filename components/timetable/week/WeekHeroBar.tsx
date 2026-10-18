@@ -1,15 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { HeroMetric } from "@/lib/timetable/weekView/buildHeroMetrics";
 import { WEEK_CARD_CLASS } from "./weekCardClass";
-
-export type WeekHeroMetric = { label: string; value: string };
 
 type WeekHeroBarProps = {
   eyebrow: string;
   greeting: string;
   subtitle: string;
-  metrics: WeekHeroMetric[];
+  metrics: HeroMetric[];
   actions?: ReactNode;
 };
 

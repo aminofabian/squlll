@@ -7,7 +7,6 @@
 export { TimetablePrintStyles } from './TimetablePrintStyles';
 export { CurrentLessonBanner } from './CurrentLessonBanner';
 export { TimetableGrid } from './TimetableGrid';
-export { TeacherMobileSchedule } from './TeacherMobileSchedule';
 export { AdminMobileSchedule } from './AdminMobileSchedule';
 export { AdminMobileClassBar } from './AdminMobileClassBar';
 export { TimetableNextLessonBar, TimetableNextLessonBarSkeleton } from './TimetableNextLessonBar';
