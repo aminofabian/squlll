@@ -93,7 +93,7 @@ function Calendar({
         ),
         [SelectionState.range_middle]: merge(
           SelectionState.range_middle,
-          "rounded-none",
+          "rounded-md",
         ),
         [SelectionState.range_end]: merge(SelectionState.range_end, "rounded-r-md"),
       }}

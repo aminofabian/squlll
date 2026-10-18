@@ -66,7 +66,6 @@ import {
   RetryingSpinner,
 } from "./components/TimetableGridError";
 import { TimetablePrintStyles } from "./components/TimetablePrintStyles";
-import { TimetableSurfaceStyles } from "./components/TimetableSurfaceStyles";
 import { TimetableShareDrawer } from "./components/TimetableShareDrawer";
 import { useSubjectCoverageInsights } from "./hooks/useSubjectCoverageInsights";
 import { useTimetableTermOverview } from "./hooks/useTimetableTermOverview";
@@ -2402,7 +2401,6 @@ export default function SmartTimetableNew() {
       className={cn("relative flex min-h-0 flex-1 overflow-hidden", tt.pageBg)}
     >
       <TimetablePrintStyles />
-      <TimetableSurfaceStyles />
       <TimetableExportDialog
         open={classExport.open}
         classLabel={classPrintTitle}
