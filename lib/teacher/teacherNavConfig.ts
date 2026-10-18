@@ -3,14 +3,12 @@ import {
   BookMarked,
   BookOpen,
   CalendarDays,
-  ClipboardCheck,
   ClipboardList,
   GraduationCap,
   Home,
   Layers,
   LayoutDashboard,
   MessageSquare,
-  Settings,
   User,
 } from "lucide-react";
 
@@ -41,7 +39,6 @@ export const TEACHER_PAGE_TITLES: Record<string, string> = {
   "/teacher": "Home",
   "/teacher/timetable": "Timetable",
   "/teacher/assignments": "Assignments",
-  "/teacher/assessments": "Assessments",
   "/teacher/attendance": "Attendance",
   "/teacher/lesson-plans": "Lesson Plans",
   "/teacher/schemes-of-work": "Schemes of Work",
@@ -49,7 +46,6 @@ export const TEACHER_PAGE_TITLES: Record<string, string> = {
   "/teacher/exams": "Exams",
   "/teacher/exams/review": "HOD Review",
   "/teacher/profile": "Profile",
-  "/teacher/settings": "Settings",
 };
 
 export function getTeacherPageTitle(pathname: string): string {
@@ -85,12 +81,6 @@ export const TEACHER_NAV_ITEMS: TeacherNavItem[] = [
     tab: "primary",
   },
   {
-    title: "Assessments",
-    href: "/teacher/assessments",
-    icon: GraduationCap,
-    tab: "more",
-  },
-  {
     title: "Attendance",
     href: "/teacher/attendance",
     icon: ClipboardList,
@@ -115,7 +105,6 @@ export const TEACHER_NAV_ITEMS: TeacherNavItem[] = [
     tab: "more",
   },
   { title: "Profile", href: "/teacher/profile", icon: User, tab: "more" },
-  { title: "Settings", href: "/teacher/settings", icon: Settings, tab: "more" },
 ];
 
 export const TEACHER_PRIMARY_TABS = TEACHER_NAV_ITEMS.filter(

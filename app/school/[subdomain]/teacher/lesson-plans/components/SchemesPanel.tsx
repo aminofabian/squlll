@@ -14,19 +14,14 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
 import {
   saveSchemeOfWork,
   type LessonPlanPeriod,
   type SchemeOfWork,
   type SchemeOfWorkStatus,
 } from '@/lib/lesson-planning/api'
-
-function coverageTone(percent: number) {
-  if (percent >= 80) return 'bg-emerald-500'
-  if (percent >= 40) return 'bg-amber-500'
-  return 'bg-primary'
-}
+import { PlannerEmptyState } from './PlannerEmptyState'
+import { SchemeCard } from './SchemeCard'
 
 export function CreateSchemeDialog({
   open,
@@ -205,12 +200,9 @@ export function SchemesPanel({
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
         {[0, 1].map((index) => (
-          <div
-            key={index}
-            className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
-          />
+          <div key={index} className="h-32 animate-pulse rounded-3xl bg-muted/60" />
         ))}
       </div>
     )
@@ -218,76 +210,28 @@ export function SchemesPanel({
 
   if (schemes.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center">
-        <div className="mx-auto flex size-11 items-center justify-center rounded-full bg-muted">
-          <Sparkles className="size-5 text-muted-foreground" />
-        </div>
-        <h3 className="mt-3 text-sm font-semibold">No scheme of work yet</h3>
-        <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
-          {emptyHint}
-        </p>
-        <Button className="mt-4" size="sm" onClick={onCreate}>
-          <Plus className="size-4" />
-          Create scheme of work
-        </Button>
-      </div>
+      <PlannerEmptyState
+        icon={Sparkles}
+        title="No scheme of work yet"
+        description={emptyHint}
+        action={
+          <Button size="sm" className="rounded-xl" onClick={onCreate}>
+            <Plus className="size-4" />
+            Create scheme of work
+          </Button>
+        }
+      />
     )
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3 md:grid-cols-2">
       {schemes.map((scheme) => (
-        <button
+        <SchemeCard
           key={scheme.id}
-          type="button"
-          onClick={() => router.push(`/teacher/schemes-of-work/${scheme.id}`)}
-          className="rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">
-                {scheme.title || `${scheme.className} ${scheme.subjectName}`}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {scheme.className}
-                {scheme.streamName ? ` ${scheme.streamName}` : ''} ·{' '}
-                {scheme.subjectName} · {scheme.entries.length} topics
-              </p>
-            </div>
-            <span
-              className={cn(
-                'rounded-full border px-2 py-0.5 text-[11px] font-medium',
-                scheme.status === 'ACTIVE'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
-                  : scheme.status === 'ARCHIVED'
-                    ? 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                    : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300',
-              )}
-            >
-              {scheme.status === 'ACTIVE'
-                ? 'Active'
-                : scheme.status === 'ARCHIVED'
-                  ? 'Archived'
-                  : 'Draft'}
-            </span>
-          </div>
-
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>
-                {scheme.deliveredLessons} of {scheme.plannedLessons} lessons
-                delivered
-              </span>
-              <span>{scheme.coveragePercent}%</span>
-            </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn('h-full rounded-full', coverageTone(scheme.coveragePercent))}
-                style={{ width: `${Math.min(100, scheme.coveragePercent)}%` }}
-              />
-            </div>
-          </div>
-        </button>
+          scheme={scheme}
+          onOpen={() => router.push(`/teacher/schemes-of-work/${scheme.id}`)}
+        />
       ))}
     </div>
   )

@@ -11,7 +11,6 @@ import {
   LayoutDashboard, 
   CalendarDays, 
   BookOpen, 
-  GraduationCap,
   ClipboardList,
   BookMarked,
   MessageSquare,
@@ -19,7 +18,6 @@ import {
   ClipboardCheck,
   Layers,
   User,
-  Settings,
   LogOut
 } from "lucide-react"
 import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
@@ -48,11 +46,6 @@ const navigation = [
     title: "Assignments",
     href: "/teacher/assignments",
     icon: BookOpen,
-  },
-  {
-    title: "Assessments",
-    href: "/teacher/assessments",
-    icon: GraduationCap,
   },
   {
     title: "Exams",
@@ -214,26 +207,6 @@ export function Sidebar({ className, logoInstance }: SidebarProps) {
           </Link>
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.05 }}
-        >
-          <Link href="/teacher/settings">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
-                  <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
-                </div>
-                <span className="font-medium">Settings</span>
-              </div>
-            </Button>
-          </Link>
-        </motion.div>
-        
         <motion.div 
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
