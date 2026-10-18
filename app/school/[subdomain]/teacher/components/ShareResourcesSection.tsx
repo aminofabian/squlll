@@ -470,7 +470,7 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
         <button
           onClick={() => setStep('recipients')}
           disabled={selectedResources.length === 0}
-          className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
         >
           Continue ({selectedResources.length} selected)
         </button>
@@ -624,14 +624,14 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
           <button
             onClick={() => setStep('preview')}
             disabled={selectedRecipients.length === 0}
-            className="px-6 py-3 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 bg-primary/10 text-primary rounded-md hover:bg-primary/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
           >
             Preview
           </button>
           <button
             onClick={handleShareResources}
             disabled={selectedRecipients.length === 0 || sharingResources}
-            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             {sharingResources ? (
               <>
@@ -727,7 +727,7 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
         <button
           onClick={handleShareResources}
           disabled={sharingResources}
-          className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {sharingResources ? (
             <>

@@ -29,7 +29,7 @@ import {
   useMpesaCustody,
   type MpesaStkIntent,
 } from "../../fees/hooks/useMpesaCustody";
-import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
+import { useReceiptShareLink } from "@/lib/receipts/useReceiptShareLink";
 
 type Phase = "form" | "waiting" | "success" | "failed";
 
@@ -227,21 +227,7 @@ export function StudentMpesaPromptDialog({
 
   const receiptRef =
     intent?.mpesaReceipt ?? intent?.paymentId ?? intent?.id ?? "";
-  const receiptLink = useMemo(() => {
-    if (!intent || !receiptRef) return "";
-    const query = new URLSearchParams({
-      ref: receiptRef,
-      student: student.studentName,
-      admission: student.admissionNumber,
-      class: `${student.gradeLevelName}${
-        student.streamName ? ` · ${student.streamName}` : ""
-      }`,
-      amount: String(intent.amount),
-      date: intent.createdAt,
-      phone: intent.phone,
-    });
-    return schoolPortalUrl(subdomain, `/receipt?${query.toString()}`);
-  }, [intent, receiptRef, student, subdomain]);
+  const receiptLink = useReceiptShareLink(subdomain, intent?.paymentId);
 
   const receiptText = useMemo(() => {
     if (!intent) return "";
@@ -314,7 +300,7 @@ export function StudentMpesaPromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden rounded-none p-0 sm:max-w-md">
+      <DialogContent className="gap-0 overflow-hidden rounded-lg p-0 sm:max-w-md">
         <DialogHeader className="space-y-1 border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-5 py-4 text-left dark:border-white/10 dark:bg-[#071411]">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center border border-[#246a59]/25 bg-[#e8f2ef] text-[#246a59]">
@@ -555,7 +541,7 @@ export function StudentMpesaPromptDialog({
                     onChange={(event) => setPhone(event.target.value)}
                     inputMode="tel"
                     placeholder="07XX XXX XXX"
-                    className="h-9 rounded-none border-[#1a4d42]/15 bg-white text-sm shadow-none"
+                    className="h-9 rounded-md border-[#1a4d42]/15 bg-white text-sm shadow-none"
                   />
                   <p className="text-[10px] leading-relaxed text-[#1a4d42]/45">
                     Prefilled from the student record. Change it to the parent
@@ -596,7 +582,7 @@ export function StudentMpesaPromptDialog({
                       value={amount}
                       onChange={(event) => setAmountInput(event.target.value)}
                       inputMode="numeric"
-                      className="h-9 rounded-none border-[#1a4d42]/15 bg-white text-sm shadow-none"
+                      className="h-9 rounded-md border-[#1a4d42]/15 bg-white text-sm shadow-none"
                     />
                     <Button
                       type="button"

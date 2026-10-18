@@ -27,7 +27,7 @@ interface TeachersBulkActionsProps {
 }
 
 const actionButtonClass =
-  "h-6 gap-1 rounded-none border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]";
+  "h-6 gap-1 rounded-lg border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]";
 
 export function TeachersBulkActions({
   teachers,
@@ -104,7 +104,7 @@ export function TeachersBulkActions({
               <span className="text-[#1a4d42]/40">({teachers.length})</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="rounded-none">
+          <DropdownMenuContent align="end" className="rounded-lg">
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-slate-400">
               Download as
             </DropdownMenuLabel>

@@ -49,7 +49,7 @@ export function ClassesGradeHero({
         All classes
       </button>
 
-      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]">
+      <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-sm dark:border-white/10 dark:bg-[#0c1a17]">
         <div className="bg-gradient-to-br from-[#246a59]/[0.06] via-[#f8fbfa] to-[#f3f7f5] px-4 py-4 dark:from-[#246a59]/12 dark:via-[#0c1a17] dark:to-[#071411] sm:px-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
             {levelName}
@@ -73,7 +73,7 @@ export function ClassesGradeHero({
                   variant={isPrimary ? "default" : "outline"}
                   disabled={action.disabled}
                   className={cn(
-                    "h-8 gap-1.5 rounded-none text-xs",
+                    "h-8 gap-1.5 rounded-lg text-xs",
                     isPrimary
                       ? "bg-[#0a1f1a] text-white hover:bg-[#246a59]"
                       : "border-[#1a4d42]/15",
@@ -108,7 +108,7 @@ export function ClassesGradeHero({
                 type="button"
                 onClick={() => onStreamSelect(stream.id)}
                 className={cn(
-                  "rounded-none px-3 py-1.5 text-xs font-medium transition-colors",
+                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                   selectedStreamId === stream.id
                     ? "bg-[#246a59] text-white"
                     : "bg-[#e8f2ef] text-[#1a4d42]/80 hover:bg-[#e8f2ef] dark:bg-slate-800 dark:text-slate-200",
@@ -120,7 +120,7 @@ export function ClassesGradeHero({
             <button
               type="button"
               onClick={() => onStreamSelect("")}
-              className="rounded-none px-3 py-1.5 text-xs font-medium text-[#246a59] hover:underline"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#246a59] hover:underline"
             >
               Whole grade
             </button>

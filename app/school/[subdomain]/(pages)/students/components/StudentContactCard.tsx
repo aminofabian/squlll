@@ -18,7 +18,7 @@ const GENDERS = [
 ] as const;
 
 const fieldClass =
-  "h-8 rounded-none border-[#1a4d42]/15 bg-white text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]";
+  "h-8 rounded-lg border-[#1a4d42]/15 bg-white text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]";
 
 interface EditableStudentContact {
   id: string;

@@ -444,8 +444,8 @@ export default function StudentsPage() {
 
   if (pageError) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f3f7f5] dark:bg-[#071411]">
-        <div className="rounded-none border border-red-300/80 bg-white px-6 py-8 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+      <div className="flex h-screen items-center justify-center bg-background dark:bg-[#071411]">
+        <div className="rounded-lg border border-red-300/80 bg-white px-6 py-8 text-center shadow-sm dark:border-red-900/50 dark:bg-[#0c1a17]">
           <h2 className="mb-1 font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading students
           </h2>
@@ -458,7 +458,7 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-[#071411]">
       {isDirectoryOpen ? (
         <button
           type="button"

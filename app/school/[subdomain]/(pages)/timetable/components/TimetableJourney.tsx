@@ -298,7 +298,7 @@ export function TimetableJourney({
         const isCurrent = i === currentIndex;
         const isSkipped = skipped.has(stop.id) && !stop.done;
         const chipClass = cn(
-          "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 font-medium",
+          "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-medium",
           tt.text.caption,
           stop.attention
             ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
@@ -312,7 +312,7 @@ export function TimetableJourney({
           !stop.done && tt.focus,
         );
         const badgeClass = cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center rounded-none font-bold",
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded-md font-bold",
           tt.text.micro,
           tt.numeral,
           stop.attention

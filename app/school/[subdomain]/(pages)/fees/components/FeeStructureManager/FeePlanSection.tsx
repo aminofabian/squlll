@@ -57,7 +57,7 @@ export function FeePlanSection({
             {step != null && !hideStep ? (
               <span
                 className={cn(
-                  "flex shrink-0 items-center justify-center rounded-none text-[10px] font-bold text-white max-md:h-7 max-md:w-7 max-md:text-[11px]",
+                  "flex shrink-0 items-center justify-center rounded-lg text-[10px] font-bold text-white max-md:h-7 max-md:w-7 max-md:text-[11px]",
                   dense ? "h-5 w-5" : "h-6 w-6",
                 )}
                 style={{ backgroundColor: FEES_BRAND.primary }}
@@ -81,7 +81,7 @@ export function FeePlanSection({
             </div>
           </div>
           {action ? (
-            <div className="max-md:shrink-0 max-md:[&_button]:h-9 max-md:[&_button]:w-auto max-md:[&_button]:rounded-none sm:[&_button]:w-auto [&_button]:w-full">
+            <div className="max-md:shrink-0 max-md:[&_button]:h-9 max-md:[&_button]:w-auto max-md:[&_button]:rounded-lg sm:[&_button]:w-auto [&_button]:w-full">
               {action}
             </div>
           ) : null}

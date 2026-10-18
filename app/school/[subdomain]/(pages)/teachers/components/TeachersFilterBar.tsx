@@ -59,7 +59,7 @@ export function TeachersFilterBar({
             type="button"
             onClick={() => onFilterChange(id)}
             className={cn(
-              "inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[11px] transition-colors",
+              "inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] transition-colors",
               isActive
                 ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
                 : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/55",
@@ -84,7 +84,7 @@ export function TeachersFilterBar({
           aria-label="Department"
           value={departmentFilter}
           onChange={(e) => onDepartmentFilterChange(e.target.value)}
-          className="h-6 rounded-none border border-[#1a4d42]/15 bg-white px-1.5 text-[11px] text-[#0a1f1a] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
+          className="h-6 rounded-lg border border-[#1a4d42]/15 bg-white px-1.5 text-[11px] text-[#0a1f1a] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
         >
           <option value="all">All depts</option>
           {departments.map((department) => (

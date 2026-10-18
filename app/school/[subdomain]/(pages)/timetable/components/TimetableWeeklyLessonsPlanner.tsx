@@ -157,7 +157,7 @@ function Stepper({
   return (
     <div
       className={cn(
-        "inline-flex h-7 items-center overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#071411]",
+        "inline-flex h-7 items-center overflow-hidden rounded-md border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#071411]",
         (muted || disabled) && "opacity-60",
         disabled && "cursor-not-allowed",
       )}
@@ -167,7 +167,7 @@ function Stepper({
         aria-label={`Fewer ${ariaLabel}`}
         disabled={disabled || value <= 0}
         onClick={() => onChange(clamp(value - 1))}
-        className={cn(tt.focus, tt.ink.faint, "flex h-full w-6 items-center justify-center transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] disabled:opacity-30 dark:hover:bg-white/5 dark:hover:text-white")}
+        className={cn(tt.focus, tt.ink.faint, "flex h-full w-6 items-center justify-center transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] disabled:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white")}
       >
         <Minus className="h-2.5 w-2.5" />
       </button>
@@ -189,7 +189,7 @@ function Stepper({
         aria-label={`More ${ariaLabel}`}
         disabled={disabled || (max != null && value >= max)}
         onClick={() => onChange(clamp(value + 1))}
-        className={cn(tt.focus, tt.ink.faint, "flex h-full w-6 items-center justify-center transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] disabled:opacity-30 dark:hover:bg-white/5 dark:hover:text-white")}
+        className={cn(tt.focus, tt.ink.faint, "flex h-full w-6 items-center justify-center transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] disabled:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white")}
       >
         <Plus className="h-2.5 w-2.5" />
       </button>
@@ -844,7 +844,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                   key={s.id}
                   type="button"
                   onClick={() => handleAddSubject(s)}
-                  className={cn(tt.focus, tt.text.caption, tt.ink.base, tt.rowHover, "flex w-full items-center justify-between gap-2 rounded-none px-1.5 py-1 text-left")}
+                  className={cn(tt.focus, tt.text.caption, tt.ink.base, tt.rowHover, "flex w-full items-center justify-between gap-2 rounded-md px-1.5 py-1 text-left")}
                 >
                   {s.name}
                   <Plus className={cn(tt.ink.faint, "h-3 w-3 shrink-0")} />
@@ -885,7 +885,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               {copyCandidates.map(({ grade, shared }) => (
                 <label
                   key={grade.id}
-                  className={cn(tt.text.caption, tt.ink.base, tt.rowHover, "flex cursor-pointer items-center gap-2 rounded-none px-1 py-0.5")}
+                  className={cn(tt.text.caption, tt.ink.base, tt.rowHover, "flex cursor-pointer items-center gap-2 rounded-md px-1 py-0.5")}
                 >
                   <Checkbox
                     checked={copyTargets.includes(grade.id)}
@@ -965,7 +965,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
 
       <ul
         key={activeGradeId}
-        className="divide-y divide-[#1a4d42]/10 overflow-hidden rounded-none border border-[#1a4d42]/12 dark:divide-white/10 dark:border-white/10"
+        className="divide-y divide-[#1a4d42]/10 overflow-hidden rounded-md border border-[#1a4d42]/12 dark:divide-white/10 dark:border-white/10"
       >
         {visibleRows.map((row) => {
           const { preferred, others } = teacherOptions(
@@ -1092,7 +1092,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                 className={cn(
                   tt.focus,
                   tt.ink.faint,
-                  "hidden h-6 w-6 items-center justify-center rounded-none transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] sm:flex dark:hover:bg-white/10 dark:hover:text-white",
+                  "hidden h-6 w-6 items-center justify-center rounded-md transition hover:bg-[#e8f2ef] hover:text-[#0a1f1a] sm:flex dark:hover:bg-white/10 dark:hover:text-white",
                   row.lessonsPerWeek === 0 && !row.teacherId && "invisible",
                 )}
               >

@@ -81,13 +81,13 @@ export function ClassDetailQuickLinks({
             key={item.id}
             href={hrefFor(item.id)}
             className={cn(
-              "group flex items-center gap-2.5 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 transition-all",
+              "group flex items-center gap-2.5 rounded-lg border border-[#1a4d42]/12 bg-white px-3 py-2.5 transition-all",
               "hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#0c1a17]",
             )}
           >
             <span
               className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-none",
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
                 item.accent,
               )}
             >

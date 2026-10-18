@@ -316,7 +316,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
   return (
     <Drawer open={!!breakData} onOpenChange={onClose} direction="right">
-      <DrawerContent className="flex h-full w-full flex-col rounded-none sm:w-[500px]">
+      <DrawerContent className="flex h-full w-full flex-col rounded-md sm:w-[500px]">
         <DrawerHeader className="border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 py-4 dark:border-white/10 dark:bg-[#071411]">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -453,7 +453,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           </div>
 
           {/* Apply to All Days */}
-          <div className="flex items-center space-x-3 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/[0.02]">
+          <div className="flex items-center space-x-3 rounded-md border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/[0.02]">
             <Checkbox
               id="applyToAllDays"
               checked={applyToAllDays}
@@ -469,7 +469,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
           {/* Preview */}
           <div
-            className="border-l-4 p-4 rounded-none"
+            className="border-l-4 p-4 rounded-md"
             style={{ borderColor: formData.color }}
           >
             <div className="flex items-center gap-4">

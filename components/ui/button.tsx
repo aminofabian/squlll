@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.985] [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none active:scale-[0.985] [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -28,6 +28,22 @@ const buttonVariants = cva(
         icon: "size-9",
       },
     },
+    compoundVariants: [
+      {
+        variant: ["default", "destructive"],
+        class:
+          "disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400",
+      },
+      {
+        variant: ["outline", "secondary"],
+        class:
+          "disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none dark:disabled:border-slate-700 dark:disabled:bg-slate-800 dark:disabled:text-slate-500",
+      },
+      {
+        variant: ["ghost", "link"],
+        class: "disabled:bg-transparent disabled:text-slate-400",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

@@ -122,10 +122,10 @@ function FeeSummaryMetrics({ balance }: { balance: AdminFeeBalance }) {
               {progress}%
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-none bg-[#e8f2ef] dark:bg-[#0c1a17]">
+          <div className="h-1.5 overflow-hidden rounded-lg bg-[#e8f2ef] dark:bg-[#0c1a17]">
             <div
               className={cn(
-                "h-full rounded-none transition-all duration-500",
+                "h-full rounded-lg transition-all duration-500",
                 hasOutstanding ? "bg-amber-500" : "bg-[#246a59]",
               )}
               style={{ width: `${progress}%` }}
@@ -151,7 +151,7 @@ function MetricTile({
   return (
     <div
       className={cn(
-        "rounded-none border border-[#1a4d42]/10 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]",
+        "rounded-lg border border-[#1a4d42]/10 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]",
         muted && "bg-[#f8fbfa] dark:bg-[#071411]",
       )}
     >
@@ -178,7 +178,7 @@ function FeeBreakdownTable({
   if (lines.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-none border border-[#1a4d42]/10 dark:border-white/10">
+    <div className="overflow-x-auto rounded-lg border border-[#1a4d42]/10 dark:border-white/10">
       <table className="w-full min-w-[420px] text-xs">
         <thead>
           <tr className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]">
@@ -270,7 +270,7 @@ function CollapsibleFeeSection({
   const [open, setOpen] = useState(defaultOpen ?? false);
 
   return (
-    <div className="rounded-none border border-[#1a4d42]/10 dark:border-white/10">
+    <div className="rounded-lg border border-[#1a4d42]/10 dark:border-white/10">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -282,7 +282,7 @@ function CollapsibleFeeSection({
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#1a4d42]/45" />
         )}
         <span>{title}</span>
-        <span className="rounded-none bg-[#e8f2ef] px-2 py-0.5 text-[10px] tabular-nums text-[#1a4d42]/55 dark:bg-[#0c1a17]">
+        <span className="rounded-full bg-[#e8f2ef] px-2 py-0.5 text-[10px] tabular-nums text-[#1a4d42]/55 dark:bg-[#0c1a17]">
           {count}
         </span>
       </button>
@@ -318,7 +318,7 @@ function StudentFeeCard({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-6 text-sm text-[#1a4d42]/55 dark:border-white/10 dark:bg-[#071411]">
+      <div className="flex items-center gap-2 rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-6 text-sm text-[#1a4d42]/55 dark:border-white/10 dark:bg-[#071411]">
         <Loader2 className="h-4 w-4 animate-spin" />
         Loading fees for {student.name}…
       </div>
@@ -327,7 +327,7 @@ function StudentFeeCard({
 
   if (error) {
     return (
-      <div className="rounded-none border border-red-100 bg-red-50/60 px-4 py-4 dark:border-red-900/30 dark:bg-red-950/20">
+      <div className="rounded-lg border border-red-100 bg-red-50/60 px-4 py-4 dark:border-red-900/30 dark:bg-red-950/20">
         <p className="text-sm text-red-700 dark:text-red-300">
           Could not load fees for {student.name}.
         </p>
@@ -351,7 +351,7 @@ function StudentFeeCard({
   const hasLines = grouped.length > 0;
 
   return (
-    <article className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+    <article className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#1a4d42]/10 px-4 py-3.5 dark:border-white/10 sm:px-5">
         <div className="min-w-0">
           <h4 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
@@ -396,7 +396,7 @@ function StudentFeeCard({
             <button
               type="button"
               onClick={() => setShowBreakdown((v) => !v)}
-              className="flex w-full items-center justify-between gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 text-left text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#e8f2ef] dark:border-white/10 dark:bg-[#071411] dark:text-white/70 dark:hover:bg-[#0c1a17]"
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 text-left text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#e8f2ef] dark:border-white/10 dark:bg-[#071411] dark:text-white/70 dark:hover:bg-[#0c1a17]"
             >
               <span className="flex items-center gap-1.5">
                 {showBreakdown ? (
@@ -447,7 +447,7 @@ function StudentFeeCard({
             ) : null}
           </div>
         ) : (
-          <p className="rounded-none border border-dashed border-[#1a4d42]/12 px-3 py-4 text-center text-xs text-[#1a4d42]/45 dark:border-white/15">
+          <p className="rounded-lg border border-dashed border-[#1a4d42]/12 px-3 py-4 text-center text-xs text-[#1a4d42]/45 dark:border-white/15">
             No fee line items yet. Assign a fee structure from the fees page.
           </p>
         )}
@@ -506,7 +506,7 @@ export function ParentFeesPanel({ students }: ParentFeesPanelProps) {
               type="button"
               onClick={() => setSelectedIndex(index)}
               className={cn(
-                "rounded-none border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                 selectedIndex === index
                   ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
                   : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17]",

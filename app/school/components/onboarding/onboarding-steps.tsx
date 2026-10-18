@@ -38,7 +38,7 @@ export function DoneBanner({
   detail: string;
 }) {
   return (
-    <div className="flex items-start gap-3 border border-emerald-600/25 bg-emerald-50/90 dark:bg-emerald-950/40 dark:border-emerald-700/40 p-5 shadow-[3px_3px_0_0_rgba(5,150,105,0.15)]">
+    <div className="flex items-start gap-3 border border-emerald-600/25 bg-emerald-50/90 dark:bg-emerald-950/40 dark:border-emerald-700/40 p-5 shadow-sm">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-emerald-600/30 bg-emerald-100 dark:bg-emerald-900/50">
         <CheckCircle2 className="h-5 w-5 text-emerald-700" />
       </div>
@@ -258,7 +258,7 @@ export function AcademicYearStepContent({
         <Button
           onClick={onCreate}
           disabled={isCreating || !isValid}
-          className="w-full h-12 rounded-none text-base font-medium bg-[#0a1f1a] hover:bg-[#246a59] shadow-[3px_3px_0_0_rgba(36,106,89,0.35)]"
+          className="w-full h-12 rounded-lg text-base font-medium bg-[#0a1f1a] hover:bg-[#246a59] shadow-sm"
         >
           {isCreating ? (
             <>
@@ -899,7 +899,7 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} stream name`}
-                        className="h-8 w-10 rounded-none border-0 bg-transparent px-0 text-center text-sm font-bold text-[#0a1f1a] shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06] dark:text-white"
+                        className="h-8 w-10 rounded-lg border-0 bg-transparent px-0 text-center text-sm font-bold text-[#0a1f1a] shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06] dark:text-white"
                         placeholder="?"
                       />
                       <span className="h-5 w-px bg-[#1a4d42]/15" aria-hidden />
@@ -922,7 +922,7 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} ${draft.name || "stream"} seats (max learners)`}
-                        className="h-8 w-11 rounded-none border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1a4d42]/70 shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06]"
+                        className="h-8 w-11 rounded-lg border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1a4d42]/70 shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06]"
                         title="Seats (max learners)"
                       />
                       <button
@@ -1093,7 +1093,7 @@ function PaymentSetupCard({
       className={cn(
         'border bg-[#f8fbfa] p-4 dark:bg-white/[0.03]',
         ready
-          ? 'border-emerald-600/30 shadow-[3px_3px_0_0_rgba(5,150,105,0.12)]'
+          ? 'border-emerald-600/30 shadow-sm'
           : 'border-[#1a4d42]/12 dark:border-white/10',
       )}
     >
@@ -1125,7 +1125,7 @@ function PaymentSetupCard({
       </div>
       <Button
         type="button"
-        className="mt-3 h-9 w-full rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+        className="mt-3 h-9 w-full rounded-lg bg-[#0a1f1a] text-white hover:bg-[#246a59]"
         onClick={onAction}
       >
         {actionLabel}

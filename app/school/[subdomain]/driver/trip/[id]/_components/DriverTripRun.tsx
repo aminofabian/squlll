@@ -374,7 +374,7 @@ export function DriverTripRun() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
-              className={cn("rounded-none", TRIP_STATUS_CLASS[trip.status])}
+              className={cn("rounded-lg", TRIP_STATUS_CLASS[trip.status])}
             >
               {humanize(trip.status)}
             </Badge>
@@ -436,7 +436,7 @@ export function DriverTripRun() {
                 {live?.approaching ? (
                   <Badge
                     variant="outline"
-                    className="rounded-none border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
+                    className="rounded-lg border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
                   >
                     Arriving
                   </Badge>
@@ -506,7 +506,7 @@ export function DriverTripRun() {
                           <Badge
                             variant="outline"
                             className={cn(
-                              "rounded-none",
+                              "rounded-lg",
                               STOP_STATUS_CLASS[stop.status],
                             )}
                           >
@@ -565,7 +565,7 @@ export function DriverTripRun() {
                                   <Badge
                                     variant="outline"
                                     className={cn(
-                                      "rounded-none",
+                                      "rounded-lg",
                                       boarded
                                         ? "border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
                                         : "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300",

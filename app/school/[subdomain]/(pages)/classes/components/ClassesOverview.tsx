@@ -48,7 +48,7 @@ export function ClassesOverview({ levels, isLoading }: ClassesOverviewProps) {
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]">
+      <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]">
         <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
           <div className="h-4 w-32 animate-pulse rounded bg-[#e8f2ef] dark:bg-slate-800" />
         </div>
@@ -56,7 +56,7 @@ export function ClassesOverview({ levels, isLoading }: ClassesOverviewProps) {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-9 animate-pulse rounded-none bg-[#f8fbfa] dark:bg-slate-800/60"
+              className="h-9 animate-pulse rounded-lg bg-[#f8fbfa] dark:bg-slate-800/60"
             />
           ))}
         </div>
@@ -69,7 +69,7 @@ export function ClassesOverview({ levels, isLoading }: ClassesOverviewProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]">
+    <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]">
       <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
         <h2 className="text-sm font-medium text-[#0a1f1a] dark:text-white">
           Levels at a glance

@@ -382,7 +382,7 @@ export default function ExamsMarksComponent(_props: ExamsMarksComponentProps) {
               <button
                 onClick={saveMarks}
                 disabled={isSaving || enteredCount === 0}
-                className="px-5 py-2 rounded-lg bg-primary text-primary-foreground font-semibold shadow hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 rounded-lg bg-primary text-primary-foreground font-semibold shadow hover:bg-primary-dark transition disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving..." : "Save Marks"}
               </button>
@@ -394,7 +394,7 @@ export default function ExamsMarksComponent(_props: ExamsMarksComponentProps) {
       {/* Marksheet modal */}
       {marksheetAssessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 print:bg-white print:relative print:inset-auto print:z-auto">
-          <div className="bg-card w-full h-full max-w-none rounded-none shadow-lg p-0 relative flex flex-col print:p-0 print:shadow-none print:bg-white print:rounded-none print:max-w-full print:w-full print:h-full border-2 border-primary/20">
+          <div className="bg-card w-full h-full max-w-none rounded-lg shadow-lg p-0 relative flex flex-col print:p-0 print:shadow-none print:bg-white print:rounded-lg print:max-w-full print:w-full print:h-full border-2 border-primary/20">
             <button
               className="absolute top-6 right-8 text-primary hover:text-primary-dark print:hidden z-10"
               onClick={() => setMarksheetAssessment(null)}

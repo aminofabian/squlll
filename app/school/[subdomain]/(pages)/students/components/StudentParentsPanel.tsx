@@ -39,7 +39,7 @@ export function StudentParentsPanel({
       variant={compact ? "outline" : "default"}
       className={cn(
         "gap-1.5 text-xs",
-        compact ? "h-7 rounded-none" : "h-8 rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]",
+        compact ? "h-7 rounded-lg" : "h-8 rounded-lg bg-[#0a1f1a] text-white hover:bg-[#246a59]",
       )}
     >
       <UserPlus className="h-3.5 w-3.5" />
@@ -99,7 +99,7 @@ export function StudentParentsPanel({
 
       <div className="p-4 sm:p-5">
         {parents.length === 0 ? (
-          <div className="rounded-none border border-dashed border-[#1a4d42]/15 bg-[#f8fbfa] px-4 py-6 text-center dark:border-white/15 dark:bg-[#071411]">
+          <div className="rounded-lg border border-dashed border-[#1a4d42]/15 bg-[#f8fbfa] px-4 py-6 text-center dark:border-white/15 dark:bg-[#071411]">
             <Users className="mx-auto mb-2 h-8 w-8 text-[#1a4d42]/35" />
             <p className="text-sm font-medium text-[#1a4d42]/65 dark:text-[#1a4d42]/35">
               No parent linked
@@ -120,7 +120,7 @@ export function StudentParentsPanel({
             {parents.map((parent) => (
               <li
                 key={parent.id}
-                className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-3 dark:border-white/10 dark:bg-[#071411]"
+                className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-3 dark:border-white/10 dark:bg-[#071411]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -144,7 +144,7 @@ export function StudentParentsPanel({
                       className={cn(
                         "text-[10px] font-medium",
                         parent.userId
-                          ? "rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
+                          ? "rounded-lg border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
                           : "border-amber-200 bg-amber-50 text-amber-700",
                       )}
                     >

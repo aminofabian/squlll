@@ -43,7 +43,7 @@ function ActionRow({
 }) {
   const content = (
     <>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-[#e8f2ef] dark:bg-slate-800">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ef] dark:bg-slate-800">
         <Icon className="h-4 w-4 text-[#1a4d42]/65 dark:text-[#1a4d42]/30" />
       </div>
       <div className="min-w-0 flex-1">
@@ -61,7 +61,7 @@ function ActionRow({
       <button
         type="button"
         onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 text-left transition-colors hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-slate-800/40"
+        className="flex w-full items-center gap-3 rounded-lg border border-[#1a4d42]/12 bg-white px-3 py-2.5 text-left transition-colors hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-slate-800/40"
       >
         {content}
       </button>
@@ -69,7 +69,7 @@ function ActionRow({
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
+    <div className="flex items-center gap-3 rounded-lg border border-[#1a4d42]/12 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
       {content}
     </div>
   );

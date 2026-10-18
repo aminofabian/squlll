@@ -164,10 +164,10 @@ export function SchoolNavbar({
   }
 
   const iconButtonClass =
-    'h-8 w-8 rounded-none text-[#1a4d42]/55 hover:bg-[#f3f7f5] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white transition-colors'
+    'h-8 w-8 rounded-lg text-[#1a4d42]/55 hover:bg-[#f3f7f5] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white transition-colors'
 
   const menuContentClass =
-    'rounded-none border border-[#1a4d42]/15 bg-white shadow-[6px_6px_0_0_rgba(10,31,26,0.08)] dark:border-white/10 dark:bg-[#0c1a17] dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.4)] p-1.5'
+    'rounded-lg border border-[#1a4d42]/15 bg-white shadow-sm dark:border-white/10 dark:bg-[#0c1a17] dark:shadow-sm p-1.5'
 
   return (
     <>
@@ -206,7 +206,7 @@ export function SchoolNavbar({
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/40" />
             <Input
               placeholder="Search school…"
-              className="h-8 rounded-none border-[#1a4d42]/15 bg-white pl-8 text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
+              className="h-8 rounded-lg border-[#1a4d42]/15 bg-white pl-8 text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
             />
           </div>
         </div>
@@ -241,7 +241,7 @@ export function SchoolNavbar({
                   <DropdownMenuItem
                     key={step.id}
                     className={cn(
-                      'flex items-start gap-3 rounded-none px-2.5 py-2 cursor-pointer',
+                      'flex items-start gap-3 rounded-lg px-2.5 py-2 cursor-pointer',
                       isCurrent && 'bg-[#246a59]/8 dark:bg-[#246a59]/15',
                     )}
                     onSelect={() => handleSetupStepClick(step)}
@@ -305,7 +305,7 @@ export function SchoolNavbar({
             <MessageCircle className="h-4 w-4" />
             <span className="hidden sm:inline">Messages</span>
             {chatUnread > 0 ? (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-none bg-[#c2410c] px-1 text-[9px] font-semibold tabular-nums leading-none text-white">
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-lg bg-[#c2410c] px-1 text-[9px] font-semibold tabular-nums leading-none text-white">
                 {chatUnread > 9 ? '9+' : chatUnread}
               </span>
             ) : null}
@@ -317,7 +317,7 @@ export function SchoolNavbar({
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
-                  className="h-8 gap-1 rounded-none bg-[#0a1f1a] px-2.5 text-white shadow-none hover:bg-[#246a59]"
+                  className="h-8 gap-1 rounded-lg bg-[#0a1f1a] px-2.5 text-white shadow-none hover:bg-[#246a59]"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium">New</span>
@@ -333,7 +333,7 @@ export function SchoolNavbar({
                   return (
                     <DropdownMenuItem
                       key={index}
-                      className="flex cursor-pointer items-center gap-3 rounded-none px-2.5 py-2 hover:bg-[#f3f7f5] dark:hover:bg-white/5"
+                      className="flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-[#f3f7f5] dark:hover:bg-white/5"
                       onClick={option.action}
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#246a59]/20 bg-[#246a59]/10">
@@ -375,10 +375,10 @@ export function SchoolNavbar({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="hidden h-8 items-center gap-2 rounded-none border border-transparent px-1.5 hover:border-[#1a4d42]/12 hover:bg-[#f3f7f5] md:flex dark:hover:bg-white/5"
+                className="hidden h-8 items-center gap-2 rounded-lg border border-transparent px-1.5 hover:border-[#1a4d42]/12 hover:bg-[#f3f7f5] md:flex dark:hover:bg-white/5"
               >
-                <Avatar className="h-6 w-6 rounded-none">
-                  <AvatarFallback className="rounded-none bg-[#0a1f1a] text-[10px] font-semibold text-white">
+                <Avatar className="h-6 w-6 rounded-lg">
+                  <AvatarFallback className="rounded-lg bg-[#0a1f1a] text-[10px] font-semibold text-white">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>
@@ -393,20 +393,20 @@ export function SchoolNavbar({
                 My account
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#1a4d42]/10 dark:bg-white/10 my-1" />
-              <DropdownMenuItem className="cursor-pointer rounded-none px-2.5 py-2 text-sm">
+              <DropdownMenuItem className="cursor-pointer rounded-lg px-2.5 py-2 text-sm">
                 Profile Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer rounded-none px-2.5 py-2 text-sm">
+              <DropdownMenuItem className="cursor-pointer rounded-lg px-2.5 py-2 text-sm">
                 School Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer rounded-none px-2.5 py-2 text-sm">
+              <DropdownMenuItem className="cursor-pointer rounded-lg px-2.5 py-2 text-sm">
                 Help & Support
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#1a4d42]/10 dark:bg-white/10 my-1" />
               <DropdownMenuItem
                 onClick={signOut}
                 disabled={isSigningOut}
-                className="cursor-pointer rounded-none px-2.5 py-2 text-sm text-red-600 disabled:opacity-50 dark:text-red-400"
+                className="cursor-pointer rounded-lg px-2.5 py-2 text-sm text-red-600 disabled:text-slate-400 dark:text-red-400"
               >
                 {isSigningOut ? 'Signing Out...' : 'Log out'}
               </DropdownMenuItem>
@@ -418,25 +418,25 @@ export function SchoolNavbar({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className={iconButtonClass}>
-                  <Avatar className="h-7 w-7 rounded-none">
-                    <AvatarFallback className="rounded-none bg-[#0a1f1a] text-[10px] font-semibold text-white">
+                  <Avatar className="h-7 w-7 rounded-lg">
+                    <AvatarFallback className="rounded-lg bg-[#0a1f1a] text-[10px] font-semibold text-white">
                       {getInitials(userName || 'User')}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className={cn('w-48', menuContentClass)}>
-                <DropdownMenuItem className="cursor-pointer rounded-none px-2.5 py-2 text-sm">
+                <DropdownMenuItem className="cursor-pointer rounded-lg px-2.5 py-2 text-sm">
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer rounded-none px-2.5 py-2 text-sm">
+                <DropdownMenuItem className="cursor-pointer rounded-lg px-2.5 py-2 text-sm">
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#1a4d42]/10 dark:bg-white/10 my-1" />
                 <DropdownMenuItem
                   onClick={signOut}
                   disabled={isSigningOut}
-                  className="cursor-pointer rounded-none px-2.5 py-2 text-sm text-red-600 disabled:opacity-50 dark:text-red-400"
+                  className="cursor-pointer rounded-lg px-2.5 py-2 text-sm text-red-600 disabled:text-slate-400 dark:text-red-400"
                 >
                   {isSigningOut ? 'Signing Out...' : 'Log out'}
                 </DropdownMenuItem>

@@ -122,7 +122,7 @@ const BREAK_CHANNEL =
   "max-lg:py-2 max-lg:px-0 dark:max-lg:bg-transparent";
 
 const LINK_ACTION =
-  "inline-flex items-center gap-0.5 rounded-none px-1 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:pointer-events-none disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200";
+  "inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:pointer-events-none disabled:text-slate-300 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200";
 
 type BreakVisual = {
   Icon: LucideIcon;
@@ -416,8 +416,8 @@ function doubleBlockSurfaceClass({
 
   return cn(
     "ring-1 ring-inset ring-violet-200/40 dark:ring-violet-800/30",
-    connectsBelow && "rounded-none border-b-0",
-    isDoubleContinuation && "rounded-none border-t-0",
+    connectsBelow && "rounded-md border-b-0",
+    isDoubleContinuation && "rounded-md border-t-0",
   );
 }
 
@@ -846,7 +846,7 @@ export function AdminTimetableGrid({
               onClick={() => setMobileDayIndex(index)}
               className={cn(
                 T_CELL_SM,
-                "relative flex-1 min-w-0 rounded-none px-1.5 py-1 font-semibold tracking-tight transition-colors",
+                "relative flex-1 min-w-0 rounded-md px-1.5 py-1 font-semibold tracking-tight transition-colors",
                 index === mobileDayIndex
                   ? "bg-[#246a59] text-white"
                   : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
@@ -855,7 +855,7 @@ export function AdminTimetableGrid({
               {day.slice(0, 3)}
               {todayIndex === index && index !== mobileDayIndex ? (
                 <span
-                  className="absolute left-1/2 bottom-0.5 h-1 w-1 -translate-x-1/2 rounded-none bg-[#246a59]"
+                  className="absolute left-1/2 bottom-0.5 h-1 w-1 -translate-x-1/2 rounded-md bg-[#246a59]"
                   aria-hidden
                 />
               ) : null}
@@ -965,7 +965,7 @@ export function AdminTimetableGrid({
                     <div
                       className={cn(
                         ROW_H,
-                        "animate-pulse rounded-none bg-zinc-100 dark:bg-zinc-800",
+                        "animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800",
                       )}
                     />
                   </td>
@@ -974,7 +974,7 @@ export function AdminTimetableGrid({
                       <div
                         className={cn(
                           ROW_H,
-                          "animate-pulse rounded-none bg-zinc-100/80 dark:bg-zinc-800/60",
+                          "animate-pulse rounded-md bg-zinc-100/80 dark:bg-zinc-800/60",
                         )}
                       />
                     </td>
@@ -985,7 +985,7 @@ export function AdminTimetableGrid({
               <tr>
                 <td colSpan={days.length + 1} className="p-12 text-center">
                   <div className="mx-auto flex max-w-xs flex-col items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-none bg-zinc-100 dark:bg-zinc-800">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
                       <Clock className="h-5 w-5 text-zinc-400" />
                     </div>
                     <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
@@ -1509,7 +1509,7 @@ function TimeColumnCell({
       <button
         type="button"
         onClick={() => onEdit?.(slot)}
-        className="w-full rounded-none px-1 py-0.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+        className="w-full rounded-md px-1 py-0.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
         title={`Edit times · ${timeLabel}`}
       >
         <p className="whitespace-nowrap text-[12.5px] font-semibold tabular-nums leading-tight text-slate-900 dark:text-slate-100">
@@ -1564,7 +1564,7 @@ function CombinedLessonCell({
   if (entries.length === 0) {
     return (
       <div
-        className="relative flex min-h-[36px] items-center justify-center overflow-hidden rounded-none border border-dashed border-zinc-200/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.9)_25%,transparent_25%,transparent_50%,rgba(248,250,252,0.9)_50%,rgba(248,250,252,0.9)_75%,transparent_75%,transparent)] bg-[length:8px_8px] dark:border-zinc-700/60 dark:bg-zinc-900/20"
+        className="relative flex min-h-[36px] items-center justify-center overflow-hidden rounded-md border border-dashed border-zinc-200/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.9)_25%,transparent_25%,transparent_50%,rgba(248,250,252,0.9)_50%,rgba(248,250,252,0.9)_75%,transparent_75%,transparent)] bg-[length:8px_8px] dark:border-zinc-700/60 dark:bg-zinc-900/20"
         role="presentation"
         aria-label="No classes configured"
       >
@@ -1589,7 +1589,7 @@ function CombinedLessonCell({
         className={cn(
           "grid min-h-[36px] overscroll-contain",
           multiClass
-            ? "gap-1 max-lg:rounded-none max-lg:bg-zinc-100/50 max-lg:p-1 max-lg:ring-1 max-lg:ring-inset max-lg:ring-zinc-200/60 dark:max-lg:bg-zinc-900/30 dark:max-lg:ring-zinc-700/50"
+            ? "gap-1 max-lg:rounded-md max-lg:bg-zinc-100/50 max-lg:p-1 max-lg:ring-1 max-lg:ring-inset max-lg:ring-zinc-200/60 dark:max-lg:bg-zinc-900/30 dark:max-lg:ring-zinc-700/50"
             : "",
           twoColumn ? "grid-cols-2" : "grid-cols-1",
           manyEntries && !expanded
@@ -1652,7 +1652,7 @@ function CombinedLessonCell({
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="col-span-2 flex items-center justify-center gap-1 rounded-none border border-dashed border-slate-200/70 bg-slate-50/60 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-zinc-700/50 dark:bg-zinc-900/30 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/40"
+            className="col-span-2 flex items-center justify-center gap-1 rounded-md border border-dashed border-slate-200/70 bg-slate-50/60 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-zinc-700/50 dark:bg-zinc-900/30 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/40"
             aria-expanded={expanded}
           >
             <ChevronDown
@@ -1734,7 +1734,7 @@ function CombinedShortcodeChip({
       onClick={onSelect}
       aria-label={chipLabel}
       className={cn(
-        "group/chip relative flex min-w-0 items-stretch overflow-hidden rounded-none border text-left",
+        "group/chip relative flex min-w-0 items-stretch overflow-hidden rounded-md border text-left",
         "transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50",
         compact ? "min-h-[30px]" : "min-h-[34px]",
@@ -1775,7 +1775,7 @@ function CombinedShortcodeChip({
         <div className="flex min-w-0 items-center gap-1 leading-none">
           <span
             className={cn(
-              "inline-flex shrink-0 items-center rounded-none px-1 py-px font-semibold uppercase tracking-wide",
+              "inline-flex shrink-0 items-center rounded-md px-1 py-px font-semibold uppercase tracking-wide",
               compact ? "text-[8px]" : "text-[9px]",
             )}
             style={{
@@ -1831,7 +1831,7 @@ function CombinedShortcodeChip({
       {isDoubleStart ? (
         <span
           className={cn(
-            "absolute right-0.5 top-0.5 rounded-none px-1 font-semibold leading-none",
+            "absolute right-0.5 top-0.5 rounded-md px-1 font-semibold leading-none",
             "bg-violet-100/90 text-violet-700 ring-1 ring-violet-200/80",
             "dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60",
             compact ? "py-px text-[7px]" : "py-0.5 text-[8px]",
@@ -1844,7 +1844,7 @@ function CombinedShortcodeChip({
       {isDoubleCont ? (
         <span
           className={cn(
-            "absolute right-0.5 top-0.5 rounded-none px-1 font-medium leading-none",
+            "absolute right-0.5 top-0.5 rounded-md px-1 font-medium leading-none",
             "text-violet-600/80 dark:text-violet-400/80",
             compact ? "py-px text-[7px]" : "py-0.5 text-[8px]",
           )}
@@ -2117,7 +2117,7 @@ function FreeSlotCell({
         }
         className={cn(
           "inline-flex items-center justify-center gap-1 rounded-full border text-[11px] font-semibold transition-all",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/30 disabled:cursor-not-allowed disabled:opacity-50",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/30 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400",
           hasSuggestion
             ? "border-[#246a59]/40 bg-white px-2.5 py-1 text-[#1a4d42] shadow-sm hover:bg-[#246a59] hover:text-white dark:bg-[#0c1a17] dark:text-[#9dcec1]"
             : "h-7 w-7 border-transparent text-[#1a4d42]/25 hover:border-[#246a59]/25 hover:bg-white hover:text-[#246a59] hover:shadow-sm focus-visible:border-[#246a59]/30 focus-visible:bg-white focus-visible:text-[#246a59] dark:text-white/20 dark:hover:bg-white/5 dark:hover:text-[#9dcec1]",
@@ -2217,7 +2217,7 @@ function BreakRow({
               disabled={!canMoveUp}
               onClick={() => onMoveBreak(primary, -1)}
               className={cn(
-                "pointer-events-auto rounded-none p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
+                "pointer-events-auto rounded-md p-0.5 transition-colors hover:bg-black/[0.06] disabled:text-slate-300",
                 visual.iconColor,
               )}
               title="Move break earlier in the day"
@@ -2234,7 +2234,7 @@ function BreakRow({
               disabled={!canMoveDown}
               onClick={() => onMoveBreak(primary, 1)}
               className={cn(
-                "pointer-events-auto rounded-none p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
+                "pointer-events-auto rounded-md p-0.5 transition-colors hover:bg-black/[0.06] disabled:text-slate-300",
                 visual.iconColor,
               )}
               title="Move break later in the day"
@@ -2267,7 +2267,7 @@ function BreakRow({
                     })
                   }
                   className={cn(
-                    "rounded-none px-2.5 py-1 text-[10px] font-medium text-slate-500 transition-colors",
+                    "rounded-md px-2.5 py-1 text-[10px] font-medium text-slate-500 transition-colors",
                     "hover:bg-black/[0.04] hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
                   )}
                   title={`Add ${visual.label} on this day`}

@@ -92,13 +92,13 @@ export function InvitationSuccessModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="gap-0 overflow-hidden rounded-none border border-[#1a4d42]/12 p-0 sm:max-w-[460px]">
+      <DialogContent className="gap-0 overflow-hidden rounded-lg border border-[#1a4d42]/12 p-0 sm:max-w-[460px]">
         {/* Header */}
         <div className="relative overflow-hidden border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 pb-5 pt-6 dark:border-white/10 dark:bg-[#071411]">
           <div className="relative flex flex-col items-center text-center">
             <div
               className={cn(
-                "mb-3 flex h-14 w-14 items-center justify-center rounded-none text-white",
+                "mb-3 flex h-14 w-14 items-center justify-center rounded-lg text-white",
                 emailFailed ? "bg-amber-600" : "bg-[#0a1f1a]",
               )}
             >
@@ -144,9 +144,9 @@ export function InvitationSuccessModal({
 
         <div className="max-h-[min(70vh,520px)] space-y-4 overflow-y-auto bg-[#f3f7f5] px-5 py-5 dark:bg-[#071411]/80">
           {/* Teacher card */}
-          <div className="overflow-hidden rounded-none border border-[#1a4d42]/20 bg-[#0a1f1a] px-4 py-3.5">
+          <div className="overflow-hidden rounded-lg border border-[#1a4d42]/20 bg-[#0a1f1a] px-4 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-[#246a59] text-base font-bold text-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#246a59] text-base font-bold text-white">
                 {initialsFromName(invitationData.fullName)}
               </div>
               <div className="min-w-0 flex-1">
@@ -159,7 +159,7 @@ export function InvitationSuccessModal({
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <Badge
                     className={cn(
-                      "h-5 rounded-none border-0 px-2 text-[10px] font-medium capitalize hover:bg-transparent",
+                      "h-5 rounded-lg border-0 px-2 text-[10px] font-medium capitalize hover:bg-transparent",
                       emailFailed
                         ? "bg-amber-500/20 text-amber-100"
                         : "bg-white/10 text-white/90",
@@ -177,10 +177,10 @@ export function InvitationSuccessModal({
           </div>
 
           {initialPassword ? (
-            <div className="overflow-hidden rounded-none border-2 border-[#246a59]/35 bg-white dark:border-[#3fae8f]/30 dark:bg-[#0c1a17]">
+            <div className="overflow-hidden rounded-lg border-2 border-[#246a59]/35 bg-white dark:border-[#3fae8f]/30 dark:bg-[#0c1a17]">
               <div className="flex items-center justify-between border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-none bg-[#246a59] text-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#246a59] text-white">
                     <KeyRound className="h-3.5 w-3.5" />
                   </div>
                   <div>
@@ -197,7 +197,7 @@ export function InvitationSuccessModal({
                   size="sm"
                   variant="outline"
                   onClick={() => void copyPassword()}
-                  className="h-8 gap-1.5 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
+                  className="h-8 gap-1.5 rounded-lg border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
                 >
                   {passwordCopied ? (
                     <>
@@ -213,7 +213,7 @@ export function InvitationSuccessModal({
                 </Button>
               </div>
               <div className="space-y-2 p-3">
-                <p className="select-all rounded-none bg-[#f8fbfa] px-3 py-2.5 font-mono text-base font-semibold tracking-wide text-[#0a1f1a] ring-1 ring-inset ring-[#246a59]/20 dark:bg-[#071411] dark:text-white dark:ring-[#3fae8f]/25">
+                <p className="select-all rounded-lg bg-[#f8fbfa] px-3 py-2.5 font-mono text-base font-semibold tracking-wide text-[#0a1f1a] ring-1 ring-inset ring-[#246a59]/20 dark:bg-[#071411] dark:text-white dark:ring-[#3fae8f]/25">
                   {initialPassword}
                 </p>
                 <p className="text-[11px] leading-relaxed text-[#1a4d42]/60 dark:text-white/45">
@@ -227,10 +227,10 @@ export function InvitationSuccessModal({
           ) : null}
 
           {/* Email copy */}
-          <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
+          <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
             <div className="flex items-center justify-between border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
                   <Mail className="h-3.5 w-3.5" />
                 </div>
                 <div>
@@ -247,7 +247,7 @@ export function InvitationSuccessModal({
                 size="sm"
                 variant="outline"
                 onClick={() => void copyEmail()}
-                className="h-8 gap-1.5 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
+                className="h-8 gap-1.5 rounded-lg border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
               >
                 {copied ? (
                   <>
@@ -263,7 +263,7 @@ export function InvitationSuccessModal({
               </Button>
             </div>
             <div className="p-3">
-              <p className="truncate rounded-none bg-white px-3 py-2.5 font-mono text-sm text-[#0a1f1a] ring-1 ring-inset ring-[#1a4d42]/12 dark:bg-[#071411] dark:text-white dark:ring-white/10">
+              <p className="truncate rounded-lg bg-white px-3 py-2.5 font-mono text-sm text-[#0a1f1a] ring-1 ring-inset ring-[#1a4d42]/12 dark:bg-[#071411] dark:text-white dark:ring-white/10">
                 {invitationData.email}
               </p>
               {!emailFailed && (
@@ -275,7 +275,7 @@ export function InvitationSuccessModal({
           </div>
 
           {/* Next steps — single panel */}
-          <div className="rounded-none border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]">
+          <div className="rounded-lg border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[#1a4d42]/45">
               What happens next
             </p>
@@ -334,7 +334,7 @@ export function InvitationSuccessModal({
           </div>
 
           {emailFailed && (
-            <div className="flex items-start gap-2.5 rounded-none border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200/90">
                 Email delivery failed — often a mail config issue in dev. Resend from Pending invitations when ready.
@@ -346,7 +346,7 @@ export function InvitationSuccessModal({
         <div className="border-t border-[#1a4d42]/12 bg-white px-5 py-4 dark:border-white/10 dark:bg-[#0c1a17]">
           <Button
             onClick={onClose}
-            className="h-11 w-full rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
+            className="h-11 w-full rounded-lg bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
           >
             {accountReady ? "Done — password saved" : emailFailed ? "Got it — I'll resend later" : "Done"}
           </Button>

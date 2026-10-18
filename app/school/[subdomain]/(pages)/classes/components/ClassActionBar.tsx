@@ -79,7 +79,7 @@ export function ClassActionBar({
           <button
             type="button"
             className={cn(
-              "inline-flex h-7 w-7 items-center justify-center rounded-none text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#1a4d42]/65 dark:hover:bg-slate-800 dark:hover:text-slate-200",
+              "inline-flex h-7 w-7 items-center justify-center rounded-lg text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#1a4d42]/65 dark:hover:bg-slate-800 dark:hover:text-slate-200",
               className,
             )}
             aria-label="Actions"
@@ -129,7 +129,7 @@ export function ClassActionBar({
                   action.onClick();
                 }}
                 className={cn(
-                  "inline-flex h-7 w-7 items-center justify-center rounded-none text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#1a4d42]/80 dark:hover:bg-slate-800 dark:hover:text-slate-200",
+                  "inline-flex h-7 w-7 items-center justify-center rounded-lg text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#1a4d42]/80 dark:hover:bg-slate-800 dark:hover:text-slate-200",
                   action.destructive &&
                     "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40",
                   action.disabled && "opacity-40",

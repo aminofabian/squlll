@@ -1622,7 +1622,7 @@ function ScopeShortcut({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'rounded-lg border px-2.5 py-2 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50',
+        'rounded-lg border px-2.5 py-2 text-left transition-all disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400',
         selected && variant === 'default'
           ? 'border-slate-900 bg-slate-900 text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
           : selected && variant === 'muted'

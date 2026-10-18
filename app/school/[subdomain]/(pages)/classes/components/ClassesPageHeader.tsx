@@ -120,7 +120,7 @@ export function ClassesPageHeader({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-none">
+            <DropdownMenuContent align="end" className="w-48 rounded-lg">
               <DropdownMenuLabel className="text-xs">Class tasks</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {visibleActions.map((action) => {

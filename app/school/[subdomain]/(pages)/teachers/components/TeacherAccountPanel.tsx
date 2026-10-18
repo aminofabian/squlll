@@ -66,7 +66,7 @@ function invitationStatusBadge(invitation: PendingInvitation | undefined) {
     return (
       <Badge
         variant="outline"
-        className="rounded-none border-[#1a4d42]/12 bg-white text-[10px] font-medium text-[#1a4d42]/60"
+        className="rounded-lg border-[#1a4d42]/12 bg-white text-[10px] font-medium text-[#1a4d42]/60"
       >
         No pending invite
       </Badge>
@@ -80,7 +80,7 @@ function invitationStatusBadge(invitation: PendingInvitation | undefined) {
     <Badge
       variant="outline"
       className={cn(
-        "rounded-none text-[10px] font-medium capitalize",
+        "rounded-lg text-[10px] font-medium capitalize",
         invitation.status === "PENDING"
           ? isExpired
             ? "border-red-200 bg-red-50 text-red-700"
@@ -229,7 +229,7 @@ export function TeacherAccountPanel({
         </div>
 
         {invitation && (
-          <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/65 dark:border-white/10 dark:bg-[#071411]">
+          <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/65 dark:border-white/10 dark:bg-[#071411]">
             <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/40">
@@ -305,7 +305,7 @@ export function TeacherAccountPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 rounded-none border-red-200 text-xs text-red-700 hover:bg-red-50"
+                className="h-8 gap-1.5 rounded-lg border-red-200 text-xs text-red-700 hover:bg-red-50"
                 onClick={() => setRevokeOpen(true)}
                 disabled={isRevoking}
               >
@@ -317,7 +317,7 @@ export function TeacherAccountPanel({
       </div>
 
       <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
-        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
+        <AlertDialogContent className="rounded-lg border border-[#1a4d42]/12">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-[#0a1f1a]">
               Revoke invitation?
@@ -328,7 +328,7 @@ export function TeacherAccountPanel({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none" disabled={isRevoking}>
+            <AlertDialogCancel className="rounded-lg" disabled={isRevoking}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -337,7 +337,7 @@ export function TeacherAccountPanel({
                 void handleRevoke();
               }}
               disabled={isRevoking}
-              className="rounded-none bg-red-600 hover:bg-red-700"
+              className="rounded-lg bg-red-600 hover:bg-red-700"
             >
               {isRevoking ? "Revoking…" : "Revoke invitation"}
             </AlertDialogAction>

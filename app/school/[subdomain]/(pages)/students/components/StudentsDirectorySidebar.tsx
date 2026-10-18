@@ -38,7 +38,7 @@ function StudentInitials({
   return (
     <div
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-none text-[11px] font-semibold",
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold",
         selected
           ? "bg-[#0a1f1a] text-white"
           : "bg-[#e8f2ef] text-[#1a4d42] dark:bg-[#246a59]/20 dark:text-[#d4e8e2]",
@@ -149,7 +149,7 @@ export function StudentsDirectorySidebar({
                         </span>
                         <span
                           className={cn(
-                            "h-1.5 w-1.5 shrink-0 rounded-none",
+                            "h-1.5 w-1.5 shrink-0 rounded-lg",
                             student.status === "active"
                               ? "bg-[#246a59]"
                               : "bg-amber-500",

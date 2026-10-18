@@ -80,7 +80,7 @@ export function ClassSubjectsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+      <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
         <div className="flex flex-wrap items-center gap-4 border-b border-[#1a4d42]/10 px-4 py-4 dark:border-white/10 sm:px-6">
           <ClassDetailProgressRing value={coverage} size={52} stroke={5} />
           <div className="min-w-0 flex-1">
@@ -146,7 +146,7 @@ export function ClassSubjectsPanel({
 
         <div className="p-4 sm:p-6">
           {totalCount === 0 && !isLoading ? (
-            <div className="flex flex-col items-center rounded-none border border-dashed border-[#1a4d42]/15/90 py-12 text-center dark:border-white/15">
+            <div className="flex flex-col items-center rounded-lg border border-dashed border-[#1a4d42]/15/90 py-12 text-center dark:border-white/15">
               <p className="text-sm font-medium text-[#1a4d42]/80 dark:text-slate-200">
                 Build your class curriculum
               </p>
@@ -205,14 +205,14 @@ export function ClassSubjectsPanel({
       </div>
 
       {feeSummary && feeSummary.students.length > 0 ? (
-        <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+        <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
           <button
             type="button"
             onClick={() => setFeesOpen((o) => !o)}
             className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#f8fbfa] dark:hover:bg-slate-800/40 sm:px-6"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-none bg-[#e8f2ef] text-[#1a4d42]/65 dark:bg-slate-800 dark:text-[#1a4d42]/30">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e8f2ef] text-[#1a4d42]/65 dark:bg-slate-800 dark:text-[#1a4d42]/30">
                 <Receipt className="h-4 w-4" />
               </span>
               <div>
@@ -404,7 +404,7 @@ function SubjectGroup({
             <li
               key={s.id}
               className={cn(
-                "flex flex-col gap-3 rounded-none border border-[#1a4d42]/12 border-l-[3px] bg-white px-3 py-3 shadow-none transition-shadow hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#071411] sm:flex-row sm:items-center sm:justify-between sm:px-4",
+                "flex flex-col gap-3 rounded-lg border border-[#1a4d42]/12 border-l-[3px] bg-white px-3 py-3 shadow-none transition-shadow hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#071411] sm:flex-row sm:items-center sm:justify-between sm:px-4",
                 staffed ? borderAccent : "border-l-slate-300 dark:border-l-slate-600",
               )}
             >

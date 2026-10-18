@@ -62,14 +62,14 @@ export function StudentsRecentlyEnrolled({
                 type="button"
                 onClick={() => onSelect(student.id)}
                 className={cn(
-                  "flex w-[9.5rem] flex-col gap-1.5 rounded-none border px-2.5 py-2 text-left transition-colors",
+                  "flex w-[9.5rem] flex-col gap-1.5 rounded-lg border px-2.5 py-2 text-left transition-colors",
                   selected
                     ? "border-[#246a59]/40 bg-[#246a59]/[0.06]"
                     : "border-[#1a4d42]/12 bg-[#f8fbfa] hover:border-[#246a59]/30 hover:bg-white dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-white/5",
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10 text-[10px] font-bold text-[#246a59]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-[10px] font-bold text-[#246a59]">
                     {initials(student.name)}
                   </span>
                   <span className="min-w-0">

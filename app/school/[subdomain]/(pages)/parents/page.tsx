@@ -184,7 +184,7 @@ export default function ParentsPage() {
       : `${parents.length} parent${parents.length !== 1 ? "s" : ""} · ${pendingInvitations.length} pending invite${pendingInvitations.length !== 1 ? "s" : ""}`;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-[#071411]">
       {!isSidebarMinimized ? (
         <button
           type="button"
@@ -308,7 +308,7 @@ export default function ParentsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => void refetchParents()}
-                  className="h-7 rounded-none border-red-200 text-red-700 hover:bg-red-100"
+                  className="h-7 rounded-lg border-red-200 text-red-700 hover:bg-red-100"
                 >
                   Retry
                 </Button>
@@ -331,8 +331,8 @@ export default function ParentsPage() {
                 onUpdated={handleParentUpdated}
               />
             ) : parents.length === 0 && !loading ? (
-              <div className="rounded-none border border-dashed border-[#1a4d42]/20 bg-white px-6 py-14 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-white/15 dark:bg-[#0c1a17]">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+              <div className="rounded-lg border border-dashed border-[#1a4d42]/20 bg-white px-6 py-14 text-center shadow-sm dark:border-white/15 dark:bg-[#0c1a17]">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
                   <Users className="h-5 w-5" />
                 </div>
                 <h2 className="font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">

@@ -57,7 +57,7 @@ export function FeePlansToolbar({
           <div
             className={cn(
               FEES_LAYOUT.chipStrip,
-              "shrink-0 gap-1 rounded-none border border-[#1a4d42]/10 bg-white p-1 lg:max-w-[50%]",
+              "shrink-0 gap-1 rounded-lg border border-[#1a4d42]/10 bg-white p-1 lg:max-w-[50%]",
             )}
             role="tablist"
             aria-label="Filter by school year"
@@ -85,12 +85,12 @@ export function FeePlansToolbar({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search name or year…"
-              className="h-9 rounded-none border-[#1a4d42]/15 bg-white pl-9 pr-8 text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20"
+              className="h-9 rounded-md border-[#1a4d42]/15 bg-white pl-9 pr-8 text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20"
             />
             {searchQuery ? (
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-none p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
                 onClick={() => onSearchChange("")}
                 aria-label="Clear search"
               >
@@ -106,10 +106,10 @@ export function FeePlansToolbar({
                 onStatusFilterChange(v as "all" | "active" | "inactive")
               }
             >
-              <SelectTrigger className="h-9 w-full min-w-[7rem] rounded-none border-[#1a4d42]/15 text-sm sm:w-[7.5rem]">
+              <SelectTrigger className="h-9 w-full min-w-[7rem] rounded-md border-[#1a4d42]/15 text-sm sm:w-[7.5rem]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent className="rounded-none">
+              <SelectContent className="rounded-md">
                 <SelectItem value="all">All status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
@@ -121,10 +121,10 @@ export function FeePlansToolbar({
                 value={academicYearFilter}
                 onValueChange={onAcademicYearFilterChange}
               >
-                <SelectTrigger className="h-9 w-full min-w-[8rem] rounded-none border-[#1a4d42]/15 text-sm sm:w-[8.5rem]">
+                <SelectTrigger className="h-9 w-full min-w-[8rem] rounded-md border-[#1a4d42]/15 text-sm sm:w-[8.5rem]">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none">
+                <SelectContent className="rounded-md">
                   <SelectItem value="all">All years</SelectItem>
                   {academicYears.map((year) => (
                     <SelectItem key={year} value={year}>
@@ -182,7 +182,7 @@ function YearChip({
       aria-selected={selected}
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-none px-2.5 py-1.5 text-xs font-medium transition-colors",
+        "shrink-0 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors",
         selected
           ? "bg-[#0a1f1a] text-white"
           : "text-[#1a4d42]/65 hover:bg-[#f3f7f5] hover:text-[#0a1f1a]",

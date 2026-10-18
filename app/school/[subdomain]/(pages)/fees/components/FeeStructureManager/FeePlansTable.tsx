@@ -110,7 +110,7 @@ function PlanAttentionBadge({
 }) {
   if (!structure.isActive) {
     return (
-      <span className="inline-flex rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-2 py-0.5 text-[11px] font-semibold text-[#1a4d42]/45">
+      <span className="inline-flex rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] px-2 py-0.5 text-[11px] font-semibold text-[#1a4d42]/45">
         Inactive
       </span>
     );
@@ -127,7 +127,7 @@ function PlanAttentionBadge({
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "inline-flex cursor-default rounded-none border px-2 py-0.5 text-[11px] font-semibold",
+            "inline-flex cursor-default rounded-lg border px-2 py-0.5 text-[11px] font-semibold",
             styles.badge,
           )}
         >
@@ -183,7 +183,7 @@ function NotBilledBadge({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-none border border-amber-200/90 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900",
+        "inline-flex rounded-lg border border-amber-200/90 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900",
         className,
       )}
     >
@@ -229,9 +229,9 @@ function CollectionCellContent({
 
   return (
     <div className="min-w-0 max-w-full space-y-1.5">
-      <div className="h-1.5 w-full overflow-hidden rounded-none bg-[#1a4d42]/10">
+      <div className="h-1.5 w-full overflow-hidden rounded-lg bg-[#1a4d42]/10">
         <div
-          className="h-full rounded-none transition-all"
+          className="h-full rounded-lg transition-all"
           style={{
             width: `${Math.min(100, pct)}%`,
             backgroundColor: FEES_BRAND.primary,
@@ -451,7 +451,7 @@ export function FeePlansTable({
                     <li key={structure.structureId} className="group">
                       <div
                         className={cn(
-                          "overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white",
+                          "overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white",
                           !structure.isActive && "opacity-75",
                         )}
                       >

@@ -480,7 +480,7 @@ export function TimetableShareDrawer({
     >
       <DrawerContent
         className={cn(
-          "flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t bg-white dark:bg-[#0c1a17]",
+          "flex max-h-[min(92dvh,720px)] flex-col rounded-md border-t bg-white dark:bg-[#0c1a17]",
           tt.border.hair,
         )}
         data-vaul-drawer-direction="bottom"

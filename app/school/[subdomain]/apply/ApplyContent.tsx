@@ -335,7 +335,7 @@ function MobileProgress({
       <div
         className={cn(
           'h-1 overflow-hidden bg-[var(--school-ink)]/10',
-          soft ? 'rounded-full' : 'rounded-none',
+          soft ? 'rounded-full' : 'rounded-lg',
         )}
       >
         <motion.div
@@ -443,7 +443,7 @@ function ApplyShell({
               <div
                 className={cn(
                   'flex h-10 w-10 items-center justify-center sm:h-11 sm:w-11',
-                  soft ? 'rounded-xl' : 'rounded-none',
+                  soft ? 'rounded-xl' : 'rounded-lg',
                   isPlayfield
                     ? 'border border-primary bg-transparent text-primary'
                     : 'bg-primary text-white',
@@ -564,7 +564,7 @@ function ApplyShell({
           <section
             className={cn(
               'flex min-h-0 min-w-0 flex-col border bg-[color-mix(in_srgb,var(--school-paper)_88%,white)]',
-              soft ? 'rounded-2xl' : 'rounded-none',
+              soft ? 'rounded-2xl' : 'rounded-lg',
               isAssembly &&
                 'border-[var(--school-ink)]/20 bg-[var(--ah-cream,#FBF6E9)]',
               isPlayfield &&
@@ -777,7 +777,7 @@ export default function ApplyContent({
           <div
             className={cn(
               'relative overflow-hidden border border-primary/25 bg-primary/[0.06] px-6 py-8 text-center sm:px-8',
-              soft ? 'rounded-2xl' : 'rounded-none',
+              soft ? 'rounded-2xl' : 'rounded-lg',
             )}
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">

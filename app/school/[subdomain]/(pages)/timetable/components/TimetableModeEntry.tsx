@@ -72,7 +72,7 @@ export function TimetableModeEntry({
 
       <div
         className={cn(
-          "relative w-full max-w-3xl overflow-hidden border border-[#1a4d42]/15 bg-white shadow-[8px_8px_0_0_rgba(10,31,26,0.08)] transition-all duration-400 dark:border-white/10 dark:bg-[#0c1a17]",
+          "relative w-full max-w-3xl overflow-hidden border border-[#1a4d42]/15 bg-white shadow-sm transition-all duration-400 dark:border-white/10 dark:bg-[#0c1a17]",
           visible
             ? "translate-y-0 opacity-100"
             : "translate-y-2 opacity-0",
@@ -113,7 +113,7 @@ export function TimetableModeEntry({
                       tt.text.caption,
                       tt.ink.base,
                       tt.numeral,
-                      "inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-1 font-medium dark:border-white/10 dark:bg-white/[0.02]",
+                      "inline-flex items-center gap-1 rounded-md border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-1 font-medium dark:border-white/10 dark:bg-white/[0.02]",
                     )}
                   >
                     <CheckCircle2 className="h-3 w-3 text-emerald-500" />

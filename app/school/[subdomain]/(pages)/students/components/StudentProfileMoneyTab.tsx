@@ -75,7 +75,7 @@ export function StudentProfileMoneyTab({
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+            <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
               <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Total owed
               </dt>
@@ -83,7 +83,7 @@ export function StudentProfileMoneyTab({
                 {formatCurrency(student.feeSummary.totalOwed)}
               </dd>
             </div>
-            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+            <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
               <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Paid
               </dt>
@@ -91,7 +91,7 @@ export function StudentProfileMoneyTab({
                 {formatCurrency(student.feeSummary.totalPaid)}
               </dd>
             </div>
-            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+            <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
               <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Balance
               </dt>
@@ -104,7 +104,7 @@ export function StudentProfileMoneyTab({
                 {formatCurrency(balance)}
               </dd>
             </div>
-            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+            <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
               <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Fee items
               </dt>

@@ -333,8 +333,8 @@ export default function ClassesPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center bg-[#f3f7f5] p-4 dark:bg-[#071411]">
-        <div className="w-full max-w-sm rounded-none border border-red-300/80 bg-white px-4 py-6 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+      <div className="flex min-h-[40vh] items-center justify-center bg-background p-4 dark:bg-[#071411]">
+        <div className="w-full max-w-sm rounded-lg border border-red-300/80 bg-white px-4 py-6 text-center shadow-sm dark:border-red-900/50 dark:bg-[#0c1a17]">
           <h2 className="font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading classes
           </h2>
@@ -343,7 +343,7 @@ export default function ClassesPage() {
           </p>
           <Button
             onClick={() => window.location.reload()}
-            className="mt-3 h-8 rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+            className="mt-3 h-8 rounded-lg bg-[#0a1f1a] text-white hover:bg-[#246a59]"
             size="sm"
           >
             Try again
@@ -354,7 +354,7 @@ export default function ClassesPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex min-h-full flex-col bg-background dark:bg-[#071411]">
       <div className="flex min-w-0 flex-1 flex-col">
         <ClassesPageHeader
           title={headerTitle}

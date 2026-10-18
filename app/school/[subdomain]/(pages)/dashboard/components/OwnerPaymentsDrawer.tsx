@@ -143,7 +143,7 @@ export function OwnerPaymentsDrawer({
                   Checking M-Pesa settings…
                 </div>
               ) : railOn ? (
-                <div className="border border-[#1a4d42]/12 bg-white p-4 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]">
+                <div className="border border-[#1a4d42]/12 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#0c1a17]">
                   <CustodyMpesaSettingsPanel compact />
                 </div>
               ) : (
@@ -153,7 +153,7 @@ export function OwnerPaymentsDrawer({
                 />
               )
             ) : (
-              <div className="border border-[#1a4d42]/12 bg-white p-4 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]">
+              <div className="border border-[#1a4d42]/12 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#0c1a17]">
                 <SchoolBankAccountsPanel compact />
               </div>
             )}
@@ -215,7 +215,7 @@ function RailTab({
       className={cn(
         "flex min-w-0 items-center gap-2 border px-2.5 py-2 text-left transition-colors",
         active
-          ? "border-[#246a59]/30 bg-white text-[#0a1f1a] shadow-[2px_2px_0_0_rgba(10,31,26,0.05)] dark:bg-[#0c1a17] dark:text-white"
+          ? "border-[#246a59]/30 bg-white text-[#0a1f1a] shadow-sm dark:bg-[#0c1a17] dark:text-white"
           : "border-transparent text-[#1a4d42]/55 hover:bg-white/70 dark:text-white/45 dark:hover:bg-white/5",
       )}
     >

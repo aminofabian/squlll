@@ -35,13 +35,13 @@ import {
 } from "@/lib/exams/gradingConfig";
 
 const panel =
-  "border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]";
+  "border border-[#1a4d42]/12 bg-white shadow-sm dark:border-white/10 dark:bg-[#0c1a17]";
 
 const fieldShell =
-  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411] dark:placeholder:text-white/40";
+  "h-10 rounded-lg border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411] dark:placeholder:text-white/40";
 
 const selectShell =
-  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411]";
+  "h-10 rounded-lg border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411]";
 
 const labelClass = "text-xs font-medium text-[#0a1f1a] dark:text-white/80";
 
@@ -160,7 +160,7 @@ export default function GradingPage() {
     id ? (subjects.find((s) => s.id === id)?.name ?? id) : "All subjects";
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="min-h-0 flex-1 overflow-y-auto bg-background dark:bg-[#071411]">
       <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-5">
         {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#1a4d42]/12 pb-4 dark:border-white/10">
@@ -180,7 +180,7 @@ export default function GradingPage() {
               variant="outline"
               size="sm"
               onClick={refetchAll}
-              className="h-9 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#0a1f1a] shadow-none hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
+              className="h-9 rounded-lg border-[#1a4d42]/15 bg-white text-xs text-[#0a1f1a] shadow-none hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
             >
               <RefreshCw className="mr-2 h-3.5 w-3.5" />
               Refresh
@@ -189,7 +189,7 @@ export default function GradingPage() {
               size="sm"
               onClick={handleSeedScale}
               disabled={seeding}
-              className="h-9 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
+              className="h-9 rounded-lg bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
             >
               {seeding ? (
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
@@ -231,7 +231,7 @@ export default function GradingPage() {
                         {scale.name}
                       </span>
                       {scale.isDefault ? (
-                        <Badge className="rounded-none border-0 bg-[#246a59]/10 px-2 text-[10px] font-semibold text-[#246a59] hover:bg-[#246a59]/10">
+                        <Badge className="rounded-lg border-0 bg-[#246a59]/10 px-2 text-[10px] font-semibold text-[#246a59] hover:bg-[#246a59]/10">
                           Default
                         </Badge>
                       ) : null}
@@ -328,7 +328,7 @@ export default function GradingPage() {
             <Button
               onClick={handleAddWeight}
               disabled={savingWeight}
-              className="h-9 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
+              className="h-9 rounded-lg bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
             >
               {savingWeight ? (
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
@@ -379,7 +379,7 @@ export default function GradingPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-none text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
+                            className="h-8 w-8 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
                             onClick={() => handleDeleteWeight(weight)}
                           >
                             <Trash2 className="h-4 w-4" />

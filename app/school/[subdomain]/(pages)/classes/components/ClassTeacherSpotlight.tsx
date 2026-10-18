@@ -33,13 +33,13 @@ export function ClassTeacherSpotlight({
     return (
       <div
         className={cn(
-          "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/15 dark:bg-[#071411]",
+          "rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/15 dark:bg-[#071411]",
           className,
         )}
       >
         <div className="h-3 w-24 animate-pulse rounded bg-[#e8f2ef] dark:bg-slate-700" />
         <div className="mt-4 flex gap-3">
-          <div className="h-12 w-12 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-slate-700" />
+          <div className="h-12 w-12 animate-pulse rounded-lg bg-[#e8f2ef] dark:bg-slate-700" />
           <div className="flex-1 space-y-2">
             <div className="h-4 w-32 animate-pulse rounded bg-[#e8f2ef] dark:bg-slate-700" />
             <div className="h-3 w-40 animate-pulse rounded bg-[#e8f2ef] dark:bg-slate-700" />
@@ -53,7 +53,7 @@ export function ClassTeacherSpotlight({
     return (
       <div
         className={cn(
-          "relative overflow-hidden rounded-none border border-dashed border-amber-200/90 bg-gradient-to-br from-amber-50/90 via-white to-slate-50/80 p-4 dark:border-amber-900/40 dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900/80",
+          "relative overflow-hidden rounded-lg border border-dashed border-amber-200/90 bg-gradient-to-br from-amber-50/90 via-white to-slate-50/80 p-4 dark:border-amber-900/40 dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900/80",
           className,
         )}
       >
@@ -84,7 +84,7 @@ export function ClassTeacherSpotlight({
   return (
     <div
       className={cn(
-        "rounded-none border border-[#1a4d42]/12 bg-gradient-to-br from-[#246a59]/[0.06] via-white to-slate-50/60 p-4 dark:border-white/15 dark:from-[#246a59]/10 dark:via-slate-900 dark:to-slate-900/80",
+        "rounded-lg border border-[#1a4d42]/12 bg-gradient-to-br from-[#246a59]/[0.06] via-white to-slate-50/60 p-4 dark:border-white/15 dark:from-[#246a59]/10 dark:via-slate-900 dark:to-slate-900/80",
         className,
       )}
     >
@@ -92,7 +92,7 @@ export function ClassTeacherSpotlight({
         {roleLabel}
       </p>
       <div className="mt-3 flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-gradient-to-br from-[#246a59] to-[#005bb5] text-sm font-bold text-white shadow-none">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#246a59] to-[#005bb5] text-sm font-bold text-white shadow-none">
           {teacherInitials(teacherName)}
         </div>
         <div className="min-w-0 flex-1">

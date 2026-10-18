@@ -23,7 +23,7 @@ export function ParentAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-none font-semibold",
+        "flex shrink-0 items-center justify-center rounded-lg font-semibold",
         sizes[size],
         ring
           ? "bg-[#0a1f1a] text-white"

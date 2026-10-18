@@ -272,7 +272,7 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
         <button
           onClick={() => setStep('compose')}
           disabled={selectedRecipients.length === 0}
-          className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
         >
           Continue ({selectedRecipients.length} selected)
         </button>
@@ -368,14 +368,14 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
           <button
             onClick={() => setStep('preview')}
             disabled={!messageSubject.trim() || !messageContent.trim()}
-            className="px-6 py-3 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 bg-primary/10 text-primary rounded-md hover:bg-primary/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
           >
             Preview
           </button>
           <button
             onClick={handleSendMessage}
             disabled={!messageSubject.trim() || !messageContent.trim() || sendingMessage}
-            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             {sendingMessage ? (
               <>
@@ -434,7 +434,7 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
         <button
           onClick={handleSendMessage}
           disabled={sendingMessage}
-          className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {sendingMessage ? (
             <>

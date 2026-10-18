@@ -903,7 +903,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                     </button>
                     <button
                       type="button"
-                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#246a59] to-[#2d8570] text-white font-semibold hover:from-[#1a4c40] hover:to-[#246a59] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#246a59] to-[#2d8570] text-white font-semibold hover:from-[#1a4c40] hover:to-[#246a59] transition-all duration-300 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed shadow-lg"
                       onClick={() => setStep(2)}
                       disabled={!detailsValid}
                     >
@@ -970,7 +970,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                     
                     <button
                       type="button"
-                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:from-primary-dark hover:to-primary-dark transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:from-primary-dark hover:to-primary-dark transition-all duration-300 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed shadow-lg"
                       onClick={handleGenerateAI}
                       disabled={aiLoading || !aiPrompt.trim() || aiNumQuestions < 1}
                     >
@@ -1084,7 +1084,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                     </button>
                     <button
                       type="button"
-                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#246a59] to-[#2d8570] text-white font-semibold hover:from-[#1a4c40] hover:to-[#246a59] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#246a59] to-[#2d8570] text-white font-semibold hover:from-[#1a4c40] hover:to-[#246a59] transition-all duration-300 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed shadow-lg"
                       onClick={() => setStep(3)}
                       disabled={!questionsValid}
                     >
@@ -1313,7 +1313,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             </button>
                             <button
                               type="submit"
-                              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#059669] to-[#10b981] text-white font-semibold hover:from-[#047857] hover:to-[#059669] transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#059669] to-[#10b981] text-white font-semibold hover:from-[#047857] hover:to-[#059669] transition-all duration-300 shadow-lg disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
                               disabled={saving}
                             >
                               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Create Test

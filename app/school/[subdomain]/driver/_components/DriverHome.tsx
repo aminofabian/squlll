@@ -102,13 +102,13 @@ function TripCard({
           </span>
           <Badge
             variant="outline"
-            className={cn("rounded-none", STATUS_CLASS[trip.status])}
+            className={cn("rounded-lg", STATUS_CLASS[trip.status])}
           >
             {humanize(trip.status)}
           </Badge>
           <Badge
             variant="outline"
-            className="rounded-none border-[#1a4d42]/15 text-[#0a1f1a] dark:border-white/15 dark:text-white/80"
+            className="rounded-lg border-[#1a4d42]/15 text-[#0a1f1a] dark:border-white/15 dark:text-white/80"
           >
             {trip.direction}
           </Badge>

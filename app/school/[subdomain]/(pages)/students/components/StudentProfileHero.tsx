@@ -43,7 +43,7 @@ function StudentAvatar({ name }: { name: string }) {
       : name.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-lg font-bold text-white">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-[#0a1f1a] text-lg font-bold text-white">
       {initials || "?"}
     </div>
   );
@@ -99,7 +99,7 @@ export function StudentProfileHero({
               <Badge
                 variant="outline"
                 className={cn(
-                  "rounded-none text-[10px] font-medium",
+                  "rounded-lg text-[10px] font-medium",
                   student.isActive
                     ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
                     : "border-amber-200 bg-amber-50 text-amber-800",
@@ -110,7 +110,7 @@ export function StudentProfileHero({
               {student.gender ? (
                 <Badge
                   variant="outline"
-                  className="rounded-none text-[10px] font-medium capitalize text-[#1a4d42]/65"
+                  className="rounded-lg text-[10px] font-medium capitalize text-[#1a4d42]/65"
                 >
                   {student.gender.toLowerCase()}
                 </Badge>
@@ -118,7 +118,7 @@ export function StudentProfileHero({
               {student.schoolType ? (
                 <Badge
                   variant="outline"
-                  className="rounded-none text-[10px] font-medium capitalize text-[#1a4d42]/65"
+                  className="rounded-lg text-[10px] font-medium capitalize text-[#1a4d42]/65"
                 >
                   {student.schoolType}
                 </Badge>
@@ -126,7 +126,7 @@ export function StudentProfileHero({
               {missingStream ? (
                 <Badge
                   variant="outline"
-                  className="rounded-none border-amber-200 bg-amber-50 text-[10px] font-medium text-amber-800"
+                  className="rounded-full border-amber-200 bg-amber-50 text-[10px] font-medium text-amber-800"
                 >
                   No stream
                 </Badge>
@@ -185,7 +185,7 @@ export function StudentProfileHero({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-48 rounded-none"
+                  className="w-48 rounded-lg"
                 >
                   <DropdownMenuItem onClick={copyCard}>
                     <Copy className="mr-2 h-3.5 w-3.5" />

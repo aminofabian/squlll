@@ -69,7 +69,7 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
               type="button"
               onClick={() => onChange("")}
               className={cn(
-                "absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-none hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white",
+                "absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white",
                 tt.ink.faint,
                 tt.focus,
               )}

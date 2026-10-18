@@ -36,7 +36,7 @@ export function FeePlanDetailSectionNav({
             href={`#${section.id}`}
             role="tab"
             className={cn(
-              "inline-flex shrink-0 items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium text-[#1a4d42]/60 transition-colors",
+              "inline-flex shrink-0 items-center rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-[#1a4d42]/60 transition-colors",
               "hover:border-[#1a4d42]/12 hover:bg-white hover:text-[#0a1f1a]",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/40",
             )}

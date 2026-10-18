@@ -52,7 +52,7 @@ function GroupHeader({
     <div className="flex items-start gap-2.5 px-4 py-3">
       <span
         className={cn(
-          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-none",
+          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
           tone === "danger"
             ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300"
             : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
@@ -100,7 +100,7 @@ function ClashCard({
 }) {
   const Icon = kind === "teacher" ? User : DoorClosed;
   return (
-    <li className="rounded-none border border-red-200/80 bg-red-50/40 p-3 dark:border-red-900/50 dark:bg-red-950/20">
+    <li className="rounded-md border border-red-200/80 bg-red-50/40 p-3 dark:border-red-900/50 dark:bg-red-950/20">
       <p
         className={cn(
           "flex items-center gap-1.5 font-semibold",
@@ -118,7 +118,7 @@ function ClashCard({
         {entries.map((e) => (
           <li
             key={e.id}
-            className="flex items-center justify-between gap-2 rounded-none bg-white/80 px-2.5 py-1.5 dark:bg-white/5"
+            className="flex items-center justify-between gap-2 rounded-md bg-white/80 px-2.5 py-1.5 dark:bg-white/5"
           >
             <span className={cn("min-w-0 truncate", tt.text.caption, tt.ink.base)}>
               <span className={cn("font-medium", tt.ink.strong)}>
@@ -193,7 +193,7 @@ export function TimetableConflictsPanel({
       >
         <span
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-none",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
             clashTotal > 0
               ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300"
               : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
@@ -289,7 +289,7 @@ export function TimetableConflictsPanel({
                 {quotaIssues.map((issue, i) => (
                   <li
                     key={`quota-${i}`}
-                    className="rounded-none border border-amber-200/80 bg-amber-50/40 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
+                    className="rounded-md border border-amber-200/80 bg-amber-50/40 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
                   >
                     <p
                       className={cn(
@@ -325,7 +325,7 @@ export function TimetableConflictsPanel({
                 {workloadBreaches.map((breach, i) => (
                   <li
                     key={`rule-${i}`}
-                    className="rounded-none border border-amber-200/80 bg-amber-50/40 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
+                    className="rounded-md border border-amber-200/80 bg-amber-50/40 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
                   >
                     <p
                       className={cn(

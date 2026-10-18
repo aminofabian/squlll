@@ -148,12 +148,12 @@ export function SubjectsView({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-9 bg-[#e8f2ef] dark:bg-slate-800 rounded-none animate-pulse" />
+        <div className="h-9 bg-[#e8f2ef] dark:bg-slate-800 rounded-lg animate-pulse" />
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-11 bg-[#e8f2ef] dark:bg-slate-800 rounded-none animate-pulse"
+              className="h-11 bg-[#e8f2ef] dark:bg-slate-800 rounded-lg animate-pulse"
             />
           ))}
         </div>
@@ -370,13 +370,13 @@ function SubjectSection({
   return (
     <section>
       <div className="mb-2 flex items-center gap-1.5 px-0.5">
-        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-none", dot)} />
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-lg", dot)} />
         <p className="text-xs font-medium text-[#1a4d42]/65 dark:text-[#1a4d42]/30">
           {title} · {hint}
         </p>
         <span className="ml-auto text-[11px] text-[#1a4d42]/45">{subjects.length}</span>
       </div>
-      <ul className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:divide-slate-800 dark:border-white/10 dark:bg-[#0c1a17]">
+      <ul className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white dark:divide-slate-800 dark:border-white/10 dark:bg-[#0c1a17]">
           {subjects.map((s) => (
             <li
               key={s.id}

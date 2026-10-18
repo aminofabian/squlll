@@ -27,7 +27,7 @@ export function TeacherAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-none font-semibold",
+        "flex shrink-0 items-center justify-center rounded-lg font-semibold",
         ring
           ? "bg-[#0a1f1a] text-white"
           : cn(palette.bg, palette.text),

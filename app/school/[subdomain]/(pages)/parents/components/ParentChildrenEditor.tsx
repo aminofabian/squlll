@@ -158,7 +158,7 @@ export function ParentChildrenEditor({
                 if (e.key === "Enter") void handleSearch();
               }}
               placeholder="Search by student name…"
-              className="h-8 rounded-none border-[#1a4d42]/15 text-xs"
+              className="h-8 rounded-md border-[#1a4d42]/15 text-xs"
             />
             <Button
               type="button"
@@ -181,7 +181,7 @@ export function ParentChildrenEditor({
               {results.map((student) => (
                 <li
                   key={student.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
@@ -219,14 +219,14 @@ export function ParentChildrenEditor({
 
       <div className="space-y-3 p-4 sm:p-5">
         {students.length === 0 ? (
-          <p className="rounded-none bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/45 dark:bg-[#071411]">
+          <p className="rounded-lg bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/45 dark:bg-[#071411]">
             No children linked yet. Use &ldquo;Link student&rdquo; to add one.
           </p>
         ) : (
           students.map((student) => (
             <div
               key={student.id}
-              className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-3 dark:border-white/10 dark:bg-[#071411]"
+              className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-3 dark:border-white/10 dark:bg-[#071411]"
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -241,7 +241,7 @@ export function ParentChildrenEditor({
                   {student.isPrimary ? (
                     <Badge
                       variant="outline"
-                      className="rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[10px] font-medium text-[#1a4d42]"
+                      className="rounded-lg border-[#246a59]/25 bg-[#e8f2ef] text-[10px] font-medium text-[#1a4d42]"
                     >
                       Primary contact
                     </Badge>

@@ -84,28 +84,28 @@ function formatGender(gender?: string) {
 function TeacherDetailSkeleton() {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Loading teacher details">
-      <Skeleton className="h-3 w-20 rounded-none" />
+      <Skeleton className="h-3 w-20 rounded-lg" />
       <div className={`${teachersPanel} p-4`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-          <Skeleton className="h-14 w-14 shrink-0 rounded-none" />
+          <Skeleton className="h-14 w-14 shrink-0 rounded-lg" />
           <div className="flex-1 space-y-2">
-            <Skeleton className="h-6 w-48 rounded-none" />
+            <Skeleton className="h-6 w-48 rounded-lg" />
             <div className="flex flex-wrap gap-1.5">
-              <Skeleton className="h-5 w-20 rounded-none" />
-              <Skeleton className="h-5 w-14 rounded-none" />
-              <Skeleton className="h-5 w-16 rounded-none" />
+              <Skeleton className="h-5 w-20 rounded-lg" />
+              <Skeleton className="h-5 w-14 rounded-lg" />
+              <Skeleton className="h-5 w-16 rounded-lg" />
             </div>
           </div>
         </div>
       </div>
-      <Skeleton className="h-9 w-full rounded-none" />
+      <Skeleton className="h-9 w-full rounded-lg" />
       <div className={`${teachersPanel} p-4`}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-3 w-24 rounded-none" />
-              <Skeleton className="h-10 w-full rounded-none" />
-              <Skeleton className="h-10 w-full rounded-none" />
+              <Skeleton className="h-3 w-24 rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             </div>
           ))}
         </div>
@@ -134,7 +134,7 @@ function DetailField({
         {copyValue ? (
           <button
             type="button"
-            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 transition-colors hover:text-[#246a59]"
+            className="shrink-0 rounded-lg p-1 text-[#1a4d42]/40 transition-colors hover:text-[#246a59]"
             onClick={() => {
               void navigator.clipboard.writeText(copyValue);
               toast.success(`${label} copied`);
@@ -184,9 +184,9 @@ function AcademicSetupCta({
     <button
       type="button"
       onClick={onAction}
-      className="group flex w-full items-center gap-3 rounded-none border border-dashed border-[#246a59]/35 bg-[#246a59]/[0.04] px-3 py-3 text-left transition-colors hover:border-[#246a59]/55 hover:bg-[#246a59]/[0.08]"
+      className="group flex w-full items-center gap-3 rounded-lg border border-dashed border-[#246a59]/35 bg-[#246a59]/[0.04] px-3 py-3 text-left transition-colors hover:border-[#246a59]/55 hover:bg-[#246a59]/[0.08]"
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
@@ -197,7 +197,7 @@ function AcademicSetupCta({
           {description}
         </p>
       </div>
-      <span className="hidden shrink-0 rounded-none bg-[#0a1f1a] px-2.5 py-1.5 text-[11px] font-medium text-white transition-colors group-hover:bg-[#246a59] sm:inline">
+      <span className="hidden shrink-0 rounded-lg bg-[#0a1f1a] px-2.5 py-1.5 text-[11px] font-medium text-white transition-colors group-hover:bg-[#246a59] sm:inline">
         {actionLabel}
       </span>
       <Plus className="h-4 w-4 shrink-0 text-[#246a59] sm:hidden" />
@@ -210,7 +210,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
     <Badge
       variant="outline"
       className={cn(
-        "rounded-none text-[10px] font-medium",
+        "rounded-lg text-[10px] font-medium",
         isActive
           ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
           : "border-amber-200 bg-amber-50 text-amber-800",
@@ -248,7 +248,7 @@ export function TeacherDetailView({
     return (
       <div className="flex min-h-[280px] items-center justify-center">
         <div className="max-w-sm space-y-3 text-center">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-none bg-red-50 dark:bg-red-950/40">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950/40">
             <AlertCircle className="h-5 w-5 text-red-500" />
           </div>
           <div>
@@ -263,7 +263,7 @@ export function TeacherDetailView({
             onClick={refetch}
             variant="outline"
             size="sm"
-            className="rounded-none border-[#1a4d42]/15"
+            className="rounded-lg border-[#1a4d42]/15"
           >
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Try again
@@ -322,7 +322,7 @@ export function TeacherDetailView({
       )}
 
       {profileIncomplete && (
-        <div className="flex items-center gap-2 rounded-none border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/15 dark:text-[#d4e8e2]">
+        <div className="flex items-center gap-2 rounded-lg border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/15 dark:text-[#d4e8e2]">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#246a59]" />
           <p>
             <span className="font-semibold">Profile incomplete.</span>{" "}
@@ -386,7 +386,7 @@ export function TeacherDetailView({
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 rounded-none">
+                <DropdownMenuContent align="end" className="w-48 rounded-lg">
                   {userId ? (
                     <DropdownMenuItem
                       onClick={() => setPasswordDialogOpen(true)}
@@ -426,7 +426,7 @@ export function TeacherDetailView({
       ) : null}
 
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
-        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
+        <AlertDialogContent className="rounded-lg border border-[#1a4d42]/12">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-[#0a1f1a]">
               Remove {displayName}?
@@ -437,7 +437,7 @@ export function TeacherDetailView({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none" disabled={isDeleting}>
+            <AlertDialogCancel className="rounded-lg" disabled={isDeleting}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -446,7 +446,7 @@ export function TeacherDetailView({
                 void handleRemove();
               }}
               disabled={isDeleting}
-              className="rounded-none bg-red-600 hover:bg-red-700"
+              className="rounded-lg bg-red-600 hover:bg-red-700"
             >
               {isDeleting ? "Removing…" : "Remove teacher"}
             </AlertDialogAction>
@@ -637,7 +637,7 @@ export function TeacherDetailView({
             <div className="space-y-3 p-3 sm:p-4">
               {isAcademicEmpty ? (
                 <div className="space-y-3">
-                  <div className="rounded-none border border-[#246a59]/25 bg-[#f8fbfa] px-3 py-3 dark:bg-[#071411]">
+                  <div className="rounded-lg border border-[#246a59]/25 bg-[#f8fbfa] px-3 py-3 dark:bg-[#071411]">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
@@ -666,9 +666,9 @@ export function TeacherDetailView({
                     ].map(({ icon: Icon, label, hint }) => (
                       <li
                         key={label}
-                        className="flex items-center gap-2.5 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
+                        className="flex items-center gap-2.5 rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
                       >
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-white text-[#246a59] ring-1 ring-[#1a4d42]/12 dark:bg-[#0c1a17]">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-[#246a59] ring-1 ring-[#1a4d42]/12 dark:bg-[#0c1a17]">
                           <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div>
@@ -683,7 +683,7 @@ export function TeacherDetailView({
                 </div>
               ) : (
                 <>
-                  <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#071411]">
+                  <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#071411]">
                     <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                       Workload summary
                     </p>
@@ -710,7 +710,7 @@ export function TeacherDetailView({
                           <Badge
                             key={subject.id}
                             variant="outline"
-                            className="rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[11px] font-medium text-[#1a4d42]"
+                            className="rounded-lg border-[#246a59]/25 bg-[#e8f2ef] text-[11px] font-medium text-[#1a4d42]"
                           >
                             {formatTenantSubjectLabel(subject)}
                           </Badge>
@@ -734,7 +734,7 @@ export function TeacherDetailView({
                           <Badge
                             key={gradeLevel.id}
                             variant="outline"
-                            className="rounded-none border-[#1a4d42]/15 bg-[#f8fbfa] text-[11px] font-medium text-[#0a1f1a] dark:text-white"
+                            className="rounded-lg border-[#1a4d42]/15 bg-[#f8fbfa] text-[11px] font-medium text-[#0a1f1a] dark:text-white"
                           >
                             {gradeLevel.gradeLevel?.name || "Unknown"}
                           </Badge>
@@ -758,7 +758,7 @@ export function TeacherDetailView({
                           <Badge
                             key={stream.id}
                             variant="outline"
-                            className="rounded-none border-[#246a59]/20 bg-white text-[11px] font-medium text-[#1a4d42]"
+                            className="rounded-lg border-[#246a59]/20 bg-white text-[11px] font-medium text-[#1a4d42]"
                           >
                             {stream.stream?.name || "Stream"}
                             {stream.tenantGradeLevel?.gradeLevel?.name

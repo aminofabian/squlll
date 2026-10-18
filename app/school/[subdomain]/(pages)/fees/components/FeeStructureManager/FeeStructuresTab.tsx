@@ -214,7 +214,7 @@ export const FeeStructuresTab = ({
   if (graphQLStructures && graphQLStructures.length > 0) {
     if (selectedPlanSlug && !activePlan && hasFetched) {
       return (
-        <div className="space-y-3 rounded-none border border-dashed border-[#1a4d42]/15 bg-[#f8fbfa] p-8 text-center">
+        <div className="space-y-3 rounded-lg border border-dashed border-[#1a4d42]/15 bg-[#f8fbfa] p-8 text-center">
           <p className="text-sm font-medium text-[#0a1f1a]">Fee plan not found</p>
           <p className="mt-1 text-xs text-[#1a4d42]/50">
             It may have been deleted or renamed.
@@ -223,7 +223,7 @@ export const FeeStructuresTab = ({
             type="button"
             variant="outline"
             size="sm"
-            className="mt-3 rounded-none border-[#1a4d42]/15"
+            className="mt-3 rounded-lg border-[#1a4d42]/15"
             onClick={onBackToPlanList}
           >
             Back to all fee plans
@@ -288,7 +288,7 @@ export const FeeStructuresTab = ({
     )
 
     return (
-      <div className="min-w-0 max-w-full overflow-x-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]">
+      <div className="min-w-0 max-w-full overflow-x-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-sm">
         <FeePlansSummary
           stats={dashboardStats}
           onCreateNew={onCreateNew}
@@ -332,7 +332,7 @@ export const FeeStructuresTab = ({
         ) : (
           <div className="border-t border-dashed border-[#1a4d42]/15 p-10 text-center">
             <div className="mx-auto max-w-sm">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa]">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa]">
                 <Search className="h-6 w-6 text-[#1a4d42]/40" />
               </div>
               <h3 className="text-sm font-semibold text-[#0a1f1a]">
@@ -345,7 +345,7 @@ export const FeeStructuresTab = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-4 h-8 rounded-none border-[#1a4d42]/15 text-xs"
+                  className="mt-4 h-8 rounded-lg border-[#1a4d42]/15 text-xs"
                   onClick={() => {
                     setSearchQuery('')
                     setStatusFilter('all')

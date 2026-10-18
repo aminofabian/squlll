@@ -12,10 +12,10 @@ export const FEES_BRAND = {
 } as const;
 
 export const FEES_PANEL =
-  "overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]";
+  "overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-sm dark:border-white/10 dark:bg-[#0c1a17]";
 
 export const FEES_PANEL_MUTED =
-  "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]";
+  "rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]";
 
 export const FEES_SECTION_HEAD =
   "border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]";
@@ -29,8 +29,8 @@ export const FEES_DETAIL = {
   planPageWidth: "max-w-5xl",
   pageGap: "space-y-3",
   planPageGap: "space-y-3",
-  cardRadius: "rounded-none",
-  shadow: "shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]",
+  cardRadius: "rounded-lg",
+  shadow: "shadow-sm",
   shadowSoft: "shadow-none",
   stickyNav:
     "-mx-0.5 px-0.5 pb-1 backdrop-blur-md supports-[backdrop-filter]:bg-[#f3f7f5]/92",
@@ -54,7 +54,7 @@ export const FEES_LAYOUT = {
   /** Tables stay inside the page width — no document-level horizontal scroll. */
   tableScroll: "min-w-0 max-w-full overflow-x-hidden",
   tableContained:
-    "min-w-0 max-w-full overflow-x-hidden rounded-none border border-[#1a4d42]/12",
+    "min-w-0 max-w-full overflow-x-hidden rounded-lg border border-[#1a4d42]/12",
   planScrollMt: "scroll-mt-28 max-md:scroll-mt-24 sm:scroll-mt-[11rem]",
   /** Room for pinned letter toolbar (+ mobile tab bar on small screens). */
   planPageBottom:
@@ -76,38 +76,38 @@ export const FEES_MOBILE = {
   planPageShell: "max-md:bg-[#f3f7f5] max-md:px-3 max-md:pt-0",
   stack: "max-md:flex max-md:flex-col max-md:gap-3",
   chrome:
-    "max-md:mb-0 max-md:rounded-none max-md:border-0 max-md:border-b max-md:border-[#1a4d42]/10 max-md:bg-white/95 max-md:shadow-none md:rounded-none md:border md:border-[#1a4d42]/12 md:shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]",
+    "max-md:mb-0 max-md:rounded-lg max-md:border-0 max-md:border-b max-md:border-[#1a4d42]/10 max-md:bg-white/95 max-md:shadow-none md:rounded-lg md:border md:border-[#1a4d42]/12 md:shadow-sm",
   largeTitle:
     "max-md:font-display max-md:text-[1.625rem] max-md:font-normal max-md:leading-tight max-md:tracking-tight max-md:text-[#0a1f1a]",
   sectionLabel:
     "max-md:px-1 max-md:text-[11px] max-md:font-semibold max-md:uppercase max-md:tracking-wider max-md:text-[#1a4d42]/45",
   segmentedTrack:
-    "max-md:flex max-md:flex-wrap max-md:gap-1 max-md:overflow-visible max-md:rounded-none max-md:bg-[#f3f7f5] max-md:p-1 max-md:border max-md:border-[#1a4d42]/10",
+    "max-md:flex max-md:flex-wrap max-md:gap-1 max-md:overflow-visible max-md:rounded-lg max-md:bg-[#f3f7f5] max-md:p-1 max-md:border max-md:border-[#1a4d42]/10",
   segmentedTab:
-    "max-md:flex max-md:min-h-[3rem] max-md:min-w-0 max-md:flex-1 max-md:basis-[30%] max-md:flex-col max-md:items-center max-md:justify-center max-md:gap-0.5 max-md:rounded-none max-md:px-2 max-md:py-1.5 max-md:text-center max-md:text-[10px] max-md:font-semibold max-md:leading-snug max-md:transition-[background,color]",
+    "max-md:flex max-md:min-h-[3rem] max-md:min-w-0 max-md:flex-1 max-md:basis-[30%] max-md:flex-col max-md:items-center max-md:justify-center max-md:gap-0.5 max-md:rounded-lg max-md:px-2 max-md:py-1.5 max-md:text-center max-md:text-[10px] max-md:font-semibold max-md:leading-snug max-md:transition-[background,color]",
   segmentedActive:
     "max-md:bg-[#0a1f1a] max-md:text-white max-md:shadow-none",
   segmentedIdle: "max-md:text-[#1a4d42]/55 max-md:active:opacity-80",
   listGroup:
-    "max-md:overflow-x-hidden max-md:rounded-none max-md:border max-md:border-[#1a4d42]/12 max-md:bg-white max-md:shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]",
+    "max-md:overflow-x-hidden max-md:rounded-lg max-md:border max-md:border-[#1a4d42]/12 max-md:bg-white max-md:shadow-sm",
   listRow:
     "max-md:flex max-md:min-h-[3.25rem] max-md:w-full max-md:items-center max-md:gap-3 max-md:px-4 max-md:py-3 max-md:text-left max-md:transition-colors max-md:active:bg-[#f3f7f5]",
   planDoc:
     "max-md:flex max-md:flex-col max-md:gap-3 max-md:bg-transparent max-md:shadow-none max-md:ring-0",
   planSection:
-    "max-md:!mt-0 max-md:overflow-x-hidden max-md:rounded-none max-md:border max-md:border-[#1a4d42]/12 max-md:bg-white max-md:shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] max-md:ring-0",
+    "max-md:!mt-0 max-md:overflow-x-hidden max-md:rounded-lg max-md:border max-md:border-[#1a4d42]/12 max-md:bg-white max-md:shadow-sm max-md:ring-0",
   planSectionHeader:
     "max-md:mb-3 max-md:flex max-md:flex-row max-md:items-center max-md:justify-between max-md:gap-2",
   planSectionTitle: "max-md:text-[15px] max-md:font-semibold max-md:tracking-tight max-md:text-[#0a1f1a]",
   planStickyTop:
     "max-md:border-0 max-md:border-b max-md:border-[#1a4d42]/10 max-md:bg-white/90 max-md:shadow-none max-md:ring-0 max-md:backdrop-blur-xl max-md:supports-[backdrop-filter]:bg-white/82",
   card:
-    "max-md:rounded-none max-md:border max-md:border-[#1a4d42]/12 max-md:bg-white max-md:shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] max-md:overflow-x-hidden md:rounded-none md:border md:border-[#1a4d42]/12 md:shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]",
+    "max-md:rounded-lg max-md:border max-md:border-[#1a4d42]/12 max-md:bg-white max-md:shadow-sm max-md:overflow-x-hidden md:rounded-lg md:border md:border-[#1a4d42]/12 md:shadow-sm",
   planHeaderCard:
-    "max-md:rounded-none max-md:border-0 max-md:shadow-none max-md:ring-0",
+    "max-md:rounded-lg max-md:border-0 max-md:shadow-none max-md:ring-0",
   planSegmented:
-    "max-md:m-2 max-md:flex max-md:flex-wrap max-md:gap-1 max-md:overflow-visible max-md:rounded-none max-md:border max-md:border-[#1a4d42]/10 max-md:bg-[#f3f7f5] max-md:p-1",
-  touchBtn: "max-md:h-11 max-md:rounded-none",
+    "max-md:m-2 max-md:flex max-md:flex-wrap max-md:gap-1 max-md:overflow-visible max-md:rounded-lg max-md:border max-md:border-[#1a4d42]/10 max-md:bg-[#f3f7f5] max-md:p-1",
+  touchBtn: "max-md:h-11 max-md:rounded-md",
   panelGhost:
     "max-md:!border-0 max-md:!bg-transparent max-md:!shadow-none",
 } as const;
@@ -115,10 +115,10 @@ export const FEES_MOBILE = {
 /** Consistent fees-module buttons (use with shadcn Button). */
 export const FEES_BTN = {
   primary:
-    "h-9 gap-2 rounded-none bg-[#0a1f1a] px-4 text-sm font-medium text-white shadow-none hover:bg-[#246a59]",
+    "h-9 gap-2 rounded-md bg-[#0a1f1a] px-4 text-sm font-medium text-white shadow-none hover:bg-[#246a59]",
   secondary:
-    "h-9 gap-2 rounded-none border border-[#1a4d42]/15 bg-white px-4 text-sm font-medium text-[#1a4d42]/80 shadow-none hover:border-[#246a59]/40 hover:bg-[#f3f7f5]",
+    "h-9 gap-2 rounded-md border border-[#1a4d42]/15 bg-white px-4 text-sm font-medium text-[#1a4d42]/80 shadow-none hover:border-[#246a59]/40 hover:bg-[#f3f7f5]",
   ghost:
-    "h-9 gap-2 rounded-none px-3 text-sm font-medium text-[#1a4d42]/60 hover:bg-[#e8f2ef] hover:text-[#0a1f1a]",
-  icon: "h-9 w-9 shrink-0 rounded-none border border-[#1a4d42]/15 bg-white text-[#1a4d42]/60 shadow-none hover:bg-[#f3f7f5]",
+    "h-9 gap-2 rounded-md px-3 text-sm font-medium text-[#1a4d42]/60 hover:bg-[#e8f2ef] hover:text-[#0a1f1a]",
+  icon: "h-9 w-9 shrink-0 rounded-md border border-[#1a4d42]/15 bg-white text-[#1a4d42]/60 shadow-none hover:bg-[#f3f7f5]",
 } as const;

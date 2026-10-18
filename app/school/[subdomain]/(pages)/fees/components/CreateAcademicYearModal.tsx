@@ -552,7 +552,7 @@ export const CreateAcademicYearModal = ({
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-4xl h-[90vh] overflow-y-auto rounded-none border-0 shadow-2xl">
+      <DialogContent className="w-[95vw] max-w-4xl h-[90vh] overflow-y-auto rounded-lg border-0 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <CalendarDays className="h-6 w-6 text-primary" />

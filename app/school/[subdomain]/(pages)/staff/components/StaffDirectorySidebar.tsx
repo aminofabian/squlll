@@ -37,7 +37,7 @@ function StaffInitials({ name }: { name: string }) {
       : name.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10 text-[11px] font-semibold text-[#246a59]">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-[11px] font-semibold text-[#246a59]">
       {initials || "?"}
     </div>
   );
@@ -144,7 +144,7 @@ export function StaffDirectorySidebar({
                       </span>
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-none",
+                          "h-1.5 w-1.5 shrink-0 rounded-lg",
                           member.isActive ? "bg-emerald-500" : "bg-amber-500",
                         )}
                       />

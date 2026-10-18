@@ -262,7 +262,7 @@ function AcademicYearCard({
             aria-label={`Delete ${year.name}`}
             disabled={deleting}
             onClick={() => onDelete(year.id)}
-            className="h-8 rounded-none text-[#1a4d42]/60 hover:bg-red-50 hover:text-red-600 dark:text-white/60 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+            className="h-8 rounded-lg text-[#1a4d42]/60 hover:bg-red-50 hover:text-red-600 dark:text-white/60 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           >
             {deleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -346,7 +346,7 @@ function AcademicYearCard({
                         aria-label={`Delete ${term.name}`}
                         disabled={deletingTermId === term.id}
                         onClick={() => onDeleteTerm(term.id)}
-                        className="h-8 rounded-none text-[#1a4d42]/60 hover:bg-red-50 hover:text-red-600 dark:text-white/60 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                        className="h-8 rounded-lg text-[#1a4d42]/60 hover:bg-red-50 hover:text-red-600 dark:text-white/60 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                       >
                         {deletingTermId === term.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />

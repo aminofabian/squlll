@@ -91,7 +91,7 @@ export function StaffTable({
 
       {staff.length === 0 ? (
         <div className="px-4 py-14 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-[#246a59]/10">
             <User className="h-5 w-5 text-[#246a59]" />
           </div>
           <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">

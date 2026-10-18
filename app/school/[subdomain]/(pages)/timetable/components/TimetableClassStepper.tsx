@@ -14,7 +14,7 @@ const STEP_BUTTON = cn(
   tt.focus,
   "flex h-8 w-8 items-center justify-center rounded-md border border-[#1a4d42]/15 bg-white text-[#0a1f1a] transition-colors",
   "hover:border-[#246a59]/50 hover:bg-[#246a59] hover:text-white",
-  "disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-[#0a1f1a]",
+  "disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white disabled:hover:text-[#0a1f1a]",
   "dark:border-white/15 dark:bg-white/5 dark:text-white",
 );
 

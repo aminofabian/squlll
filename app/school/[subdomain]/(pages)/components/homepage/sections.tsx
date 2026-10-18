@@ -200,13 +200,13 @@ export function HomepageNav({
               applyLabel={slots.applyLabel || 'Apply now'}
               greetingClassName={solid ? 'text-[var(--school-ink)]' : 'text-white'}
               portalClassName={cn(
-                'h-9 rounded-none border-0 bg-transparent px-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-none hover:bg-transparent',
+                'h-9 rounded-lg border-0 bg-transparent px-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-none hover:bg-transparent',
                 solid
                   ? 'text-[var(--school-ink)]/65 hover:text-primary'
                   : 'text-white/75 hover:text-white',
               )}
               applyClassName={cn(
-                'h-10 rounded-none px-5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-none transition-colors',
+                'h-10 rounded-lg px-5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-none transition-colors',
                 solid
                   ? 'bg-primary text-white hover:bg-primary-dark'
                   : 'bg-white text-[var(--school-ink)] hover:bg-[var(--school-accent)]',
@@ -296,8 +296,8 @@ export function HomepageNav({
               portalLabel={slots.portalLabel || 'Portal'}
               applyLabel={slots.applyLabel || 'Apply now'}
               greetingClassName="text-[var(--fo-ink)]"
-              portalClassName="h-10 rounded-none border-[var(--fo-ink)]/30 px-4 text-sm font-semibold text-[var(--fo-ink)] shadow-none hover:border-[var(--fo-ink)] hover:bg-[var(--fo-ink)] hover:text-[var(--fo-cream)]"
-              applyClassName="h-10 rounded-none bg-[var(--fo-ink)] px-5 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-vermilion)]"
+              portalClassName="h-10 rounded-lg border-[var(--fo-ink)]/30 px-4 text-sm font-semibold text-[var(--fo-ink)] shadow-none hover:border-[var(--fo-ink)] hover:bg-[var(--fo-ink)] hover:text-[var(--fo-cream)]"
+              applyClassName="h-10 rounded-lg bg-[var(--fo-ink)] px-5 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-vermilion)]"
             />
           </div>
 
@@ -900,7 +900,7 @@ export function HomepageNav({
               'h-10 px-4 text-sm font-semibold shadow-none',
               isNotebook
                 ? 'rounded-lg border-2 border-[var(--school-ink)] bg-transparent text-[var(--school-ink)] hover:bg-[var(--school-ink)] hover:text-[var(--ah-cream,#FBF6E9)]'
-                : 'rounded-none border',
+                : 'rounded-lg border',
               !isNotebook &&
                 (solid || variant === 'crest'
                   ? 'border-primary/30 text-primary hover:bg-primary hover:text-white'
@@ -910,7 +910,7 @@ export function HomepageNav({
               'h-10 px-5 text-sm font-semibold text-white shadow-none',
               isNotebook
                 ? 'rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] hover:border-primary hover:bg-primary'
-                : 'rounded-none bg-primary hover:bg-primary-dark',
+                : 'rounded-lg bg-primary hover:bg-primary-dark',
             )}
           />
         </div>
@@ -1718,7 +1718,7 @@ export function HomepageHero({
     return (
       <section className="relative bg-[var(--school-paper)] pt-[var(--school-nav-h)]">
         <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
-          <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center border-2 border-primary bg-white shadow-[6px_6px_0_var(--primary)]">
+          <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center border-2 border-primary bg-white shadow-sm">
             {config.logoUrl || runtime.logoUrl ? (
               <img
                 src={config.logoUrl || runtime.logoUrl}
@@ -1834,7 +1834,7 @@ export function HomepageHero({
                 </span>
               </figcaption>
             </figure>
-            <span className="absolute -left-4 -top-4 rotate-[-7deg] bg-[var(--fo-vermilion)] px-3 py-1.5 fo-mono text-[9.5px] font-bold uppercase tracking-[0.18em] text-white shadow-[4px_4px_0_var(--fo-ink)]">
+            <span className="absolute -left-4 -top-4 rotate-[-7deg] bg-[var(--fo-vermilion)] px-3 py-1.5 fo-mono text-[9.5px] font-bold uppercase tracking-[0.18em] text-white shadow-sm">
               Cover story
             </span>
           </div>
@@ -2084,7 +2084,7 @@ export function HomepageHero({
                 <Button
                   asChild
                   size="lg"
-                  className="h-12 rounded-none bg-white px-7 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)] shadow-none transition-colors hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
+                  className="h-12 rounded-lg bg-white px-7 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)] shadow-none transition-colors hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
                 >
                   <Link href={slots.primaryCta.href}>
                     {slots.primaryCta.label}
@@ -2097,7 +2097,7 @@ export function HomepageHero({
                   asChild
                   size="lg"
                   variant="outline"
-                  className="h-12 rounded-none border-white/35 bg-transparent px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white shadow-none transition-colors hover:border-white hover:bg-white/10 hover:text-white"
+                  className="h-12 rounded-lg border-white/35 bg-transparent px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white shadow-none transition-colors hover:border-white hover:bg-white/10 hover:text-white"
                 >
                   <Link href={slots.secondaryCta.href}>
                     <LogIn className="mr-2.5 h-4 w-4" />
@@ -2244,10 +2244,10 @@ function HeroButtons({
           className={cn(
             'h-12 px-8 text-base font-semibold shadow-none',
             folio
-              ? 'rounded-none bg-[var(--fo-ink)] text-[var(--fo-cream)] hover:bg-[var(--fo-vermilion)]'
+              ? 'rounded-lg bg-[var(--fo-ink)] text-[var(--fo-cream)] hover:bg-[var(--fo-vermilion)]'
               : notebook
                 ? 'rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] text-[var(--ah-cream,#FBF6E9)] hover:border-primary hover:bg-primary'
-                : 'rounded-none bg-primary text-white hover:bg-primary-dark',
+                : 'rounded-lg bg-primary text-white hover:bg-primary-dark',
           )}
         >
           <Link href={slots.primaryCta.href}>
@@ -2276,7 +2276,7 @@ function HeroButtons({
             asChild
             size="lg"
             variant="outline"
-            className="h-12 rounded-none border-white/50 bg-white/10 px-8 text-base font-semibold text-white shadow-none backdrop-blur-sm hover:bg-white hover:text-[var(--school-ink)]"
+            className="h-12 rounded-lg border-white/50 bg-white/10 px-8 text-base font-semibold text-white shadow-none backdrop-blur-sm hover:bg-white hover:text-[var(--school-ink)]"
           >
             <Link href={slots.secondaryCta.href}>
               <LogIn className="mr-2 h-4 w-4" />
@@ -3266,8 +3266,8 @@ export function HomepagePrograms({
   const { slots } = data
   const programLevels = levels ?? schoolConfig?.selectedLevels ?? []
   const soft = config.theme.radiusMode === 'soft'
-  const radius = soft ? 'rounded-2xl' : 'rounded-none'
-  const chipRadius = soft ? 'rounded-md' : 'rounded-none'
+  const radius = soft ? 'rounded-2xl' : 'rounded-lg'
+  const chipRadius = soft ? 'rounded-md' : 'rounded-lg'
   const isDawn = config.templateId === 'campus-dawn'
 
   return (
@@ -3309,7 +3309,7 @@ export function HomepagePrograms({
                 'h-12 w-fit border border-primary bg-primary px-7 text-sm font-semibold text-white shadow-none transition-[background-color,transform] hover:bg-primary-dark active:scale-[0.98]',
                 isDawn &&
                   'px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em]',
-                soft ? 'rounded-xl' : 'rounded-none',
+                soft ? 'rounded-xl' : 'rounded-lg',
               )}
             >
               <Link href={slots.href || '/programs'}>
@@ -3450,7 +3450,7 @@ export function HomepagePrograms({
                 variant="outline"
                 className={cn(
                   'mt-7 h-11 border-[var(--school-ink)]/20 bg-transparent px-5 text-sm font-semibold text-[var(--school-ink)] shadow-none hover:bg-[var(--school-ink)] hover:text-[var(--school-paper)]',
-                  soft ? 'rounded-xl' : 'rounded-none',
+                  soft ? 'rounded-xl' : 'rounded-lg',
                 )}
               >
                 <Link href="/apply">Talk to admissions</Link>
@@ -3993,7 +3993,7 @@ export function HomepageTestimonials({
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {items.map((item, i) => (
               <Reveal key={item.name + i} delay={i * 70}>
-                <blockquote className="relative flex h-full flex-col rounded-sm border border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] p-6 shadow-[4px_5px_0_var(--ah-shadow,rgba(28,43,69,0.14))]">
+                <blockquote className="relative flex h-full flex-col rounded-sm border border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)] p-6 shadow-sm">
                   <p className="flex-1 text-[1.05rem] leading-relaxed text-[var(--school-ink)]">
                     <span className="ah-hand mr-1 text-2xl leading-none text-primary" aria-hidden>
                       “
@@ -4675,7 +4675,7 @@ export function HomepageCtaBand({
                 {slots.primaryCta && (
                   <Button
                     asChild
-                    className="h-12 rounded-none bg-[var(--fo-vermilion)] px-8 text-sm font-semibold text-white shadow-none hover:bg-white hover:text-[var(--fo-ink)]"
+                    className="h-12 rounded-lg bg-[var(--fo-vermilion)] px-8 text-sm font-semibold text-white shadow-none hover:bg-white hover:text-[var(--fo-ink)]"
                   >
                     <Link href={slots.primaryCta.href}>
                       {slots.primaryCta.label}
@@ -4687,7 +4687,7 @@ export function HomepageCtaBand({
                   <Button
                     asChild
                     variant="outline"
-                    className="h-12 rounded-none border-[var(--fo-cream)]/40 px-8 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-cream)] hover:text-[var(--fo-ink)]"
+                    className="h-12 rounded-lg border-[var(--fo-cream)]/40 px-8 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-cream)] hover:text-[var(--fo-ink)]"
                   >
                     <Link href={slots.secondaryCta.href}>
                       {slots.secondaryCta.label}
@@ -4803,7 +4803,7 @@ export function HomepageCtaBand({
                   <Button
                     asChild
                     size="lg"
-                    className="h-12 w-full rounded-none bg-white px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)] shadow-none transition-colors hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
+                    className="h-12 w-full rounded-lg bg-white px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-[var(--school-ink)] shadow-none transition-colors hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
                   >
                     <Link href={slots.primaryCta.href}>
                       {slots.primaryCta.label}
@@ -4816,7 +4816,7 @@ export function HomepageCtaBand({
                     asChild
                     size="lg"
                     variant="outline"
-                    className="h-12 w-full rounded-none border-white/30 bg-transparent px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white shadow-none transition-colors hover:border-white/60 hover:bg-white/10 hover:text-white"
+                    className="h-12 w-full rounded-lg border-white/30 bg-transparent px-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white shadow-none transition-colors hover:border-white/60 hover:bg-white/10 hover:text-white"
                   >
                     <Link href={slots.secondaryCta.href}>
                       <MapPin className="mr-2.5 h-4 w-4" />
@@ -4877,7 +4877,7 @@ export function HomepageCtaBand({
               <Button
                 asChild
                 size="lg"
-                className="h-12 rounded-none bg-white px-8 text-base font-semibold text-primary shadow-none hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
+                className="h-12 rounded-lg bg-white px-8 text-base font-semibold text-primary shadow-none hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
               >
                 <Link href={slots.primaryCta.href}>
                   <UserPlus className="mr-2 h-4 w-4" />
@@ -4890,7 +4890,7 @@ export function HomepageCtaBand({
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-12 rounded-none border-white/40 bg-transparent px-8 text-base font-semibold text-white shadow-none hover:bg-white/10"
+                className="h-12 rounded-lg border-white/40 bg-transparent px-8 text-base font-semibold text-white shadow-none hover:bg-white/10"
               >
                 <Link href={slots.secondaryCta.href}>
                   <MapPin className="mr-2 h-4 w-4" />

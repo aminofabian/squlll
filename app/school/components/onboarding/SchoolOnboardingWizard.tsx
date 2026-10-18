@@ -796,7 +796,7 @@ function ChecklistItem({
         type="button"
         variant="outline"
         size="sm"
-        className="shrink-0 rounded-none border-[#1a4d42]/20 hover:bg-[#246a59] hover:text-white hover:border-[#246a59]"
+        className="shrink-0 rounded-lg border-[#1a4d42]/20 hover:bg-[#246a59] hover:text-white hover:border-[#246a59]"
         onClick={() => router.push(href)}
       >
         Open

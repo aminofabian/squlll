@@ -122,7 +122,7 @@ export function DashboardPendingApplications({
   return (
     <section
       className={cn(
-        "relative overflow-hidden border border-[#1a4d42]/15 bg-[#0a1f1a] text-white shadow-[4px_4px_0_0_rgba(36,106,89,0.35)] dark:border-white/10",
+        "relative overflow-hidden border border-[#1a4d42]/15 bg-[#0a1f1a] text-white shadow-sm dark:border-white/10",
         pulse && "ring-2 ring-amber-400/70 ring-offset-2 ring-offset-[#f3f7f5] dark:ring-offset-[#071411]",
         className,
       )}

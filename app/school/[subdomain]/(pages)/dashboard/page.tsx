@@ -135,8 +135,8 @@ export default function SchoolDashboard() {
 
   if (error) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center bg-[#f3f7f5] p-6 dark:bg-[#071411]">
-        <div className="w-full max-w-sm border border-red-300/80 bg-white px-5 py-7 text-center shadow-[4px_4px_0_0_rgba(185,28,28,0.12)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+      <div className="flex min-h-[40vh] items-center justify-center bg-background p-6 dark:bg-[#071411]">
+        <div className="w-full max-w-sm border border-red-300/80 bg-white px-5 py-7 text-center shadow-sm dark:border-red-900/50 dark:bg-[#0c1a17]">
           <h2 className="font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Could not load dashboard
           </h2>
@@ -145,7 +145,7 @@ export default function SchoolDashboard() {
           </p>
           <Button
             onClick={() => window.location.reload()}
-            className="mt-4 h-9 rounded-none bg-[#0a1f1a] hover:bg-[#246a59]"
+            className="mt-4 h-9 rounded-lg bg-[#0a1f1a] hover:bg-[#246a59]"
             size="sm"
           >
             Try again
@@ -158,7 +158,7 @@ export default function SchoolDashboard() {
   if (!config?.selectedLevels?.length) return null;
 
   return (
-    <div className="relative flex min-h-full flex-col bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="relative flex min-h-full flex-col bg-background dark:bg-[#071411]">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.35] dark:opacity-[0.2]"
         aria-hidden
@@ -173,7 +173,7 @@ export default function SchoolDashboard() {
       <div className="relative flex min-w-0 flex-1">
         <aside
           className={cn(
-            "hidden shrink-0 flex-col border-r border-[#1a4d42]/12 bg-[#f3f7f5] dark:border-white/10 dark:bg-[#071411] lg:flex",
+            "hidden shrink-0 flex-col border-r border-[#1a4d42]/12 bg-background dark:border-white/10 dark:bg-[#071411] lg:flex",
             isGradePanelOpen ? "w-60" : "w-0 overflow-hidden border-r-0",
           )}
           aria-label="Grade navigation"
@@ -231,7 +231,7 @@ export default function SchoolDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 rounded-none px-2.5 text-xs"
+                        className="h-7 rounded-lg px-2.5 text-xs"
                         onClick={() => void refetchStats()}
                       >
                         Retry

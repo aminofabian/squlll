@@ -165,7 +165,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
 
   return (
     <Drawer open={!!timeslot} onOpenChange={onClose} direction="right">
-      <DrawerContent className="flex h-full w-full flex-col rounded-none sm:w-[500px] lg:w-[600px]">
+      <DrawerContent className="flex h-full w-full flex-col rounded-md sm:w-[500px] lg:w-[600px]">
         <DrawerHeader className="border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 py-5 dark:border-white/10 dark:bg-[#071411]">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -302,7 +302,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
             <Button
               onClick={handleSave}
               disabled={!isValidDuration || loading || !formData.startTime || !formData.endTime}
-              className={cn("h-10 flex-1 font-semibold disabled:opacity-50", tt.accentBtn, tt.focus)}
+              className={cn("h-10 flex-1 font-semibold disabled:bg-slate-200 disabled:text-slate-500", tt.accentBtn, tt.focus)}
             >
               {loading ? (
                 <>

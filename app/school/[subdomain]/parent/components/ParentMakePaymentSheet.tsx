@@ -580,7 +580,7 @@ export function ParentMakePaymentSheet({
                                 onClick={() => handleSelectInvoice(invoice)}
                                 disabled={stkBusy}
                                 className={cn(
-                                  'flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2 text-left transition-colors disabled:opacity-60',
+                                  'flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2 text-left transition-colors disabled:bg-slate-100 disabled:text-slate-400',
                                   selectedInvoiceId === invoice.id
                                     ? 'border-primary bg-primary/10'
                                     : 'border-slate-200 bg-white hover:bg-slate-50',
@@ -653,7 +653,7 @@ export function ParentMakePaymentSheet({
                           disabled={stkBusy}
                           aria-pressed={advance}
                           className={cn(
-                            'flex w-full items-start gap-2 rounded-md border px-2.5 py-2 text-left transition-colors disabled:opacity-60',
+                            'flex w-full items-start gap-2 rounded-md border px-2.5 py-2 text-left transition-colors disabled:bg-slate-100 disabled:text-slate-400',
                             advance
                               ? 'border-primary bg-primary/10'
                               : 'border-slate-200 bg-white hover:bg-slate-50',

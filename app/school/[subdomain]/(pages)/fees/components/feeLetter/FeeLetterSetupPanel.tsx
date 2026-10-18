@@ -188,7 +188,7 @@ export function FeeLetterSetupPanel({
       >
         <div className="max-w-full space-y-3">
           <div
-            className="overflow-hidden rounded-none bg-white border border-[#1a4d42]/12"
+            className="overflow-hidden rounded-lg bg-white border border-[#1a4d42]/12"
             style={{ backgroundColor: `${FEES_BRAND.primaryLight}40` }}
           >
             <div className="px-3 py-3">
@@ -206,7 +206,7 @@ export function FeeLetterSetupPanel({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 rounded-none bg-white p-3 border border-[#1a4d42]/12 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 rounded-lg bg-white p-3 border border-[#1a4d42]/12 sm:grid-cols-2">
             <div className="min-w-0 space-y-1">
               <FieldLabel>Grade on letter</FieldLabel>
               <LetterGradeSelector
@@ -231,7 +231,7 @@ export function FeeLetterSetupPanel({
             ) : null}
           </div>
 
-          <div className="rounded-none bg-[#f8fbfa] p-3 border border-[#1a4d42]/12">
+          <div className="rounded-lg bg-[#f8fbfa] p-3 border border-[#1a4d42]/12">
             <LetterTemplateSelector
               value={templateId}
               onChange={onTemplateChange}
@@ -249,9 +249,9 @@ export function FeeLetterSetupPanel({
         <div
           className={cn(
             FEES_MOBILE.card,
-            'md:rounded-none md:border md:border-[#1a4d42]/12',
+            'md:rounded-lg md:border md:border-[#1a4d42]/12',
             pinActions &&
-              'mb-0 max-md:!rounded-none max-md:!bg-transparent max-md:!shadow-none max-md:!ring-0',
+              'mb-0 max-md:!rounded-lg max-md:!bg-transparent max-md:!shadow-none max-md:!ring-0',
             className,
           )}
         >
@@ -340,7 +340,7 @@ export function FeeLetterSetupPanel({
     <>
     <div
       className={cn(
-        'fee-letter-setup-panel overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f3f7f5]/50',
+        'fee-letter-setup-panel overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-[#f3f7f5]/50',
         className,
       )}
     >
@@ -368,10 +368,10 @@ export function FeeLetterSetupPanel({
           portalUrl={portalUrl}
         />
 
-        <section className="fee-letter-style-section overflow-hidden rounded-none bg-white border border-[#1a4d42]/12 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]">
+        <section className="fee-letter-style-section overflow-hidden rounded-lg bg-white border border-[#1a4d42]/12 shadow-sm">
           <div className="flex items-center gap-2.5 border-b border-[#1a4d42]/10 px-4 py-3 sm:px-5">
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-none text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
               style={{ backgroundColor: FEES_BRAND.primaryDark }}
             >
               <span className="text-[10px] font-bold">3</span>

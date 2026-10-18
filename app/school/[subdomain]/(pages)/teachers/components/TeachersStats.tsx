@@ -37,7 +37,7 @@ function StatTile({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-none border border-white/10 bg-white/[0.05] px-2.5 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.08]">
+    <div className="rounded-lg border border-white/10 bg-white/[0.05] px-2.5 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.08]">
       <div
         className={cn(
           "flex items-center gap-1.5",
@@ -99,7 +99,7 @@ export function TeachersStats({
               </span>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-none border px-1.5 py-0.5 text-[10px] font-semibold",
+                  "inline-flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-[10px] font-semibold",
                   connected
                     ? "border-[#3fae8f]/40 bg-[#3fae8f]/15 text-[#8fe3c8]"
                     : "border-white/15 bg-white/5 text-white/55",
@@ -107,7 +107,7 @@ export function TeachersStats({
               >
                 {connected ? (
                   <>
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-none bg-[#8fe3c8]" />
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-lg bg-[#8fe3c8]" />
                     Live
                   </>
                 ) : (

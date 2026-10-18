@@ -238,7 +238,7 @@ function SchoolLayoutContent({
               <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
             </div>
           </div>
-          <div className="flex-1 bg-white dark:bg-slate-950" />
+          <div className="flex-1 bg-background dark:bg-slate-950" />
         </div>
       </div>
     )
@@ -278,7 +278,7 @@ function SchoolLayoutContent({
       </div>
       
       {/* Main content — white canvas beside the rail */}
-      <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-slate-950">
+      <div className="flex min-w-0 flex-1 flex-col bg-background dark:bg-slate-950">
         {/* Header */}
         <SchoolNavbar
           userName={userName}
@@ -288,7 +288,7 @@ function SchoolLayoutContent({
         />
         
         {/* Main content area with scrolling */}
-        <main className={`flex-1 bg-white pb-[calc(4.75rem+env(safe-area-inset-bottom))] dark:bg-slate-950 lg:pb-0 ${
+        <main className={`flex-1 bg-background pb-[calc(4.75rem+env(safe-area-inset-bottom))] dark:bg-slate-950 lg:pb-0 ${
           pathname === "/timetable" ? "flex min-h-0 flex-col overflow-hidden" : "overflow-auto"
         }`}>
           {children}

@@ -154,7 +154,7 @@ export function AssignSubjectTeacherSheet({
                       disabled={Boolean(savingId)}
                       onClick={() => assignToTeacher(teacher)}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-none border px-3 py-2.5 text-left text-sm transition-colors",
+                        "flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
                         already
                           ? "border-emerald-200 bg-emerald-50/80 dark:border-emerald-900 dark:bg-emerald-950/30"
                           : "border-[#1a4d42]/12 hover:border-[#246a59]/30 hover:bg-[#f8fbfa] dark:border-white/15",

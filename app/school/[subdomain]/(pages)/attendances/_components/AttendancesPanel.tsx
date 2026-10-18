@@ -88,7 +88,7 @@ function StatusControl({
   onChange: (status: AttendanceStatus) => void;
 }) {
   return (
-    <div className="inline-flex overflow-hidden rounded-none border border-[#1a4d42]/15 dark:border-white/15">
+    <div className="inline-flex overflow-hidden rounded-lg border border-[#1a4d42]/15 dark:border-white/15">
       {STATUS_OPTIONS.map((option, index) => {
         const active = value === option.value;
         return (

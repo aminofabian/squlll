@@ -1702,7 +1702,7 @@ Check the browser console for detailed input information.`;
                 onClick={handleDelete}
                 disabled={isSaving}
                 className={cn(
-                  "h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40",
+                  "h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:text-slate-400 dark:text-red-400 dark:hover:bg-red-950/40",
                   tt.text.caption,
                   tt.focus,
                 )}
@@ -1751,7 +1751,7 @@ Check the browser console for detailed input information.`;
     >
       <DrawerContent
         className={cn(
-          "flex max-h-[min(92dvh,720px)] flex-col rounded-none border-t bg-white dark:bg-[#0c1a17]",
+          "flex max-h-[min(92dvh,720px)] flex-col rounded-md border-t bg-white dark:bg-[#0c1a17]",
           tt.border.hair,
         )}
         data-vaul-drawer-direction="bottom"

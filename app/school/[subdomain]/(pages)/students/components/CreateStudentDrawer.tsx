@@ -113,10 +113,10 @@ function getGradeNumber(gradeName: string): number {
 }
 
 const fieldShell =
-  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#0c1a17] dark:placeholder:text-white/40"
+  "h-10 rounded-md border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#0c1a17] dark:placeholder:text-white/40"
 
 const selectShell =
-  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#0c1a17]"
+  "h-10 rounded-md border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#0c1a17]"
 
 const labelClass = "text-xs font-medium text-[#0a1f1a] dark:text-white/80"
 
@@ -140,7 +140,7 @@ function GenderPills({
             type="button"
             onClick={() => onChange(option.id)}
             className={cn(
-              "h-10 rounded-none px-3 text-sm font-medium transition-colors",
+              "h-10 rounded-md px-3 text-sm font-medium transition-colors",
               active
                 ? "bg-[#0a1f1a] text-white"
                 : "border border-[#1a4d42]/15 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/55",
@@ -519,7 +519,7 @@ export function CreateStudentDrawer({
                 type="submit"
                 form="enroll-student-form"
                 disabled={createStudentMutation.isPending}
-                className="h-10 flex-1 gap-2 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59] disabled:opacity-50"
+                className="h-10 flex-1 gap-2 rounded-md bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59] disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
               >
                 {createStudentMutation.isPending ? (
                   <>
@@ -535,7 +535,7 @@ export function CreateStudentDrawer({
                   type="button"
                   variant="ghost"
                   disabled={createStudentMutation.isPending}
-                  className="h-10 rounded-none px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
+                  className="h-10 rounded-md px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
                 >
                   Cancel
                 </Button>

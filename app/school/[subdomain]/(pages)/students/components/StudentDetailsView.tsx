@@ -85,7 +85,7 @@ function DetailField({
   copyValue?: string;
 }) {
   return (
-    <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#071411]">
+    <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#071411]">
       <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
         {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
         {label}
@@ -101,7 +101,7 @@ function DetailField({
               void navigator.clipboard.writeText(copyValue);
               toast.success("Copied to clipboard");
             }}
-            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
+            className="shrink-0 rounded-lg p-1 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
             aria-label={`Copy ${label}`}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -123,7 +123,7 @@ function EmptyPanel({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]">
         <Icon className="h-5 w-5 text-[#1a4d42]/40" />
       </div>
       <p className="text-sm font-medium text-[#1a4d42]/70 dark:text-white/70">
@@ -326,7 +326,7 @@ export function StudentDetailsView({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 rounded-none px-1 py-0.5 text-xs font-medium text-[#1a4d42]/55 transition-colors hover:text-[#246a59] dark:hover:text-white"
+          className="inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 text-xs font-medium text-[#1a4d42]/55 transition-colors hover:text-[#246a59] dark:hover:text-white"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to roster
@@ -344,7 +344,7 @@ export function StudentDetailsView({
       )}
 
       {missingStream ? (
-        <div className="flex items-start gap-3 rounded-none border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">No class assigned</p>
@@ -377,20 +377,20 @@ export function StudentDetailsView({
         value={activeTab}
         onValueChange={(v) => onTabChange(v as StudentProfileTab)}
       >
-        <TabsList className="mb-4 inline-flex h-auto min-h-10 w-full flex-wrap gap-1 rounded-none border border-[#1a4d42]/12 bg-[#f3f7f5] p-1 dark:border-white/10 dark:bg-[#071411]">
+        <TabsList className="mb-4 inline-flex h-auto min-h-10 w-full flex-wrap gap-1 rounded-lg border border-[#1a4d42]/12 bg-[#f3f7f5] p-1 dark:border-white/10 dark:bg-[#071411]">
           {STUDENT_PROFILE_TABS.map((tab) => {
             const badge = tabBadge(tab.value, student, missingStream);
             return (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-none px-3 py-2 text-xs font-medium text-[#1a4d42]/65 data-[state=active]:bg-[#0a1f1a] data-[state=active]:text-white data-[state=active]:shadow-none sm:flex-none sm:px-4 dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0a1f1a]"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-[#1a4d42]/65 data-[state=active]:bg-[#0a1f1a] data-[state=active]:text-white data-[state=active]:shadow-none sm:flex-none sm:px-4 dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0a1f1a]"
               >
                 {tab.label}
                 {badge ? (
                   <span
                     className={cn(
-                      "rounded-none px-1.5 py-0.5 text-[9px] font-semibold tabular-nums",
+                      "rounded-lg px-1.5 py-0.5 text-[9px] font-semibold tabular-nums",
                       tab.value === "money"
                         ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                         : tab.value === "access"
@@ -548,7 +548,7 @@ export function StudentDetailsView({
               </h3>
             </div>
             <div className="space-y-3 p-4 sm:p-5">
-              <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 dark:border-white/10">
+              <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() =>
@@ -560,7 +560,7 @@ export function StudentDetailsView({
                   className="flex w-full items-center justify-between gap-3 bg-[#f8fbfa] px-3 py-3 text-left transition-colors hover:bg-[#e8f2ef] dark:bg-[#071411] dark:hover:bg-[#0c1a17]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-none bg-[#e8f2ef] dark:bg-[#246a59]/20">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e8f2ef] dark:bg-[#246a59]/20">
                       <BookOpen className="h-4 w-4 text-[#246a59]" />
                     </div>
                     <div>
@@ -583,7 +583,7 @@ export function StudentDetailsView({
                       <select
                         value={reportCardYear}
                         onChange={(e) => setReportCardYear(e.target.value)}
-                        className="h-8 rounded-none border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
+                        className="h-8 rounded-md border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
                       >
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
@@ -592,7 +592,7 @@ export function StudentDetailsView({
                       <select
                         value={reportCardTerm}
                         onChange={(e) => setReportCardTerm(e.target.value)}
-                        className="h-8 rounded-none border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
+                        className="h-8 rounded-md border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
                       >
                         <option value="1">Term 1</option>
                         <option value="2">Term 2</option>
@@ -605,7 +605,7 @@ export function StudentDetailsView({
                             e.target.value as typeof selectedTemplate,
                           )
                         }
-                        className="h-8 rounded-none border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
+                        className="h-8 rounded-md border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
                       >
                         <option value="modern">Modern</option>
                         <option value="classic">Classic</option>
@@ -703,11 +703,11 @@ export function StudentDetailsView({
                         value={teacherComment}
                         onChange={(e) => setTeacherComment(e.target.value)}
                         rows={3}
-                        className="w-full rounded-none border border-[#1a4d42]/15 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-[#0c1a17]"
+                        className="w-full rounded-md border border-[#1a4d42]/15 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-[#0c1a17]"
                         placeholder="Optional comment included in the PDF report card..."
                       />
                     </div>
-                    <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 dark:border-slate-800">
+                    <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 dark:border-slate-800">
                       <SchoolReportCard
                         student={{
                           id: student.id,
@@ -735,7 +735,7 @@ export function StudentDetailsView({
                 ) : null}
               </div>
 
-              <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 dark:border-slate-800">
+              <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() =>
@@ -747,7 +747,7 @@ export function StudentDetailsView({
                   className="flex w-full items-center justify-between gap-3 bg-slate-50/50 px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800/30 dark:hover:bg-slate-800/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-none bg-[#e8f2ef] dark:bg-slate-800">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e8f2ef] dark:bg-slate-800">
                       <FileText className="h-4 w-4 text-[#1a4d42]/50" />
                     </div>
                     <div>

@@ -538,7 +538,7 @@ export function BulkLessonEntryDrawer({
                   <label
                     key={d.value}
                     className={cn(
-                      "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 font-medium transition-colors",
+                      "flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 font-medium transition-colors",
                       tt.text.small,
                       active
                         ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white"
@@ -605,7 +605,7 @@ export function BulkLessonEntryDrawer({
                         key={d.value}
                         className={cn(
                           tt.text.small,
-                          "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 transition-colors",
+                          "flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition-colors",
                           active
                             ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white"
                             : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/60",
@@ -623,7 +623,7 @@ export function BulkLessonEntryDrawer({
               </div>
             </div>
             {duplicatePlan ? (
-              <div className="space-y-2 rounded-none border border-[#1a4d42]/20 bg-white p-2.5 dark:border-white/20 dark:bg-[#0c1a17]">
+              <div className="space-y-2 rounded-md border border-[#1a4d42]/20 bg-white p-2.5 dark:border-white/20 dark:bg-[#0c1a17]">
                 <p className={cn(tt.text.small, tt.ink.base)}>
                   Will copy <strong className={tt.numeral}>{duplicatePlan.requests.length}</strong> lesson
                   {duplicatePlan.requests.length !== 1 ? "s" : ""} from{" "}
@@ -683,7 +683,7 @@ export function BulkLessonEntryDrawer({
             )}
           </div>
 
-          <div className="rounded-none border border-dashed border-[#1a4d42]/12 p-3 dark:border-white/10">
+          <div className="rounded-md border border-dashed border-[#1a4d42]/12 p-3 dark:border-white/10">
             <p className={cn("font-medium", tt.text.small, tt.ink.base)}>
               Or load into the form
             </p>
@@ -735,7 +735,7 @@ export function BulkLessonEntryDrawer({
             </div>
 
             {entries.length === 0 ? (
-              <div className="rounded-none border border-dashed border-[#1a4d42]/12 py-8 text-center dark:border-white/10">
+              <div className="rounded-md border border-dashed border-[#1a4d42]/12 py-8 text-center dark:border-white/10">
                 <BookOpen className={cn("mx-auto mb-2 h-7 w-7", tt.ink.faint)} />
                 <p className={cn(tt.text.small, tt.ink.muted)}>No lessons added yet</p>
                 <Button
@@ -752,7 +752,7 @@ export function BulkLessonEntryDrawer({
                 {sortedEntryRows.map((entry) => (
                   <div
                     key={entry.id}
-                    className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa]/50 p-2.5 dark:border-white/10 dark:bg-[#0c1a17]/40"
+                    className="rounded-md border border-[#1a4d42]/12 bg-[#f8fbfa]/50 p-2.5 dark:border-white/10 dark:bg-[#0c1a17]/40"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <span className={tt.label}>
@@ -764,7 +764,7 @@ export function BulkLessonEntryDrawer({
                         <button
                           type="button"
                           onClick={() => removeEntry(entry.id)}
-                          className={cn("rounded-none p-1 hover:bg-red-50 hover:text-red-600", tt.ink.faint, tt.focus)}
+                          className={cn("rounded-md p-1 hover:bg-red-50 hover:text-red-600", tt.ink.faint, tt.focus)}
                           aria-label="Remove lesson row"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -857,7 +857,7 @@ export function BulkLessonEntryDrawer({
           </datalist>
 
           {entries.length > 0 && selectedGrade ? (
-            <div className={cn("flex items-start gap-2 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]/50", tt.text.small, tt.ink.base)}>
+            <div className={cn("flex items-start gap-2 rounded-md border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]/50", tt.text.small, tt.ink.base)}>
               <Calendar className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", tt.ink.faint)} />
               <span>
                 <strong className={cn("font-semibold", tt.ink.strong, tt.numeral)}>

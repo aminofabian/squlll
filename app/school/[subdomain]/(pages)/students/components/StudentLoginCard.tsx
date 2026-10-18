@@ -58,7 +58,7 @@ function LoginValue({
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 rounded-none border px-2.5 py-2",
+        "flex items-center gap-2.5 rounded-lg border px-2.5 py-2",
         highlight
           ? "border-emerald-200/80 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20"
           : "border-[#1a4d42]/10 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]",
@@ -88,7 +88,7 @@ function LoginValue({
       <button
         type="button"
         onClick={() => void copy()}
-        className="shrink-0 rounded-none p-1 text-[#1a4d42]/35 hover:text-[#0a1f1a] dark:hover:text-white"
+        className="shrink-0 rounded-lg p-1 text-[#1a4d42]/35 hover:text-[#0a1f1a] dark:hover:text-white"
         aria-label={`Copy ${label}`}
       >
         {copied ? (
@@ -125,7 +125,7 @@ export function StudentLoginCard({
     >
       <div className="flex flex-col gap-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
             <KeyRound className="h-4 w-4" />
           </span>
           <div>
@@ -201,7 +201,7 @@ export function StudentLoginCard({
             </p>
           </div>
 
-          <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] p-3 dark:border-white/10 dark:bg-[#071411]">
+          <div className="rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] p-3 dark:border-white/10 dark:bg-[#071411]">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
               <Send className="h-3 w-3" />
               Send login details

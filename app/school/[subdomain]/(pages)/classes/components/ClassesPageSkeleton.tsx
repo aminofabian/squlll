@@ -6,7 +6,7 @@ function Pulse({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-none bg-[#e8f2ef] dark:bg-slate-800",
+        "animate-pulse rounded-lg bg-[#e8f2ef] dark:bg-slate-800",
         className,
       )}
     />
@@ -27,7 +27,7 @@ export function ClassesPageSkeleton() {
       </div>
 
       <div className="mx-auto max-w-6xl space-y-3 p-3 sm:space-y-5 sm:p-4">
-        <div className="rounded-none border border-[#0a1f1a] bg-[#0a1f1a] p-4 sm:p-5">
+        <div className="rounded-lg border border-[#0a1f1a] bg-[#0a1f1a] p-4 sm:p-5">
           <Pulse className="h-3 w-24 bg-white/10" />
           <Pulse className="mt-2 h-5 w-56 bg-white/10" />
           <Pulse className="mt-1.5 h-2.5 w-72 max-w-full bg-white/10" />

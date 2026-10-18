@@ -116,7 +116,7 @@ export function FeePlanDetailHeader({
             <Link
               href={feesPlansHref()}
               scroll={false}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-none text-[#246a59] hover:bg-[#f3f7f5] active:bg-[#e8f2ef] md:h-auto md:w-auto md:gap-1 md:px-1.5 md:py-1 md:text-xs md:text-[#1a4d42]/55 md:hover:text-[#246a59]"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#246a59] hover:bg-[#f3f7f5] active:bg-[#e8f2ef] md:h-auto md:w-auto md:gap-1 md:px-1.5 md:py-1 md:text-xs md:text-[#1a4d42]/55 md:hover:text-[#246a59]"
               aria-label="Back to fee plans"
             >
               <ArrowLeft className="h-5 w-5 md:h-3.5 md:w-3.5" />
@@ -231,7 +231,7 @@ export function FeePlanDetailHeader({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-44 rounded-none"
+                      className="w-44 rounded-lg"
                     >
                       {!showPrimaryEdit && !showSecondaryEdit && canModifyPlan ? (
                         <DropdownMenuItem onClick={onEdit}>
@@ -279,7 +279,7 @@ export function FeePlanDetailHeader({
 
         {!structure.isActive && inactiveDetail ? (
           <div className="border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/65 sm:px-4">
-            <span className="mr-2 inline-flex rounded-none border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1a4d42]/45">
+            <span className="mr-2 inline-flex rounded-lg border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1a4d42]/45">
               Inactive
             </span>
             {inactiveDetail}. Payments against existing balances remain available
@@ -309,13 +309,13 @@ export function FeePlanDetailHeader({
                   </span>
                 ) : null}
               </p>
-              <span className="shrink-0 rounded-none border border-[#246a59]/25 bg-[#e8f2ef] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-[#1a4d42]">
+              <span className="shrink-0 rounded-lg border border-[#246a59]/25 bg-[#e8f2ef] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-[#1a4d42]">
                 {collectionPct}%
               </span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-none bg-[#1a4d42]/10">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-lg bg-[#1a4d42]/10">
               <div
-                className="h-full rounded-none transition-[width]"
+                className="h-full rounded-lg transition-[width]"
                 style={{
                   width: `${Math.min(100, collectionPct)}%`,
                   backgroundColor: FEES_BRAND.primary,

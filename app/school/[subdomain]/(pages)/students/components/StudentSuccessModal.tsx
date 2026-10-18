@@ -60,7 +60,7 @@ function CopyRow({
   copied: boolean;
 }) {
   return (
-    <div className="group flex items-center gap-2 rounded-none bg-white p-2.5 ring-1 ring-inset ring-[#1a4d42]/12 dark:bg-[#071411] dark:ring-white/10">
+    <div className="group flex items-center gap-2 rounded-lg bg-white p-2.5 ring-1 ring-inset ring-[#1a4d42]/12 dark:bg-[#071411] dark:ring-white/10">
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">{label}</p>
         <p
@@ -79,7 +79,7 @@ function CopyRow({
         size="sm"
         onClick={onCopy}
         className={cn(
-          "h-9 shrink-0 gap-1.5 rounded-none px-2.5 text-xs",
+          "h-9 shrink-0 gap-1.5 rounded-md px-2.5 text-xs",
           copied
             ? "bg-[#246a59]/10 text-[#246a59] hover:bg-[#246a59]/10"
             : "text-[#1a4d42]/55 hover:bg-[#246a59]/[0.06] hover:text-[#246a59]",
@@ -134,11 +134,11 @@ export function StudentSuccessModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="gap-0 overflow-hidden rounded-none border border-[#1a4d42]/12 p-0 sm:max-w-[460px]">
+      <DialogContent className="gap-0 overflow-hidden rounded-lg border border-[#1a4d42]/12 p-0 sm:max-w-[460px]">
         {/* Header */}
         <div className="relative overflow-hidden border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 pb-5 pt-6 dark:border-white/10 dark:bg-[#071411]">
           <div className="relative flex flex-col items-center text-center">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-none bg-[#0a1f1a] text-white">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-lg bg-[#0a1f1a] text-white">
               <CheckCircle2 className="h-7 w-7" strokeWidth={1.75} />
             </div>
             <DialogTitle className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
@@ -153,9 +153,9 @@ export function StudentSuccessModal({
 
         <div className="max-h-[min(70vh,560px)] space-y-4 overflow-y-auto bg-[#f3f7f5] px-5 py-5 dark:bg-[#071411]/80">
           {/* Student card */}
-          <div className="overflow-hidden rounded-none border border-[#1a4d42]/20 bg-[#0a1f1a] px-4 py-3.5">
+          <div className="overflow-hidden rounded-lg border border-[#1a4d42]/20 bg-[#0a1f1a] px-4 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-[#246a59] text-base font-bold text-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#246a59] text-base font-bold text-white">
                 {initialsFromName(studentData.user.name)}
               </div>
               <div className="min-w-0 flex-1">
@@ -164,10 +164,10 @@ export function StudentSuccessModal({
                   {studentData.student.admission_number}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <Badge className="h-5 rounded-none border-0 bg-white/10 px-2 text-[10px] font-medium text-white/90 hover:bg-white/10">
+                  <Badge className="h-5 rounded-full border-0 bg-white/10 px-2 text-[10px] font-medium text-white/90 hover:bg-white/10">
                     {studentData.student.gradeName}
                   </Badge>
-                  <Badge className="h-5 rounded-none border-0 bg-white/10 px-2 text-[10px] font-medium capitalize text-white/90 hover:bg-white/10">
+                  <Badge className="h-5 rounded-full border-0 bg-white/10 px-2 text-[10px] font-medium capitalize text-white/90 hover:bg-white/10">
                     {studentData.student.gender}
                   </Badge>
                 </div>
@@ -186,10 +186,10 @@ export function StudentSuccessModal({
           </div>
 
           {/* Credentials */}
-          <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
+          <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
             <div className="flex items-center justify-between border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
                   <Key className="h-3.5 w-3.5" />
                 </div>
                 <div>
@@ -202,7 +202,7 @@ export function StudentSuccessModal({
                 size="sm"
                 variant="outline"
                 onClick={copyAllCredentials}
-                className="h-8 gap-1.5 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
+                className="h-8 gap-1.5 rounded-md border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
               >
                 {copiedField === 'all' ? (
                   <>
@@ -245,7 +245,7 @@ export function StudentSuccessModal({
           </div>
 
           {/* Next steps */}
-          <div className="rounded-none border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]">
+          <div className="rounded-lg border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[#1a4d42]/45">
               Next steps
             </p>
@@ -266,7 +266,7 @@ export function StudentSuccessModal({
           </div>
 
           {/* Security notice */}
-          <div className="flex items-start gap-2.5 rounded-none border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200/90">
               This is your only chance to view the password. Copy it now before closing.
@@ -288,7 +288,7 @@ export function StudentSuccessModal({
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 w-full rounded-none border-[#1a4d42]/15 text-[#246a59] hover:bg-[#246a59]/[0.06]"
+                className="h-11 w-full rounded-md border-[#1a4d42]/15 text-[#246a59] hover:bg-[#246a59]/[0.06]"
               >
                 <Users className="mr-2 h-4 w-4" />
                 Link a parent now
@@ -297,7 +297,7 @@ export function StudentSuccessModal({
           />
           <Button
             onClick={onClose}
-            className="h-11 w-full rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
+            className="h-11 w-full rounded-lg bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
           >
             Done — I&apos;ve saved the credentials
           </Button>

@@ -81,7 +81,7 @@ function Metric({
     <Wrapper
       {...(onClick ? { type: "button" as const, onClick } : {})}
       className={cn(
-        "flex min-w-0 items-center gap-2.5 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-left dark:border-white/10 dark:bg-white/[0.02]",
+        "flex min-w-0 items-center gap-2.5 rounded-md border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-left dark:border-white/10 dark:bg-white/[0.02]",
         onClick &&
           "transition-colors hover:border-[#1a4d42]/20 hover:bg-white dark:hover:border-white/20 dark:hover:bg-white/[0.04]",
         onClick && tt.focus,
@@ -89,7 +89,7 @@ function Metric({
     >
       <span
         className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-none ring-1 ring-inset",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md ring-1 ring-inset",
           tone === "danger"
             ? "bg-red-100 text-red-600 ring-red-200/70 dark:bg-red-900/40 dark:text-red-300 dark:ring-red-900/50"
             : tone === "success"
@@ -264,7 +264,7 @@ export function TimetableHealthPanel({
       {totalSlots > 0 ? (
         <div className={cn(isRail ? "px-3 pb-3" : "px-4 pb-4 sm:px-5")}>
           <div
-            className="h-1.5 w-full overflow-hidden rounded-none bg-[#1a4d42]/8 dark:bg-white/10"
+            className="h-1.5 w-full overflow-hidden rounded-md bg-[#1a4d42]/8 dark:bg-white/10"
             role="progressbar"
             aria-valuenow={fillPct}
             aria-valuemin={0}
@@ -272,7 +272,7 @@ export function TimetableHealthPanel({
             aria-label={`${filledSlots} of ${totalSlots} slots filled`}
           >
             <div
-              className={cn("h-full rounded-none transition-[width]", barTone)}
+              className={cn("h-full rounded-md transition-[width]", barTone)}
               style={{ width: `${Math.max(fillPct, filledSlots > 0 ? 2 : 0)}%` }}
             />
           </div>

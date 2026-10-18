@@ -365,7 +365,7 @@ export function FeePlanDetailView({
         />
       ) : null}
 
-      <FeePlanDetailSectionNav className="max-md:mx-0 md:rounded-none" />
+      <FeePlanDetailSectionNav className="max-md:mx-0 md:rounded-lg" />
 
       <FeePlanDocument className="min-w-0 max-md:!bg-transparent max-md:!border-0 max-md:!shadow-none">
         <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:divide-x lg:divide-[#1a4d42]/10">

@@ -1216,8 +1216,7 @@ export const BulkInvoiceGenerator = ({
                 </Button>
               </DrawerClose>
               <Button
-                className="flex-1 text-white disabled:opacity-50"
-                style={{ backgroundColor: FEES_BRAND.primary }}
+                className="flex-1 bg-primary text-white disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
                 onClick={handleGenerate}
                 disabled={!canGenerate}
               >

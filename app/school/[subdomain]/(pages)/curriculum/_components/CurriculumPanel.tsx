@@ -518,7 +518,7 @@ export function CurriculumPanel() {
                 <td className="px-3 py-2.5">
                   <Badge
                     className={cn(
-                      "rounded-none border-0 px-2 text-[10px] font-semibold",
+                      "rounded-lg border-0 px-2 text-[10px] font-semibold",
                       subject.isCompulsory
                         ? "bg-[#246a59]/10 text-[#246a59] hover:bg-[#246a59]/10"
                         : "bg-[#1a4d42]/8 text-[#1a4d42]/50 hover:bg-[#1a4d42]/8 dark:bg-white/10 dark:text-white/50",
@@ -538,7 +538,7 @@ export function CurriculumPanel() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-none text-[#1a4d42]/50 hover:bg-[#246a59]/10 hover:text-[#246a59] dark:text-white/40"
+                      className="h-8 w-8 rounded-lg text-[#1a4d42]/50 hover:bg-[#246a59]/10 hover:text-[#246a59] dark:text-white/40"
                       aria-label={`Edit ${subject.subjectName}`}
                       onClick={() => {
                         setEditing(subject);
@@ -554,7 +554,7 @@ export function CurriculumPanel() {
                         removeMutation.isPending &&
                         removeMutation.variables === subject.id
                       }
-                      className="h-8 w-8 rounded-none text-[#1a4d42]/50 hover:bg-red-50 hover:text-red-600 dark:text-white/40 dark:hover:bg-red-950/30"
+                      className="h-8 w-8 rounded-lg text-[#1a4d42]/50 hover:bg-red-50 hover:text-red-600 dark:text-white/40 dark:hover:bg-red-950/30"
                       aria-label={`Remove ${subject.subjectName}`}
                       onClick={() => {
                         if (
@@ -686,7 +686,7 @@ export function CurriculumPanel() {
                   {activeLevel.gradeLevels.map((grade) => (
                     <Badge
                       key={grade.id}
-                      className="rounded-none border border-[#1a4d42]/15 bg-white px-2 py-1 text-xs font-normal text-[#0a1f1a] hover:bg-white dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/80"
+                      className="rounded-lg border border-[#1a4d42]/15 bg-white px-2 py-1 text-xs font-normal text-[#0a1f1a] hover:bg-white dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/80"
                     >
                       {grade.name}
                       {grade.age != null ? (

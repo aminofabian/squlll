@@ -138,15 +138,15 @@ export function ClassesStructureOverview({
   if (isLoading) {
     return (
       <div className="grid gap-4 lg:grid-cols-5">
-        <div className="h-48 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-slate-800 lg:col-span-2" />
-        <div className="h-48 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-slate-800 lg:col-span-3" />
+        <div className="h-48 animate-pulse rounded-lg bg-[#e8f2ef] dark:bg-slate-800 lg:col-span-2" />
+        <div className="h-48 animate-pulse rounded-lg bg-[#e8f2ef] dark:bg-slate-800 lg:col-span-3" />
       </div>
     );
   }
 
   if (levelSummaries.length === 0) {
     return (
-      <div className="rounded-none border border-dashed border-[#1a4d42]/15 px-6 py-10 text-center dark:border-white/15">
+      <div className="rounded-lg border border-dashed border-[#1a4d42]/15 px-6 py-10 text-center dark:border-white/15">
         <p className="text-sm text-[#1a4d42]/55">No class levels configured yet.</p>
         <p className="mt-1 text-xs text-[#1a4d42]/45">
           Finish school setup to add grades and streams.
@@ -157,7 +157,7 @@ export function ClassesStructureOverview({
 
   return (
     <div className="grid gap-4 lg:grid-cols-5">
-      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17] lg:col-span-2">
+      <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17] lg:col-span-2">
         <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
           <h3 className="flex items-center gap-1.5 text-xs font-semibold text-[#0a1f1a] dark:text-white">
             <Layers className="h-3.5 w-3.5 text-[#246a59]" />
@@ -178,9 +178,9 @@ export function ClassesStructureOverview({
                   {level.studentCount} students · {level.gradeCount} grades
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-none bg-[#e8f2ef] dark:bg-slate-800">
+              <div className="h-1.5 overflow-hidden rounded-lg bg-[#e8f2ef] dark:bg-slate-800">
                 <div
-                  className="h-full rounded-none bg-[#246a59] transition-all"
+                  className="h-full rounded-lg bg-[#246a59] transition-all"
                   style={{
                     width: `${Math.max(
                       10,
@@ -199,7 +199,7 @@ export function ClassesStructureOverview({
       </div>
 
       <div className="space-y-4 lg:col-span-3">
-        <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+        <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
             <div>
               <h3 className="flex items-center gap-1.5 text-xs font-semibold text-[#0a1f1a] dark:text-white">
@@ -230,7 +230,7 @@ export function ClassesStructureOverview({
                   onClick={() => onGradeSelect(row.gradeId, row.levelId)}
                   className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f8fbfa] dark:hover:bg-slate-800/40"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10 text-sm font-bold text-[#246a59]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-sm font-bold text-[#246a59]">
                     {abbreviateGradeShort(row.gradeName)}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -264,7 +264,7 @@ export function ClassesStructureOverview({
                           onClick={() =>
                             onStreamSelect(stream.id, row.gradeId, row.levelId)
                           }
-                          className="rounded-none bg-white px-2.5 py-1 text-[11px] font-medium text-[#1a4d42]/65 ring-1 ring-slate-200/80 transition-colors hover:bg-[#246a59] hover:text-white hover:ring-[#246a59] dark:bg-slate-800 dark:text-[#1a4d42]/30 dark:ring-slate-700"
+                          className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-medium text-[#1a4d42]/65 ring-1 ring-slate-200/80 transition-colors hover:bg-[#246a59] hover:text-white hover:ring-[#246a59] dark:bg-slate-800 dark:text-[#1a4d42]/30 dark:ring-slate-700"
                         >
                           {stream.name}
                         </button>
@@ -285,7 +285,7 @@ export function ClassesStructureOverview({
         </div>
 
         {attention.length > 0 ? (
-          <div className="rounded-none border border-amber-200/70 bg-amber-50/50 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <div className="rounded-lg border border-amber-200/70 bg-amber-50/50 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               Needs a look
@@ -318,7 +318,7 @@ export function ClassesStructureOverview({
           </div>
         ) : null}
 
-        <div className="hidden rounded-none border border-dashed border-[#1a4d42]/12 bg-[#f8fbfa] px-4 py-3 text-[11px] text-[#1a4d42]/55 dark:border-white/15 dark:bg-[#071411] lg:block">
+        <div className="hidden rounded-lg border border-dashed border-[#1a4d42]/12 bg-[#f8fbfa] px-4 py-3 text-[11px] text-[#1a4d42]/55 dark:border-white/15 dark:bg-[#071411] lg:block">
           <BookOpen className="mb-1 inline h-3.5 w-3.5 text-[#1a4d42]/45" />
           Use the <strong>grades panel</strong> on the left to jump to any class
           quickly.

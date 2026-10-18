@@ -812,14 +812,14 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
                     setUploadErrors({});
                   }}
                   disabled={isUploading}
-                  className="flex-1 px-4 py-2 border border-primary/20 rounded-lg text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-primary/20 rounded-md text-foreground hover:bg-primary/5 transition-colors disabled:bg-slate-100 disabled:text-slate-400"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUploadFiles}
                   disabled={isUploading || uploadedFiles.length === 0 || !newAssignment.title.trim() || !newAssignment.subject.trim() || !accessToken}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {isUploading ? (
                     <>
@@ -984,7 +984,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
         <button
           onClick={() => setStep('recipients')}
           disabled={selectedAssignments.length === 0}
-          className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
         >
           Continue ({selectedAssignments.length} selected)
         </button>
@@ -1138,14 +1138,14 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
           <button
             onClick={() => setStep('preview')}
             disabled={selectedRecipients.length === 0}
-            className="px-6 py-3 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 bg-primary/10 text-primary rounded-md hover:bg-primary/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
           >
             Preview
           </button>
           <button
             onClick={handleAssignHomework}
             disabled={selectedRecipients.length === 0 || assigningHomework}
-            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             {assigningHomework ? (
               <>
@@ -1249,7 +1249,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
         <button
           onClick={handleAssignHomework}
           disabled={assigningHomework}
-          className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {assigningHomework ? (
             <>

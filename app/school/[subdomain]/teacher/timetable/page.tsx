@@ -461,7 +461,7 @@ const TeacherTimetable = () => {
             currentDayOfWeek={core.currentDayOfWeek}
             currentPeriodIndex={core.currentPeriodIndex}
             completedLessonIds={core.completedLessonIds}
-            className="rounded-none border border-slate-200 bg-white shadow-none"
+            className="rounded-md border border-slate-200 bg-white shadow-none"
           />
         </div>
       ) : null}

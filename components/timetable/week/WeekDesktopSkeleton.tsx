@@ -57,7 +57,7 @@ export function WeekDesktopSkeleton() {
           <div className="px-4 py-3.5">
             <Skeleton className="h-5 w-56" />
           </div>
-          <TimetableGridSkeleton className="rounded-none border-0 bg-transparent" />
+          <TimetableGridSkeleton className="rounded-md border-0 bg-transparent" />
         </section>
       </div>
     </div>

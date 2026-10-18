@@ -11,12 +11,12 @@ export const onboardingCalendarClassNames = {
   month_caption: 'relative flex h-8 w-full items-center justify-center',
   caption_label: 'text-sm font-semibold text-[#0a1f1a] dark:text-white',
   button_previous: cn(
-    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-none border border-[#1a4d42]/15',
+    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#1a4d42]/15',
     'bg-white text-[#1a4d42]/70 hover:border-[#246a59]/40 hover:bg-[#246a59]/10 hover:text-[#246a59]',
     'dark:border-white/15 dark:bg-[#0a1f1a] dark:hover:bg-[#246a59]/20',
   ),
   button_next: cn(
-    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-none border border-[#1a4d42]/15',
+    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#1a4d42]/15',
     'bg-white text-[#1a4d42]/70 hover:border-[#246a59]/40 hover:bg-[#246a59]/10 hover:text-[#246a59]',
     'dark:border-white/15 dark:bg-[#0a1f1a] dark:hover:bg-[#246a59]/20',
   ),
@@ -24,7 +24,7 @@ export const onboardingCalendarClassNames = {
     'w-9 pb-1 text-center text-[0.65rem] font-semibold uppercase tracking-wide text-[#1a4d42]/45',
   day: 'relative p-0 text-center align-middle',
   day_button: cn(
-    'h-8 w-8 rounded-none p-0 text-sm font-medium text-[#0a1f1a] dark:text-white/80',
+    'h-8 w-8 rounded-lg p-0 text-sm font-medium text-[#0a1f1a] dark:text-white/80',
     'hover:bg-[#246a59]/15 hover:text-[#1a4d42]',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/40',
   ),

@@ -1556,7 +1556,7 @@ function HeroLiveDemoStrip({
         </div>
         <p
           key={selectedStudent.id}
-          className="hero-profile-in rounded-none min-w-0 flex-1 text-left text-sm font-medium leading-snug text-white"
+          className="hero-profile-in rounded-lg min-w-0 flex-1 text-left text-sm font-medium leading-snug text-white"
         >
           {selectedStudent.pitchLine}
         </p>

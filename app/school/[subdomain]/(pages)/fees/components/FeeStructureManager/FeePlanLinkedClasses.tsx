@@ -41,8 +41,8 @@ export function FeePlanLinkedClasses({
         className={cn(
           "text-center",
           useChips
-            ? "rounded-none border border-dashed px-3 py-4"
-            : "rounded-none border border-dashed px-5 py-8",
+            ? "rounded-lg border border-dashed px-3 py-4"
+            : "rounded-lg border border-dashed px-5 py-8",
           "border-[#1a4d42]/15 bg-[#f8fbfa]",
           className,
         )}
@@ -83,7 +83,7 @@ export function FeePlanLinkedClasses({
                 href={feesBalancesHref(entry.name)}
                 scroll={false}
                 className={cn(
-                  "inline-flex max-w-full items-center rounded-none border border-[#1a4d42]/12 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0a1f1a] transition-colors",
+                  "inline-flex max-w-full items-center rounded-lg border border-[#1a4d42]/12 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0a1f1a] transition-colors",
                   "hover:border-[#246a59]/35 hover:bg-[#e8f2ef] hover:text-[#1a4d42]",
                   FEES_LAYOUT.textWrap,
                 )}
@@ -111,7 +111,7 @@ export function FeePlanLinkedClasses({
     <div className={cn("min-w-0", className)}>
       <div
         className={cn(
-          "overflow-y-auto overscroll-contain rounded-none border border-[#1a4d42]/12 bg-white",
+          "overflow-y-auto overscroll-contain rounded-lg border border-[#1a4d42]/12 bg-white",
           "max-h-[min(280px,45vh)]",
         )}
       >
@@ -122,7 +122,7 @@ export function FeePlanLinkedClasses({
                 href={feesBalancesHref(entry.name)}
                 scroll={false}
                 className={cn(
-                  "group flex h-full min-h-[2.75rem] items-center justify-center rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-1.5 py-2 text-center transition-colors",
+                  "group flex h-full min-h-[2.75rem] items-center justify-center rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] px-1.5 py-2 text-center transition-colors",
                   "hover:border-[#246a59]/35 hover:bg-[#e8f2ef]",
                 )}
                 title={`View balances for ${entry.name}`}

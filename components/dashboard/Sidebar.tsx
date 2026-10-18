@@ -118,7 +118,7 @@ export function Sidebar({ className, onNavClick }: SidebarProps) {
           type="button"
           onClick={signOut}
           disabled={isSigningOut}
-          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-400 transition-all duration-150 hover:bg-red-50/50 hover:text-red-500 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-400 transition-all duration-150 hover:bg-red-50/50 hover:text-red-500 disabled:text-slate-300 dark:text-slate-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
         >
           <LogOut className="h-4.5 w-4.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
           <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>

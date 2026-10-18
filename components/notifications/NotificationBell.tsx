@@ -64,7 +64,7 @@ export function NotificationBell({
           className={cn(
             'relative',
             iconButtonClass ??
-              'rounded-none text-[#1a4d42]/55 hover:bg-[#f3f7f5] hover:text-[#0a1f1a]',
+              'rounded-lg text-[#1a4d42]/55 hover:bg-[#f3f7f5] hover:text-[#0a1f1a]',
             className,
           )}
           aria-label={`Notifications${totalUnread ? `, ${totalUnread} unread` : ''}`}

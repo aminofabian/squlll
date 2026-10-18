@@ -372,8 +372,8 @@ export default function AdmissionsApplicationsPage() {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f3f7f5] dark:bg-[#071411]">
-        <div className="rounded-none border border-red-300/80 bg-white px-6 py-8 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+      <div className="flex h-screen items-center justify-center bg-background dark:bg-[#071411]">
+        <div className="rounded-lg border border-red-300/80 bg-white px-6 py-8 text-center shadow-sm dark:border-red-900/50 dark:bg-[#0c1a17]">
           <h2 className="mb-1 font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading applications
           </h2>
@@ -393,7 +393,7 @@ export default function AdmissionsApplicationsPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-[#071411]">
       {/* Directory sidebar */}
       <div
         className={cn(
@@ -478,7 +478,7 @@ export default function AdmissionsApplicationsPage() {
                       className={appsSidebarItem(app.id === selectedId)}
                     >
                       <div className="flex items-start gap-2">
-                        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-[10px] font-semibold text-white">
+                        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0a1f1a] text-[10px] font-semibold text-white">
                           {initials(name) || '?'}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -488,7 +488,7 @@ export default function AdmissionsApplicationsPage() {
                           <span className="mt-0.5 flex items-center gap-1.5">
                             <span
                               className={cn(
-                                'rounded-none border px-1 py-px text-[9px] font-semibold uppercase tracking-wide',
+                                'rounded-lg border px-1 py-px text-[9px] font-semibold uppercase tracking-wide',
                                 meta.className,
                               )}
                             >
@@ -509,7 +509,7 @@ export default function AdmissionsApplicationsPage() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="mt-1 h-7 w-full rounded-none text-xs text-[#1a4d42]/55"
+                  className="mt-1 h-7 w-full rounded-lg text-xs text-[#1a4d42]/55"
                   onClick={() => setDisplayedCount((n) => n + 20)}
                 >
                   Load more
@@ -621,7 +621,7 @@ export default function AdmissionsApplicationsPage() {
                       <button
                         type="button"
                         onClick={clearFilters}
-                        className="inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-xs text-[#1a4d42]/80 hover:border-[#246a59]/35 dark:border-white/10 dark:bg-[#0c1a17]"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-xs text-[#1a4d42]/80 hover:border-[#246a59]/35 dark:border-white/10 dark:bg-[#0c1a17]"
                       >
                         <X className="h-3 w-3" />
                         Clear filters
@@ -667,7 +667,7 @@ export default function AdmissionsApplicationsPage() {
                               >
                                 <td className={appsTd}>
                                   <div className="flex items-center gap-2.5">
-                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-[11px] font-semibold text-white">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0a1f1a] text-[11px] font-semibold text-white">
                                       {initials(name) || '?'}
                                     </span>
                                     <div className="min-w-0">
@@ -700,7 +700,7 @@ export default function AdmissionsApplicationsPage() {
                                 <td className={appsTd}>
                                   <span
                                     className={cn(
-                                      'inline-flex rounded-none border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                      'inline-flex rounded-lg border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
                                       meta.className,
                                     )}
                                   >
@@ -765,7 +765,7 @@ function ApplicationDetail({
         <div className="border-b border-[#1a4d42]/10 bg-gradient-to-br from-[#246a59]/[0.06] via-[#f8fbfa] to-white px-4 py-4 dark:border-white/10 dark:from-[#246a59]/12 dark:via-[#0c1a17] dark:to-[#0c1a17] sm:px-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-sm font-semibold text-white">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#0a1f1a] text-sm font-semibold text-white">
                 {initials(name) || '?'}
               </span>
               <div>
@@ -780,7 +780,7 @@ function ApplicationDetail({
                   {' · '}
                   <span
                     className={cn(
-                      'inline-flex rounded-none border px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide',
+                      'inline-flex rounded-lg border px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide',
                       meta.className,
                     )}
                   >
@@ -927,7 +927,7 @@ function ApplicationDetail({
           value={adminNotes}
           onChange={(e) => onAdminNotesChange(e.target.value)}
           placeholder="Only visible to school admins…"
-          className="mt-2 min-h-[88px] rounded-none border-[#1a4d42]/15 bg-white shadow-none focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
+          className="mt-2 min-h-[88px] rounded-lg border-[#1a4d42]/15 bg-white shadow-none focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Button

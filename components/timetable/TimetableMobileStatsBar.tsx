@@ -174,8 +174,8 @@ export function TimetableMobileStatsBar({
                 index < 3 && "border-r border-[#1a4d42]/8 dark:border-white/8",
               )}
             >
-              <Skeleton className="h-3.5 w-7 rounded-none" />
-              <Skeleton className="h-2 w-11 rounded-none" />
+              <Skeleton className="h-3.5 w-7 rounded-md" />
+              <Skeleton className="h-2 w-11 rounded-md" />
             </div>
           ))
         : items.map((item, index) => (

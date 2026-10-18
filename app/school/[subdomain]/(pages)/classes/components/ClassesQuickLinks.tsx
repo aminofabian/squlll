@@ -23,7 +23,7 @@ const links: QuickLink[] = [
 ];
 
 const buttonClass =
-  "inline-flex items-center gap-1.5 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-1.5 text-xs font-medium text-[#0a1f1a] transition-colors hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17] dark:text-white dark:hover:border-[#246a59]/45 dark:hover:bg-[#246a59]/15";
+  "inline-flex items-center gap-1.5 rounded-lg border border-[#1a4d42]/12 bg-white px-3 py-1.5 text-xs font-medium text-[#0a1f1a] transition-colors hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17] dark:text-white dark:hover:border-[#246a59]/45 dark:hover:bg-[#246a59]/15";
 
 interface ClassesQuickLinksProps {
   onOpenSubjects?: () => void;

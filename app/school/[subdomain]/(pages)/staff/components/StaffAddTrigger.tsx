@@ -15,28 +15,28 @@ interface StaffAddTriggerProps
 
 const variantStyles: Record<StaffAddTriggerVariant, string> = {
   header: cn(
-    "group relative h-9 gap-2 overflow-hidden rounded-none px-3.5 text-xs font-medium text-white",
+    "group relative h-9 gap-2 overflow-hidden rounded-md px-3.5 text-xs font-medium text-white",
     "bg-[#0a1f1a]",
     "transition-colors duration-200 hover:bg-[#246a59] hover:text-white",
-    "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60",
+    "active:scale-[0.98] disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-500",
   ),
   hero: cn(
-    "group relative h-11 gap-2.5 overflow-hidden rounded-none px-6 text-sm font-medium text-white",
+    "group relative h-11 gap-2.5 overflow-hidden rounded-md px-6 text-sm font-medium text-white",
     "bg-[#0a1f1a]",
     "transition-colors duration-200 hover:bg-[#246a59] hover:text-white",
-    "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60",
+    "active:scale-[0.98] disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-500",
   ),
   toolbar: cn(
-    "group h-8 gap-1.5 rounded-none px-3 text-xs font-medium text-white",
+    "group h-8 gap-1.5 rounded-md px-3 text-xs font-medium text-white",
     "bg-[#0a1f1a]",
     "transition-colors hover:bg-[#246a59] hover:text-white",
-    "disabled:pointer-events-none disabled:opacity-60",
+    "disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-500",
   ),
   inline: cn(
-    "group inline-flex items-center gap-1 rounded-none px-2.5 py-1 text-xs font-medium text-white",
+    "group inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-white",
     "bg-[#0a1f1a]",
     "transition-colors hover:bg-[#246a59] hover:text-white",
-    "disabled:pointer-events-none disabled:opacity-60",
+    "disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-500",
   ),
 };
 

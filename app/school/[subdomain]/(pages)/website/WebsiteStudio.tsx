@@ -673,7 +673,7 @@ export function WebsiteStudio() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 rounded-none px-2.5 text-xs"
+              className="h-8 rounded-lg px-2.5 text-xs"
               asChild
             >
               <a href="/" target="_blank" rel="noreferrer">
@@ -684,7 +684,7 @@ export function WebsiteStudio() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 rounded-none px-2.5 text-xs"
+              className="h-8 rounded-lg px-2.5 text-xs"
               onClick={handleRevert}
               disabled={
                 !published ||
@@ -696,7 +696,7 @@ export function WebsiteStudio() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 rounded-none px-2.5 text-xs"
+              className="h-8 rounded-lg px-2.5 text-xs"
               onClick={handleSave}
               disabled={saving || !dirty}
             >
@@ -709,7 +709,7 @@ export function WebsiteStudio() {
             </Button>
             <Button
               size="sm"
-              className="h-8 rounded-none bg-[#246a59] px-3 text-xs hover:bg-[#1a4c40]"
+              className="h-8 rounded-lg bg-[#246a59] px-3 text-xs hover:bg-[#1a4c40]"
               onClick={handlePublish}
               disabled={publishing}
             >

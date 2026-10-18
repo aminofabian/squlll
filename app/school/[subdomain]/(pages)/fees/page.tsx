@@ -148,11 +148,6 @@ export default function FeesPage() {
     typeof params?.subdomain === "string" ? params.subdomain : undefined,
   );
 
-  useEffect(() => {
-    document.body.classList.add("fees-square-mode");
-    return () => document.body.classList.remove("fees-square-mode");
-  }, []);
-
   const feesAccess = useFeesAccess();
   const {
     applyFeeAdjustment,

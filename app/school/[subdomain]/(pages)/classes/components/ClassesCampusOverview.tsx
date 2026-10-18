@@ -312,7 +312,7 @@ export function ClassesCampusOverview({
         {Array.from({ length: 6 }).map((_, index) => (
           <div
             key={index}
-            className="h-28 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-[#0c1a17]"
+            className="h-28 animate-pulse rounded-lg bg-[#e8f2ef] dark:bg-[#0c1a17]"
           />
         ))}
       </div>
@@ -321,7 +321,7 @@ export function ClassesCampusOverview({
 
   if (classUnits.length === 0) {
     return (
-      <div className="rounded-none border border-dashed border-[#1a4d42]/15 px-6 py-12 text-center dark:border-white/15">
+      <div className="rounded-lg border border-dashed border-[#1a4d42]/15 px-6 py-12 text-center dark:border-white/15">
         <GraduationCap className="mx-auto h-8 w-8 text-[#1a4d42]/30" />
         <p className="mt-3 text-sm font-medium text-[#1a4d42]/65">
           No classes set up yet
@@ -428,7 +428,7 @@ export function ClassesCampusOverview({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search classes or teachers…"
-                className="h-8 rounded-none border-[#1a4d42]/15 bg-white pl-7 pr-7 text-xs shadow-none dark:bg-[#0c1a17]"
+                className="h-8 rounded-lg border-[#1a4d42]/15 bg-white pl-7 pr-7 text-xs shadow-none dark:bg-[#0c1a17]"
               />
               {search ? (
                 <button
@@ -443,7 +443,7 @@ export function ClassesCampusOverview({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="inline-flex shrink-0 rounded-none border border-[#1a4d42]/12 bg-white p-0.5 dark:border-white/15 dark:bg-[#0c1a17]">
+              <div className="inline-flex shrink-0 rounded-lg border border-[#1a4d42]/12 bg-white p-0.5 dark:border-white/15 dark:bg-[#0c1a17]">
                 {(
                   [
                     { id: "all" as const, label: "All" },
@@ -455,7 +455,7 @@ export function ClassesCampusOverview({
                     type="button"
                     onClick={() => setFilter(tab.id)}
                     className={cn(
-                      "rounded-none px-2.5 py-1 text-[11px] font-medium transition-colors",
+                      "rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors",
                       filter === tab.id
                         ? "bg-[#0a1f1a] text-white"
                         : "text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/55 dark:hover:text-white",
@@ -550,7 +550,7 @@ export function ClassesCampusOverview({
                         </span>
                         <span className="flex shrink-0 items-center gap-1.5">
                           <span
-                            className={cn("h-1.5 w-1.5 rounded-none", meta.dot)}
+                            className={cn("h-1.5 w-1.5 rounded-lg", meta.dot)}
                             title={meta.label}
                           />
                         </span>
@@ -615,7 +615,7 @@ export function ClassesCampusOverview({
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-none text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white"
+                            className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-lg text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white"
                             aria-label={`Manage ${unit.label}`}
                           >
                             <MoreHorizontal className="h-4 w-4" />

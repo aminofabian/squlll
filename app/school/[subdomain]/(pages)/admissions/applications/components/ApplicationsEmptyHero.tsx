@@ -10,8 +10,8 @@ export function ApplicationsEmptyHero({
   filtered?: boolean
 }) {
   return (
-    <div className="relative overflow-hidden rounded-none border border-[#1a4d42]/12 bg-gradient-to-br from-[#246a59]/[0.06] via-[#f8fbfa] to-[#f3f7f5] px-6 py-14 text-center dark:border-white/10 dark:from-[#246a59]/12 dark:via-[#0c1a17] dark:to-[#071411]">
-      <div className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-none bg-[#0a1f1a]">
+    <div className="relative overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-gradient-to-br from-[#246a59]/[0.06] via-[#f8fbfa] to-[#f3f7f5] px-6 py-14 text-center dark:border-white/10 dark:from-[#246a59]/12 dark:via-[#0c1a17] dark:to-[#071411]">
+      <div className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-[#0a1f1a]">
         <UserRoundPlus className="h-7 w-7 text-white" strokeWidth={1.75} />
       </div>
 

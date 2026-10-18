@@ -240,7 +240,7 @@ export function SchoolSidebar({
               side="right"
               align="start"
               sideOffset={6}
-              className="w-52 rounded-none border border-[#1a4d42]/15 bg-white p-0 shadow-[6px_6px_0_0_rgba(10,31,26,0.1)] dark:border-white/10 dark:bg-[#0c1a17]"
+              className="w-52 rounded-lg border border-[#1a4d42]/15 bg-white p-0 shadow-sm dark:border-white/10 dark:bg-[#0c1a17]"
             >
               <div className="border-b border-[#1a4d42]/10 bg-[#0a1f1a] px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200/80">
@@ -342,7 +342,7 @@ export function SchoolSidebar({
             onClick={signOut}
             disabled={isSigningOut}
             title="Sign out"
-            className="group flex w-full flex-col items-center gap-0.5 py-1.5 text-[#1a4d42]/45 transition-colors hover:text-red-600 disabled:opacity-50"
+            className="group flex w-full flex-col items-center gap-0.5 py-1.5 text-[#1a4d42]/45 transition-colors hover:text-red-600 disabled:text-slate-300"
           >
             <span className="flex h-8 w-8 items-center justify-center border border-transparent group-hover:border-red-200 group-hover:bg-red-50 dark:group-hover:bg-red-950/30">
               <LogOut className="h-[17px] w-[17px]" strokeWidth={1.75} />

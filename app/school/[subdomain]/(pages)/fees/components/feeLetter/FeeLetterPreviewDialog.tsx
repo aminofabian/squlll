@@ -50,7 +50,7 @@ export function FeeLetterPreviewDialog({
           "flex w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl",
           "max-h-[92vh]",
           "max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:max-w-full",
-          "max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0",
+          "max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-lg max-md:border-0",
         )}
       >
         <DialogTitle className="sr-only">{accessibleTitle}</DialogTitle>

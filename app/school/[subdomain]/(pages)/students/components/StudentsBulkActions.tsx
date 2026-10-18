@@ -53,7 +53,7 @@ export function StudentsBulkActions({ students }: StudentsBulkActionsProps) {
           <span className="text-slate-400">({students.length})</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="rounded-none">
+      <DropdownMenuContent align="end" className="rounded-lg">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-slate-400">
           Download as
         </DropdownMenuLabel>

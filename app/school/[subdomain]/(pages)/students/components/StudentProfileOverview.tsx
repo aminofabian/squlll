@@ -219,7 +219,7 @@ export function StudentProfileOverview({
             type="button"
             variant="outline"
             size="sm"
-            className="mt-3 h-8 w-full rounded-none border-[#1a4d42]/15 text-xs"
+            className="mt-3 h-8 w-full rounded-lg border-[#1a4d42]/15 text-xs"
             onClick={onAssignClass}
           >
             Assign class now
@@ -299,7 +299,7 @@ export function StudentProfileOverview({
             {parents.slice(0, 2).map((parent) => (
               <li
                 key={parent.id}
-                className="flex items-center justify-between gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
+                className="flex items-center justify-between gap-2 rounded-lg border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white">
@@ -311,7 +311,7 @@ export function StudentProfileOverview({
                 </div>
                 <span
                   className={cn(
-                    "shrink-0 rounded-none px-2 py-0.5 text-[10px] font-medium",
+                    "shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-medium",
                     parent.userId
                       ? "bg-[#e8f2ef] text-[#1a4d42]"
                       : "bg-amber-100 text-amber-800",

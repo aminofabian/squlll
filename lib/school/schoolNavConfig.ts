@@ -1,24 +1,18 @@
 import {
   LayoutDashboard,
   Building2,
-  Clock,
   Users2,
   GraduationCap,
   Users,
   Briefcase,
-  Bus,
-  CreditCard,
   FileCheck,
   BookMarked,
   CalendarCheck,
-  FileText,
   PieChart,
   UserRoundPlus,
   Medal,
-  CheckSquare,
   ClipboardCheck,
   Trophy,
-  MessageCircle,
   MessageSquareText,
   BellRing,
   Settings,
@@ -27,6 +21,8 @@ import {
   Link2,
   type LucideIcon,
 } from "lucide-react";
+
+import { ICONS } from "@/lib/icons";
 
 export interface SchoolNavItem {
   title: string;
@@ -49,20 +45,20 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
       { title: "Students", shortLabel: "Students", href: "/students", icon: Users2 },
       { title: "Classes", shortLabel: "Classes", href: "/classes", icon: Building2 },
       { title: "Teachers", shortLabel: "Teachers", href: "/teachers", icon: GraduationCap },
-      { title: "Messages", shortLabel: "Chat", href: "/communication", icon: MessageCircle },
+      { title: "Messages", shortLabel: "Chat", href: "/communication", icon: ICONS.messages },
     ],
   },
   {
     items: [
-      { title: "Timetable", shortLabel: "Timetable", href: "/timetable", icon: Clock },
-      { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees?section=plans", icon: CreditCard },
+      { title: "Timetable", shortLabel: "Timetable", href: "/timetable", icon: ICONS.timetable },
+      { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees?section=plans", icon: ICONS.fees },
       { title: "Exams", shortLabel: "Exams", href: "/exams", icon: FileCheck },
     ],
   },
   {
     items: [
       { title: "Website", shortLabel: "Website", href: "/website", icon: Globe },
-      { title: "Transport", shortLabel: "Transport", href: "/transport", icon: Bus },
+      { title: "Transport", shortLabel: "Transport", href: "/transport", icon: ICONS.transport },
       { title: "Custom domain", shortLabel: "Domain", href: "/domains", icon: Link2 },
       { title: "Reminders", shortLabel: "Reminders", href: "/reminders", icon: BellRing },
       { title: "SMS messages", shortLabel: "SMS", href: "/sms-credits", icon: MessageSquareText },
@@ -77,23 +73,23 @@ export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
   { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Students", href: "/students", icon: Users2 },
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
-  { title: "Messages", href: "/communication", icon: MessageCircle },
-  { title: "Timetable", href: "/timetable", icon: Clock },
-  { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
+  { title: "Messages", href: "/communication", icon: ICONS.messages },
+  { title: "Timetable", href: "/timetable", icon: ICONS.timetable },
+  { title: "Fees & Invoices", href: "/fees?section=plans", icon: ICONS.fees },
   { title: "Exams", href: "/exams", icon: FileCheck },
 ];
 
 /** Less frequent pages — tucked under "More" */
 export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
-  { title: "Transport", href: "/transport", icon: Bus },
+  { title: "Transport", href: "/transport", icon: ICONS.transport },
   { title: "Parents", href: "/parents", icon: Users },
   { title: "Staff", href: "/staff", icon: Briefcase },
-  { title: "Attendances", href: "/attendances", icon: CheckSquare },
+  { title: "Attendances", href: "/attendances", icon: ICONS.attendance },
   { title: "Grading", href: "/grading", icon: Trophy },
   { title: "Curriculum", href: "/curriculum", icon: BookMarked },
   { title: "Lesson Plans", href: "/lesson-plans", icon: ClipboardCheck },
   { title: "School Years", href: "/school-years", icon: CalendarCheck },
-  { title: "Reports", href: "/reports", icon: FileText },
+  { title: "Reports", href: "/reports", icon: ICONS.reports },
   { title: "Analytics", href: "/analytics", icon: PieChart },
   { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
   { title: "Enrollment", href: "/enrollment", icon: Medal },
@@ -116,7 +112,7 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
     label: "Academic",
     items: [
       { title: "Classes", href: "/classes", icon: Building2 },
-      { title: "Timetable", href: "/timetable", icon: Clock },
+      { title: "Timetable", href: "/timetable", icon: ICONS.timetable },
       { title: "Curriculum", href: "/curriculum", icon: BookMarked },
   { title: "Lesson Plans", href: "/lesson-plans", icon: ClipboardCheck },
       { title: "Exams", href: "/exams", icon: FileCheck },
@@ -137,14 +133,14 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
     id: "administration",
     label: "Administration",
     items: [
-      { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
-      { title: "Attendances", href: "/attendances", icon: CheckSquare },
+      { title: "Fees & Invoices", href: "/fees?section=plans", icon: ICONS.fees },
+      { title: "Attendances", href: "/attendances", icon: ICONS.attendance },
       { title: "School Years", href: "/school-years", icon: CalendarCheck },
-      { title: "Reports", href: "/reports", icon: FileText },
+      { title: "Reports", href: "/reports", icon: ICONS.reports },
       { title: "Analytics", href: "/analytics", icon: PieChart },
       { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
       { title: "Enrollment", href: "/enrollment", icon: Medal },
-      { title: "Transport", href: "/transport", icon: Bus },
+      { title: "Transport", href: "/transport", icon: ICONS.transport },
           { title: "Reminders", href: "/reminders", icon: BellRing },
       { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },
       { title: "Website", href: "/website", icon: Globe },
@@ -184,8 +180,8 @@ export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
   { title: "Students", href: "/students", icon: Users2 },
   { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
-  { title: "Messages", href: "/communication", icon: MessageCircle },
-  { title: "Timetable", href: "/timetable", icon: Clock },
+  { title: "Messages", href: "/communication", icon: ICONS.messages },
+  { title: "Timetable", href: "/timetable", icon: ICONS.timetable },
 ];
 
 /** Mobile bottom nav — overflow items shown in "More" sheet */

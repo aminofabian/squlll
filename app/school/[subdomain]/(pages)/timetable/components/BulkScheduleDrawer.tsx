@@ -541,7 +541,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       >
         <SheetHeader className={`border-b pb-2.5 px-4 pt-3 ${tt.border.hair}`}>
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-none bg-[#246a59]/10 dark:bg-[#246a59]/20">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#246a59]/10 dark:bg-[#246a59]/20">
               <Calendar className="h-3.5 w-3.5 text-[#246a59] dark:text-[#7eb8a8]" />
             </div>
             <div className="flex-1">
@@ -558,14 +558,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
         </SheetHeader>
 
         {weekTemplatesLoading && effectiveTermId && (
-          <div className={`mx-4 mt-3 flex items-center gap-2 rounded-none border bg-[#f8fbfa] dark:bg-white/[0.02] px-3 py-2 ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
+          <div className={`mx-4 mt-3 flex items-center gap-2 rounded-md border bg-[#f8fbfa] dark:bg-white/[0.02] px-3 py-2 ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
             <Loader2 className="h-3 w-3 animate-spin" />
             Checking for existing timetables…
           </div>
         )}
 
         {!weekTemplatesLoading && existingWeekTemplate && effectiveTermId && (
-          <div className="sticky top-0 z-10 mx-4 mt-3 flex items-start gap-2.5 rounded-none border border-amber-300 bg-amber-50 px-3 py-3 text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+          <div className="sticky top-0 z-10 mx-4 mt-3 flex items-start gap-2.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-3 text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className={`${tt.text.small} leading-relaxed`}>
               A timetable already exists for <span className="font-semibold">{selectedTerm?.name ?? 'this term'}</span>{' '}
@@ -580,22 +580,22 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           {/* Step 1 - Term Selection */}
           <div className="space-y-1.5 pb-4 border-b-2 border-[#1a4d42]/12 dark:border-white/10">
             <div className="flex items-center gap-1.5">
-              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-white dark:bg-[#246a59] ${tt.text.micro} font-semibold`}>
+              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#0a1f1a] text-white dark:bg-[#246a59] ${tt.text.micro} font-semibold`}>
                 1
               </div>
               <Label className={`${tt.text.micro} font-semibold uppercase tracking-wide`}>Select Term</Label>
             </div>
             {termsLoading ? (
-              <div className={`flex items-center justify-center gap-1.5 rounded-none border bg-[#f8fbfa] dark:bg-white/[0.02] p-2 ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
+              <div className={`flex items-center justify-center gap-1.5 rounded-md border bg-[#f8fbfa] dark:bg-white/[0.02] p-2 ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Loading terms...
               </div>
             ) : !currentAcademicYear ? (
-              <div className={`rounded-none border bg-[#f8fbfa] dark:bg-white/[0.02] p-2 text-center ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
+              <div className={`rounded-md border bg-[#f8fbfa] dark:bg-white/[0.02] p-2 text-center ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
                 No academic year available
               </div>
             ) : !terms || terms.length === 0 ? (
-              <div className={`rounded-none border bg-[#f8fbfa] dark:bg-white/[0.02] p-2 text-center ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
+              <div className={`rounded-md border bg-[#f8fbfa] dark:bg-white/[0.02] p-2 text-center ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
                 No terms available
               </div>
             ) : (
@@ -611,7 +611,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       key={term.id}
                       type="button"
                       onClick={() => selectTerm(term.id)}
-                      className={`group relative flex flex-col items-start gap-1 rounded-none border-2 p-2.5 text-left transition-all duration-200 cursor-pointer ${tt.focus} ${
+                      className={`group relative flex flex-col items-start gap-1 rounded-md border-2 p-2.5 text-left transition-all duration-200 cursor-pointer ${tt.focus} ${
                         isSelected
                           ? 'border-[#0a1f1a] bg-[#0a1f1a] text-white shadow-md shadow-[#0a1f1a]/20 scale-[1.02] dark:border-[#246a59] dark:bg-[#246a59]'
                           : 'border-[#1a4d42]/12 bg-white hover:border-[#246a59]/60 hover:bg-[#246a59]/5 hover:shadow-sm active:scale-[0.98] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:border-[#7eb8a8]/50'
@@ -627,12 +627,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           </div>
                         )}
                         {!isSelected && term.isActive && (
-                          <span className={`flex-shrink-0 rounded-none bg-emerald-100 px-1.5 py-0.5 ${tt.text.micro} font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300`}>
+                          <span className={`flex-shrink-0 rounded-md bg-emerald-100 px-1.5 py-0.5 ${tt.text.micro} font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300`}>
                             Active
                           </span>
                         )}
                         {termTemplate && (
-                          <span className={`flex-shrink-0 rounded-none bg-amber-100 px-1.5 py-0.5 ${tt.text.micro} font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200`}>
+                          <span className={`flex-shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 ${tt.text.micro} font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200`}>
                             Has timetable
                           </span>
                         )}
@@ -650,7 +650,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                         )}
                       </div>
                       {isSelected && (
-                        <div className="absolute inset-0 rounded-none bg-white/5 pointer-events-none" />
+                        <div className="absolute inset-0 rounded-md bg-white/5 pointer-events-none" />
                       )}
                     </button>
                   );
@@ -661,9 +661,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
           {/* Step 2 - Timetable Name */}
           {effectiveTermId && (
-            <div className="space-y-1.5 rounded-none border border-[#1a4d42]/12 bg-white p-2.5 transition-all pb-4 border-b-2 dark:border-white/10 dark:bg-[#0c1a17]">
+            <div className="space-y-1.5 rounded-md border border-[#1a4d42]/12 bg-white p-2.5 transition-all pb-4 border-b-2 dark:border-white/10 dark:bg-[#0c1a17]">
               <div className="flex items-center gap-1.5">
-                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-white dark:bg-[#246a59] ${tt.text.micro} font-semibold`}>
+                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#0a1f1a] text-white dark:bg-[#246a59] ${tt.text.micro} font-semibold`}>
                   2
                 </div>
                 <Label className={`${tt.text.micro} font-semibold uppercase tracking-wide`}>Timetable Name</Label>
@@ -672,14 +672,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                 placeholder="e.g., TERM 1 TIMETABLE 2016"
-                className={`h-8 rounded-none border focus:border-[#246a59]/50 ${tt.text.small} uppercase font-normal tracking-wide`}
+                className={`h-8 rounded-md border focus:border-[#246a59]/50 ${tt.text.small} uppercase font-normal tracking-wide`}
               />
             </div>
           )}
 
           {/* Grades Selection */}
           {effectiveTermId && (
-            <div className="space-y-2 rounded-none border border-[#1a4d42]/12 bg-white p-3 pb-4 border-b-2 dark:border-white/10 dark:bg-[#0c1a17]">
+            <div className="space-y-2 rounded-md border border-[#1a4d42]/12 bg-white p-3 pb-4 border-b-2 dark:border-white/10 dark:bg-[#0c1a17]">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-4 w-4 text-[#246a59] dark:text-[#7eb8a8]" />
@@ -694,7 +694,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   variant="ghost"
                   onClick={handleSelectAllGrades}
                   disabled={grades.length === 0}
-                  className={`h-6 rounded-none ${tt.text.micro} px-1.5`}
+                  className={`h-6 rounded-md ${tt.text.micro} px-1.5`}
                 >
                   All
                 </Button>
@@ -704,14 +704,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   variant="ghost"
                   onClick={handleClearGrades}
                   disabled={selectedGradeIds.length === 0}
-                  className={`h-6 rounded-none ${tt.text.micro} px-1.5`}
+                  className={`h-6 rounded-md ${tt.text.micro} px-1.5`}
                 >
                   Clear
                 </Button>
               </div>
             </div>
             {grades.length === 0 ? (
-              <div className={`rounded-none border bg-[#f8fbfa] dark:bg-white/[0.02] p-1.5 text-center ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
+              <div className={`rounded-md border bg-[#f8fbfa] dark:bg-white/[0.02] p-1.5 text-center ${tt.text.caption} ${tt.ink.muted} ${tt.border.soft}`}>
                 No grades available
               </div>
             ) : (
@@ -721,7 +721,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   return (
                     <label
                       key={grade.id}
-                      className={`group flex cursor-pointer items-center gap-1 rounded-none border-2 px-2 py-1 transition-all ${
+                      className={`group flex cursor-pointer items-center gap-1 rounded-md border-2 px-2 py-1 transition-all ${
                         isSelected
                           ? 'border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white'
                           : 'border-[#1a4d42]/12 bg-white hover:border-[#246a59]/60 hover:bg-[#f3f7f5] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-white/[0.03]'
@@ -745,9 +745,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
           {/* Step 3 - Lesson Periods Configuration */}
           {effectiveTermId && (
-            <div className="space-y-2 rounded-none border border-[#1a4d42]/12 bg-white p-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
+            <div className="space-y-2 rounded-md border border-[#1a4d42]/12 bg-white p-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
               <div className="flex items-center gap-1.5">
-                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-[#0a1f1a] text-white dark:bg-[#246a59] ${tt.text.micro} font-semibold`}>
+                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#0a1f1a] text-white dark:bg-[#246a59] ${tt.text.micro} font-semibold`}>
                   3
                 </div>
                 <Label className={`${tt.text.micro} font-semibold uppercase tracking-wide`}>Lesson Periods</Label>
@@ -764,7 +764,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className={`h-8 rounded-none border focus:border-[#246a59]/50 ${tt.text.small}`}
+                      className={`h-8 rounded-md border focus:border-[#246a59]/50 ${tt.text.small}`}
                     />
                   </div>
                   <div className="space-y-0.5">
@@ -784,7 +784,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           setFormData({ ...formData, periodDuration: value });
                         }
                       }}
-                      className={`h-8 rounded-none border focus:border-[#246a59]/50 ${tt.text.small}`}
+                      className={`h-8 rounded-md border focus:border-[#246a59]/50 ${tt.text.small}`}
                       placeholder="40"
                     />
                   </div>
@@ -807,7 +807,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           setFormData({ ...formData, periodCount: value });
                         }
                       }}
-                      className={`h-8 rounded-none border focus:border-[#246a59]/50 ${tt.text.small}`}
+                      className={`h-8 rounded-md border focus:border-[#246a59]/50 ${tt.text.small}`}
                       placeholder="8"
                     />
                   </div>
@@ -822,13 +822,13 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       max="7"
                       value={formData.numberOfDays}
                       onChange={(e) => setFormData({ ...formData, numberOfDays: e.target.value })}
-                      className={`h-8 rounded-none border focus:border-[#246a59]/50 ${tt.text.small}`}
+                      className={`h-8 rounded-md border focus:border-[#246a59]/50 ${tt.text.small}`}
                     />
                   </div>
                 </div>
 
                 {/* Preview */}
-                <div className="rounded-none border-2 border-[#246a59]/20 bg-gradient-to-br from-[#246a59]/5 to-[#246a59]/10 p-2">
+                <div className="rounded-md border-2 border-[#246a59]/20 bg-gradient-to-br from-[#246a59]/5 to-[#246a59]/10 p-2">
                   {(() => {
                     const periodCount = parsePositiveInt(formData.periodCount);
                     const periodDuration = parsePositiveInt(formData.periodDuration);
@@ -889,7 +889,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 variant="outline"
                 onClick={onClose}
                 disabled={isCreating}
-                className={`flex-1 h-8 rounded-none ${tt.text.small}`}
+                className={`flex-1 h-8 rounded-md ${tt.text.small}`}
               >
                 Cancel
               </Button>
@@ -916,18 +916,18 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           {/* Info Popup - Below Actions */}
           {showInfoPopup && (
             <div className="flex justify-end mt-2">
-              <div className={`relative bg-white dark:bg-[#0c1a17] border border-[#1a4d42]/12 dark:border-white/10 shadow-xl px-3 py-2 max-w-xs rounded-none ${tt.ink.base}`}>
+              <div className={`relative bg-white dark:bg-[#0c1a17] border border-[#1a4d42]/12 dark:border-white/10 shadow-xl px-3 py-2 max-w-xs rounded-md ${tt.ink.base}`}>
                 <button
                   type="button"
                   onClick={() => setShowInfoPopup(false)}
-                  className={`absolute top-2 right-2 transition-colors p-0.5 rounded-none hover:bg-[#e8f2ef] dark:hover:bg-white/10 ${tt.ink.faint} hover:text-[#0a1f1a] dark:hover:text-white ${tt.focus}`}
+                  className={`absolute top-2 right-2 transition-colors p-0.5 rounded-md hover:bg-[#e8f2ef] dark:hover:bg-white/10 ${tt.ink.faint} hover:text-[#0a1f1a] dark:hover:text-white ${tt.focus}`}
                   aria-label="Close info"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
                 <div className="flex items-start gap-2.5 pr-5">
                   <div className="mt-0.5 flex-shrink-0">
-                    <div className="h-5 w-5 rounded-none bg-[#246a59]/10 dark:bg-[#246a59]/20 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-md bg-[#246a59]/10 dark:bg-[#246a59]/20 flex items-center justify-center">
                       <Info className="h-3 w-3 text-[#246a59] dark:text-[#7eb8a8]" />
                     </div>
                   </div>

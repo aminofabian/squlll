@@ -118,7 +118,7 @@ function BankPicker({
             value={query}
             onChange={(event) => onQuery(event.target.value)}
             placeholder="Search Equity, KCB, Co-op…"
-            className={cn('pl-8', dense && 'h-9 rounded-none bg-white shadow-none')}
+            className={cn('pl-8', dense && 'h-9 rounded-lg bg-white shadow-none')}
           />
         </div>
       </div>
@@ -209,7 +209,7 @@ function ChosenBank({
   onChange: (next: BankAccount) => void
   onChangeBank: () => void
 }) {
-  const inputClass = dense ? 'h-9 rounded-none bg-white shadow-none' : undefined
+  const inputClass = dense ? 'h-9 rounded-lg bg-white shadow-none' : undefined
   const paybill = formatBankPaybillLine(value.branch)
   const title = matched ? bankShortName(matched) : value.bankName || 'Your bank'
 

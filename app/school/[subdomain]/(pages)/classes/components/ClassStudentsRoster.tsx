@@ -48,10 +48,10 @@ export function ClassStudentsRoster({
   const hasMore = students.length > maxRows;
 
   return (
-    <section className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+    <section className="overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1a4d42]/10 px-4 py-3.5 dark:border-white/10 sm:px-5">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
             <Users className="h-4 w-4" />
           </span>
           <div>

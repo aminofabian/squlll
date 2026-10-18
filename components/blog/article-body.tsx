@@ -53,7 +53,7 @@ function BlockView({ block }: { block: Block }) {
     case 'table':
       return (
         <div className="mt-6">
-          <div className="overflow-x-auto border border-[#1a4d42]/15 bg-white shadow-[4px_4px_0_0_rgba(10,31,26,0.04)]">
+          <div className="overflow-x-auto border border-[#1a4d42]/15 bg-white shadow-sm">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
                 <tr className="bg-[#0a1f1a] text-white">
@@ -487,7 +487,7 @@ function MockBody({ variant }: { variant: MockVariant }) {
 function MockFigure({ variant, caption }: { variant: MockVariant; caption?: string }) {
   return (
     <figure className="mt-6">
-      <div className="overflow-hidden border border-[#1a4d42]/15 bg-white shadow-[4px_4px_0_0_rgba(10,31,26,0.04)]">
+      <div className="overflow-hidden border border-[#1a4d42]/15 bg-white shadow-sm">
         <div className="flex items-center gap-1.5 border-b border-[#1a4d42]/10 bg-[#0a1f1a] px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
           <span className="h-2.5 w-2.5 rounded-full bg-white/20" />

@@ -68,7 +68,7 @@ export function TimetableSubjectInsights({
       <div className={cn("flex items-start justify-between gap-3 border-b px-4 py-3.5", tt.border.hair)}>
         <div className="flex min-w-0 items-start gap-3">
           <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
             aria-hidden
           >
             <AlertTriangle className="h-4 w-4" strokeWidth={2.25} />
@@ -87,7 +87,7 @@ export function TimetableSubjectInsights({
           type="button"
           onClick={() => setExpanded((e) => !e)}
           className={cn(
-            "flex shrink-0 items-center gap-1.5 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-1.5",
+            "flex shrink-0 items-center gap-1.5 rounded-md border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-1.5",
             "font-semibold transition-colors",
             "active:bg-[#e8f2ef] dark:border-white/10 dark:bg-white/10 dark:active:bg-white/15",
             tt.text.small,
@@ -114,11 +114,11 @@ export function TimetableSubjectInsights({
             return (
               <li
                 key={`${item.kind}-${item.subject}`}
-                className="flex items-start gap-3 rounded-none px-2.5 py-2.5"
+                className="flex items-start gap-3 rounded-md px-2.5 py-2.5"
                 style={{ backgroundColor: accent.background }}
               >
                 <span
-                  className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-none"
+                  className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                   style={{
                     color: accent.text,
                     boxShadow: `inset 0 0 0 1px ${accent.border}`,
@@ -134,7 +134,7 @@ export function TimetableSubjectInsights({
                     </span>
                     <span
                       className={cn(
-                        "rounded-none px-2 py-0.5 font-bold uppercase tracking-wide",
+                        "rounded-md px-2 py-0.5 font-bold uppercase tracking-wide",
                         tt.text.micro,
                         kind.badge,
                       )}

@@ -215,7 +215,7 @@ function ResetPasswordForm() {
                 <Button 
                   type="submit"
                   disabled={isLoading || !token}
-                  className="w-full h-12 mt-8 bg-blue-600 hover:bg-blue-700 text-white font-mono tracking-wide uppercase text-sm disabled:opacity-50"
+                  className="w-full h-12 mt-8 bg-blue-600 hover:bg-blue-700 text-white font-mono tracking-wide uppercase text-sm disabled:bg-slate-200 disabled:text-slate-500"
                 >
                   {isLoading ? 'Updating Password...' : 'Update Password'}
                 </Button>

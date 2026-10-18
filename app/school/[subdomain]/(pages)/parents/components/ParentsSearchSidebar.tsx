@@ -44,7 +44,7 @@ export function ParentsSearchSidebar({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center gap-2 px-0.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
           <Users className="h-4 w-4" />
         </div>
         <div className="min-w-0">

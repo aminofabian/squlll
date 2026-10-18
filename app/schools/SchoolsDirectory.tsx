@@ -48,7 +48,7 @@ export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
 
   if (schools.length === 0) {
     return (
-      <div className="border border-[#1a4d42]/12 bg-white px-6 py-16 text-center shadow-[4px_4px_0_0_rgba(10,31,26,0.04)]">
+      <div className="border border-[#1a4d42]/12 bg-white px-6 py-16 text-center shadow-sm">
         <Building2 className="mx-auto h-10 w-10 text-[#246a59]/40" />
         <h2 className="mt-4 font-display text-2xl text-[#0a1f1a]">
           Schools are joining every week
@@ -78,7 +78,7 @@ export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name…"
-            className="h-11 rounded-none border-[#1a4d42]/15 bg-white pl-9 shadow-none focus-visible:ring-[#246a59]/25"
+            className="h-11 rounded-lg border-[#1a4d42]/15 bg-white pl-9 shadow-none focus-visible:ring-[#246a59]/25"
             aria-label="Search schools"
           />
         </div>
@@ -100,8 +100,8 @@ export function SchoolsDirectory({ schools }: { schools: PlatformSchool[] }) {
                   target="_blank"
                   rel="noreferrer"
                   className={cn(
-                    'group flex h-full flex-col border border-[#1a4d42]/12 bg-white p-5 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] transition-all',
-                    'hover:-translate-y-0.5 hover:border-[#246a59]/35 hover:shadow-[4px_4px_0_0_rgba(36,106,89,0.18)]',
+                    'group flex h-full flex-col border border-[#1a4d42]/12 bg-white p-5 shadow-sm transition-all',
+                    'hover:-translate-y-0.5 hover:border-[#246a59]/35 hover:shadow-sm',
                   )}
                   style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}
                 >

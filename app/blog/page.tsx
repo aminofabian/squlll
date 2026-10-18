@@ -31,7 +31,7 @@ const FUNNEL_LABEL: Record<string, string> = {
 function ClusterCard({ article }: { article: ReturnType<typeof getTopicGroups>[number]['clusters'][number] }) {
   return (
     <Link href={article.path} className="group h-full">
-      <article className="flex h-full flex-col border border-[#1a4d42]/12 bg-white p-6 shadow-[4px_4px_0_0_rgba(10,31,26,0.04)] transition-all hover:-translate-y-0.5 hover:border-[#1d5547]/25 hover:shadow-md">
+      <article className="flex h-full flex-col border border-[#1a4d42]/12 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#1d5547]/25 hover:shadow-md">
         <div className="flex items-center justify-between gap-3">
           <span className="font-ui text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1d5547]/80">
             {article.kicker}

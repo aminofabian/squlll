@@ -36,7 +36,7 @@ export function StudentsPulseHero({
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-none border border-[#1a4d42]/12",
+        "relative overflow-hidden rounded-lg border border-[#1a4d42]/12",
         "bg-gradient-to-br from-[#246a59]/[0.06] via-[#f8fbfa] to-[#f3f7f5]",
         "dark:border-white/10 dark:from-[#246a59]/12 dark:via-[#0c1a17] dark:to-[#071411]",
       )}
@@ -61,7 +61,7 @@ export function StudentsPulseHero({
           <div className="flex flex-col items-end gap-2">
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-semibold",
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
                 connected
                   ? "bg-[#246a59] text-white"
                   : "bg-[#e8f2ef] text-[#1a4d42]/70 dark:bg-white/10 dark:text-white/60",
@@ -70,8 +70,8 @@ export function StudentsPulseHero({
               {connected ? (
                 <>
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-none bg-white/70 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-none bg-white" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/70 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
                   </span>
                   Live
                 </>

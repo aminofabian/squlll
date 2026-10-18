@@ -14,13 +14,13 @@ import { cn } from "@/lib/utils";
  */
 
 export const panel =
-  "border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]";
+  "border border-[#1a4d42]/12 bg-white shadow-sm dark:border-white/10 dark:bg-[#0c1a17]";
 
 export const fieldShell =
-  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411] dark:placeholder:text-white/40";
+  "h-10 rounded-lg border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411] dark:placeholder:text-white/40";
 
 export const selectShell =
-  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411]";
+  "h-10 rounded-lg border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#071411]";
 
 export const labelClass = "text-xs font-medium text-[#0a1f1a] dark:text-white/80";
 
@@ -28,10 +28,10 @@ export const thClass =
   "py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45";
 
 export const primaryButtonClass =
-  "h-9 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]";
+  "h-9 rounded-lg bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]";
 
 export const outlineButtonClass =
-  "h-9 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#0a1f1a] shadow-none hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white";
+  "h-9 rounded-lg border-[#1a4d42]/15 bg-white text-xs text-[#0a1f1a] shadow-none hover:border-[#246a59]/40 hover:bg-[#f8fbfa] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white";
 
 interface SchoolPageProps {
   eyebrow: string;

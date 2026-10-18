@@ -1291,8 +1291,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                         representativeTermTotal(feesValue) <= 0)
                                 }
                                 size="sm"
-                                className="shrink-0 whitespace-nowrap text-white max-sm:flex-1 disabled:cursor-not-allowed disabled:opacity-40"
-                                style={{ backgroundColor: FEES_BRAND.primary }}
+                                className="shrink-0 whitespace-nowrap bg-primary text-white max-sm:flex-1 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
                             >
                                 {isProvisioningSetup ? (
                                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
@@ -1305,8 +1304,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 size="sm"
-                                className="shrink-0 whitespace-nowrap text-white max-sm:flex-1 disabled:cursor-not-allowed disabled:opacity-40"
-                                style={{ backgroundColor: FEES_BRAND.primary }}
+                                className="shrink-0 whitespace-nowrap bg-primary text-white max-sm:flex-1 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
                             >
                                 {isSaving ? (
                                     <>

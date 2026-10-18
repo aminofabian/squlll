@@ -123,7 +123,7 @@ function SessionRow({
           <Badge
             variant="outline"
             className={cn(
-              "rounded-none",
+              "rounded-lg",
               STATUS_CLASSES[session.status] ?? STATUS_CLASSES.DRAFT,
             )}
           >
@@ -132,7 +132,7 @@ function SessionRow({
           <Badge
             variant="outline"
             className={cn(
-              "rounded-none",
+              "rounded-lg",
               PUBLICATION_CLASSES[session.publicationState] ??
                 PUBLICATION_CLASSES.HIDDEN,
             )}
@@ -142,7 +142,7 @@ function SessionRow({
           {session.resultsPublished ? (
             <Badge
               variant="outline"
-              className="rounded-none border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
+              className="rounded-lg border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
             >
               <CheckCircle2 className="h-3 w-3" />
               Results published
@@ -150,7 +150,7 @@ function SessionRow({
           ) : (
             <Badge
               variant="outline"
-              className="rounded-none border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
+              className="rounded-lg border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
             >
               <Hourglass className="h-3 w-3" />
               Processing pending
@@ -188,7 +188,7 @@ function SessionRow({
       <Button
         asChild
         size="sm"
-        className="shrink-0 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
+        className="shrink-0 rounded-lg bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
       >
         <Link href={examSessionPath(subdomain, session.id)}>
           View results &amp; report cards
@@ -387,7 +387,7 @@ function StudentReportCardPanel({ subdomain }: { subdomain: string }) {
                 </div>
                 <Badge
                   variant="outline"
-                  className="rounded-none border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
+                  className="rounded-lg border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:border-[#246a59]/40 dark:text-emerald-300"
                 >
                   {report.overallAverage.toFixed(1)}%
                 </Badge>
@@ -400,7 +400,7 @@ function StudentReportCardPanel({ subdomain }: { subdomain: string }) {
                   <Badge
                     key={`${term.academicYear}-${term.term}`}
                     variant="outline"
-                    className="rounded-none border-[#1a4d42]/15 bg-white text-xs font-normal text-[#0a1f1a] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/80"
+                    className="rounded-lg border-[#1a4d42]/15 bg-white text-xs font-normal text-[#0a1f1a] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/80"
                   >
                     Term {term.term}: {term.grade} · {term.percentage.toFixed(1)}%
                   </Badge>
@@ -432,7 +432,7 @@ function StudentReportCardPanel({ subdomain }: { subdomain: string }) {
                         <td className="px-3 py-2.5">
                           <Badge
                             variant="outline"
-                            className="rounded-none border-[#1a4d42]/15 text-[#0a1f1a] dark:border-white/15 dark:text-white/80"
+                            className="rounded-lg border-[#1a4d42]/15 text-[#0a1f1a] dark:border-white/15 dark:text-white/80"
                           >
                             {row.grade}
                           </Badge>

@@ -112,7 +112,7 @@ export function TimetableNextLessonBar({
       <div className="flex min-w-0 flex-1">
         {loading ? (
           <div className="flex min-h-[58px] w-full items-stretch">
-            <Skeleton className="w-0.5 shrink-0 rounded-none" />
+            <Skeleton className="w-0.5 shrink-0 rounded-md" />
             <div className="min-w-0 flex-1 space-y-2 px-3 py-2.5">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-2 w-12" />
@@ -156,7 +156,7 @@ export function TimetableNextLessonBar({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-auto min-h-[58px] w-11 shrink-0 rounded-none border-l border-slate-100 text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:border-slate-800 dark:hover:bg-slate-900 dark:hover:text-slate-300"
+          className="h-auto min-h-[58px] w-11 shrink-0 rounded-md border-l border-slate-100 text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:border-slate-800 dark:hover:bg-slate-900 dark:hover:text-slate-300"
           onClick={onRefresh}
           aria-label="Refresh timetable"
         >

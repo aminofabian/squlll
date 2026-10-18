@@ -69,7 +69,7 @@ export function TimetableClassDrawer({
               className={cn(
                 tt.text.title,
                 tt.focus,
-                "rounded-none px-3 py-2 text-[#246a59] active:opacity-60",
+                "rounded-md px-3 py-2 text-[#246a59] active:opacity-60",
               )}
             >
               Done
@@ -87,7 +87,7 @@ export function TimetableClassDrawer({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 rounded-none p-0 text-[#1a4d42]/50 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white"
+            className="h-8 w-8 rounded-md p-0 text-[#1a4d42]/50 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white"
             onClick={onToggleDesktop}
             aria-label={
               desktopMinimized

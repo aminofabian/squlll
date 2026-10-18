@@ -157,7 +157,7 @@ export function TeacherLessonDetailSheet({
         className={cn(
           "fixed gap-0 overflow-hidden border-0 bg-white p-0 shadow-none dark:bg-slate-950",
           "max-h-[min(88dvh,640px)] overflow-y-auto",
-          "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-auto max-lg:max-w-full max-lg:translate-x-0 max-lg:translate-y-0 max-lg:rounded-none max-lg:border-t max-lg:border-slate-100 max-lg:pb-[env(safe-area-inset-bottom)] dark:max-lg:border-slate-800",
+          "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-auto max-lg:max-w-full max-lg:translate-x-0 max-lg:translate-y-0 max-lg:rounded-md max-lg:border-t max-lg:border-slate-100 max-lg:pb-[env(safe-area-inset-bottom)] dark:max-lg:border-slate-800",
           "max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom max-lg:data-[state=open]:zoom-in-100 max-lg:data-[state=closed]:zoom-out-100",
           "lg:top-[50%] lg:left-[50%] lg:max-w-md lg:translate-x-[-50%] lg:translate-y-[-50%] lg:rounded-lg lg:border lg:border-slate-200/80 lg:shadow-xl dark:lg:border-slate-700/80",
         )}
@@ -240,7 +240,7 @@ export function TeacherLessonDetailSheet({
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 shrink-0 rounded-none border-[#1a4d42]/15 text-[12px] font-semibold shadow-none"
+                    className="h-9 shrink-0 rounded-md border-[#1a4d42]/15 text-[12px] font-semibold shadow-none"
                     disabled={planLoading || planPreparing}
                     onClick={() => {
                       if (lessonPlan && onOpenPlan) {
@@ -269,7 +269,7 @@ export function TeacherLessonDetailSheet({
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 rounded-none border-[#1a4d42]/15 text-[13px] font-semibold shadow-none"
+                    className="h-11 rounded-md border-[#1a4d42]/15 text-[13px] font-semibold shadow-none"
                     onClick={() => onRequestSwap(selection)}
                   >
                     <ArrowLeftRight className="mr-2 h-4 w-4" />
@@ -281,7 +281,7 @@ export function TeacherLessonDetailSheet({
                   type="button"
                   variant={isCompleted ? "outline" : "default"}
                   className={cn(
-                    "h-11 w-full rounded-none text-[13px] font-semibold shadow-none",
+                    "h-11 w-full rounded-md text-[13px] font-semibold shadow-none",
                     !isCompleted && "bg-primary hover:bg-primary/90",
                     isCompleted &&
                       "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/60",

@@ -125,7 +125,7 @@ export default function AdmissionsContent({
               <div
                 className={cn(
                   'flex h-10 w-10 items-center justify-center sm:h-11 sm:w-11',
-                  soft ? 'rounded-xl' : 'rounded-none',
+                  soft ? 'rounded-xl' : 'rounded-lg',
                   isPlayfield
                     ? 'border border-primary bg-transparent text-primary'
                     : 'bg-primary text-white',
@@ -220,7 +220,7 @@ export default function AdmissionsContent({
                 variant="outline"
                 className={cn(
                   'h-12 border-2 px-6 font-semibold',
-                  soft ? 'rounded-lg' : 'rounded-none',
+                  soft ? 'rounded-lg' : 'rounded-lg',
                   isPlayfield
                     ? 'border-primary/40 text-[var(--school-paper)] hover:bg-primary/10'
                     : 'border-[var(--school-ink)]/15 text-[var(--school-ink)]',

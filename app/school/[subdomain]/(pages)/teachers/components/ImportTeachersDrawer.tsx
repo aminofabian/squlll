@@ -213,7 +213,7 @@ export function ImportTeachersDrawer({
         <button
           type="button"
           className={cn(
-            "inline-flex items-center justify-center rounded-none border border-[#1a4d42]/20 bg-white font-medium text-[#0a1f1a] transition-colors hover:border-[#246a59]/50 hover:bg-[#246a59]/[0.04] hover:text-[#246a59] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/85",
+            "inline-flex items-center justify-center rounded-md border border-[#1a4d42]/20 bg-white font-medium text-[#0a1f1a] transition-colors hover:border-[#246a59]/50 hover:bg-[#246a59]/[0.04] hover:text-[#246a59] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/85",
             triggerStyles[triggerVariant],
           )}
         >
@@ -302,7 +302,7 @@ export function ImportTeachersDrawer({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-10 rounded-none px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
+                  className="h-10 rounded-md px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
                 >
                   Cancel
                 </Button>
@@ -315,7 +315,7 @@ export function ImportTeachersDrawer({
                   type="button"
                   variant="ghost"
                   onClick={reset}
-                  className="h-10 rounded-none px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
+                  className="h-10 rounded-md px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
                 >
                   <ArrowLeft className="mr-1.5 h-4 w-4" />
                   Choose another file
@@ -324,7 +324,7 @@ export function ImportTeachersDrawer({
                   type="button"
                   onClick={() => void runImport()}
                   disabled={readyRows.length === 0}
-                  className="h-10 flex-1 gap-2 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59] disabled:opacity-50"
+                  className="h-10 flex-1 gap-2 rounded-md bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59] disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
                 >
                   Invite {readyRows.length} teacher{readyRows.length === 1 ? "" : "s"}
                   <ArrowRight className="h-4 w-4" />
@@ -338,7 +338,7 @@ export function ImportTeachersDrawer({
                   type="button"
                   variant="ghost"
                   onClick={reset}
-                  className="h-10 rounded-none px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
+                  className="h-10 rounded-md px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
                 >
                   <RotateCcw className="mr-1.5 h-4 w-4" />
                   Import another
@@ -346,7 +346,7 @@ export function ImportTeachersDrawer({
                 <DrawerClose asChild>
                   <Button
                     type="button"
-                    className="h-10 flex-1 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
+                    className="h-10 flex-1 rounded-md bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
                   >
                     Done
                   </Button>
@@ -483,7 +483,7 @@ function UploadStep({
         <button
           type="button"
           onClick={onPick}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-none bg-[#0a1f1a] px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-[#246a59]"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-[#0a1f1a] px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-[#246a59]"
         >
           Choose a file
         </button>
@@ -555,7 +555,7 @@ function PreviewStep({
             Department
           </span>
           <Select value={departmentFilter} onValueChange={onDepartmentFilterChange}>
-            <SelectTrigger className="h-8 w-[200px] rounded-none border-[#1a4d42]/15 bg-white text-xs dark:border-white/15 dark:bg-[#0c1a17]">
+            <SelectTrigger className="h-8 w-[200px] rounded-md border-[#1a4d42]/15 bg-white text-xs dark:border-white/15 dark:bg-[#0c1a17]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

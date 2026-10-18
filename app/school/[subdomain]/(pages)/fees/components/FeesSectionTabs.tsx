@@ -92,7 +92,7 @@ export const FeesSectionTabs = ({
         FEES_LAYOUT.page,
         integrated
           ? "border-t border-[#1a4d42]/10 px-3 py-2 max-md:border-0 max-md:px-3 max-md:pb-3"
-          : "rounded-none border border-[#1a4d42]/12 bg-white p-2 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]",
+          : "rounded-lg border border-[#1a4d42]/12 bg-white p-2 shadow-sm",
       )}
       aria-label="Fees sections"
     >
@@ -129,7 +129,7 @@ export const FeesSectionTabs = ({
                 aria-current={isActive ? "page" : undefined}
                 title={tab.label}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-none px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-[13px]",
+                  "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-[13px]",
                   integrated && FEES_MOBILE.segmentedTab,
                   integrated &&
                     (isActive
@@ -162,7 +162,7 @@ export const FeesSectionTabs = ({
                   assignmentCount > 0 && (
                     <span
                       className={cn(
-                        "rounded-none px-1.5 text-[9px] font-bold tabular-nums",
+                        "rounded-full px-1.5 text-[9px] font-bold tabular-nums",
                         isActive
                           ? "bg-white/20 text-white"
                           : "bg-[#e8f2ef] text-[#1a4d42]",

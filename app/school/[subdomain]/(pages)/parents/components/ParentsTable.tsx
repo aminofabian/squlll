@@ -21,9 +21,9 @@ interface ParentsTableProps {
 
 function statusBadge(status: ParentsListItem["status"]) {
   if (status === "active") {
-    return "rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]";
+    return "rounded-full border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]";
   }
-  return "rounded-none border-amber-200/80 bg-amber-50 text-amber-800";
+  return "rounded-full border-amber-200/80 bg-amber-50 text-amber-800";
 }
 
 function statusLabel(status: ParentsListItem["status"]) {
@@ -61,7 +61,7 @@ export function ParentsTable({
 
       {parents.length === 0 ? (
         <div className="px-3 py-10 text-center">
-          <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-none bg-[#246a59]/10">
+          <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[#246a59]/10">
             <User className="h-4 w-4 text-[#246a59]" />
           </div>
           <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">

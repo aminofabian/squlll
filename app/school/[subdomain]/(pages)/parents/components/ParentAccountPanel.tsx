@@ -94,7 +94,7 @@ const phaseConfig: Record<
     accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "Active",
     badgeClass:
-      "rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]",
+      "rounded-full border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]",
   },
   pending_invite: {
     title: "Invitation pending",
@@ -121,7 +121,7 @@ const phaseConfig: Record<
     accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "Not activated",
     badgeClass:
-      "rounded-none border-amber-200 bg-amber-50 text-amber-800",
+      "rounded-full border-amber-200 bg-amber-50 text-amber-800",
   },
   no_account: {
     title: "No login account",
@@ -146,7 +146,7 @@ function AccountMetric({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-none border border-[#1a4d42]/10 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
+    <div className="rounded-lg border border-[#1a4d42]/10 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
       <p className={cn(parentsSectionLabel, "flex items-center gap-1")}>
         <Icon className="h-3 w-3 shrink-0" />
         {label}
@@ -289,7 +289,7 @@ export function ParentAccountPanel({
             <div className="flex min-w-0 gap-3">
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-none",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
                   phase === "active"
                     ? "bg-[#e8f2ef] text-[#246a59]"
                     : phase === "pending_invite" || phase === "expired_invite"
@@ -327,7 +327,7 @@ export function ParentAccountPanel({
         </article>
 
         {!hasCompletedProfile ? (
-          <div className="flex items-center gap-2 rounded-none border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42]">
+          <div className="flex items-center gap-2 rounded-lg border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42]">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#246a59]" />
             <p>
               <span className="font-semibold">Profile incomplete.</span> Add
@@ -451,7 +451,7 @@ export function ParentAccountPanel({
                     {isActivating ? "Activating…" : "Activate account"}
                   </Button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-none border border-[#246a59]/25 bg-[#e8f2ef] px-3 py-1.5 text-xs text-[#1a4d42]">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#246a59]/25 bg-[#e8f2ef] px-3 py-1.5 text-xs text-[#1a4d42]">
                     <CheckCircle2 className="h-3.5 w-3.5 text-[#246a59]" />
                     Account is active
                   </span>
@@ -470,7 +470,7 @@ export function ParentAccountPanel({
                     Set password
                   </Button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-none border border-dashed border-[#1a4d42]/12 px-3 py-1.5 text-xs text-[#1a4d42]/45 dark:border-white/15">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-[#1a4d42]/12 px-3 py-1.5 text-xs text-[#1a4d42]/45 dark:border-white/15">
                     <KeyRound className="h-3.5 w-3.5" />
                     Set password after signup
                   </span>

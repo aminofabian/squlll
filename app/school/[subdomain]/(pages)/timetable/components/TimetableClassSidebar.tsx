@@ -28,7 +28,7 @@ function GradeListLabel({ label, query }: { label: string; query: string }) {
   return (
     <span>
       {parts.before}
-      <span className="rounded-none bg-[#e8f2ef] px-0.5 font-semibold text-[#0a1f1a] dark:bg-white/10 dark:text-white">
+      <span className="rounded-md bg-[#e8f2ef] px-0.5 font-semibold text-[#0a1f1a] dark:bg-white/10 dark:text-white">
         {parts.match}
       </span>
       {parts.after}
@@ -70,7 +70,7 @@ export function TimetableClassSidebar({
               className={cn(
                 tt.text.body,
                 tt.focus,
-                "mb-0.5 w-full rounded-none px-2.5 py-2.5 text-left font-medium tracking-tight transition-colors",
+                "mb-0.5 w-full rounded-md px-2.5 py-2.5 text-left font-medium tracking-tight transition-colors",
                 selectedGradeId === null
                   ? "bg-[#0a1f1a] text-white dark:bg-[#246a59]"
                   : cn(tt.ink.base, "hover:bg-[#e8f2ef] dark:hover:bg-white/5"),
@@ -125,7 +125,7 @@ export function TimetableClassSidebar({
                   className={cn(
                     tt.text.body,
                     tt.focus,
-                    "w-full rounded-none px-2.5 py-2.5 text-left font-medium tracking-tight transition-colors",
+                    "w-full rounded-md px-2.5 py-2.5 text-left font-medium tracking-tight transition-colors",
                     active
                       ? "bg-[#0a1f1a] text-white dark:bg-[#246a59]"
                       : cn(tt.ink.base, "hover:bg-[#e8f2ef] dark:hover:bg-white/5"),

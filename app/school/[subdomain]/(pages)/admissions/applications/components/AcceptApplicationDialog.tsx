@@ -116,7 +116,7 @@ export function AcceptApplicationDialog({
   if (result) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md rounded-none border-[#1a4d42]/15 p-0 shadow-[6px_6px_0_0_rgba(10,31,26,0.12)] sm:rounded-none">
+        <DialogContent className="max-w-md rounded-lg border-[#1a4d42]/15 p-0 shadow-sm sm:rounded-lg">
           <div className="bg-[#0a1f1a] px-5 py-6 text-white">
             <div className="flex items-center gap-2 text-amber-300">
               <PartyPopper className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function AcceptApplicationDialog({
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-none border-[#1a4d42]/20"
+                className="rounded-lg border-[#1a4d42]/20"
                 onClick={() => onOpenChange(false)}
               >
                 Done
@@ -201,7 +201,7 @@ export function AcceptApplicationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-none border-[#1a4d42]/15 p-0 shadow-[6px_6px_0_0_rgba(10,31,26,0.12)] sm:rounded-none">
+      <DialogContent className="max-w-md rounded-lg border-[#1a4d42]/15 p-0 shadow-sm sm:rounded-lg">
         <div className="border-b border-[#1a4d42]/10 bg-gradient-to-br from-[#246a59]/[0.08] via-white to-[#f3f7f5] px-5 py-5 dark:border-white/10 dark:from-[#246a59]/15 dark:via-[#0c1a17] dark:to-[#0c1a17]">
           <div className="flex items-center gap-2 text-[#246a59]">
             <Sparkles className="h-4 w-4" />
@@ -241,11 +241,11 @@ export function AcceptApplicationDialog({
               <Select value={gradeId} onValueChange={setGradeId}>
                 <SelectTrigger
                   id="accept-grade"
-                  className="rounded-none border-[#1a4d42]/15"
+                  className="rounded-lg border-[#1a4d42]/15"
                 >
                   <SelectValue placeholder="Choose grade" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none">
+                <SelectContent className="rounded-lg">
                   {grades
                     .filter((g) => g.isActive)
                     .map((g) => (
@@ -264,11 +264,11 @@ export function AcceptApplicationDialog({
               <Select value={streamId} onValueChange={setStreamId}>
                 <SelectTrigger
                   id="accept-stream"
-                  className="rounded-none border-[#1a4d42]/15"
+                  className="rounded-lg border-[#1a4d42]/15"
                 >
                   <SelectValue placeholder="Choose stream" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none">
+                <SelectContent className="rounded-lg">
                   {streams.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
@@ -289,7 +289,7 @@ export function AcceptApplicationDialog({
               value={admissionNumber}
               onChange={(e) => setAdmissionNumber(e.target.value)}
               placeholder="Auto-generated if blank"
-              className="rounded-none border-[#1a4d42]/15"
+              className="rounded-lg border-[#1a4d42]/15"
             />
             <p className="text-[11px] text-[#1a4d42]/45">
               Also used as the learner&apos;s first login password.
@@ -300,7 +300,7 @@ export function AcceptApplicationDialog({
             <Button
               type="button"
               variant="outline"
-              className="rounded-none border-[#1a4d42]/20"
+              className="rounded-lg border-[#1a4d42]/20"
               disabled={submitting}
               onClick={() => onOpenChange(false)}
             >

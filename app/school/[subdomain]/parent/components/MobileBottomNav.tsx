@@ -1,20 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Bell,
-  Bus,
-  Calendar,
-  Clock,
-  DollarSign,
-  FileText,
-  GraduationCap,
-  Home,
-  MessageCircle,
-  MoreHorizontal,
-} from "lucide-react";
+import { GraduationCap, Home, MoreHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
+import { ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -80,17 +70,17 @@ export function MobileBottomNav({
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   const primaryItems: NavItem[] = [
-    { icon: Calendar, label: "Timetable", key: "schedule" },
+    { icon: ICONS.timetable, label: "Timetable", key: "schedule" },
     { icon: GraduationCap, label: "Grades", key: "grades" },
-    { icon: MessageCircle, label: "Messages", key: "messages" },
-    { icon: DollarSign, label: "Fees", key: "payments" },
+    { icon: ICONS.messages, label: "Messages", key: "messages" },
+    { icon: ICONS.fees, label: "Fees", key: "payments" },
   ];
 
   const moreItems: NavItem[] = [
-    { icon: Bell, label: "Notifications", key: "notifications" },
-    { icon: Clock, label: "Attendance", key: "attendance" },
-    { icon: Bus, label: "Transport", key: "transport" },
-    { icon: FileText, label: "Reports", key: "reports" },
+    { icon: ICONS.notifications, label: "Notifications", key: "notifications" },
+    { icon: ICONS.attendance, label: "Attendance", key: "attendance" },
+    { icon: ICONS.transport, label: "Transport", key: "transport" },
+    { icon: ICONS.reports, label: "Reports", key: "reports" },
   ];
 
   return (

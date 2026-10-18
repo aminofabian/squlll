@@ -124,8 +124,8 @@ export function PendingParentInvitations({
         >
           <div className="flex min-w-0 items-center gap-2">
             <span className="relative flex h-1.5 w-1.5 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-none bg-amber-400 opacity-40" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-none bg-amber-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-amber-400 opacity-40" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-lg bg-amber-500" />
             </span>
             <h2 className="text-xs font-semibold text-[#0a1f1a] dark:text-white">
               Pending invitations
@@ -179,7 +179,7 @@ export function PendingParentInvitations({
                       <td className="px-2 py-1.5">
                         <Badge
                           variant="outline"
-                          className="rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[9px] font-normal capitalize text-[#1a4d42]"
+                          className="rounded-lg border-[#246a59]/25 bg-[#e8f2ef] text-[9px] font-normal capitalize text-[#1a4d42]"
                         >
                           {invitation.role.toLowerCase()}
                         </Badge>
@@ -187,7 +187,7 @@ export function PendingParentInvitations({
                       <td className="px-2 py-1.5">
                         <Badge
                           variant="outline"
-                          className="rounded-none border-amber-200 bg-amber-50 text-[9px] font-normal capitalize text-amber-700"
+                          className="rounded-lg border-amber-200 bg-amber-50 text-[9px] font-normal capitalize text-amber-700"
                         >
                           {invitation.status.toLowerCase()}
                         </Badge>
@@ -213,7 +213,7 @@ export function PendingParentInvitations({
                                 void handleResend(invitation.id, invitation.email)
                               }
                               disabled={isResending || isRevoking}
-                              className="text-[11px] text-[#1a4d42]/55 hover:text-[#246a59] disabled:opacity-50"
+                              className="text-[11px] text-[#1a4d42]/55 hover:text-[#246a59] disabled:text-slate-400"
                             >
                               {isResending ? "Sending…" : "Resend"}
                             </button>
@@ -222,7 +222,7 @@ export function PendingParentInvitations({
                             type="button"
                             onClick={() => setConfirmRevoke(invitation)}
                             disabled={isRevoking || isResending}
-                            className="text-[11px] text-[#1a4d42]/55 hover:text-red-600 disabled:opacity-50"
+                            className="text-[11px] text-[#1a4d42]/55 hover:text-red-600 disabled:text-slate-400"
                           >
                             {isRevoking ? "Revoking…" : "Revoke"}
                           </button>
@@ -241,7 +241,7 @@ export function PendingParentInvitations({
         open={!!confirmRevoke}
         onOpenChange={(open) => !open && setConfirmRevoke(null)}
       >
-        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
+        <AlertDialogContent className="rounded-lg border border-[#1a4d42]/12">
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -253,9 +253,9 @@ export function PendingParentInvitations({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none">Keep invitation</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-lg">Keep invitation</AlertDialogCancel>
             <AlertDialogAction
-              className="rounded-none bg-red-600 hover:bg-red-700"
+              className="rounded-lg bg-red-600 hover:bg-red-700"
               onClick={() => {
                 if (confirmRevoke) {
                   void handleRevoke(confirmRevoke.id);

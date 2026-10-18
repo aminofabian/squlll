@@ -428,7 +428,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                 size="sm"
                 variant="outline"
                 onClick={addBreakEntry}
-                className={`h-7 px-2 ${tt.text.small} rounded-none flex items-center gap-1`}
+                className={`h-7 px-2 ${tt.text.small} rounded-md flex items-center gap-1`}
               >
                 <Plus className="h-3 w-3" />
                 Add Break
@@ -462,7 +462,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                                 value={entry.type} 
                                 onValueChange={(value) => updateBreakEntry(entry.id, { type: value })}
                               >
-                                <SelectTrigger className={`h-8 ${tt.text.small} rounded-none`}>
+                                <SelectTrigger className={`h-8 ${tt.text.small} rounded-md`}>
                                   <SelectValue>
                                     <div className="flex items-center gap-1.5">
                                       <span>{breakType?.icon}</span>
@@ -489,7 +489,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                                 value={entry.afterPeriod.toString()} 
                                 onValueChange={(value) => updateBreakEntry(entry.id, { afterPeriod: parseInt(value) })}
                               >
-                                <SelectTrigger className={`h-8 ${tt.text.small} rounded-none`}>
+                                <SelectTrigger className={`h-8 ${tt.text.small} rounded-md`}>
                                   <SelectValue>
                                     {entry.afterPeriod === 0 ? 'Before Period 0' : `After Period ${entry.afterPeriod}`}
                                   </SelectValue>
@@ -513,7 +513,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                               max="120"
                               value={entry.durationMinutes}
                               onChange={(e) => updateBreakEntry(entry.id, { durationMinutes: e.target.value })}
-                              className={`h-8 ${tt.text.small} rounded-none`}
+                              className={`h-8 ${tt.text.small} rounded-md`}
                             />
                           </div>
                         </div>
@@ -524,7 +524,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                             size="sm"
                             variant="ghost"
                             onClick={() => removeBreakEntry(entry.id)}
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive rounded-none"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive rounded-md"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -562,7 +562,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                   return (
                     <label
                       key={d.value}
-                      className={`flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 font-medium transition-colors ${tt.text.small} ${
+                      className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 font-medium transition-colors ${tt.text.small} ${
                         active
                           ? 'border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59] dark:text-white'
                           : 'border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#1a4d42]/30 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/60'
@@ -592,14 +592,14 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                 variant="outline"
                 onClick={onClose}
                 disabled={isCreating}
-                className="flex-1 h-9 rounded-none"
+                className="flex-1 h-9 rounded-md"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isCreating || breakEntries.length === 0}
-                className={`flex-1 h-9 rounded-none ${tt.accentBtn}`}
+                className={`flex-1 h-9 rounded-md ${tt.accentBtn}`}
               >
                 {isCreating ? (
                   <>

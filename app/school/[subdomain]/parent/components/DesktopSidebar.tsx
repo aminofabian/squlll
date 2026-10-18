@@ -1,18 +1,9 @@
 "use client";
 
 import React from "react";
-import {
-  Bus,
-  Calendar,
-  Clock,
-  DollarSign,
-  FileText,
-  GraduationCap,
-  Home,
-  LogOut,
-  MessageCircle,
-} from "lucide-react";
+import { GraduationCap, Home, LogOut } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ICONS } from "@/lib/icons";
 import { DynamicLogo } from "./DynamicLogo";
 import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
 import { useSignout } from "@/lib/hooks/useSignout";
@@ -74,13 +65,13 @@ export function DesktopSidebar({
       title: "Academic",
       items: [
         {
-          icon: Calendar,
+          icon: ICONS.timetable,
           label: "Timetable",
           key: "schedule",
           description: "Class timetable",
         },
         {
-          icon: Clock,
+          icon: ICONS.attendance,
           label: "Attendance",
           key: "attendance",
           description: "Attendance records",
@@ -97,7 +88,7 @@ export function DesktopSidebar({
       title: "Financial",
       items: [
         {
-          icon: DollarSign,
+          icon: ICONS.fees,
           label: "Payments",
           key: "payments",
           description: "Fees & receipts",
@@ -108,7 +99,7 @@ export function DesktopSidebar({
       title: "Transport",
       items: [
         {
-          icon: Bus,
+          icon: ICONS.transport,
           label: "Transport",
           key: "transport",
           description: "Bus & pickup",
@@ -119,7 +110,7 @@ export function DesktopSidebar({
       title: "Communication",
       items: [
         {
-          icon: MessageCircle,
+          icon: ICONS.messages,
           label: "Messages",
           key: "messages",
           description: "School messages",
@@ -131,7 +122,7 @@ export function DesktopSidebar({
       title: "Reports",
       items: [
         {
-          icon: FileText,
+          icon: ICONS.reports,
           label: "Reports",
           key: "reports",
           description: "Report cards",
@@ -243,7 +234,7 @@ export function DesktopSidebar({
           type="button"
           onClick={() => void signOut()}
           disabled={isSigningOut}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 disabled:text-slate-400 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           {isSigningOut ? "Signing out…" : "Sign out"}

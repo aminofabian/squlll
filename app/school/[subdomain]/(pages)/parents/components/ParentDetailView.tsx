@@ -64,7 +64,7 @@ function DetailField({
               void navigator.clipboard.writeText(copyValue);
               toast.success("Copied to clipboard");
             }}
-            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 hover:text-[#246a59]"
+            className="shrink-0 rounded-lg p-1 text-[#1a4d42]/40 hover:text-[#246a59]"
             aria-label={`Copy ${label}`}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -134,7 +134,7 @@ export function ParentDetailView({
       ) : null}
 
       {profileIncomplete ? (
-        <div className="flex items-center gap-2 rounded-none border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/15 dark:text-[#d4e8e2]">
+        <div className="flex items-center gap-2 rounded-lg border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/15 dark:text-[#d4e8e2]">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#246a59]" />
           <p>
             <span className="font-semibold">Profile incomplete.</span> Add
@@ -155,7 +155,7 @@ export function ParentDetailView({
                 <Badge
                   variant="outline"
                   className={cn(
-                    "rounded-none text-[10px] font-medium",
+                    "rounded-lg text-[10px] font-medium",
                     parent.status === "active"
                       ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
                       : "border-amber-200 bg-amber-50 text-amber-800",

@@ -205,7 +205,7 @@ export function SchoolAuthShell({
             href="/"
             className={cn(
               'inline-flex h-10 items-center gap-2 border-2 px-4 text-sm font-semibold transition-colors',
-              soft || themed ? 'rounded-lg' : 'rounded-none',
+              soft || themed ? 'rounded-lg' : 'rounded-lg',
               isAssembly &&
                 'border-[var(--school-ink)] bg-transparent text-[var(--school-ink)] hover:bg-[var(--school-ink)] hover:text-[var(--ah-cream,#FBF6E9)]',
               isPlayfield &&
@@ -308,7 +308,7 @@ export function SchoolAuthShell({
                   'border-[var(--school-ink)] bg-white',
                   soft
                     ? 'rounded-xl shadow-lg'
-                    : 'rounded-none shadow-[6px_6px_0_rgba(0,0,0,0.12)]',
+                    : 'rounded-lg shadow-sm',
                 ),
             )}
           >
@@ -351,7 +351,7 @@ export function authFieldClass(config: HomepageConfig) {
     isHorizon
   return cn(
     'h-12 border-2 bg-white text-[var(--school-ink)] placeholder:text-[var(--school-ink)]/40 focus-visible:ring-2 focus-visible:ring-primary/25',
-    soft ? 'rounded-lg' : 'rounded-none',
+    soft ? 'rounded-lg' : 'rounded-lg',
     isPlayfield && 'rounded-sm border-[var(--school-ink)]/20',
     isAssembly &&
       'border-[var(--school-ink)]/25 focus-visible:border-primary',
@@ -384,8 +384,8 @@ export function authPrimaryButtonClass(config: HomepageConfig) {
     isStory ||
     isHorizon
   return cn(
-    'h-12 w-full border-2 font-display text-sm font-bold shadow-none transition-[background-color,border-color,transform] active:scale-[0.98] disabled:opacity-50',
-    soft ? 'rounded-lg' : 'rounded-none',
+    'h-12 w-full border-2 font-display text-sm font-bold shadow-none transition-[background-color,border-color,transform] active:scale-[0.98] disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400',
+    soft ? 'rounded-lg' : 'rounded-lg',
     isAssembly &&
       'border-[var(--school-ink)] bg-[var(--school-ink)] text-[var(--ah-cream,#FBF6E9)] hover:border-primary hover:bg-primary',
     isPlayfield &&

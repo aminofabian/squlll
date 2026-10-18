@@ -218,7 +218,7 @@ function ToolbarHint({
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
         side="bottom"
-        className="max-w-[18rem] rounded-none px-2.5 py-1.5 text-left text-[11px] leading-snug"
+        className="max-w-[18rem] rounded-md px-2.5 py-1.5 text-left text-[11px] leading-snug"
       >
         {text}
       </TooltipContent>
@@ -2776,7 +2776,7 @@ export default function SmartTimetableNew() {
                       variant="ghost"
                       size="sm"
                       className={cn(
-                        "h-9 gap-1.5 rounded-lg hover:bg-[#f3f7f5] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white",
+                        "h-9 gap-1.5 rounded-lg hover:bg-background hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white",
                         tt.text.small,
                         tt.ink.muted,
                       )}
@@ -2788,14 +2788,14 @@ export default function SmartTimetableNew() {
                   </PopoverTrigger>
                   <PopoverContent
                     align="end"
-                    className="w-72 rounded-none p-3"
+                    className="w-72 rounded-md p-3"
                   >
                     <p className={tt.eyebrow}>Grid display</p>
 
                     <div className="mt-2.5 space-y-2.5">
                       <div>
                         <p className={cn(tt.label, "mb-1.5")}>Subject labels</p>
-                        <div className="flex rounded-none border border-slate-200 p-0.5 dark:border-slate-700">
+                        <div className="flex rounded-md border border-slate-200 p-0.5 dark:border-slate-700">
                           {[
                             { key: false, label: "Codes" },
                             { key: true, label: "Full names" },
@@ -2805,7 +2805,7 @@ export default function SmartTimetableNew() {
                               type="button"
                               onClick={() => setShowFullSubjectName(opt.key)}
                               className={cn(
-                                "flex-1 rounded-none px-2 py-1 text-[11px] font-medium transition-colors",
+                                "flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
                                 showFullSubjectName === opt.key
                                   ? "bg-[#246a59] text-white"
                                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
@@ -2820,7 +2820,7 @@ export default function SmartTimetableNew() {
                       <button
                         type="button"
                         onClick={toggleConflicts}
-                        className="flex w-full items-center justify-between gap-2 rounded-none border border-slate-200 px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60"
+                        className="flex w-full items-center justify-between gap-2 rounded-md border border-slate-200 px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60"
                       >
                         <span className="min-w-0">
                           <span className="block text-[12px] font-medium text-slate-800 dark:text-slate-100">
@@ -2832,7 +2832,7 @@ export default function SmartTimetableNew() {
                         </span>
                         <span
                           className={cn(
-                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-none",
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
                             showConflicts
                               ? "bg-[#246a59] text-white"
                               : "bg-slate-100 text-slate-400 dark:bg-slate-800",
@@ -3325,7 +3325,7 @@ export default function SmartTimetableNew() {
                   </h2>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-auto bg-[#f3f7f5] p-2 dark:bg-[#071411] lg:p-3">
+                <div className="min-h-0 flex-1 overflow-auto bg-background p-2 dark:bg-[#071411] lg:p-3">
                   {refreshLoadFailed &&
                   !combinedGridFailed &&
                   !classGridFailed ? (
@@ -4042,10 +4042,10 @@ export default function SmartTimetableNew() {
             {timeSlots.map((slot) => (
               <div
                 key={slot.id}
-                className="flex items-center justify-between rounded-none border border-zinc-200/90 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80"
+                className="flex items-center justify-between rounded-md border border-zinc-200/90 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-none bg-zinc-100 dark:bg-zinc-800">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
                     <span className="text-[11px] font-bold tabular-nums text-zinc-600 dark:text-zinc-300">
                       P{slot.periodNumber}
                     </span>
@@ -4062,7 +4062,7 @@ export default function SmartTimetableNew() {
                 <button
                   type="button"
                   onClick={() => setTimeslotToDelete(slot)}
-                  className="rounded-none p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600 dark:hover:bg-slate-800"
+                  className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600 dark:hover:bg-slate-800"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -4085,7 +4085,7 @@ export default function SmartTimetableNew() {
           </SheetHeader>
           <div className="mt-4 space-y-2 flex-1 overflow-y-auto min-h-0">
             {breaks.length === 0 ? (
-              <div className="rounded-none border border-dashed border-zinc-200 p-6 text-center dark:border-zinc-700">
+              <div className="rounded-md border border-dashed border-zinc-200 p-6 text-center dark:border-zinc-700">
                 <Coffee className="mx-auto mb-2 h-8 w-8 text-zinc-300" />
                 <p className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300">
                   No breaks yet
@@ -4103,10 +4103,10 @@ export default function SmartTimetableNew() {
                     setBreaksDrawerOpen(false);
                     setEditingBreak(b);
                   }}
-                  className="flex w-full items-center justify-between rounded-none border border-zinc-200/90 bg-white p-3 text-left transition-colors hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/80 dark:hover:border-zinc-600"
+                  className="flex w-full items-center justify-between rounded-md border border-zinc-200/90 bg-white p-3 text-left transition-colors hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/80 dark:hover:border-zinc-600"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-stone-100 text-lg dark:bg-stone-900/50">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-stone-100 text-lg dark:bg-stone-900/50">
                       {b.icon}
                     </div>
                     <div className="min-w-0">
@@ -4138,7 +4138,7 @@ export default function SmartTimetableNew() {
                         });
                       }
                     }}
-                    className="p-1.5 hover:bg-red-50 rounded-none text-red-500 shrink-0"
+                    className="p-1.5 hover:bg-red-50 rounded-md text-red-500 shrink-0"
                     aria-label="Remove break"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

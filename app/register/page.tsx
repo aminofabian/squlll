@@ -664,7 +664,7 @@ export default function SignupPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="min-w-[140px] bg-[#1d5547] font-semibold text-white hover:bg-[#2d8570] disabled:opacity-60"
+                    className="min-w-[140px] bg-[#1d5547] font-semibold text-white hover:bg-[#2d8570] disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
                   >
                     {isSubmitting ? "Creating…" : "Create school"}
                   </Button>
@@ -734,7 +734,7 @@ function Field({
             error
               ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
               : "border-emerald-900/15 focus:border-[#1d5547]/40 focus:ring-2 focus:ring-[#1d5547]/20",
-            "disabled:cursor-not-allowed disabled:opacity-50",
+            "disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400",
           )}
         />
       </div>

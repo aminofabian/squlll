@@ -75,10 +75,10 @@ export function StudentsGradeMix({
                     {row.count} · {row.percent}%
                   </span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-none bg-[#1a4d42]/10 dark:bg-white/10">
+                <div className="h-1.5 overflow-hidden rounded-lg bg-[#1a4d42]/10 dark:bg-white/10">
                   <div
                     className={cn(
-                      "h-full rounded-none transition-all duration-300",
+                      "h-full rounded-lg transition-all duration-300",
                       isActive
                         ? "bg-[#246a59]"
                         : "bg-[#1a4d42]/25 group-hover:bg-[#246a59]/60 dark:bg-white/25",

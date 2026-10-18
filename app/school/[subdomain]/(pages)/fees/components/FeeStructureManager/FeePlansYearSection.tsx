@@ -54,7 +54,7 @@ export function FeePlansYearSection({
   const moreUnlinked = unlinkedGrades.length - visibleUnlinked.length;
 
   return (
-    <section className="min-w-0 max-w-full overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa]/40">
+    <section className="min-w-0 max-w-full overflow-hidden rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa]/40">
       <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 sm:px-5">
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
@@ -63,7 +63,7 @@ export function FeePlansYearSection({
                 {yearLabel}
               </h3>
               {isCurrentSchoolYear ? (
-                <span className="rounded-none border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-900">
+                <span className="rounded-lg border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-900">
                   Current year
                 </span>
               ) : null}
@@ -83,7 +83,7 @@ export function FeePlansYearSection({
           <div className="flex max-w-full shrink-0 flex-col items-start gap-1.5 sm:max-w-[11rem] sm:items-end">
             <div
               className={cn(
-                "inline-flex max-w-full flex-wrap items-center gap-2 rounded-none border px-2.5 py-1 text-xs font-medium tabular-nums",
+                "inline-flex max-w-full flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1 text-xs font-medium tabular-nums",
                 allLinked
                   ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
                   : "border-amber-200/90 bg-amber-50 text-amber-950",
@@ -91,7 +91,7 @@ export function FeePlansYearSection({
             >
               <span
                 className={cn(
-                  "h-1.5 w-1.5 rounded-none",
+                  "h-1.5 w-1.5 rounded-lg",
                   allLinked ? "bg-[#246a59]" : "bg-amber-500",
                 )}
                 aria-hidden
@@ -99,9 +99,9 @@ export function FeePlansYearSection({
               {linkedGradeCount}/{totalSchoolGrades} grades linked
             </div>
             {!allLinked && totalSchoolGrades > 0 ? (
-              <div className="h-1 w-full max-w-[8rem] overflow-hidden rounded-none bg-[#1a4d42]/10 sm:w-28">
+              <div className="h-1 w-full max-w-[8rem] overflow-hidden rounded-lg bg-[#1a4d42]/10 sm:w-28">
                 <div
-                  className="h-full rounded-none bg-amber-500 transition-all"
+                  className="h-full rounded-lg bg-amber-500 transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -110,7 +110,7 @@ export function FeePlansYearSection({
         </div>
 
         {conflicts.length > 0 && !pageLevelConflictAlert ? (
-          <details className="group mt-2 rounded-none border border-rose-200/90 bg-rose-50/80 open:pb-2">
+          <details className="group mt-2 rounded-lg border border-rose-200/90 bg-rose-50/80 open:pb-2">
             <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 text-[11px] font-medium text-rose-900 [&::-webkit-details-marker]:hidden">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               <span className="min-w-0">
@@ -165,13 +165,13 @@ export function FeePlansYearSection({
                 {visibleUnlinked.map((g) => (
                   <span
                     key={g.id}
-                    className="rounded-none border border-amber-200/80 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-950"
+                    className="rounded-lg border border-amber-200/80 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-950"
                   >
                     {g.name}
                   </span>
                 ))}
                 {moreUnlinked > 0 ? (
-                  <span className="rounded-none border border-dashed border-amber-200 px-2 py-0.5 text-[11px] text-amber-800">
+                  <span className="rounded-lg border border-dashed border-amber-200 px-2 py-0.5 text-[11px] text-amber-800">
                     +{moreUnlinked} more
                   </span>
                 ) : null}

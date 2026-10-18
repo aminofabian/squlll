@@ -54,12 +54,12 @@ export function hasIncompleteProfile(teacher: Teacher) {
 
 function statusBadge(status: Teacher["status"]) {
   if (status === "active") {
-    return "rounded-none border-emerald-200/80 bg-emerald-50 text-emerald-800";
+    return "rounded-lg border-emerald-200/80 bg-emerald-50 text-emerald-800";
   }
   if (status === "inactive") {
-    return "rounded-none border-amber-200/80 bg-amber-50 text-amber-800";
+    return "rounded-lg border-amber-200/80 bg-amber-50 text-amber-800";
   }
-  return "rounded-none border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/70";
+  return "rounded-lg border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/70";
 }
 
 function statusLabel(status: Teacher["status"]) {
@@ -144,7 +144,7 @@ export function TeachersTable({
 
       {teachers.length === 0 ? (
         <div className="px-3 py-10 text-center">
-          <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-none bg-[#246a59]/10">
+          <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[#246a59]/10">
             <User className="h-4 w-4 text-[#246a59]" />
           </div>
           <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
@@ -295,7 +295,7 @@ export function TeachersTable({
         open={!!confirmDelete}
         onOpenChange={(open) => !open && setConfirmDelete(null)}
       >
-        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
+        <AlertDialogContent className="rounded-lg border border-[#1a4d42]/12">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-[#0a1f1a]">
               Remove {confirmDelete?.name}?
@@ -305,11 +305,11 @@ export function TeachersTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none" disabled={!!deletingTeacherId}>
+            <AlertDialogCancel className="rounded-lg" disabled={!!deletingTeacherId}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="rounded-none bg-red-600 hover:bg-red-700"
+              className="rounded-lg bg-red-600 hover:bg-red-700"
               disabled={!!deletingTeacherId}
               onClick={(e) => {
                 e.preventDefault();

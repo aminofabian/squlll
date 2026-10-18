@@ -32,7 +32,7 @@ function StatCell({
   return (
     <div
       className={cn(
-        "flex min-h-[3.25rem] flex-col justify-center rounded-none bg-[#f8fbfa] px-2 py-1.5 dark:bg-[#071411]",
+        "flex min-h-[3.25rem] flex-col justify-center rounded-lg bg-[#f8fbfa] px-2 py-1.5 dark:bg-[#071411]",
         className,
       )}
     >
@@ -134,7 +134,7 @@ export function GradeDetailsView({
       </div>
 
       {!selectedStreamId && grade.streams && grade.streams.length > 0 ? (
-        <div className="rounded-none border border-[#1a4d42]/12 bg-white px-2.5 py-2 dark:border-white/15 dark:bg-[#0c1a17]">
+        <div className="rounded-lg border border-[#1a4d42]/12 bg-white px-2.5 py-2 dark:border-white/15 dark:bg-[#0c1a17]">
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
             Streams
           </p>
@@ -144,7 +144,7 @@ export function GradeDetailsView({
                 key={stream.id}
                 type="button"
                 onClick={() => onStreamSelect?.(stream.id)}
-                className="rounded-none bg-[#e8f2ef] px-2.5 py-1 text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#e8f2ef] dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="rounded-lg bg-[#e8f2ef] px-2.5 py-1 text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#e8f2ef] dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 {stream.name}
               </button>

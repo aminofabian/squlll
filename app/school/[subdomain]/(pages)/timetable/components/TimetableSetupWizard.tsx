@@ -225,7 +225,7 @@ function breakIconForLabel(label: string) {
 
 function wizardChipClass(selected: boolean) {
   return cn(
-    "shrink-0 rounded-none border px-2.5 py-1.5 transition-colors",
+    "shrink-0 rounded-md border px-2.5 py-1.5 transition-colors",
     tt.text.title,
     tt.numeral,
     tt.focus,
@@ -257,7 +257,7 @@ function WizardQuestion({
       <div className="mb-3 flex items-start gap-2.5">
         <span
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-[#e8f2ef] font-semibold dark:bg-white/10",
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#e8f2ef] font-semibold dark:bg-white/10",
             tt.text.caption,
             tt.ink.base,
           )}
@@ -1270,7 +1270,7 @@ export function TimetableSetupWizard({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-9 w-9 shrink-0 rounded-none p-0 text-[#1a4d42]/40 hover:bg-red-50 hover:text-red-600"
+              className="h-9 w-9 shrink-0 rounded-md p-0 text-[#1a4d42]/40 hover:bg-red-50 hover:text-red-600"
               onClick={() => removeCustomBreakRow(b.id)}
               aria-label={`Remove ${displayName}`}
             >
@@ -1329,7 +1329,7 @@ export function TimetableSetupWizard({
                     type="button"
                     onClick={() => selectBreakMode(opt.mode)}
                     className={cn(
-                      "flex w-full items-start gap-3 rounded-none border px-3 py-2.5 text-left transition-colors",
+                      "flex w-full items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors",
                       tt.focus,
                       selected
                         ? "border-[#0a1f1a] bg-[#0a1f1a] text-white dark:border-[#246a59] dark:bg-[#246a59]"
@@ -1415,7 +1415,7 @@ export function TimetableSetupWizard({
             type="button"
             onClick={addAnotherBreak}
             className={cn(
-              "flex w-full items-center justify-center gap-2 rounded-none border border-dashed border-[#1a4d42]/25 bg-transparent px-3 py-2 font-medium transition-colors hover:border-[#246a59]/40 hover:bg-[#f3f7f5]",
+              "flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#1a4d42]/25 bg-transparent px-3 py-2 font-medium transition-colors hover:border-[#246a59]/40 hover:bg-[#f3f7f5]",
               tt.text.title,
               tt.ink.base,
               tt.focus,
@@ -1499,7 +1499,7 @@ export function TimetableSetupWizard({
               onClick={selectAllScopes}
               disabled={allSelected || totalCount === 0}
               className={cn(
-                "font-medium text-[#246a59] transition-colors hover:text-[#0a1f1a] hover:underline disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#7eb8a8] dark:hover:text-white",
+                "font-medium text-[#246a59] transition-colors hover:text-[#0a1f1a] hover:underline disabled:cursor-not-allowed disabled:text-slate-400 dark:text-[#7eb8a8] dark:hover:text-white",
                 tt.text.title,
                 tt.focus,
               )}
@@ -1512,7 +1512,7 @@ export function TimetableSetupWizard({
               onClick={() => setSelectedScopeKeys(new Set())}
               disabled={selectedCount === 0}
               className={cn(
-                "font-medium text-[#1a4d42]/55 transition-colors hover:text-[#0a1f1a] hover:underline disabled:cursor-not-allowed disabled:opacity-40 dark:text-white/45 dark:hover:text-white",
+                "font-medium text-[#1a4d42]/55 transition-colors hover:text-[#0a1f1a] hover:underline disabled:cursor-not-allowed disabled:text-slate-400 dark:text-white/45 dark:hover:text-white",
                 tt.text.title,
                 tt.focus,
               )}
@@ -1529,7 +1529,7 @@ export function TimetableSetupWizard({
         ) : gradeLevelsWithStreams.length === 0 ? (
           <p
             className={cn(
-              "rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-4 text-center dark:border-white/10 dark:bg-white/[0.02]",
+              "rounded-md border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-4 text-center dark:border-white/10 dark:bg-white/[0.02]",
               tt.text.title,
               tt.ink.muted,
             )}

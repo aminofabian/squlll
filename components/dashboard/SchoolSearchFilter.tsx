@@ -440,7 +440,7 @@ export function SchoolSearchFilter({
   const gradeButtonClass = (selected: boolean) => {
     if (!isMinimal) {
       return cn(
-        "relative h-8 w-full rounded-none border px-2.5 text-xs font-medium transition-all",
+        "relative h-8 w-full rounded-lg border px-2.5 text-xs font-medium transition-all",
         selected
           ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
           : "border-[#1a4d42]/15 bg-white hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06] hover:text-[#246a59]",
@@ -448,7 +448,7 @@ export function SchoolSearchFilter({
     }
 
     return cn(
-      "flex h-7 w-full items-center justify-center gap-1 rounded-none border text-[11px] font-semibold transition-colors",
+      "flex h-7 w-full items-center justify-center gap-1 rounded-lg border text-[11px] font-semibold transition-colors",
       selected
         ? "border-[#246a59] bg-[#0a1f1a] text-white"
         : "border-[#1a4d42]/10 bg-[#f8fbfa] text-[#1a4d42]/80 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#071411] dark:text-white/70",
@@ -458,7 +458,7 @@ export function SchoolSearchFilter({
   const streamButtonClass = (selected: boolean) => {
     if (isMinimal) {
       return cn(
-        "flex-1 rounded-none py-1.5 text-center text-[11px] font-semibold transition-colors",
+        "flex-1 rounded-lg py-1.5 text-center text-[11px] font-semibold transition-colors",
         selected
           ? "bg-[#0a1f1a] text-white"
           : "text-[#1a4d42]/55 hover:bg-white hover:text-[#0a1f1a] dark:text-white/45",
@@ -466,7 +466,7 @@ export function SchoolSearchFilter({
     }
 
     return cn(
-      "inline-flex items-center justify-center rounded-none border px-3 text-xs font-medium transition-colors",
+      "inline-flex items-center justify-center rounded-lg border px-3 text-xs font-medium transition-colors",
       "h-8 min-w-[2.25rem]",
       selected
         ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
@@ -512,7 +512,7 @@ export function SchoolSearchFilter({
                   variant="ghost"
                   size="sm"
                   onClick={clearSearch}
-                  className="h-7 rounded-none px-2 text-[#1a4d42]/55 hover:text-[#0a1f1a]"
+                  className="h-7 rounded-lg px-2 text-[#1a4d42]/55 hover:text-[#0a1f1a]"
                 >
                   Clear
                   <X className="ml-1 h-3.5 w-3.5" />
@@ -522,7 +522,7 @@ export function SchoolSearchFilter({
                 variant="outline"
                 size="sm"
                 onClick={refreshConfig}
-                className="h-8 rounded-none border-[#1a4d42]/20 px-2 text-[#1a4d42]/55 hover:text-[#0a1f1a]"
+                className="h-8 rounded-lg border-[#1a4d42]/20 px-2 text-[#1a4d42]/55 hover:text-[#0a1f1a]"
               >
                 Refresh
               </Button>
@@ -578,7 +578,7 @@ export function SchoolSearchFilter({
             <Input
               placeholder="Search grades..."
               className={cn(
-                "rounded-none pl-7",
+                "rounded-lg pl-7",
                 isMinimal
                   ? "h-8 border-0 bg-transparent text-[12px] shadow-none focus-visible:ring-0 dark:bg-transparent"
                   : "h-10 border-[#1a4d42]/15 focus-visible:ring-[#246a59]/20",
@@ -747,7 +747,7 @@ export function SchoolSearchFilter({
                                         key={stream.id}
                                         type="button"
                                         className={cn(
-                                          "h-6 w-full truncate rounded-none border px-2 py-0 text-[10px] font-medium transition-colors",
+                                          "h-6 w-full truncate rounded-lg border px-2 py-0 text-[10px] font-medium transition-colors",
                                           isSelected
                                             ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
                                             : "border-dashed border-[#1a4d42]/20 hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.05]",

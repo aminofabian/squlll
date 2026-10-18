@@ -89,7 +89,7 @@ export function TeachersSearchSidebar({
         <Input
           type="text"
           placeholder="Search staff…"
-          className="h-8 rounded-none border border-[#1a4d42]/15 bg-white pl-7 text-xs shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
+          className="h-8 rounded-lg border border-[#1a4d42]/15 bg-white pl-7 text-xs shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -97,7 +97,7 @@ export function TeachersSearchSidebar({
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute right-1.5 top-1.5 rounded-none p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
+            className="absolute right-1.5 top-1.5 rounded-lg p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
             aria-label="Clear search"
           >
             <X className="h-3.5 w-3.5" />
@@ -119,7 +119,7 @@ export function TeachersSearchSidebar({
       </div>
 
       {isError && (
-        <div className="mb-2.5 rounded-none border border-red-200/80 bg-red-50 p-2.5">
+        <div className="mb-2.5 rounded-lg border border-red-200/80 bg-red-50 p-2.5">
           <div className="mb-1.5 flex items-center gap-1.5 text-xs text-red-600">
             <AlertCircle className="h-3.5 w-3.5 shrink-0" />
             {error instanceof Error ? error.message : "Failed to load"}
@@ -128,7 +128,7 @@ export function TeachersSearchSidebar({
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            className="h-7 w-full rounded-none border-red-200 text-xs text-red-700"
+            className="h-7 w-full rounded-lg border-red-200 text-xs text-red-700"
           >
             Retry
           </Button>
@@ -154,7 +154,7 @@ export function TeachersSearchSidebar({
                 type="button"
                 onClick={() => onTeacherSelect(teacher.id)}
                 className={cn(
-                  "w-full rounded-none border px-2 py-1.5 text-left transition-colors",
+                  "w-full rounded-lg border px-2 py-1.5 text-left transition-colors",
                   isSelected
                     ? "border-[#246a59]/25 bg-[#246a59]/10 dark:bg-[#246a59]/15"
                     : "border-transparent hover:border-[#1a4d42]/10 hover:bg-white dark:hover:bg-white/5",
@@ -169,7 +169,7 @@ export function TeachersSearchSidebar({
                       </span>
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-none",
+                          "h-1.5 w-1.5 shrink-0 rounded-lg",
                           teacher.status === "active"
                             ? "bg-[#246a59]"
                             : "bg-amber-400",
@@ -193,7 +193,7 @@ export function TeachersSearchSidebar({
             variant="ghost"
             size="sm"
             onClick={onLoadMore}
-            className="h-7 w-full rounded-none text-xs text-[#1a4d42]/55 hover:bg-[#e8f2ef] hover:text-[#0a1f1a]"
+            className="h-7 w-full rounded-lg text-xs text-[#1a4d42]/55 hover:bg-[#e8f2ef] hover:text-[#0a1f1a]"
           >
             Show more (
             {Math.min(10, filteredTeachers.length - displayedTeachersCount)})

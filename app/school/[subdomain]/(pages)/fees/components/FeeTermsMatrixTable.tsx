@@ -124,7 +124,7 @@ export function FeeTermsMatrixTable({
     return (
       <div
         className={cn(
-          "rounded-none border border-dashed px-4 py-6 text-center text-sm",
+          "rounded-lg border border-dashed px-4 py-6 text-center text-sm",
           className,
         )}
         style={{
@@ -153,8 +153,8 @@ export function FeeTermsMatrixTable({
         className={cn(
           "flex flex-col gap-2 text-[11px] sm:flex-row sm:items-center sm:justify-between",
           compact
-            ? "rounded-none bg-[#f8fbfa] px-2.5 py-2"
-            : "rounded-none bg-[#f8fbfa] px-3 py-2.5 border border-[#1a4d42]/12",
+            ? "rounded-lg bg-[#f8fbfa] px-2.5 py-2"
+            : "rounded-lg bg-[#f8fbfa] px-3 py-2.5 border border-[#1a4d42]/12",
         )}
       >
         <p className={cn("min-w-0 leading-snug text-[#1a4d42]/60", FEES_LAYOUT.textWrap)}>
@@ -190,7 +190,7 @@ export function FeeTermsMatrixTable({
       {uniformCategories && compact ? (
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 rounded-none border border-amber-200/70 bg-amber-50/80 px-2.5 py-1.5 text-left text-[10px] font-medium text-amber-950"
+          className="flex w-full items-center gap-1.5 rounded-lg border border-amber-200/70 bg-amber-50/80 px-2.5 py-1.5 text-left text-[10px] font-medium text-amber-950"
           onClick={() => setShowUniformHint((v) => !v)}
         >
           <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden />
@@ -208,8 +208,8 @@ export function FeeTermsMatrixTable({
           className={cn(
             "text-[10px] leading-snug text-amber-900/90",
             compact
-              ? "rounded-none border border-amber-200/60 bg-amber-50/60 px-2.5 py-1.5"
-              : "flex items-start gap-2 rounded-none border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] text-amber-950",
+              ? "rounded-lg border border-amber-200/60 bg-amber-50/60 px-2.5 py-1.5"
+              : "flex items-start gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] text-amber-950",
           )}
           role="status"
         >
@@ -415,7 +415,7 @@ export function FeeTermsMatrixTable({
         className={cn(
           FEES_LAYOUT.tableScroll,
           tableScrollClass,
-          "hidden rounded-none border border-[#1a4d42]/12 md:block",
+          "hidden rounded-lg border border-[#1a4d42]/12 md:block",
         )}
       >
         <table className="w-full table-fixed border-collapse text-left text-xs">

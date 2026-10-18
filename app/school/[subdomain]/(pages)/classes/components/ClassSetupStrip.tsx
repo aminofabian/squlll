@@ -36,7 +36,7 @@ export function ClassSetupStrip({
   return (
     <div
       className={cn(
-        "rounded-none border border-[#1a4d42]/12 bg-white/60 px-3 py-2.5 backdrop-blur-sm dark:border-white/15 dark:bg-[#0c1a17]",
+        "rounded-lg border border-[#1a4d42]/12 bg-white/60 px-3 py-2.5 backdrop-blur-sm dark:border-white/15 dark:bg-[#0c1a17]",
         className,
       )}
     >
@@ -66,7 +66,7 @@ export function ClassSetupStrip({
             <>
               <span
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-none",
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
                   step.done
                     ? "bg-emerald-500 text-white"
                     : "bg-[#e8f2ef]/80 text-[#1a4d42]/45 dark:bg-slate-700",
@@ -91,7 +91,7 @@ export function ClassSetupStrip({
             </>
           );
           const stepClass = cn(
-            "flex w-full min-w-0 items-center gap-2 rounded-none px-2 py-1.5 text-left",
+            "flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-left",
             step.done
               ? "bg-emerald-50/80 dark:bg-emerald-950/25"
               : "bg-[#f8fbfa] dark:bg-[#071411]",

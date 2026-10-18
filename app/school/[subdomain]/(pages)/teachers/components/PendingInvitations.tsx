@@ -84,7 +84,7 @@ function InvitationTableRow({
       <tr className="text-[#1a4d42]/80 transition-colors hover:bg-[#f8fbfa] dark:text-white/70 dark:hover:bg-white/5">
         <td className="px-2 py-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10">
               <Mail className="h-3 w-3 text-[#246a59]" />
             </div>
             <p
@@ -98,7 +98,7 @@ function InvitationTableRow({
         <td className="px-2 py-1.5">
           <Badge
             variant="outline"
-            className="rounded-none border-[#246a59]/25 bg-[#246a59]/10 text-[9px] font-normal capitalize text-[#246a59]"
+            className="rounded-lg border-[#246a59]/25 bg-[#246a59]/10 text-[9px] font-normal capitalize text-[#246a59]"
           >
             {invitation.role.toLowerCase()}
           </Badge>
@@ -107,7 +107,7 @@ function InvitationTableRow({
           <Badge
             variant="outline"
             className={cn(
-              "rounded-none text-[9px] font-normal capitalize",
+              "rounded-lg text-[9px] font-normal capitalize",
               invitation.status === "PENDING"
                 ? "border-amber-200 bg-amber-50 text-amber-700"
                 : invitation.status === "ACCEPTED"
@@ -148,7 +148,7 @@ function InvitationTableRow({
                     type="button"
                     onClick={() => onResend(invitation.id)}
                     disabled={isResending}
-                    className="text-[11px] text-[#1a4d42]/55 hover:text-[#246a59] disabled:opacity-50"
+                    className="text-[11px] text-[#1a4d42]/55 hover:text-[#246a59] disabled:text-slate-400"
                   >
                     {isResending ? "Sending…" : "Resend"}
                   </button>
@@ -157,7 +157,7 @@ function InvitationTableRow({
                     type="button"
                     onClick={() => setConfirmRevokeOpen(true)}
                     disabled={isRevoking}
-                    className="text-[11px] text-[#1a4d42]/55 hover:text-red-600 disabled:opacity-50"
+                    className="text-[11px] text-[#1a4d42]/55 hover:text-red-600 disabled:text-slate-400"
                   >
                     {isRevoking ? "Revoking…" : "Revoke"}
                   </button>
@@ -168,7 +168,7 @@ function InvitationTableRow({
                 type="button"
                 onClick={() => onActivate(invitation)}
                 disabled={isActivating}
-                className="text-[11px] font-medium text-[#246a59] hover:text-[#1a4d42] disabled:opacity-50"
+                className="text-[11px] font-medium text-[#246a59] hover:text-[#1a4d42] disabled:text-slate-400"
               >
                 {isActivating ? "Activating…" : "Activate"}
               </button>
@@ -178,7 +178,7 @@ function InvitationTableRow({
       </tr>
 
       <AlertDialog open={confirmRevokeOpen} onOpenChange={setConfirmRevokeOpen}>
-        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
+        <AlertDialogContent className="rounded-lg border border-[#1a4d42]/12">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-[#0a1f1a]">Revoke invitation?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -190,9 +190,9 @@ function InvitationTableRow({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none">Keep invitation</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-lg">Keep invitation</AlertDialogCancel>
             <AlertDialogAction
-              className="rounded-none bg-red-600 hover:bg-red-700"
+              className="rounded-lg bg-red-600 hover:bg-red-700"
               onClick={() => {
                 setConfirmRevokeOpen(false);
                 onRevoke(invitation.id);
@@ -323,8 +323,8 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
       >
         <div className="flex min-w-0 items-center gap-2">
           <span className="relative flex h-1.5 w-1.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-none bg-amber-400 opacity-40" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-none bg-amber-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-amber-400 opacity-40" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-lg bg-amber-500" />
           </span>
           <h2 className="text-xs font-semibold text-[#0a1f1a] dark:text-white">
             Pending invitations

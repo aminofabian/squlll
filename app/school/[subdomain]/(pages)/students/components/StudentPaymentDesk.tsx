@@ -28,7 +28,7 @@ interface Receipt {
 }
 
 const fieldClass =
-  "h-9 rounded-none border-[#1a4d42]/15 bg-white text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#071411]";
+  "h-9 rounded-lg border-[#1a4d42]/15 bg-white text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#071411]";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -352,7 +352,7 @@ function ReceiptSlip({ receipt, onAnother }: { receipt: Receipt; onAnother: () =
       <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#1a4d42]/50">
         {receipt.paymentMethod.split("_").join(" ")}
       </p>
-      <Button type="button" variant="outline" size="sm" className="mt-4 h-8 rounded-none text-xs" onClick={onAnother}>
+      <Button type="button" variant="outline" size="sm" className="mt-4 h-8 rounded-lg text-xs" onClick={onAnother}>
         Take another
       </Button>
     </div>

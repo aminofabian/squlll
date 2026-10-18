@@ -164,7 +164,7 @@ function TeachersPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-[#071411]">
       {/* Sidebar */}
       <div
         className={cn(
@@ -182,7 +182,7 @@ function TeachersPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 rounded-none p-0 text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a]"
+            className="h-8 w-8 rounded-lg p-0 text-[#1a4d42]/45 hover:bg-[#e8f2ef] hover:text-[#0a1f1a]"
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           >
             {isSidebarMinimized ? (
@@ -266,7 +266,7 @@ function TeachersPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => void refetchTeachers()}
-                  className="h-7 rounded-none border-red-200 text-red-700 hover:bg-red-100"
+                  className="h-7 rounded-lg border-red-200 text-red-700 hover:bg-red-100"
                 >
                   Retry
                 </Button>
@@ -294,8 +294,8 @@ function TeachersPage() {
                 }}
               />
             ) : teachers.length === 0 && !teachersLoading ? (
-              <div className="rounded-none border border-dashed border-[#1a4d42]/20 bg-white px-6 py-14 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-white/15 dark:bg-[#0c1a17]">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+              <div className="rounded-lg border border-dashed border-[#1a4d42]/20 bg-white px-6 py-14 text-center shadow-sm dark:border-white/15 dark:bg-[#0c1a17]">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59]">
                   <Users className="h-5 w-5" />
                 </div>
                 <h2 className="font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
@@ -356,7 +356,7 @@ function TeachersPage() {
                     <button
                       type="button"
                       onClick={() => setSearchTerm("")}
-                      className="inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/15 bg-white px-2 py-0.5 text-[#0a1f1a] hover:border-[#246a59]/40 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#1a4d42]/15 bg-white px-2 py-0.5 text-[#0a1f1a] hover:border-[#246a59]/40 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
                     >
                       &ldquo;{searchTerm}&rdquo;
                       <span className="text-[#1a4d42]/40">×</span>

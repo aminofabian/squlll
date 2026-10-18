@@ -159,7 +159,7 @@ export function SchoolHomepageFeeDownloads({
                   type="button"
                   onClick={() => handleDownload(plan)}
                   disabled={isDownloading}
-                  className="h-11 shrink-0 rounded-none bg-primary px-5 text-sm font-semibold text-white shadow-none hover:bg-primary-dark"
+                  className="h-11 shrink-0 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-none hover:bg-primary-dark"
                 >
                   {isDownloading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

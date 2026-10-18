@@ -171,7 +171,7 @@ export default function LessonPlanSupervisionPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 rounded-none"
+              className="size-8 rounded-lg"
               onClick={() =>
                 overview && setAnchor(addDays(overview.weekStartDate, -7))
               }
@@ -188,7 +188,7 @@ export default function LessonPlanSupervisionPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 rounded-none"
+              className="size-8 rounded-lg"
               onClick={() =>
                 overview && setAnchor(addDays(overview.weekStartDate, 7))
               }

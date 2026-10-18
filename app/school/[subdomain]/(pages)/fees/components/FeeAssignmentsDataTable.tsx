@@ -520,7 +520,7 @@ function MobileAssignmentCard({
       >
         <button
           type="button"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:opacity-30"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:text-slate-300"
           onClick={onToggle}
           disabled={!canExpand}
           aria-expanded={canExpand ? isExpanded : undefined}

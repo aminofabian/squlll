@@ -347,7 +347,7 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
               size="sm"
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Previous
@@ -386,7 +386,7 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
               size="sm"
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
             >
               Next
               <ChevronRight className="w-4 h-4 ml-2" />

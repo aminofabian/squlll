@@ -74,7 +74,7 @@ export function DashboardHeader({
             type="button"
             variant={hasGradeSelected ? "secondary" : "outline"}
             size="sm"
-            className="h-8 gap-1.5 rounded-none border-[#1a4d42]/20 px-2.5 text-xs lg:hidden"
+            className="h-8 gap-1.5 rounded-lg border-[#1a4d42]/20 px-2.5 text-xs lg:hidden"
             onClick={onOpenGradePicker}
           >
             <Filter className="h-3.5 w-3.5" />
@@ -88,7 +88,7 @@ export function DashboardHeader({
               type="button"
               variant="ghost"
               size="sm"
-              className="hidden h-8 rounded-none px-2.5 text-xs text-[#1a4d42]/70 lg:inline-flex dark:text-white/60"
+              className="hidden h-8 rounded-lg px-2.5 text-xs text-[#1a4d42]/70 lg:inline-flex dark:text-white/60"
               onClick={onToggleGradePanel}
             >
               {isGradePanelOpen ? "Hide grades" : "Show grades"}
@@ -100,13 +100,13 @@ export function DashboardHeader({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-none border-[#1a4d42]/20 bg-white dark:border-white/15 dark:bg-[#0c1a17]"
+                className="h-8 w-8 rounded-lg border-[#1a4d42]/20 bg-white dark:border-white/15 dark:bg-[#0c1a17]"
                 aria-label="Dashboard actions"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 rounded-none">
+            <DropdownMenuContent align="end" className="w-52 rounded-lg">
               <DropdownMenuLabel className="text-xs text-[#1a4d42]/55">
                 Tasks
               </DropdownMenuLabel>
@@ -139,7 +139,7 @@ export function DashboardHeader({
                 <DashboardBroadcastSheet
                   subdomain={subdomain}
                   triggerClassName={cn(
-                    "flex w-full cursor-pointer items-center gap-2 rounded-none px-2 py-1.5 text-sm",
+                    "flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
                     "hover:bg-accent hover:text-accent-foreground",
                   )}
                   triggerLabel="Announcement"

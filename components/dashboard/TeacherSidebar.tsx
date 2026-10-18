@@ -216,7 +216,7 @@ export function Sidebar({ className, logoInstance }: SidebarProps) {
             variant="outline" 
             onClick={signOut}
             disabled={isSigningOut}
-            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50/50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10 disabled:opacity-50"
+            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50/50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10 disabled:text-slate-400"
           >
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-red-100/30 transition-colors">

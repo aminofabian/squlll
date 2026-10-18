@@ -254,7 +254,7 @@ export function ClassesClassDetail({
         <div className="relative px-4 py-5 sm:px-6 sm:py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex min-w-0 gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-base font-bold tracking-tight text-white ring-1 ring-white/10 sm:h-16 sm:w-16 sm:text-lg">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-base font-bold tracking-tight text-white ring-1 ring-white/10 sm:h-16 sm:w-16 sm:text-lg">
                 {monogram}
               </div>
               <div className="min-w-0 flex-1">
@@ -267,7 +267,7 @@ export function ClassesClassDetail({
                 <div className="mt-2.5 flex flex-wrap items-center gap-2">
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1 rounded-none border px-2.5 py-0.5 text-[10px] font-semibold",
+                      "inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-[10px] font-semibold",
                       status.className,
                     )}
                   >
@@ -276,11 +276,11 @@ export function ClassesClassDetail({
                     ) : null}
                     {status.label}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-none border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] tabular-nums text-white/70">
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] tabular-nums text-white/70">
                     <Users className="h-3 w-3" />
                     {studentCount} student{studentCount === 1 ? "" : "s"}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-none border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] tabular-nums text-white/70">
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] tabular-nums text-white/70">
                     <BookOpen className="h-3 w-3" />
                     {totalCount === 0
                       ? "No subjects"
@@ -292,7 +292,7 @@ export function ClassesClassDetail({
 
             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
               {classTeacher ? (
-                <div className="rounded-none border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-right">
+                <div className="rounded-lg border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-right">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-white/45">
                     {teacherRole}
                   </p>
@@ -317,7 +317,7 @@ export function ClassesClassDetail({
                   size="sm"
                   variant={studentCount === 0 ? "outline" : "default"}
                   className={cn(
-                    "h-8 gap-1.5 rounded-none text-xs shadow-none",
+                    "h-8 gap-1.5 rounded-lg text-xs shadow-none",
                     studentCount === 0
                       ? "border-white/15 bg-white/[0.06] text-white/80 hover:bg-white/10 hover:text-white"
                       : "bg-[#246a59] text-white hover:bg-[#1a4d42]",
@@ -342,7 +342,7 @@ export function ClassesClassDetail({
           />
 
           {hasStreams && streams.length > 1 ? (
-            <section className="rounded-none border border-[#1a4d42]/12 bg-white p-3 dark:border-white/10 dark:bg-[#0c1a17] sm:p-4">
+            <section className="rounded-lg border border-[#1a4d42]/12 bg-white p-3 dark:border-white/10 dark:bg-[#0c1a17] sm:p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
@@ -358,7 +358,7 @@ export function ClassesClassDetail({
                   </span>
                 ) : null}
               </div>
-              <div className="mt-2 inline-flex max-w-full flex-wrap gap-1 rounded-none bg-[#e8f2ef]/90 p-1 dark:bg-slate-800/80">
+              <div className="mt-2 inline-flex max-w-full flex-wrap gap-1 rounded-lg bg-[#e8f2ef]/90 p-1 dark:bg-slate-800/80">
                 {streams.map((stream) => {
                   const count = countStreamStudents(
                     students,
@@ -373,7 +373,7 @@ export function ClassesClassDetail({
                       title={`${stream.name}: ${count} student${count !== 1 ? "s" : ""}`}
                       onClick={() => onStreamSelect(stream.id)}
                       className={cn(
-                        "rounded-none px-3 py-2 text-left text-xs font-medium transition-all",
+                        "rounded-lg px-3 py-2 text-left text-xs font-medium transition-all",
                         active
                           ? "bg-white text-[#246a59] shadow-none dark:bg-[#0c1a17] dark:text-[#4d9fff]"
                           : "text-[#1a4d42]/65 hover:text-[#0a1f1a] dark:text-[#1a4d42]/45 dark:hover:text-slate-200",
@@ -397,7 +397,7 @@ export function ClassesClassDetail({
                     title="View all streams in this grade combined"
                     onClick={() => onStreamSelect("")}
                     className={cn(
-                      "rounded-none px-3 py-2 text-xs font-medium transition-all",
+                      "rounded-lg px-3 py-2 text-xs font-medium transition-all",
                       !selectedStreamId
                         ? "bg-white text-[#246a59] shadow-none dark:bg-[#0c1a17]"
                         : "text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:hover:text-slate-200",

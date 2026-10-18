@@ -209,7 +209,7 @@ export function OnboardingShell({
 
               <div
                 key={currentStep}
-                className="border border-[#1a4d42]/12 bg-white shadow-[6px_6px_0_0_rgba(10,31,26,0.06)] dark:bg-[#0c1a17] dark:border-white/10 dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.35)] animate-in fade-in slide-in-from-bottom-3 duration-500"
+                className="border border-[#1a4d42]/12 bg-white shadow-sm dark:bg-[#0c1a17] dark:border-white/10 dark:shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-500"
               >
                 {children}
               </div>
@@ -224,7 +224,7 @@ export function OnboardingShell({
                 size="sm"
                 onClick={onBack}
                 disabled={currentStep === 1}
-                className="rounded-none text-[#1a4d42]/70 hover:text-[#0a1f1a] hover:bg-[#246a59]/8 shrink-0 dark:text-white/60"
+                className="rounded-lg text-[#1a4d42]/70 hover:text-[#0a1f1a] hover:bg-[#246a59]/8 shrink-0 dark:text-white/60"
               >
                 <ChevronLeft className="h-4 w-4 mr-0.5" />
                 Back
@@ -242,7 +242,7 @@ export function OnboardingShell({
                     variant="ghost"
                     size="sm"
                     onClick={onSkip}
-                    className="rounded-none text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/50"
+                    className="rounded-lg text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/50"
                   >
                     {skipLabel}
                   </Button>
@@ -252,7 +252,7 @@ export function OnboardingShell({
                   size="sm"
                   onClick={onContinue}
                   disabled={isContinueDisabled || isLoading}
-                  className="min-w-[128px] max-w-[min(100%,14rem)] rounded-none h-10 bg-[#0a1f1a] hover:bg-[#246a59] text-white shadow-none dark:bg-emerald-400 dark:text-[#0a1f1a] dark:hover:bg-emerald-300 transition-colors"
+                  className="min-w-[128px] max-w-[min(100%,14rem)] rounded-lg h-10 bg-[#0a1f1a] hover:bg-[#246a59] text-white shadow-none dark:bg-emerald-400 dark:text-[#0a1f1a] dark:hover:bg-emerald-300 transition-colors"
                 >
                   {isLoading ? (
                     <>
@@ -419,7 +419,7 @@ export function PresetOption({
         'relative flex flex-col items-start text-left w-full border-2 p-4 transition-all duration-200',
         'hover:border-[#246a59]/50 hover:bg-[#246a59]/[0.04]',
         selected
-          ? 'border-[#246a59] bg-[#246a59]/[0.06] shadow-[3px_3px_0_0_rgba(36,106,89,0.25)]'
+          ? 'border-[#246a59] bg-[#246a59]/[0.06] shadow-sm'
           : 'border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-white/5',
       )}
     >
@@ -473,7 +473,7 @@ export function FieldGroup({
 }
 
 export const onboardingInputClass =
-  'h-11 rounded-none border-[#1a4d42]/15 bg-white focus-visible:ring-[#246a59]/30 dark:border-white/15 dark:bg-[#071411]'
+  'h-11 rounded-lg border-[#1a4d42]/15 bg-white focus-visible:ring-[#246a59]/30 dark:border-white/15 dark:bg-[#071411]'
 
 function formatDateHint(iso: string) {
   try {
@@ -541,7 +541,7 @@ export function DateField({
             aria-label={ariaLabel ?? 'Choose date'}
             aria-expanded={open}
             className={cn(
-              'relative flex w-full items-center border bg-white text-left transition-all rounded-none',
+              'relative flex w-full items-center border bg-white text-left transition-all rounded-lg',
               'dark:bg-[#071411]',
               disabled && 'opacity-50 pointer-events-none',
               value
@@ -576,7 +576,7 @@ export function DateField({
         <PopoverContent
           align="start"
           sideOffset={8}
-          className="w-auto p-0 rounded-none border border-[#1a4d42]/15 shadow-lg dark:border-white/15 overflow-hidden"
+          className="w-auto p-0 rounded-lg border border-[#1a4d42]/15 shadow-lg dark:border-white/15 overflow-hidden"
         >
           {!compact && <CalendarPopoverHeader label="Select date" value={selected} />}
           <OnboardingCalendar
@@ -590,7 +590,7 @@ export function DateField({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-8 rounded-none text-xs text-[#1a4d42]/60 hover:text-[#0a1f1a]"
+              className="h-8 rounded-lg text-xs text-[#1a4d42]/60 hover:text-[#0a1f1a]"
               onClick={() => {
                 onChange('')
                 setOpen(false)
@@ -602,7 +602,7 @@ export function DateField({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-8 rounded-none text-xs text-[#246a59] hover:text-[#1a4d42] hover:bg-[#246a59]/10"
+              className="h-8 rounded-lg text-xs text-[#246a59] hover:text-[#1a4d42] hover:bg-[#246a59]/10"
               onClick={() => {
                 const today = new Date()
                 today.setHours(12, 0, 0, 0)

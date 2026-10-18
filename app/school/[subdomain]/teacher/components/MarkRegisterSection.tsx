@@ -408,7 +408,7 @@ export default function MarkRegisterSection({
             <div className="flex justify-end px-3 sm:px-8 pb-4 sm:pb-8 mt-2">
               <button
                 type="submit"
-                className="flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-primary to-primary/80 text-white font-bold text-base sm:text-lg shadow-lg hover:scale-105 hover:from-primary/90 hover:to-primary/70 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-primary to-primary/80 text-white font-bold text-base sm:text-lg shadow-lg hover:scale-105 hover:from-primary/90 hover:to-primary/70 transition disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
                 disabled={saving}
               >
                 {saving ? (

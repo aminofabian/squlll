@@ -139,15 +139,15 @@ export default function StaffPage() {
 
   if (error && staff.length === 0 && !loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f3f7f5] px-4 dark:bg-[#071411]">
-        <div className="max-w-md rounded-none border border-red-300/80 bg-white px-6 py-8 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+      <div className="flex h-screen items-center justify-center bg-background px-4 dark:bg-[#071411]">
+        <div className="max-w-md rounded-lg border border-red-300/80 bg-white px-6 py-8 text-center shadow-sm dark:border-red-900/50 dark:bg-[#0c1a17]">
           <h2 className="mb-1 font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading staff
           </h2>
           <p className="text-sm text-[#1a4d42]/55 dark:text-white/45">{error}</p>
           <Button
             size="sm"
-            className="mt-4 rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]"
+            className="mt-4 rounded-lg bg-[#0a1f1a] text-white hover:bg-[#246a59]"
             onClick={() => void refetchStaff()}
           >
             Retry
@@ -158,7 +158,7 @@ export default function StaffPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-[#071411]">
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] transition-all duration-300 dark:border-white/10 dark:bg-[#0c1a17]",

@@ -3,7 +3,7 @@ import type { LessonPlanWeek } from '@/lib/lesson-planning/api'
 import { formatWeekRange } from '../utils/formatWeekRange'
 
 const NAV_BUTTON =
-  'flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40'
+  'flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:text-slate-300'
 
 export function WeekNavigator({
   week,
