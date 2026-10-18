@@ -25,6 +25,8 @@ interface ClassStudentsRosterProps {
   students: ClassRosterRow[];
   showStreamColumn?: boolean;
   maxRows?: number;
+  /** Optional per-student badge, e.g. prefect / deputy. */
+  badges?: Record<string, string>;
 }
 
 function formatKes(amount: number) {
@@ -43,6 +45,7 @@ export function ClassStudentsRoster({
   students,
   showStreamColumn = false,
   maxRows = 8,
+  badges,
 }: ClassStudentsRosterProps) {
   const visible = students.slice(0, maxRows);
   const hasMore = students.length > maxRows;
@@ -143,12 +146,19 @@ export function ClassStudentsRoster({
                   className="transition-colors hover:bg-[#f8fbfa] dark:hover:bg-slate-800/30"
                 >
                   <td className="px-4 py-2.5 sm:px-5">
-                    <Link
-                      href={studentProfileHref(student.id)}
-                      className="font-medium text-[#0a1f1a] hover:text-[#246a59] dark:text-white"
-                    >
-                      {student.name}
-                    </Link>
+                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                      <Link
+                        href={studentProfileHref(student.id)}
+                        className="font-medium text-[#0a1f1a] hover:text-[#246a59] dark:text-white"
+                      >
+                        {student.name}
+                      </Link>
+                      {badges?.[student.id] ? (
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                          {badges[student.id]}
+                        </span>
+                      ) : null}
+                    </span>
                   </td>
                   <td className="px-4 py-2.5 font-mono text-[11px] text-[#1a4d42]/55 sm:px-5">
                     {student.admissionNumber}

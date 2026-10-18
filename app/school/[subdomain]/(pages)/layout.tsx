@@ -289,7 +289,9 @@ function SchoolLayoutContent({
         
         {/* Main content area with scrolling */}
         <main className={`flex-1 bg-background pb-[calc(4.75rem+env(safe-area-inset-bottom))] dark:bg-slate-950 lg:pb-0 ${
-          pathname === "/timetable" ? "flex min-h-0 flex-col overflow-hidden" : "overflow-auto"
+          pathname === "/timetable" || pathname === "/classes"
+            ? "flex min-h-0 flex-col overflow-hidden"
+            : "overflow-auto"
         }`}>
           {children}
         </main>

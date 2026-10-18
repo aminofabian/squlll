@@ -6,6 +6,7 @@ const GET_TENANT_SUBJECTS = gql`
   query GetTenantSubjects {
     tenantSubjects {
       id
+      name
       subjectType
       isCompulsory
       totalMarks
@@ -39,6 +40,8 @@ const GET_TENANT_SUBJECTS = gql`
 // TypeScript interfaces for the response
 export interface TenantSubject {
   id: string;
+  /** Tenant-owned label. Renames are stored here so catalog subjects stay editable. */
+  name?: string | null;
   subjectType: 'core' | 'elective';
   isCompulsory: boolean;
   totalMarks: number;
@@ -67,6 +70,25 @@ export interface TenantSubject {
   } | null;
 }
 
+/** Prefer the tenant-owned name so a renamed subject shows its new label. */
+export function tenantSubjectDisplayName(ts: TenantSubject): string {
+  const tenantName = (ts.name ?? '').trim();
+  if (tenantName) return tenantName;
+  return (
+    ts.subject?.name?.trim() ||
+    ts.customSubject?.name?.trim() ||
+    'Unknown subject'
+  );
+}
+
+export function tenantSubjectCode(ts: TenantSubject): string {
+  return (
+    ts.subject?.code?.trim() ||
+    ts.customSubject?.code?.trim() ||
+    ''
+  );
+}
+
 interface GetTenantSubjectsResponse {
   tenantSubjects: TenantSubject[];
 }
@@ -93,6 +115,7 @@ export function useTenantSubjects(enabled: boolean = true) {
               query {
                 tenantSubjects {
                   id
+                  name
                   subjectType
                   isCompulsory
                   totalMarks

@@ -13,7 +13,11 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useToast } from "@/components/ui/use-toast";
-import { useTenantSubjects } from "@/lib/hooks/useTenantSubjects";
+import {
+  useTenantSubjects,
+  tenantSubjectCode,
+  tenantSubjectDisplayName,
+} from "@/lib/hooks/useTenantSubjects";
 import { useGradeLevelsForSchoolType } from "@/lib/hooks/useGradeLevelsForSchoolType";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { cn } from "@/lib/utils";
@@ -447,8 +451,8 @@ export function TeacherAcademicEditor({
         .filter((ts) => ts.isActive !== false)
         .map((ts) => ({
           id: ts.id,
-          name: ts.subject?.name || ts.customSubject?.name || "Unknown Subject",
-          code: ts.subject?.code || ts.customSubject?.code || "",
+          name: tenantSubjectDisplayName(ts),
+          code: tenantSubjectCode(ts),
           curriculum: ts.curriculum.name,
           curriculumId: ts.curriculum.id,
         })),
@@ -475,6 +479,7 @@ export function TeacherAcademicEditor({
       const glData = gradeLevelsData.find((g) => g.id === gradeId);
 
       if (level) {
+        const allowedIds = new Set(level.subjects.map((s) => s.id));
         const allowedNames = new Set(
           level.subjects.map((s) => s.name.toLowerCase().trim()),
         );
@@ -491,6 +496,7 @@ export function TeacherAcademicEditor({
             const name = subject.name.toLowerCase().trim();
             const code = subject.code.toLowerCase().trim();
             return (
+              allowedIds.has(subject.id) ||
               allowedNames.has(name) ||
               (code.length > 0 && allowedCodes.has(code))
             );

@@ -6,6 +6,8 @@ import { BookOpen, Search, Edit, Trash2, Loader2, Plus, Layers } from "lucide-re
 import {
   useTenantSubjects,
   TenantSubject,
+  tenantSubjectCode,
+  tenantSubjectDisplayName,
 } from "@/lib/hooks/useTenantSubjects";
 import { EditSubjectDialog } from "../../components/EditSubjectDialog";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
@@ -68,8 +70,8 @@ export function SubjectsView({
   const filteredSubjects = useMemo(() => {
     let subs = tenantSubjects.map((ts) => ({
       id: ts.id,
-      name: ts.subject?.name || ts.customSubject?.name || "Unknown",
-      code: ts.subject?.code || ts.customSubject?.code || "",
+      name: tenantSubjectDisplayName(ts),
+      code: tenantSubjectCode(ts),
       subjectType: (ts.subjectType === "core" ? "core" : "elective") as
         | "core"
         | "elective",
@@ -81,6 +83,7 @@ export function SubjectsView({
         l.gradeLevels?.some((g) => g.id === selectedGradeId),
       );
       if (level) {
+        const ids = new Set(level.subjects.map((s) => s.id));
         const names = new Set(
           level.subjects.map((s) => s.name.toLowerCase().trim()),
         );
@@ -91,6 +94,7 @@ export function SubjectsView({
         );
         subs = subs.filter(
           (s) =>
+            ids.has(s.id) ||
             names.has(s.name.toLowerCase().trim()) ||
             (s.code && codes.has(s.code.toLowerCase().trim())),
         );

@@ -1,6 +1,11 @@
 "use client";
 
-import { Filter, MoreHorizontal, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  LayoutGrid,
+  MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -57,18 +62,17 @@ export function ClassesPageHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          {hasGradeSelected ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={cn(classesActionButton, "lg:hidden")}
-              onClick={onOpenGradePicker}
-            >
-              <Filter className="h-3.5 w-3.5" />
-              <span className="hidden min-[380px]:inline">Grades</span>
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={cn(classesActionButton, "lg:hidden")}
+            onClick={onOpenGradePicker}
+            aria-label="Open class directory"
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            <span className="hidden min-[380px]:inline">Classes</span>
+          </Button>
 
           <div className="hidden items-center gap-1 lg:flex">
             {visibleActions.map((action) => {

@@ -1,5 +1,9 @@
 import type { Level } from "@/lib/types/school-config";
-import type { TenantSubject } from "@/lib/hooks/useTenantSubjects";
+import {
+  tenantSubjectCode,
+  tenantSubjectDisplayName,
+  type TenantSubject,
+} from "@/lib/hooks/useTenantSubjects";
 import { dedupeSubjectsByMaster } from "./dedupeSubjects";
 
 export type SubjectStaffing = { assigned: number; total: number };
@@ -15,8 +19,8 @@ export function computeGradeSubjectStaffing(
 ): SubjectStaffing {
   const transformed = tenantSubjects.map((ts) => ({
     id: ts.id,
-    name: ts.subject?.name || ts.customSubject?.name || "Unknown Subject",
-    code: ts.subject?.code || ts.customSubject?.code || "",
+    name: tenantSubjectDisplayName(ts),
+    code: tenantSubjectCode(ts),
     subjectType: (ts.subjectType === "core" ? "core" : "elective") as
       | "core"
       | "elective",
@@ -29,19 +33,27 @@ export function computeGradeSubjectStaffing(
   );
   if (!gradeBelongsToLevel) return { assigned: 0, total: 0 };
 
+  // Match on the tenant subject id first (rename-safe), then fall back to
+  // name/code for older configurations.
+  const levelSubjectIds = new Set(
+    (level.subjects ?? []).map((s) => s.id).filter(Boolean),
+  );
   const levelSubjectNames = new Set(
-    level.subjects.map((s) => s.name.toLowerCase().trim()),
+    (level.subjects ?? []).map((s) => s.name.toLowerCase().trim()),
   );
   const levelSubjectCodes = new Set(
-    level.subjects.map((s) => s.code?.toLowerCase().trim()).filter(Boolean),
+    (level.subjects ?? [])
+      .map((s) => s.code?.toLowerCase().trim())
+      .filter(Boolean) as string[],
   );
 
   const filtered = transformed.filter((subject) => {
+    if (levelSubjectIds.has(subject.id)) return true;
     const subjectName = subject.name.toLowerCase().trim();
     const subjectCode = subject.code?.toLowerCase().trim();
     return (
       levelSubjectNames.has(subjectName) ||
-      (subjectCode && levelSubjectCodes.has(subjectCode))
+      (Boolean(subjectCode) && levelSubjectCodes.has(subjectCode as string))
     );
   });
 

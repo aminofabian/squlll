@@ -12,7 +12,12 @@ import {
 import type { Level, Subject } from "@/lib/types/school-config";
 import { useState, useMemo } from "react";
 import { EditSubjectDialog } from "./EditSubjectDialog";
-import { useTenantSubjects, TenantSubject } from "@/lib/hooks/useTenantSubjects";
+import {
+  useTenantSubjects,
+  TenantSubject,
+  tenantSubjectCode,
+  tenantSubjectDisplayName,
+} from "@/lib/hooks/useTenantSubjects";
 import { useGradeLevelFeeSummary } from "@/lib/hooks/useGradeLevelFeeSummary";
 import { cn } from "@/lib/utils";
 import {
@@ -47,8 +52,8 @@ export function ClassCard({
   const transformedSubjects = useMemo(() => {
     return tenantSubjects.map((ts) => ({
       id: ts.id,
-      name: ts.subject?.name || ts.customSubject?.name || "Unknown Subject",
-      code: ts.subject?.code || ts.customSubject?.code || "",
+      name: tenantSubjectDisplayName(ts),
+      code: tenantSubjectCode(ts),
       subjectType: (ts.subjectType === "core" ? "core" : "elective") as
         | "core"
         | "elective",
@@ -65,6 +70,7 @@ export function ClassCard({
       );
 
       if (gradeBelongsToLevel) {
+        const levelSubjectIds = new Set(level.subjects.map((s) => s.id));
         const levelSubjectNames = new Set(
           level.subjects.map((s) => s.name.toLowerCase().trim()),
         );
@@ -78,6 +84,7 @@ export function ClassCard({
           const subjectName = subject.name.toLowerCase().trim();
           const subjectCode = subject.code?.toLowerCase().trim();
           return (
+            levelSubjectIds.has(subject.id) ||
             levelSubjectNames.has(subjectName) ||
             (subjectCode && levelSubjectCodes.has(subjectCode))
           );
