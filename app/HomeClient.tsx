@@ -673,7 +673,7 @@ function HeroPreviewToggle({
         aria-pressed={mode === "phone"}
         className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${
           mode === "phone"
-            ? "bg-emerald-500 text-white shadow-sm"
+            ? "bg-[#f7f6f2] text-[#14201c] shadow-sm"
             : "text-white/60 hover:text-white"
         }`}
       >
@@ -686,7 +686,7 @@ function HeroPreviewToggle({
         aria-pressed={mode === "desktop"}
         className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${
           mode === "desktop"
-            ? "bg-emerald-500 text-white shadow-sm"
+            ? "bg-[#f7f6f2] text-[#14201c] shadow-sm"
             : "text-white/60 hover:text-white"
         }`}
       >
@@ -725,7 +725,7 @@ function HeroDesktopFrame({ children }: { children: ReactNode }) {
       />
 
       {/* Desktop app window */}
-      <div className="hero-desktop-window relative overflow-hidden rounded-xl bg-[#e8ecea] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/20">
+      <div className="hero-desktop-window relative overflow-hidden rounded-2xl bg-[#e8ecea] shadow-[0_40px_90px_-24px_rgba(0,0,0,0.65)] ring-1 ring-white/20">
         {/* Title bar */}
         <div className="flex h-9 items-center gap-3 border-b border-black/5 bg-gradient-to-b from-[#f4f6f5] to-[#e4e9e7] px-3">
           <div className="flex items-center gap-1.5" aria-hidden>
@@ -748,12 +748,6 @@ function HeroDesktopFrame({ children }: { children: ReactNode }) {
         <div className="overflow-hidden bg-white">{children}</div>
       </div>
 
-      {/* Monitor chin + stand */}
-      <div className="relative mx-auto mt-0 flex flex-col items-center">
-        <div className="h-2 w-full rounded-b-lg bg-gradient-to-b from-[#2a3330] to-[#141a18] shadow-md ring-1 ring-white/10" />
-        <div className="h-8 w-16 bg-gradient-to-b from-[#3a4441] to-[#1c2220] sm:h-9 sm:w-[4.5rem]" />
-        <div className="h-1.5 w-36 rounded-full bg-gradient-to-b from-[#2a3330] to-[#0e1211] shadow-[0_4px_12px_rgba(0,0,0,0.4)] ring-1 ring-white/10 sm:w-44" />
-      </div>
     </div>
   )
 }
@@ -2033,10 +2027,6 @@ export default function Home() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#0f2923]/90 via-[#1a332c]/75 to-transparent" />
           </div>
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute top-[38%] left-1/4 h-[55%] w-px bg-gradient-to-b from-primary/15 via-primary/25 to-transparent" />
-            <div className="absolute top-[38%] right-1/4 h-[55%] w-px bg-gradient-to-b from-primary/15 via-primary/25 to-transparent" />
-          </div>
 
           <div className="relative z-10 mx-auto max-w-7xl px-4 pt-12 sm:px-6 sm:pt-14 lg:px-8 lg:pt-16">
             <Reveal>
@@ -2314,19 +2304,19 @@ export default function Home() {
                       Start Your Free Term
                     </Button>
                   </Link>
-                  <Link href="/login" className="w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-12 w-full rounded-xl border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
-                    >
-                      <Play className="mr-2 h-3.5 w-3.5 fill-white" />
-                      See a demo
-                    </Button>
-                  </Link>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setDemoOpen(true)}
+                    className="h-12 w-full rounded-xl border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
+                  >
+                    <Play className="mr-2 h-3.5 w-3.5 fill-white" />
+                    See a demo
+                  </Button>
                 </div>
                 <p className="mt-6 font-ui text-xs font-medium uppercase tracking-[0.14em] text-white/45">
-                  90-day free trial · full term access · no credit card
+                  90-day free trial · No credit card
                 </p>
               </div>
             </div>
