@@ -260,6 +260,7 @@ export function SchoolSidebar({
                         "/attendances",
                         "/grading",
                         "/curriculum",
+                        "/lesson-plans",
                         "/school-years",
                       ],
                     },

@@ -67,6 +67,7 @@ const ADMIN_ROUTE_SEGMENTS = new Set([
   'staff',
   'grading',
   'curriculum',
+  'lesson-plans',
   'school-years',
   'reports',
   'analytics',

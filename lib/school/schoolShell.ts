@@ -42,6 +42,7 @@ export function getSchoolPageTitle(pathname: string): string {
     attendances: "Attendances",
     grading: "Grading",
     curriculum: "Curriculum",
+    "lesson-plans": "Lesson Plans",
     "school-years": "School Years",
     reports: "Reports",
     analytics: "Analytics",

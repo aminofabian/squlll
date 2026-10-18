@@ -17,6 +17,7 @@ import {
   MessageSquare,
   FileText,
   ClipboardCheck,
+  Layers,
   User,
   Settings,
   LogOut
@@ -67,6 +68,11 @@ const navigation = [
     title: "Lesson Plans",
     href: "/teacher/lesson-plans",
     icon: BookMarked,
+  },
+  {
+    title: "Schemes of Work",
+    href: "/teacher/schemes-of-work",
+    icon: Layers,
   },
   {
     title: "Messages",
