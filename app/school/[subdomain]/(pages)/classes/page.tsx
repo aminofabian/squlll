@@ -254,6 +254,21 @@ export default function ClassesPage() {
     [],
   );
 
+  const openAddSubjectForLevel = useCallback(
+    (levelId: string) => {
+      const level = config?.selectedLevels.find((item) => item.id === levelId);
+      if (!level) {
+        toast.error("Could not find that curriculum level");
+        return;
+      }
+      openAddSubject({
+        curriculumId: level.id,
+        levelName: level.name,
+      });
+    },
+    [config?.selectedLevels, openAddSubject],
+  );
+
   const defaultAddSubjectContext = useMemo(() => {
     if (!selectedGrade) return null;
     return {
@@ -629,27 +644,37 @@ export default function ClassesPage() {
         onOpenChange={setShowSubjectsDrawer}
         direction="right"
       >
-        <DrawerContent className="flex h-[95vh] max-h-[95dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] sm:max-w-lg">
-          <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
+        <DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] sm:max-w-xl">
+          <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 bg-white px-4 py-3.5 pr-4 dark:border-white/10 dark:bg-[#0c1a17]">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <DrawerTitle className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
-                  All subjects
-                </DrawerTitle>
-                <DrawerDescription className="mt-0.5 text-xs text-[#1a4d42]/55">
-                  {selectedGrade
-                    ? `${selectedGrade.levelName} · ${selectedGrade.displayName}`
-                    : "Core and elective subjects"}
-                </DrawerDescription>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#8fe3c8]">
+                  <BookOpen className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <DrawerTitle className="text-base font-semibold text-[#0a1f1a] dark:text-white">
+                    All subjects
+                  </DrawerTitle>
+                  <DrawerDescription className="mt-0.5 truncate text-[11px] text-[#1a4d42]/55 dark:text-white/45">
+                    {selectedGrade
+                      ? `${selectedGrade.levelName} · ${selectedGrade.displayName}`
+                      : "Every subject, grouped by level"}
+                  </DrawerDescription>
+                </div>
               </div>
               <DrawerClose asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 shrink-0 p-0 text-[#1a4d42]/50 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:text-white/45 dark:hover:bg-white/10 dark:hover:text-white"
+                  aria-label="Close subjects"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </DrawerClose>
             </div>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 py-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <SubjectsView
               selectedGradeId={selectedGradeId || null}
               onAddSubject={
@@ -657,11 +682,7 @@ export default function ClassesPage() {
                   ? () => openAddSubject(defaultAddSubjectContext)
                   : undefined
               }
-              onAddStream={
-                selectedGrade?.grade
-                  ? () => setShowAddStreamModal(true)
-                  : undefined
-              }
+              onAddSubjectToLevel={openAddSubjectForLevel}
             />
           </div>
         </DrawerContent>
