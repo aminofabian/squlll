@@ -324,7 +324,6 @@ const LESSON_PLAN_FRAGMENT = `
     updatedAt
     createdAt
   }
-  ${LESSON_RECORD_FRAGMENT}
 `
 
 const SCHEME_FRAGMENT = `
@@ -351,7 +350,6 @@ const SCHEME_FRAGMENT = `
     updatedAt
     createdAt
   }
-  ${SCHEME_ENTRY_FRAGMENT}
 `
 
 // ─────────────────────────────── queries ──────────────────────────────────
@@ -412,6 +410,7 @@ const GET_MY_LESSON_PLANS = `
     }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 const GET_LESSON_PLAN = `
@@ -421,6 +420,7 @@ const GET_LESSON_PLAN = `
     }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 const GET_LESSON_PLAN_FOR_PERIOD = `
@@ -430,6 +430,7 @@ const GET_LESSON_PLAN_FOR_PERIOD = `
     }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 const GET_MY_SCHEMES = `
@@ -439,6 +440,7 @@ const GET_MY_SCHEMES = `
     }
   }
   ${SCHEME_FRAGMENT}
+  ${SCHEME_ENTRY_FRAGMENT}
 `
 
 const GET_SCHEME = `
@@ -448,6 +450,7 @@ const GET_SCHEME = `
     }
   }
   ${SCHEME_FRAGMENT}
+  ${SCHEME_ENTRY_FRAGMENT}
 `
 
 const GET_SUPERVISION = `
@@ -496,6 +499,7 @@ const GET_PLANS_FOR_REVIEW = `
     }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 // ─────────────────────────────── mutations ────────────────────────────────
@@ -505,6 +509,7 @@ const START_LESSON_PLAN = `
     startLessonPlan(input: $input) { ...LessonPlanFields }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 const SAVE_LESSON_PLAN = `
@@ -512,6 +517,7 @@ const SAVE_LESSON_PLAN = `
     saveLessonPlan(input: $input) { ...LessonPlanFields }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 const SUBMIT_LESSON_PLAN = `
@@ -519,6 +525,7 @@ const SUBMIT_LESSON_PLAN = `
     submitLessonPlan(id: $id, comment: $comment) { ...LessonPlanFields }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 const DELETE_LESSON_PLAN = `
@@ -539,6 +546,7 @@ const SAVE_SCHEME = `
     saveSchemeOfWork(input: $input) { ...SchemeOfWorkFields }
   }
   ${SCHEME_FRAGMENT}
+  ${SCHEME_ENTRY_FRAGMENT}
 `
 
 const SAVE_SCHEME_ENTRY = `
@@ -546,6 +554,7 @@ const SAVE_SCHEME_ENTRY = `
     saveSchemeEntry(input: $input) { ...SchemeOfWorkFields }
   }
   ${SCHEME_FRAGMENT}
+  ${SCHEME_ENTRY_FRAGMENT}
 `
 
 const DELETE_SCHEME_ENTRY = `
@@ -553,6 +562,7 @@ const DELETE_SCHEME_ENTRY = `
     deleteSchemeEntry(id: $id) { ...SchemeOfWorkFields }
   }
   ${SCHEME_FRAGMENT}
+  ${SCHEME_ENTRY_FRAGMENT}
 `
 
 const GENERATE_PLANS = `
@@ -566,6 +576,7 @@ const REVIEW_LESSON_PLAN = `
     reviewLessonPlan(input: $input) { ...LessonPlanFields }
   }
   ${LESSON_PLAN_FRAGMENT}
+  ${LESSON_RECORD_FRAGMENT}
 `
 
 // ─────────────────────────────── api calls ────────────────────────────────
