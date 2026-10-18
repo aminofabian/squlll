@@ -3288,10 +3288,10 @@ export default function SmartTimetableNew() {
                       </span>
                       <div className="min-w-0">
                         <p className="text-[12px] font-semibold text-amber-900 dark:text-amber-200">
-                          Draft timetable
+                          Not shared with staff yet
                         </p>
                         <p className="text-[11px] text-amber-800/70 dark:text-amber-300/60">
-                          Students and parents cannot see this timetable until you share it.
+                          Students and teachers can already see it. Share to notify teachers.
                         </p>
                       </div>
                     </div>

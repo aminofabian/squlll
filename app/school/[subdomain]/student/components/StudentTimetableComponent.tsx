@@ -242,11 +242,11 @@ const StudentTimetableComponent = ({
     <Section padded={false}>
       <EmptyState
         icon={Calendar}
-        title="No timetable published yet"
+        title="No lessons on your timetable yet"
         description={
           student?.streamName
-            ? `Your school has not published a timetable for ${gradeName} · ${student.streamName} this term yet. Check back later.`
-            : `Your school has not published a timetable for ${gradeName} this term yet. Check back later.`
+            ? `Your school has not added lessons for ${gradeName} · ${student.streamName} this term yet. Check back later.`
+            : `Your school has not added lessons for ${gradeName} this term yet. Check back later.`
         }
       />
     </Section>

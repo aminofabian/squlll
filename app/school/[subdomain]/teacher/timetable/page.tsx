@@ -243,7 +243,7 @@ const TeacherTimetable = () => {
       <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-amber-800/90 dark:text-amber-300/80">
         {graphqlData?.timetablePublishedAt
           ? "Ask your administrator to assign you on the school timetable."
-          : "Try switching term, or ask admin to confirm assignments and publish."}
+          : "Try switching term, or ask admin to confirm your timetable assignments."}
       </p>
     </div>
   );
