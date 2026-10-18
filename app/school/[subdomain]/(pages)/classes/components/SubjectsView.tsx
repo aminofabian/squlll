@@ -631,7 +631,7 @@ export function SubjectsView({
                   </button>
 
                   {expanded ? (
-                    <ul className="grid grid-cols-1 gap-2 p-2.5 sm:grid-cols-2">
+                    <ul className="grid grid-cols-1 gap-2 p-2.5 min-[1200px]:grid-cols-2">
                       {group.rows.map((row) => (
                         <SubjectRow
                           key={`${group.key}:${row.id}`}
@@ -800,24 +800,22 @@ function SubjectRow({
         <button
           type="button"
           onClick={onAssign}
-          title={`Change teacher for ${row.name}`}
-          className="hidden max-w-[9rem] shrink-0 items-center gap-1.5 border border-[#1a4d42]/10 bg-[#f8fbfa] px-1.5 py-1 text-left transition-colors hover:border-[#246a59]/35 dark:border-white/10 dark:bg-white/5 lg:inline-flex"
+          title={`Taught by ${row.teacher} — click to change`}
+          aria-label={`Change teacher for ${row.name}`}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#246a59]/10 text-[9px] font-bold text-[#246a59] transition-colors hover:bg-[#246a59]/20 dark:bg-[#246a59]/25 dark:text-[#8fe3c8]"
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#246a59]/10 text-[9px] font-bold text-[#246a59] dark:bg-[#246a59]/25 dark:text-[#8fe3c8]">
-            {initials(row.teacher)}
-          </span>
-          <span className="truncate text-[11px] font-medium text-[#0a1f1a] dark:text-white">
-            {row.teacher}
-          </span>
+          {initials(row.teacher)}
         </button>
       ) : (
         <button
           type="button"
           onClick={onAssign}
-          className="inline-flex h-8 shrink-0 items-center gap-1 border border-dashed border-amber-300 bg-amber-50 px-2.5 text-[11px] font-semibold text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+          title="Assign a teacher"
+          aria-label={`Assign a teacher to ${row.name}`}
+          className="inline-flex h-8 shrink-0 items-center gap-1 border border-dashed border-amber-300 bg-amber-50 px-2 text-[11px] font-semibold text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300 min-[1600px]:px-2.5"
         >
-          <UserPlus className="h-3 w-3" />
-          Assign
+          <UserPlus className="h-3.5 w-3.5" />
+          <span className="hidden min-[1600px]:inline">Assign</span>
         </button>
       )}
 

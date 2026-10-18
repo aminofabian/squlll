@@ -644,7 +644,7 @@ export default function ClassesPage() {
         onOpenChange={setShowSubjectsDrawer}
         direction="right"
       >
-        <DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl">
+        <DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] data-[vaul-drawer-direction=right]:sm:w-1/2 data-[vaul-drawer-direction=right]:sm:max-w-none">
           <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 bg-white px-4 py-4 pr-4 dark:border-white/10 dark:bg-[#0c1a17] sm:px-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
