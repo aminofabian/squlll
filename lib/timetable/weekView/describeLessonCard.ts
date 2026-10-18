@@ -1,25 +1,29 @@
 import type { TimetableLesson } from "@/lib/timetable/types";
 import type { WeekViewerType } from "./weekViewerType";
-import type { LessonTintMode } from "./buildLessonTints";
-import { getClassLabel } from "./getLessonCounterpartLabel";
+import type { LessonGroup, LessonGroupMode } from "./buildLessonGroups";
+import { getClassIdentity } from "./getClassIdentity";
 
 export type LessonCardText = { title: string; detail: string };
 
-/** Headline and supporting line for a lesson card, without repeating what the tint already says. */
+/** Headline and supporting line for a lesson card. */
 export function describeLessonCard(
   lesson: TimetableLesson,
   viewType: WeekViewerType,
-  tintMode: LessonTintMode,
-  showSubject: boolean,
+  mode: LessonGroupMode,
+  showSubjectOrGroup: boolean | LessonGroup,
 ): LessonCardText {
-  if (viewType === "student") {
+  const group =
+    typeof showSubjectOrGroup === "boolean" ? undefined : showSubjectOrGroup;
+  const showSubject =
+    typeof showSubjectOrGroup === "boolean" ? showSubjectOrGroup : false;
+  if (viewType === "student" || showSubject) {
     return { title: lesson.subject.name, detail: lesson.teacher.name };
   }
-  if (tintMode === "class") {
+  if (mode === "class") {
     return {
-      title: getClassLabel(lesson),
-      detail: showSubject ? lesson.subject.name : "",
+      title: group?.shortLabel ?? getClassIdentity(lesson).shortLabel,
+      detail: lesson.subject.name,
     };
   }
-  return { title: lesson.subject.name, detail: getClassLabel(lesson) };
+  return { title: lesson.subject.name, detail: getClassIdentity(lesson).shortLabel };
 }

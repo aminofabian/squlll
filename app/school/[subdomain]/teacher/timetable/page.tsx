@@ -20,18 +20,16 @@ import {
   TeacherMobileSchedule,
   TimetablePrintStyles,
 } from "@/components/timetable";
-import { WeekHeroBar } from "@/components/timetable/week/WeekHeroBar";
-import { WeekSidebar } from "@/components/timetable/week/WeekSidebar";
-import { WeekGrid } from "@/components/timetable/week/WeekGrid";
+import { WeekDesktopView } from "@/components/timetable/week/WeekDesktopView";
 import { WeekHeroButton } from "@/components/timetable/week/WeekHeroButton";
 import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
-import { useWeekLayout } from "@/lib/timetable/weekView/useWeekLayout";
-import { getGreeting } from "@/lib/timetable/weekView/getGreeting";
 import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
 import {
   TeacherLessonDetailSheet,
   type TeacherLessonSelection,
 } from "./components/TeacherLessonDetailSheet";
+import { LessonSwapDialog } from "./components/LessonSwapDialog";
+import { LessonSwapInbox } from "@/components/timetable/LessonSwapInbox";
 import { getWeekStartDate } from "@/lib/timetable/week";
 import {
   fetchMyLessonCompletions,
@@ -58,6 +56,8 @@ const TeacherTimetable = () => {
 
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
   const [selectedLesson, setSelectedLesson] =
+    useState<TeacherLessonSelection | null>(null);
+  const [swapSelection, setSwapSelection] =
     useState<TeacherLessonSelection | null>(null);
   const termId = selectedTerm?.id;
 
@@ -182,11 +182,6 @@ const TeacherTimetable = () => {
     },
   });
 
-  const weekLayout = useWeekLayout(
-    unifiedTimetable,
-    core.sortedTimeSlots,
-    "teacher",
-  );
   const stats = unifiedTimetable?.stats as TimetableStats | undefined;
   const isWeekend = core.currentDayOfWeek === null;
 
@@ -240,47 +235,19 @@ const TeacherTimetable = () => {
       : null;
 
   const emptyLessons = (
-    <div className="relative overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-[#fbfaf6] px-6 py-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#c49a52]/10 blur-3xl" aria-hidden />
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#0a2620] text-[#d9c49a]">
+    <div className="rounded-xl border border-[#e3e7e1] bg-white px-6 py-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#111a17] text-white">
         <BookOpen className="h-5 w-5" />
       </div>
-      <p className="mt-4 font-display text-[20px] text-[#0a1f1a] dark:text-white">
+      <p className="mt-4 text-[18px] font-bold text-[#111a16] dark:text-white">
         No lessons for {selectedTerm?.name || "this term"}
       </p>
-      <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-[#1a4d42]/80 dark:text-white/65">
+      <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[#4a5751] dark:text-white/65">
         Ask your administrator to add you to the school timetable, or check that
         the correct term is selected.
       </p>
     </div>
   );
-
-  const scheduleGrid =
-    unifiedTimetable && !hasNoLessons ? (
-      <WeekGrid
-        viewType="teacher"
-        tints={weekLayout.tints}
-        rows={weekLayout.rows}
-        dayDates={weekLayout.dayDates}
-        lessonCounts={weekLayout.lessonCounts}
-        weekRangeLabel={weekLayout.weekRangeLabel}
-        totalLessons={stats?.totalLessons ?? 0}
-        completedLessons={stats?.completedLessons ?? 0}
-        currentDayOfWeek={core.currentDayOfWeek}
-        currentPeriodIndex={core.currentPeriodIndex}
-        progressPercent={core.currentStatus.progressPercent}
-        completedLessonIds={core.completedLessonIds}
-        nextLesson={
-          core.nextLesson
-            ? {
-                id: core.nextLesson.lesson.id,
-                dayOfWeek: core.nextLesson.lesson.dayOfWeek,
-              }
-            : null
-        }
-        onLessonClick={handleLessonClick}
-      />
-    ) : null;
 
   return (
     <>
@@ -300,12 +267,27 @@ const TeacherTimetable = () => {
         onToggleComplete={(lessonId) => {
           void handleToggleComplete(lessonId);
         }}
+        onRequestSwap={(selection) => {
+          setSelectedLesson(null);
+          setSwapSelection(selection);
+        }}
+      />
+      <LessonSwapDialog
+        lesson={swapSelection?.lesson ?? null}
+        slot={core.sortedTimeSlots.find(
+          (slot) => slot.periodNumber === swapSelection?.periodNumber,
+        )}
+        open={swapSelection != null}
+        onOpenChange={(open) => {
+          if (!open) setSwapSelection(null);
+        }}
+        onCreated={() => void refetch()}
       />
       <div
-        className="min-h-screen overflow-x-hidden bg-[#f4f1e9] lg:bg-[radial-gradient(1200px_420px_at_70%_-80px,rgba(196,154,82,0.14),transparent_70%),radial-gradient(900px_500px_at_0%_100%,rgba(36,106,89,0.07),transparent_70%)] dark:bg-[#071411]"
+        className="min-h-screen overflow-x-hidden bg-[#f4f1e9] lg:bg-[#eef0eb] dark:bg-[#071411] lg:dark:bg-[#0a110e]"
         data-timetable-no-print
       >
-      <div className="mx-auto w-full max-w-[1440px] max-lg:overflow-hidden max-lg:p-0 lg:px-5 lg:py-4">
+      <div className="mx-auto w-full max-w-[1440px] max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5">
         {/* Mobile — full-bleed between header and tab bar */}
         <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
           {hasNoLessons ? (
@@ -358,6 +340,9 @@ const TeacherTimetable = () => {
                   </div>
                 </div>
               </div>
+              <div className="shrink-0 px-3 pt-3">
+                <LessonSwapInbox />
+              </div>
               <div className="min-h-0 flex-1">
                 <TeacherMobileSchedule
                   days={unifiedTimetable.days}
@@ -379,32 +364,17 @@ const TeacherTimetable = () => {
         </div>
 
         {/* Desktop */}
-        <div className="hidden flex-col gap-3 lg:flex">
-          <WeekHeroBar
-            greeting={getGreeting(
-              core.currentTime.getHours(),
-              graphqlData?.teacherName,
-            )}
+        <div className="hidden lg:block">
+          <WeekDesktopView
+            viewType="teacher"
+            timetable={unifiedTimetable}
+            core={core}
+            personName={graphqlData?.teacherName}
             eyebrow={
               selectedTerm?.name
                 ? `Teaching timetable · ${selectedTerm.name}`
                 : "Teaching timetable"
             }
-            subtitle={`${core.formattedDate} · Week of ${weekLayout.weekRangeLabel}`}
-            metrics={[
-              { label: "This week", value: String(stats?.totalLessons ?? 0) },
-              {
-                label: "Contact",
-                value: weekLayout.summary?.contactTimeLabel ?? "—",
-              },
-              {
-                label: "Classes",
-                value: String(weekLayout.summary?.distinctClasses ?? 0),
-              },
-            ]}
-            totalLessons={stats?.totalLessons ?? 0}
-            completedLessons={stats?.completedLessons ?? 0}
-            completedLabel="Taught"
             actions={
               <>
                 <RealtimeLiveIndicator showLabel={false} />
@@ -417,23 +387,10 @@ const TeacherTimetable = () => {
                 ) : null}
               </>
             }
+            emptyState={emptyLessons}
+            showEmptyState={hasNoLessons}
+            onLessonClick={handleLessonClick}
           />
-          <div className="grid grid-cols-[minmax(0,260px)_1fr] items-start gap-3 xl:grid-cols-[minmax(0,280px)_1fr]">
-            <WeekSidebar
-              viewType="teacher"
-              tints={weekLayout.tints}
-              nextLesson={core.nextLesson}
-              currentStatus={core.currentStatus}
-              formattedTime={core.formattedTime}
-              stats={stats}
-              dayDates={weekLayout.dayDates}
-              lessonCounts={weekLayout.lessonCounts}
-              currentDayOfWeek={core.currentDayOfWeek}
-            />
-            <div className="min-w-0">
-              {hasNoLessons ? emptyLessons : scheduleGrid}
-            </div>
-          </div>
         </div>
       </div>
       </div>

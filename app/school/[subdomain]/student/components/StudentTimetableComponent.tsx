@@ -59,7 +59,7 @@ function PageShell({
   return (
     <div
       className={cn(
-        "overflow-x-clip bg-gradient-to-b from-primary/[0.04] via-background to-background lg:bg-none lg:bg-[#f4f1e9] dark:lg:bg-[#071411]",
+        "overflow-x-clip bg-gradient-to-b from-primary/[0.04] via-background to-background lg:bg-none lg:bg-[#eef0eb] dark:lg:bg-[#0a110e]",
         layout === "page"
           ? cn(
               "mb-0 w-full min-w-0 max-w-full",

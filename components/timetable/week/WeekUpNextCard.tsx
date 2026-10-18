@@ -1,86 +1,75 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { MapPin, PartyPopper } from "lucide-react";
-import type { NextLessonInfo } from "@/lib/timetable/types";
+import { PartyPopper } from "lucide-react";
+import type { NextLessonInfo, TimetableSlot } from "@/lib/timetable/types";
+import type { LessonGroups } from "@/lib/timetable/weekView/buildLessonGroups";
+import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 import { useSecondsUntil } from "@/lib/timetable/weekView/useSecondsUntil";
 import { describeNextLessonStart } from "@/lib/timetable/weekView/describeNextLessonStart";
-import { describeLessonCard } from "@/lib/timetable/weekView/describeLessonCard";
-import type { LessonTints } from "@/lib/timetable/weekView/buildLessonTints";
-import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
+import { describeUpNext } from "@/lib/timetable/weekView/describeUpNext";
+import { getClassIdentity } from "@/lib/timetable/weekView/getClassIdentity";
+import { WeekGroupBadge } from "./WeekGroupBadge";
 
-const CARD_SHELL =
-  "relative overflow-hidden rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] dark:border-white/10 dark:bg-[#0c1a17]";
+const LATER_TODAY = "Later today";
+const CARD = "rounded-xl bg-[#111a17] p-4 text-white";
 
 type WeekUpNextCardProps = {
   nextLesson: NextLessonInfo | null;
   viewType: WeekViewerType;
-  tints: LessonTints;
+  lessonGroups: LessonGroups;
+  timeSlots: TimetableSlot[];
 };
 
-export function WeekUpNextCard({ nextLesson, viewType, tints }: WeekUpNextCardProps) {
+function describeCounterpart(next: NextLessonInfo, viewType: WeekViewerType) {
+  const { lesson } = next;
+  if (viewType === "student") {
+    return { label: lesson.teacher.name, badge: lesson.teacher.name.charAt(0).toUpperCase() };
+  }
+  const identity = getClassIdentity(lesson);
+  return { label: identity.fullLabel, badge: identity.badge };
+}
+
+export function WeekUpNextCard({ nextLesson, viewType, lessonGroups, timeSlots }: WeekUpNextCardProps) {
   if (!nextLesson) {
     return (
-      <section className={`${CARD_SHELL} px-4 py-4 text-center`}>
-        <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-[#0a2620] text-[#d9c49a]">
-          <PartyPopper className="h-4 w-4" aria-hidden />
-        </span>
-        <p className="mt-2 font-display text-[17px] text-[#0a1f1a] dark:text-white">All clear</p>
-        <p className="mt-1 text-[12px] text-[#1a4d42]/80 dark:text-white/65">No more lessons this week.</p>
+      <section className={`${CARD} text-center`}>
+        <PartyPopper className="mx-auto h-5 w-5 text-[#8fb6ff]" aria-hidden />
+        <p className="mt-2 text-[18px] font-bold">All clear</p>
+        <p className="mt-0.5 text-[12px] text-white/70">No more lessons this week.</p>
       </section>
     );
   }
 
-  const { lesson } = nextLesson;
-  const { title, detail } = describeLessonCard(lesson, viewType, tints.mode, tints.showSubject);
+  const counterpart = describeCounterpart(nextLesson, viewType);
+  const { timeRange, detail } = describeUpNext(nextLesson, timeSlots);
+  const accent = lessonGroups.groupFor(nextLesson.lesson).accent;
 
   return (
-    <section className={CARD_SHELL} style={{ "--subject": tints.accentFor(lesson) } as CSSProperties}>
-      <div aria-hidden className="h-[2px] bg-gradient-to-r from-[var(--subject)] via-[color-mix(in_srgb,var(--subject)_50%,#c49a52)] to-[#c49a52]" />
-      <div className="px-4 pb-3.5 pt-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7d5a22] dark:text-[#e5cf9f]">
-            Up next
-          </span>
-          <span className="text-[11px] font-semibold text-[#1a4d42] dark:text-white/75">{nextLesson.period}</span>
-        </div>
-        <h3 className="mt-1.5 truncate font-display text-[20px] leading-tight tracking-[-0.025em] text-[#0a1f1a] dark:text-white">
-          {title}
-        </h3>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px]">
-          {detail ? (
-            <span className="rounded-sm bg-[color-mix(in_srgb,var(--subject)_14%,transparent)] px-1.5 py-0.5 font-semibold text-[#0a1f1a] dark:text-white/85">
-              {detail}
-            </span>
-          ) : null}
-          {lesson.room ? (
-            <span className="inline-flex items-center gap-1 font-medium text-[#1a4d42]/85 dark:text-white/70">
-              <MapPin className="h-3 w-3" aria-hidden />
-              Room {lesson.room}
-            </span>
-          ) : null}
-        </div>
-        <StartsPanel startsAt={nextLesson.startsAt} time={nextLesson.time} dayLabel={nextLesson.dayLabel} />
+    <section className={CARD}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8fb6ff]">Up next</span>
+        <StartsPill startsAt={nextLesson.startsAt} time={nextLesson.time} dayLabel={nextLesson.dayLabel} />
+      </div>
+      <h3 className="mt-2 truncate text-[22px] font-bold leading-tight tracking-[-0.01em]">{nextLesson.lesson.subject.name}</h3>
+      <p className="mt-2 flex items-center gap-2 text-[13px] font-semibold">
+        <WeekGroupBadge letter={counterpart.badge} accent={accent} />
+        <span className="truncate">{counterpart.label}</span>
+      </p>
+      <div className="mt-3 border-t border-white/15 pt-3">
+        <p className="text-[30px] font-bold leading-none tabular-nums tracking-[-0.02em]">{timeRange}</p>
+        <p className="mt-1.5 text-[12px] text-white/70">{detail}</p>
       </div>
     </section>
   );
 }
 
-function StartsPanel({ startsAt, time, dayLabel }: { startsAt: string; time: string; dayLabel?: string | null }) {
+function StartsPill({ startsAt, time, dayLabel }: { startsAt: string; time: string; dayLabel?: string | null }) {
   const seconds = useSecondsUntil(startsAt);
   const start = describeNextLessonStart(seconds, time, dayLabel);
+  const label = start.isCountdown ? `In ${start.value}` : (dayLabel ?? LATER_TODAY);
   return (
-    <div className="relative mt-3 flex items-end justify-between gap-3 overflow-hidden rounded-lg bg-[#0a2620] px-3 py-2 text-white">
-      <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_center,rgba(196,154,82,0.35),transparent_65%)]" />
-      <div className="relative">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e5cf9f]">{start.caption}</p>
-        <p className="mt-0.5 font-display text-[21px] leading-none tabular-nums tracking-[-0.02em] text-[#fbf8ef]" role={start.isCountdown ? "timer" : undefined} aria-live="off">
-          {start.value}
-        </p>
-      </div>
-      {start.isCountdown ? (
-        <p className="relative text-[12px] font-semibold tabular-nums text-white/80">{time}</p>
-      ) : null}
-    </div>
+    <span className="rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-semibold tabular-nums" role={start.isCountdown ? "timer" : undefined}>
+      {label}
+    </span>
   );
 }

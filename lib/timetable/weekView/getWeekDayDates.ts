@@ -1,3 +1,5 @@
+import { MONTH_SHORT_NAMES } from "./monthShortNames";
+
 const MS_PER_DAY = 86_400_000;
 const MONDAY = 1;
 
@@ -7,20 +9,6 @@ export type WeekDayDate = {
   monthShort: string;
 };
 
-const MONTH_SHORT_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
 
 /** Calendar dates for each weekday, given the Monday `YYYY-MM-DD` of the week. */
 export function getWeekDayDates(

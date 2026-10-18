@@ -1,7 +1,6 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 type WeekHeroButtonProps = {
   icon: LucideIcon;
@@ -11,15 +10,13 @@ type WeekHeroButtonProps = {
 
 export function WeekHeroButton({ icon: Icon, label, onClick }: WeekHeroButtonProps) {
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="sm"
-      className="h-8 gap-1.5 rounded-md border border-white/15 bg-white/[0.06] px-3 text-[11px] font-medium text-white/80 hover:bg-white/12 hover:text-white"
       onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-full border border-[#dfe3dd] bg-white px-4 py-2 text-[13px] font-semibold text-[#111a16] transition-colors hover:bg-[#f4f6f3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111a17] dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
     >
-      <Icon className="h-3.5 w-3.5" aria-hidden />
+      <Icon className="h-4 w-4" aria-hidden />
       {label}
-    </Button>
+    </button>
   );
 }

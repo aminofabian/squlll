@@ -42,6 +42,7 @@ import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { TimetableJourney } from "./components/TimetableJourney";
 import { TimetableAutoBuildBanner } from "./components/TimetableAutoBuildBanner";
+import { LessonSwapInbox } from "@/components/timetable/LessonSwapInbox";
 import { TimetableClassStepper } from "./components/TimetableClassStepper";
 import { TimetableClassWeekPanel } from "./components/TimetableClassWeekPanel";
 import { TimetableWeekProgress } from "./components/TimetableWeekProgress";
@@ -3307,6 +3308,10 @@ export default function SmartTimetableNew() {
                   </div>
                 </div>
               ) : null}
+
+            <div data-timetable-no-print className="shrink-0 px-3 pt-3 lg:px-4">
+              <LessonSwapInbox admin />
+            </div>
 
             {(hasScheduleStructure || shouldLoadTimetableBundle) && (
               <section

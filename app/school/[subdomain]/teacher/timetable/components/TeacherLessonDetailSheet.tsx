@@ -3,6 +3,7 @@
 import React from "react";
 import {
   BookOpen,
+  ArrowLeftRight,
   CheckCircle2,
   Clock,
   MapPin,
@@ -39,6 +40,7 @@ export type TeacherLessonDetailSheetProps = {
   onOpenChange: (open: boolean) => void;
   isCompleted?: boolean;
   onToggleComplete?: (lessonId: string) => void;
+  onRequestSwap?: (selection: TeacherLessonSelection) => void;
 };
 
 function formatClassLabel(lesson: TimetableLesson): string {
@@ -59,6 +61,7 @@ export function TeacherLessonDetailSheet({
   onOpenChange,
   isCompleted = false,
   onToggleComplete,
+  onRequestSwap,
 }: TeacherLessonDetailSheetProps) {
   const lesson = selection?.lesson;
   const dayOfWeek = selection?.dayOfWeek;
@@ -187,8 +190,20 @@ export function TeacherLessonDetailSheet({
               )}
             </div>
 
-            {onToggleComplete ? (
-              <div className="border-t border-slate-100 p-3 dark:border-slate-800">
+            {onRequestSwap || onToggleComplete ? (
+              <div className="grid gap-2 border-t border-slate-100 p-3 dark:border-slate-800 sm:grid-cols-2">
+                {onRequestSwap && selection ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-none border-[#1a4d42]/15 text-[13px] font-semibold shadow-none"
+                    onClick={() => onRequestSwap(selection)}
+                  >
+                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                    Request swap
+                  </Button>
+                ) : null}
+                {onToggleComplete ? (
                 <Button
                   type="button"
                   variant={isCompleted ? "outline" : "default"}
@@ -209,6 +224,7 @@ export function TeacherLessonDetailSheet({
                     "Mark as taught"
                   )}
                 </Button>
+                ) : null}
               </div>
             ) : null}
           </>

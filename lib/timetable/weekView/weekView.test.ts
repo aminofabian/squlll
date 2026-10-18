@@ -7,7 +7,7 @@ import type {
   TimetableSlot,
 } from "@/lib/timetable/types";
 import { buildWeekRows } from "./buildWeekRows";
-import { countLessonsPerDay } from "./countLessonsPerDay";
+import { countPeriodsPerDay } from "./countPeriodsPerDay";
 import { getWeekDayDates } from "./getWeekDayDates";
 import { formatWeekRangeLabel } from "./formatWeekRangeLabel";
 import { summarizeWeekSchedule } from "./summarizeWeekSchedule";
@@ -15,8 +15,12 @@ import { getGreeting } from "./getGreeting";
 import { formatStartsIn } from "./formatStartsIn";
 import { getLessonCardState } from "./getLessonCardState";
 import { describeLiveStatus } from "./describeLiveStatus";
-import { getClassLabel, getLessonCounterpartLabel } from "./getLessonCounterpartLabel";
-import { buildLessonTints } from "./buildLessonTints";
+import { getClassIdentity } from "./getClassIdentity";
+import { buildLessonGroups } from "./buildLessonGroups";
+import { getDisplayWeek } from "./getDisplayWeek";
+import { findBusiestDay } from "./findBusiestDay";
+import { formatTimeRange } from "./formatTimeRange";
+import { describeUpNext } from "./describeUpNext";
 import { describeLessonCard } from "./describeLessonCard";
 import { describeNextLessonStart } from "./describeNextLessonStart";
 
@@ -133,8 +137,8 @@ describe("buildWeekRows", () => {
   });
 });
 
-describe("countLessonsPerDay", () => {
-  it("counts a merged double period as one lesson", () => {
+describe("countPeriodsPerDay", () => {
+  it("counts a merged double period as two periods", () => {
     const first = lesson({ isDoublePeriod: true });
     const second = lesson({ isDoublePeriod: true, isDoubleContinuation: true });
     const rows = buildWeekRows({
@@ -143,7 +147,15 @@ describe("countLessonsPerDay", () => {
       breaks: [],
       dayNumbers: [1, 2],
     });
-    expect(countLessonsPerDay(rows, [1, 2])).toEqual({ 1: 2, 2: 0 });
+    expect(countPeriodsPerDay(rows, [1, 2])).toEqual({ 1: 3, 2: 0 });
+  });
+});
+
+describe("findBusiestDay", () => {
+  it("names a single leader and ignores ties or empty weeks", () => {
+    expect(findBusiestDay({ 1: 3, 2: 6, 3: 3 })).toBe(2);
+    expect(findBusiestDay({ 1: 3, 2: 3 })).toBeNull();
+    expect(findBusiestDay({ 1: 0, 2: 0 })).toBeNull();
   });
 });
 
@@ -225,6 +237,12 @@ describe("describeLiveStatus", () => {
     });
   });
 
+  it("names the class without repeating its stream", () => {
+    const grade = { id: "g10", name: "Grade 10", displayName: "Grade 10 · A", level: 10 };
+    const result = describeLiveStatus({ ...base, lesson: lesson({ grade, stream: "A" }) }, "teacher");
+    expect(result.detail).toBe("Grade 10A · Room 4B · 12 min left");
+  });
+
   it("shows the teacher's name to students", () => {
     const result = describeLiveStatus({ ...base, lesson: lesson() }, "student");
     expect(result).toMatchObject({
@@ -239,55 +257,99 @@ describe("describeLiveStatus", () => {
   });
 });
 
-describe("getLessonCounterpartLabel", () => {
-  it("shows the class to teachers and the teacher to students", () => {
-    const item = lesson({ stream: "East" });
-    expect(getLessonCounterpartLabel(item, "teacher")).toBe("Grade 7 · East");
-    expect(getLessonCounterpartLabel(item, "student")).toBe("Jane Doe");
+describe("getClassIdentity", () => {
+  const grade10 = { id: "g10", name: "Grade 10", displayName: "Grade 10 · A", level: 10 };
+
+  it("names a class without repeating its stream", () => {
+    expect(getClassIdentity(lesson({ grade: grade10, stream: "A" }))).toMatchObject({
+      fullLabel: "Grade 10A",
+      shortLabel: "10A",
+      badge: "A",
+    });
+  });
+
+  it("strips a stream already baked into the grade name", () => {
+    const baked = { ...grade10, name: "Grade 10 · A" };
+    expect(getClassIdentity(lesson({ grade: baked, stream: "A" })).fullLabel).toBe("Grade 10A");
+  });
+
+  it("spaces out long stream names and copes without a stream", () => {
+    expect(getClassIdentity(lesson({ stream: "East" }))).toMatchObject({ fullLabel: "Grade 7 East", shortLabel: "7 East", badge: "E" });
+    expect(getClassIdentity(lesson({ stream: undefined }))).toMatchObject({ fullLabel: "Grade 7", shortLabel: "7", badge: "7" });
   });
 });
 
-describe("getClassLabel", () => {
-  const grade = { id: "g10", name: "Grade 10", displayName: "Grade 10 · A", level: 10 };
+describe("buildLessonGroups", () => {
+  const classB = { id: "g7", name: "Grade 7", displayName: "Grade 7", level: 7 };
+  const oneSubjectTwoClasses = [
+    day(1, [lesson({ id: "a", stream: "A" }), lesson({ id: "b", grade: classB, stream: "B" }), lesson({ id: "c", stream: "A" })]),
+  ];
 
-  it("does not repeat a stream the grade label already ends with", () => {
-    expect(getClassLabel(lesson({ grade, stream: "A" }))).toBe("Grade 10 · A");
+  it("groups a single-subject teacher by class with totals and distinct colours", () => {
+    const { mode, groups } = buildLessonGroups(oneSubjectTwoClasses, SLOTS, "teacher");
+    expect(mode).toBe("class");
+    expect(groups.map((g) => [g.label, g.periods, g.minutes])).toEqual([
+      ["Grade 7A", 2, 80],
+      ["Grade 7B", 1, 40],
+    ]);
+    expect(groups[0].accent).not.toBe(groups[1].accent);
   });
 
-  it("appends the stream when it is missing", () => {
-    expect(getClassLabel(lesson({ stream: "A" }))).toBe("Grade 7 · A");
-    expect(getClassLabel(lesson({ stream: undefined }))).toBe("Grade 7");
-  });
-});
-
-describe("buildLessonTints", () => {
-  const classB = { id: "g7b", name: "Grade 7", displayName: "Grade 7", level: 7 };
-  const oneSubjectTwoClasses = [day(1, [lesson({ id: "a" }), lesson({ id: "b", grade: classB, stream: "B" })])];
-
-  it("tints by class for a single-subject teacher and hides the repeated subject", () => {
-    const tints = buildLessonTints(oneSubjectTwoClasses, "teacher");
-    const [first, second] = oneSubjectTwoClasses[0].cells.map((c) => c!.lesson!);
-    expect(tints.mode).toBe("class");
-    expect(tints.showSubject).toBe(false);
-    expect(tints.accentFor(first)).not.toBe(tints.accentFor(second));
-  });
-
-  it("always tints by subject for students", () => {
-    expect(buildLessonTints(oneSubjectTwoClasses, "student").mode).toBe("subject");
+  it("always groups by subject for students", () => {
+    const { mode, groups } = buildLessonGroups(oneSubjectTwoClasses, SLOTS, "student");
+    expect(mode).toBe("subject");
+    expect(groups).toHaveLength(1);
   });
 });
 
 describe("describeLessonCard", () => {
-  const item = lesson({ stream: "East" });
+  const item = lesson({ stream: "A" });
+  const classGroups = buildLessonGroups([day(1, [item, lesson({ id: "b", stream: "B" })])], SLOTS, "teacher");
 
-  it("leads with the class when tinting by class", () => {
-    expect(describeLessonCard(item, "teacher", "class", false)).toEqual({ title: "Grade 7 · East", detail: "" });
-    expect(describeLessonCard(item, "teacher", "class", true)).toEqual({ title: "Grade 7 · East", detail: "Mathematics" });
+  it("leads with the short class name when grouped by class", () => {
+    expect(describeLessonCard(item, "teacher", "class", classGroups.groupFor(item))).toEqual({ title: "7A", detail: "Mathematics" });
   });
 
   it("leads with the subject otherwise", () => {
-    expect(describeLessonCard(item, "teacher", "subject", true)).toEqual({ title: "Mathematics", detail: "Grade 7 · East" });
-    expect(describeLessonCard(item, "student", "subject", true)).toEqual({ title: "Mathematics", detail: "Jane Doe" });
+    const group = classGroups.groupFor(item);
+    expect(describeLessonCard(item, "teacher", "subject", group)).toEqual({ title: "Mathematics", detail: "7A" });
+    expect(describeLessonCard(item, "student", "subject", group)).toEqual({ title: "Mathematics", detail: "Jane Doe" });
+  });
+});
+
+describe("getDisplayWeek", () => {
+  it("shows the current week on weekdays with today highlighted", () => {
+    expect(getDisplayWeek("2026-10-21")).toEqual({
+      weekStartYmd: "2026-10-19", focusDayOfWeek: 3, focusLabel: "Today", isUpcomingWeek: false,
+    });
+  });
+
+  it("previews the coming week at the weekend", () => {
+    expect(getDisplayWeek("2026-10-18")).toMatchObject({ weekStartYmd: "2026-10-19", focusDayOfWeek: 1, focusLabel: "Tomorrow", isUpcomingWeek: true });
+    expect(getDisplayWeek("2026-10-17")).toMatchObject({ weekStartYmd: "2026-10-19", focusLabel: "Up next" });
+  });
+});
+
+describe("formatTimeRange", () => {
+  it("drops leading zeros", () => {
+    expect(formatTimeRange("08:00", "08:40")).toBe("8:00–8:40");
+    expect(formatTimeRange("11:25", "12:05", " – ")).toBe("11:25 – 12:05");
+  });
+});
+
+describe("describeUpNext", () => {
+  it("reads the time from the slot and builds a date line", () => {
+    const next = {
+      lesson: lesson({ periodNumber: 2 }),
+      startsAt: "2026-10-19T05:40:00.000Z",
+      startsInMinutes: 0,
+      startsInFormatted: "",
+      time: "8:40 AM – 9:20 AM",
+      period: "Period 2",
+      isNextDay: true,
+      dayLabel: "Tomorrow",
+    };
+    expect(describeUpNext(next, SLOTS)).toEqual({ timeRange: "8:40 – 9:20", detail: "Mon 19 Oct · Period 2 · 40 min" });
   });
 });
 

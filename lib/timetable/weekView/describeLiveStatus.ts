@@ -1,5 +1,6 @@
 import type { CurrentLessonStatus } from "@/lib/timetable/types";
 import type { WeekViewerType } from "./weekViewerType";
+import { getClassIdentity } from "./getClassIdentity";
 
 export type LiveStatusTone = "live" | "break" | "calm";
 
@@ -24,10 +25,11 @@ function describeLesson(
   viewType: WeekViewerType,
 ): LiveStatusDescription {
   const lesson = status.lesson;
-  const who =
-    viewType === "teacher"
-      ? lesson?.grade.displayName || lesson?.grade.name
-      : lesson?.teacher.name;
+  const who = !lesson
+    ? undefined
+    : viewType === "teacher"
+      ? getClassIdentity(lesson).fullLabel
+      : lesson.teacher.name;
   const classLabel = [who, lesson?.room && `Room ${lesson.room}`]
     .filter(Boolean)
     .join(" · ");

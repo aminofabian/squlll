@@ -1,23 +1,24 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { WEEK_CARD_CLASS } from "./weekCardClass";
 import { TimetableGridSkeleton } from "@/app/school/[subdomain]/(pages)/timetable/components/TimetableGridSkeleton";
 
-const HERO_METRIC_COUNT = 4;
+const HERO_METRIC_COUNT = 3;
 const RHYTHM_DAY_COUNT = 5;
-const CARD =
-  "rounded-xl border border-[#1a4d42]/10 bg-[#fffdf8] dark:border-white/10 dark:bg-[#0c1a17]";
+const CARD = WEEK_CARD_CLASS;
 
 function HeroSkeleton() {
   return (
-    <div className="flex items-center gap-6 rounded-xl bg-[#0a2620] px-5 py-3">
-      <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-2.5 w-32 bg-white/10" />
-        <Skeleton className="h-6 w-72 max-w-full bg-white/10" />
+    <div className="flex items-end justify-between gap-6">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-40" />
+        <Skeleton className="h-8 w-80 max-w-full" />
+        <Skeleton className="h-3.5 w-64" />
       </div>
-      <div className="hidden gap-6 xl:flex">
+      <div className={`${CARD} flex gap-6 px-4 py-2.5`}>
         {Array.from({ length: HERO_METRIC_COUNT }).map((_, i) => (
-          <Skeleton key={i} className="h-8 w-14 bg-white/10" />
+          <Skeleton key={i} className="h-9 w-14" />
         ))}
       </div>
     </div>
@@ -27,11 +28,11 @@ function HeroSkeleton() {
 function SidebarSkeleton() {
   return (
     <div className="space-y-3">
-      <div className={`${CARD} p-4`}>
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="mt-3 h-7 w-3/4" />
-        <Skeleton className="mt-3 h-4 w-1/2" />
-        <Skeleton className="mt-3 h-12 w-full rounded-lg" />
+      <div className="rounded-xl bg-[#111a17] p-4">
+        <Skeleton className="h-3 w-16 bg-white/10" />
+        <Skeleton className="mt-3 h-7 w-3/4 bg-white/10" />
+        <Skeleton className="mt-3 h-4 w-1/2 bg-white/10" />
+        <Skeleton className="mt-4 h-8 w-2/3 bg-white/10" />
       </div>
       <div className={`${CARD} p-4`}>
         <Skeleton className="mb-3 h-3 w-20" />
@@ -48,12 +49,12 @@ function SidebarSkeleton() {
 /** Loading placeholder matching the desktop week view (hero bar, sidebar, grid). */
 export function WeekDesktopSkeleton() {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <HeroSkeleton />
-      <div className="grid grid-cols-[minmax(0,260px)_1fr] items-start gap-3 xl:grid-cols-[minmax(0,280px)_1fr]">
+      <div className="grid grid-cols-[minmax(0,250px)_1fr] items-start gap-4 xl:grid-cols-[minmax(0,270px)_1fr]">
         <SidebarSkeleton />
         <section className={`min-w-0 overflow-hidden ${CARD}`}>
-          <div className="border-b border-[#1a4d42]/8 px-4 py-2.5 dark:border-white/8">
+          <div className="px-4 py-3.5">
             <Skeleton className="h-5 w-56" />
           </div>
           <TimetableGridSkeleton className="rounded-none border-0 bg-transparent" />

@@ -1,55 +1,55 @@
 "use client";
 
-import type { TimetableStats } from "@/lib/timetable";
-import type { CurrentLessonStatus, LessonStatus, NextLessonInfo } from "@/lib/timetable/types";
-import type { LessonTints } from "@/lib/timetable/weekView/buildLessonTints";
+import type { CurrentLessonStatus, LessonStatus, NextLessonInfo, TimetableSlot } from "@/lib/timetable/types";
+import type { LessonGroups } from "@/lib/timetable/weekView/buildLessonGroups";
 import type { WeekDayDate } from "@/lib/timetable/weekView/getWeekDayDates";
 import type { WeekViewerType } from "@/lib/timetable/weekView/weekViewerType";
 import { WeekUpNextCard } from "./WeekUpNextCard";
 import { WeekLiveStatusCard } from "./WeekLiveStatusCard";
-import { WeekRhythmCard } from "./WeekRhythmCard";
-import { WeekSubjectMixCard } from "./WeekSubjectMixCard";
+import { WeekPeriodsPerDayCard } from "./WeekPeriodsPerDayCard";
+import { WeekGroupsCard } from "./WeekGroupsCard";
 
 const SCHOOL_CLOSED_STATUSES: LessonStatus[] = ["weekend", "outside"];
-const MIN_SUBJECTS_FOR_MIX = 2;
+const MIN_GROUPS_TO_FOCUS = 2;
 
 type WeekSidebarProps = {
   viewType: WeekViewerType;
-  tints: LessonTints;
   nextLesson: NextLessonInfo | null;
   currentStatus: CurrentLessonStatus;
   formattedTime: string;
-  stats: TimetableStats | undefined;
+  timeSlots: TimetableSlot[];
+  lessonGroups: LessonGroups;
   dayDates: WeekDayDate[];
-  lessonCounts: Record<number, number>;
-  currentDayOfWeek: number | null;
+  periodCounts: Record<number, number>;
+  busiestDay: number | null;
+  focusedGroupKey: string | null;
+  onToggleGroup: (key: string) => void;
+  onClearGroup: () => void;
 };
 
-export function WeekSidebar({
-  viewType,
-  tints,
-  nextLesson,
-  currentStatus,
-  formattedTime,
-  stats,
-  dayDates,
-  lessonCounts,
-  currentDayOfWeek,
-}: WeekSidebarProps) {
-  const hasLessons = (stats?.totalLessons ?? 0) > 0;
-  const subjectCount = Object.keys(stats?.subjectDistribution ?? {}).length;
+export function WeekSidebar(props: WeekSidebarProps) {
+  const { viewType, currentStatus, lessonGroups } = props;
   const isSchoolOpen = !SCHOOL_CLOSED_STATUSES.includes(currentStatus.status);
+  const hasLessons = lessonGroups.groups.length > 0;
 
   return (
     <aside className="sticky top-4 z-0 space-y-3">
-      <WeekUpNextCard nextLesson={nextLesson} viewType={viewType} tints={tints} />
+      <WeekUpNextCard nextLesson={props.nextLesson} viewType={viewType} lessonGroups={lessonGroups} timeSlots={props.timeSlots} />
       {isSchoolOpen ? (
-        <WeekLiveStatusCard status={currentStatus} formattedTime={formattedTime} viewType={viewType} />
+        <WeekLiveStatusCard status={currentStatus} formattedTime={props.formattedTime} viewType={viewType} />
       ) : null}
       {hasLessons ? (
-        <WeekRhythmCard dayDates={dayDates} lessonCounts={lessonCounts} currentDayOfWeek={currentDayOfWeek} />
+        <WeekPeriodsPerDayCard dayDates={props.dayDates} periodCounts={props.periodCounts} busiestDay={props.busiestDay} />
       ) : null}
-      {stats && subjectCount >= MIN_SUBJECTS_FOR_MIX ? <WeekSubjectMixCard subjectDistribution={stats.subjectDistribution} /> : null}
+      {lessonGroups.groups.length >= MIN_GROUPS_TO_FOCUS ? (
+        <WeekGroupsCard
+          mode={lessonGroups.mode}
+          groups={lessonGroups.groups}
+          focusedKey={props.focusedGroupKey}
+          onToggle={props.onToggleGroup}
+          onClear={props.onClearGroup}
+        />
+      ) : null}
     </aside>
   );
 }
