@@ -19,6 +19,7 @@ import {
   Search,
   LayoutGrid,
   Users2,
+  CalendarClock,
   CreditCard,
   FileCheck,
   Clock,
@@ -26,7 +27,6 @@ import {
   Radio,
   ClipboardList,
   NotebookPen,
-  CalendarClock,
   Smartphone,
   Monitor,
   Star,
@@ -34,10 +34,8 @@ import {
   Shield,
   Building2,
   CircleHelp,
-  Mail,
-  MapPin,
-  Phone,
   ArrowRight,
+  ArrowUpRight,
   Globe,
   ShieldCheck,
   type LucideIcon,
@@ -328,18 +326,34 @@ const LANDING_FAQ_ITEMS: {
   answer: item.answer,
 }))
 
-const LANDING_FOOTER_PRODUCT_LINKS: { label: string; href: string }[] = [
-  { label: "M-Pesa & fee balances", href: "/register" },
-  { label: "Admissions & records", href: "/register" },
-  { label: "CBC & report cards", href: "/register" },
-  { label: "Custom domains", href: "/custom-domains" },
+const LANDING_FOOTER_PERIODS: { time: string; label: string; href: string }[] = [
+  { time: "07:30", label: "Admissions & records", href: "/register" },
+  { time: "09:10", label: "Fees & M-Pesa", href: "/register" },
+  { time: "11:00", label: "CBC & report cards", href: "/register" },
+  { time: "13:30", label: "Timetables & attendance", href: "/register" },
+  { time: "15:00", label: "Parent SMS", href: "/register" },
+  { time: "16:00", label: "Custom domains", href: "/custom-domains" },
 ]
 
-const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
-  { label: "Schools on Squl", href: "/schools" },
-  { label: "Start free term", href: "/register" },
-  { label: "Sign in", href: "/login" },
-]
+function SchoolBell({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M12 3v1.8" />
+      <path d="M7.2 17h9.6l-1.6-2.8V9.7a3.2 3.2 0 0 0-6.4 0v4.5L7.2 17Z" />
+      <path d="M5.8 17h12.4" />
+      <path d="M9.8 19a2.2 2.2 0 0 0 4.4 0" />
+    </svg>
+  )
+}
 
 /**
  * Public download for the SQUL mobile app (Android APK).
@@ -2341,164 +2355,182 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="relative overflow-hidden border-t border-emerald-900/25 bg-[#0a1f1a] text-white">
+        {/* Footer — the end-of-day timetable */}
+        <footer className="relative overflow-hidden border-t border-white/10 bg-[#0a1f1a] text-[#f7f6f2]">
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#1d5547]/12 via-transparent to-[#1d5547]/8"
+            className="pointer-events-none absolute inset-0 opacity-40"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgba(247,246,242,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,246,242,0.045) 1px, transparent 1px)",
+              backgroundSize: "72px 36px",
+            }}
             aria-hidden
           />
+          <div className="pointer-events-none absolute -top-40 left-[15%] h-80 w-80 rounded-full bg-[#246a59]/20 blur-[120px]" aria-hidden />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0a1f1a] to-transparent" aria-hidden />
+
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-12 py-16 sm:py-20 lg:grid-cols-12 lg:gap-10">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 py-5">
+              <div className="flex items-center gap-2.5 font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200/80">
+                <SchoolBell className="h-4 w-4" />
+                End of day · 4:00 PM
+              </div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
+                <span>Nairobi · 1°17′S 36°49′E</span>
+                <span>Term 1 / 2026</span>
+              </div>
+            </div>
+
+            <div className="grid gap-14 py-14 lg:grid-cols-12 lg:gap-12 lg:py-20">
               <div className="lg:col-span-5">
-                <Link href="/" className="inline-flex items-center gap-3 transition-opacity hover:opacity-90">
-                  <div className="flex h-10 w-10 items-center justify-center border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
-                    <GraduationCap size={20} className="text-white" aria-hidden />
-                  </div>
-                  <span className="font-display text-2xl tracking-wide text-white">SQUL</span>
-                </Link>
-                <p className="mt-5 max-w-md text-sm leading-relaxed text-white/70 sm:text-base">
-                  School management built for Kenyan classrooms—M-Pesa fees, CBC marks, admissions, and the day-to-day work bursars and principals already run.
+                <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+                  The gate is open
                 </p>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300/90">
-                  90-day trial · No card required
+                <h2 className="mt-5 text-balance font-display text-[clamp(2.5rem,6vw,5.25rem)] leading-[0.92] tracking-[-0.03em] text-[#f7f6f2]">
+                  School’s out.
+                  <span className="mt-2 block text-balance italic text-emerald-200">
+                    The next term starts here.
+                  </span>
+                </h2>
+                <p className="mt-6 max-w-md text-sm leading-relaxed text-white/65 sm:text-base">
+                  One system for admissions, M-Pesa fees, CBC marks and parent SMS — built in Nairobi for Kenyan schools.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="rounded-lg h-11 w-full border-0 bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#2d8570] sm:w-auto"
+                      className="h-12 w-full rounded-xl border-0 bg-[#f7f6f2] px-7 font-semibold text-[#14201c] shadow-lg shadow-black/20 hover:bg-white sm:w-auto"
                     >
-                      Start free term
+                      Start your free term
                     </Button>
                   </Link>
                   <Link href="/login" className="w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="lg"
-                      className="rounded-lg h-11 w-full border-white/25 bg-transparent px-6 font-semibold text-white hover:bg-white/10 sm:w-auto"
+                      className="h-12 w-full rounded-xl border-white/25 bg-transparent px-7 font-semibold text-white hover:bg-white/10 sm:w-auto"
                     >
                       Sign in
                     </Button>
                   </Link>
                 </div>
+                <p className="mt-5 font-ui text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                  90-day free trial · No credit card
+                </p>
               </div>
 
-              <div className="grid gap-10 sm:grid-cols-3 lg:col-span-7">
-                <div>
-                  <h3 className="font-ui text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300/90">
-                    On the platform
-                  </h3>
-                  <ul className="mt-5 space-y-3">
-                    {LANDING_FOOTER_PRODUCT_LINKS.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          href={link.href}
-                          className="text-sm text-white/65 transition-colors hover:text-emerald-200"
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <div className="lg:col-span-7">
+                <div className="relative rounded-2xl bg-[#f7f6f2] p-5 text-[#14201c] shadow-[0_40px_90px_-50px_rgba(0,0,0,0.85)] sm:p-7">
+                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#14201c]/10 pb-4">
+                    <div>
+                      <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1d5547]">
+                        The week, in links
+                      </p>
+                      <p className="mt-1 font-display text-2xl leading-tight tracking-tight">
+                        Six periods. One system.
+                      </p>
+                    </div>
+                    <div className="text-right font-mono text-[10px] uppercase leading-relaxed tracking-[0.1em] text-[#14201c]/40">
+                      <p>Periods 01—06</p>
+                      <p>07:30 — 16:00</p>
+                    </div>
+                  </div>
 
-                <div>
-                  <h3 className="font-ui text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300/90">
-                    For your school
-                  </h3>
-                  <ul className="mt-5 space-y-3">
-                    {LANDING_FOOTER_SCHOOL_LINKS.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          href={link.href}
-                          className="text-sm text-white/65 transition-colors hover:text-emerald-200"
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
+                  <div className="divide-y divide-[#14201c]/10">
+                    {LANDING_FOOTER_PERIODS.map((period, index) => (
+                      <Link
+                        key={period.label}
+                        href={period.href}
+                        className="group grid grid-cols-[3.3rem_1.2rem_1fr_auto] items-center gap-3 py-3.5 transition-colors hover:bg-[#14201c]/[0.035]"
+                      >
+                        <span className="font-mono text-[10px] tabular-nums text-[#14201c]/40">
+                          {period.time}
+                        </span>
+                        <span className="font-mono text-[9px] tabular-nums text-[#14201c]/25">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="font-display text-lg leading-snug tracking-tight text-[#14201c] transition-colors group-hover:text-[#1d5547] sm:text-xl">
+                          {period.label}
+                        </span>
+                        <ArrowUpRight
+                          className="h-4 w-4 text-[#1d5547]/35 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#1d5547]"
+                          aria-hidden
+                        />
+                      </Link>
                     ))}
-                    <li>
-                      <a
-                        href={LANDING_APP_DOWNLOAD_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 text-sm text-white/65 transition-colors hover:text-emerald-200"
-                      >
-                        <Smartphone size={15} className="text-emerald-300/90" aria-hidden />
-                        Download the app
-                      </a>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        onClick={() => setWalkthroughOpen(true)}
-                        className="inline-flex items-center gap-2 text-sm text-white/65 transition-colors hover:text-emerald-200"
-                      >
-                        <CalendarClock size={15} className="text-emerald-300/90" aria-hidden />
-                        Book a walkthrough
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+                  </div>
 
-                <div>
-                  <h3 className="font-ui text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300/90">
-                    Talk to us
-                  </h3>
-                  <ul className="mt-5 space-y-4">
-                    <li>
-                      <a
-                        href={`mailto:${LEGAL_META.contactEmail}`}
-                        className="flex items-start gap-3 text-sm text-white/65 transition-colors hover:text-emerald-200"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
-                          <Mail size={16} className="text-emerald-300/90" aria-hidden />
-                        </span>
-                        <span className="pt-1.5">{LEGAL_META.contactEmail}</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href={`tel:${LEGAL_META.contactPhoneHref}`}
-                        className="flex items-start gap-3 text-sm text-white/65 transition-colors hover:text-emerald-200"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
-                          <Phone size={16} className="text-emerald-300/90" aria-hidden />
-                        </span>
-                        <span className="pt-1.5">{LEGAL_META.contactPhone}</span>
-                      </a>
-                    </li>
-                    <li className="flex items-start gap-3 text-sm text-white/65">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
-                        <MapPin size={16} className="text-emerald-300/90" aria-hidden />
-                      </span>
-                      <span className="pt-1.5 leading-relaxed">
-                        {LEGAL_META.postalAddress}
-                        <span className="block text-white/45">Support for schools nationwide</span>
-                      </span>
-                    </li>
-                  </ul>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#14201c]/10 pt-4 font-ui text-[11px] font-medium text-[#14201c]/55">
+                    <Link href="/schools" className="transition-colors hover:text-[#1d5547]">
+                      Schools on SQUL
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setWalkthroughOpen(true)}
+                      className="transition-colors hover:text-[#1d5547]"
+                    >
+                      Book a walkthrough
+                    </button>
+                    <a
+                      href={LANDING_APP_DOWNLOAD_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="transition-colors hover:text-[#1d5547]"
+                    >
+                      Download the app
+                    </a>
+                    <Link href="/login" className="transition-colors hover:text-[#1d5547]">
+                      Sign in
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 py-8 sm:flex-row">
-              <p className="text-center text-sm text-white/50 sm:text-left">
-                © {new Date().getFullYear()} SQUL. All rights reserved.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-                {[
-                  { text: "Privacy", href: "/privacy" },
-                  { text: "Terms", href: "/terms" },
-                ].map(({ text, href }) => (
-                  <Link
-                    key={text}
-                    href={href}
-                    className="text-white/50 transition-colors hover:text-emerald-200"
+            <div className="grid gap-8 border-t border-white/10 py-8 lg:grid-cols-12 lg:gap-8">
+              <div className="lg:col-span-4">
+                <Link href="/" className="inline-flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
+                    <GraduationCap size={16} className="text-white" aria-hidden />
+                  </span>
+                  <span className="font-display text-xl tracking-wide text-white">SQUL</span>
+                </Link>
+                <p className="mt-3 max-w-xs text-xs leading-relaxed text-white/40">
+                  School operations, connected. Built in Nairobi for Kenyan classrooms.
+                </p>
+              </div>
+              <div className="lg:col-span-4">
+                <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300/70">
+                  Talk to us
+                </p>
+                <div className="mt-3 flex flex-col gap-1.5 text-xs text-white/45">
+                  <a
+                    href={`mailto:${LEGAL_META.contactEmail}`}
+                    className="transition-colors hover:text-emerald-200"
                   >
-                    {text}
+                    {LEGAL_META.contactEmail}
+                  </a>
+                  <a
+                    href={`tel:${LEGAL_META.contactPhoneHref}`}
+                    className="transition-colors hover:text-emerald-200"
+                  >
+                    {LEGAL_META.contactPhone}
+                  </a>
+                  <span>{LEGAL_META.postalAddress}</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 lg:col-span-4 lg:items-end">
+                <div className="flex gap-5 text-xs text-white/45">
+                  <Link href="/privacy" className="transition-colors hover:text-emerald-200">
+                    Privacy
                   </Link>
-                ))}
+                  <Link href="/terms" className="transition-colors hover:text-emerald-200">
+                    Terms
+                  </Link>
+                </div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/30">
+                  © {new Date().getFullYear()} SQUL · All rights reserved
+                </p>
               </div>
             </div>
           </div>
