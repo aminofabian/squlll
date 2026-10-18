@@ -25,6 +25,7 @@ import { DashboardSection } from "./components/DashboardSection";
 import { OwnerPaymentsDrawer } from "./components/OwnerPaymentsDrawer";
 import { ClassesContextBar } from "../classes/components/ClassesContextBar";
 import { GradeDetailsView } from "../classes/components/GradeDetailsView";
+import { GradeInsights } from "./components/GradeInsights";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { readIsSchoolOwner } from "@/lib/school/isSchoolOwner";
 import { cn } from "@/lib/utils";
@@ -289,6 +290,20 @@ export default function SchoolDashboard() {
                           selectedGradeInfo.level.id,
                         )
                       }
+                    />
+                    <GradeInsights
+                      grade={selectedGradeInfo.grade}
+                      levelName={selectedGradeInfo.level.name}
+                      displayName={selectedGradeInfo.displayName}
+                      selectedStreamId={selectedStreamId}
+                      onStreamSelect={(streamId) =>
+                        handleStreamSelect(
+                          streamId,
+                          selectedGradeInfo.grade.id,
+                          selectedGradeInfo.level.id,
+                        )
+                      }
+                      students={students}
                     />
                   </div>
                 )
