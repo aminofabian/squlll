@@ -138,7 +138,7 @@ export function TeacherLessonDetailSheet({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "relative gap-0 overflow-hidden border-0 bg-white p-0 shadow-none dark:bg-slate-950",
+          "fixed gap-0 overflow-hidden border-0 bg-white p-0 shadow-none dark:bg-slate-950",
           "max-h-[min(88dvh,640px)] overflow-y-auto",
           "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-auto max-lg:max-w-full max-lg:translate-x-0 max-lg:translate-y-0 max-lg:rounded-none max-lg:border-t max-lg:border-slate-100 max-lg:pb-[env(safe-area-inset-bottom)] dark:max-lg:border-slate-800",
           "max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom max-lg:data-[state=open]:zoom-in-100 max-lg:data-[state=closed]:zoom-out-100",
