@@ -33,7 +33,7 @@ export function TeacherTimetableSidebar({
   isWeekend,
 }: TeacherTimetableSidebarProps) {
   return (
-    <aside className="sticky top-4 z-0 space-y-3">
+    <aside className="sticky top-4 z-0 space-y-3.5">
       <NextLessonPreview nextLesson={nextLesson} viewType="teacher" dense />
 
       {showLiveBanner ? (
@@ -82,19 +82,21 @@ function WeekAtAGlance({
   };
 
   return (
-    <div className="rounded-lg border border-slate-200/70 bg-white px-3 py-3 dark:border-slate-700/70 dark:bg-slate-800/90">
-      <div className="mb-2.5 flex items-baseline justify-between gap-2">
-        <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-          This week
-        </p>
-        <p className="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
-          <span className="font-semibold text-slate-800 dark:text-slate-100">
+    <div className="overflow-hidden rounded-[20px] border border-[#1a4d42]/10 bg-[#fffdf8] px-4 py-4 shadow-[0_16px_40px_-34px_rgba(10,38,32,0.45)] dark:border-white/10 dark:bg-[#0c1a17]">
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#1a4d42]/40 dark:text-white/35">
+            Week rhythm
+          </p>
+          <p className="mt-0.5 font-display text-[16px] tracking-tight text-[#0a1f1a] dark:text-white">
+            This week
+          </p>
+        </div>
+        <p className="text-right text-[10px] leading-relaxed text-[#1a4d42]/45 dark:text-white/35">
+          <span className="block font-display text-[18px] leading-none text-[#0a1f1a] dark:text-white">
             {stats.totalLessons}
-          </span>{" "}
-          classes ·{" "}
-          <span className="font-semibold text-slate-800 dark:text-slate-100">
-            {stats.totalSubjects}
-          </span>{" "}
+          </span>
+          classes · {stats.totalSubjects}{" "}
           {stats.totalSubjects === 1 ? "subject" : "subjects"}
         </p>
       </div>
@@ -109,14 +111,16 @@ function WeekAtAGlance({
           return (
             <div key={day} className="flex min-w-0 flex-1 flex-col items-center gap-1">
               <div
-                className="flex h-10 w-full items-end overflow-hidden rounded-sm bg-slate-100 dark:bg-slate-700/80"
+                className="flex h-12 w-full items-end overflow-hidden rounded-lg bg-[#eef0e8] dark:bg-white/[0.06]"
                 aria-label={`${DAY_NAMES[day]}: ${count} classes`}
               >
                 {count > 0 ? (
                   <div
                     className={cn(
-                      "w-full rounded-sm transition-[height] duration-300",
-                      isToday ? "bg-primary" : "bg-primary/40 dark:bg-primary/35",
+                      "w-full rounded-md transition-[height] duration-300",
+                      isToday
+                        ? "bg-gradient-to-t from-[#0a2620] to-[#246a59]"
+                        : "bg-gradient-to-t from-[#246a59]/65 to-[#7fae9f]/65 dark:from-[#246a59]/50 dark:to-[#9dcec1]/40",
                     )}
                     style={{ height: `${fillPct}%` }}
                   />
@@ -124,10 +128,10 @@ function WeekAtAGlance({
               </div>
               <span
                 className={cn(
-                  "text-[10px] font-medium",
+                  "text-[10px] font-semibold",
                   isToday
-                    ? "text-primary"
-                    : "text-slate-500 dark:text-slate-400",
+                    ? "text-[#0a2620] dark:text-[#d9c49a]"
+                    : "text-[#1a4d42]/45 dark:text-white/35",
                 )}
               >
                 {dayLabels[day]}
@@ -137,7 +141,7 @@ function WeekAtAGlance({
         })}
       </div>
 
-      <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/80">
+      <div className="mt-4 flex gap-2 border-t border-[#1a4d42]/8 pt-3 dark:border-white/8">
         <MiniStat
           icon={<Users className="h-3.5 w-3.5" />}
           label="Today"
@@ -163,13 +167,13 @@ function MiniStat({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md bg-slate-50/80 px-2 py-1.5 dark:bg-slate-900/40">
-      <span className="shrink-0 text-slate-400 dark:text-slate-500">{icon}</span>
+    <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-[#f4f2ea] px-2.5 py-2 dark:bg-white/[0.04]">
+      <span className="shrink-0 text-[#246a59]/60 dark:text-[#9dcec1]/50">{icon}</span>
       <div className="min-w-0">
-        <p className="text-sm font-semibold leading-none text-slate-900 dark:text-slate-100">
+        <p className="font-display text-[17px] leading-none text-[#0a1f1a] dark:text-white">
           {value}
         </p>
-        <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-[#1a4d42]/40 dark:text-white/30">
           {label}
         </p>
       </div>

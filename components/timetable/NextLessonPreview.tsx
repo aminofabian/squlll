@@ -233,42 +233,51 @@ export function NextLessonPreview({
       className={cn(
         'rounded-lg border bg-white dark:bg-slate-800/90',
         isTeacherDense
-          ? 'border-slate-200/70 shadow-none dark:border-slate-700/70'
+          ? 'overflow-hidden rounded-[20px] border-[#1a4d42]/10 bg-[#fffdf8] shadow-[0_16px_40px_-32px_rgba(10,38,32,0.5)] dark:border-white/10 dark:bg-[#0c1a17]'
           : cn('border-slate-200 shadow-sm dark:border-slate-700', palette.border, 'border-l-[3px]'),
         className,
       )}
     >
-      <div className={cn(dense ? 'p-3' : 'p-4')}>
+      <div className={cn(dense ? 'p-4' : 'p-4')}>
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary dark:bg-primary/20">
+              <span className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em]",
+                isTeacherDense
+                  ? "bg-[#0a2620] text-[#f0dfb8]"
+                  : "bg-primary/10 text-primary dark:bg-primary/20",
+              )}>
                 {isTeacherDense && (
                   <span
-                    className="h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: palette.accent }}
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#d9c49a]"
                     aria-hidden
                   />
                 )}
                 Up Next
               </span>
               {nextLesson.dayLabel && (
-                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                <span className="rounded-full border border-[#c49a52]/25 bg-[#c49a52]/10 px-2 py-1 text-[9px] font-semibold text-[#8a6427] dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300">
                   {nextLesson.dayLabel}
                 </span>
               )}
             </div>
 
-            <p className="break-words text-sm font-bold text-slate-900 dark:text-slate-50">
+            <p className={cn(
+              "break-words font-semibold text-slate-900 dark:text-slate-50",
+              isTeacherDense
+                ? "font-display text-[19px] leading-tight tracking-[-0.02em]"
+                : "text-sm font-bold",
+            )}>
               {nextLesson.lesson.subject.name}
             </p>
 
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-600 dark:text-slate-400">
               {viewType === 'student' && (
                 <span>{nextLesson.lesson.teacher.name}</span>
               )}
               {viewType === 'teacher' && (
-                <span className="font-medium text-slate-700 dark:text-slate-300">
+                <span className="rounded-md bg-[#246a59]/8 px-1.5 py-0.5 font-semibold text-[#1a4d42] dark:bg-white/5 dark:text-white/75">
                   {gradeLabel}
                   {nextLesson.lesson.stream ? ` · ${nextLesson.lesson.stream}` : ''}
                 </span>
@@ -292,7 +301,7 @@ export function NextLessonPreview({
                   <NextLessonCountdown startsAt={nextLesson.startsAt} />
                 </div>
               )}
-              <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 sm:text-right">
+              <div className="text-[10px] font-semibold tabular-nums text-[#1a4d42]/55 dark:text-white/40 sm:text-right">
                 {nextLesson.time}
               </div>
             </div>

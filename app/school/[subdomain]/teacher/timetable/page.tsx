@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useTeacherTimetable } from "../hooks/useTeacherTimetable";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
+import { BookOpen } from "lucide-react";
 
 import {
   useTimetableCore,
@@ -236,14 +237,17 @@ const TeacherTimetable = () => {
       : null;
 
   const emptyLessons = (
-    <div className="rounded-lg border border-amber-200/70 bg-amber-50/50 px-6 py-10 text-center dark:border-amber-900/40 dark:bg-amber-950/20">
-      <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+    <div className="relative overflow-hidden rounded-[24px] border border-[#1a4d42]/10 bg-[#fbfaf6] px-6 py-14 text-center dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#c49a52]/10 blur-3xl" aria-hidden />
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0a2620] text-[#d9c49a]">
+        <BookOpen className="h-5 w-5" />
+      </div>
+      <p className="mt-4 font-display text-[20px] text-[#0a1f1a] dark:text-white">
         No lessons for {selectedTerm?.name || "this term"}
       </p>
-      <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-amber-800/90 dark:text-amber-300/80">
-        {graphqlData?.timetablePublishedAt
-          ? "Ask your administrator to assign you on the school timetable."
-          : "Try switching term, or ask admin to confirm your timetable assignments."}
+      <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-[#1a4d42]/50 dark:text-white/40">
+        Ask your administrator to add you to the school timetable, or check that
+        the correct term is selected.
       </p>
     </div>
   );
@@ -252,18 +256,29 @@ const TeacherTimetable = () => {
     unifiedTimetable && !hasNoLessons ? (
       <>
         {/* Mobile: floating schedule shell */}
-        <section className="overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-200/60 dark:bg-slate-800/95 dark:shadow-none dark:ring-slate-700/80 lg:rounded-xl lg:border lg:border-slate-200/70 lg:bg-white lg:shadow-none lg:ring-0 dark:lg:border-slate-800 dark:lg:bg-slate-900/50">
-          <div className="hidden items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 lg:flex">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Weekly schedule
-            </h2>
-            <div className="flex items-center gap-3 text-[10px] text-slate-400">
-              <span className="inline-flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+        <section className="overflow-hidden rounded-[24px] bg-white shadow-[0_2px_0_rgba(10,38,32,0.03),0_28px_70px_-48px_rgba(10,38,32,0.45)] ring-1 ring-[#1a4d42]/10 dark:bg-[#0c1a17] dark:ring-white/10 lg:rounded-[24px]">
+          <div className="hidden items-center justify-between gap-3 border-b border-[#1a4d42]/8 bg-[#fbfaf6] px-5 py-4 dark:border-white/8 dark:bg-white/[0.025] lg:flex">
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#1a4d42]/40 dark:text-white/35">
+                Term schedule
+              </p>
+              <h2 className="mt-0.5 font-display text-[20px] tracking-[-0.02em] text-[#0a1f1a] dark:text-white">
+                Your week at a glance
+              </h2>
+            </div>
+            <div className="flex items-center gap-4 text-[10px] font-medium text-[#1a4d42]/50 dark:text-white/40">
+              <span className="hidden items-center gap-1.5 xl:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#c49a52]" />
+                {stats?.totalLessons ?? 0} lessons
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#246a59]" />
                 Today
               </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/80" />
+              <span className="inline-flex items-center gap-1.5">
+                <span className="flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700">
+                  <span className="h-1 w-1 rounded-full bg-emerald-600" />
+                </span>
                 Taught
               </span>
             </div>
@@ -304,10 +319,10 @@ const TeacherTimetable = () => {
         }}
       />
       <div
-        className="min-h-screen overflow-x-hidden bg-[#f2f2f7] lg:bg-slate-50 dark:lg:bg-slate-950"
+        className="min-h-screen overflow-x-hidden bg-[#f4f1e9] dark:bg-[#071411]"
         data-timetable-no-print
       >
-      <div className="mx-auto w-full max-w-7xl max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5">
+      <div className="mx-auto w-full max-w-[1380px] max-lg:overflow-hidden max-lg:p-0 lg:px-7 lg:py-6">
         {/* Mobile — full-bleed between header and tab bar */}
         <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
           {hasNoLessons ? (
@@ -337,6 +352,12 @@ const TeacherTimetable = () => {
           <TeacherTimetableHero
             formattedDate={core.formattedDate}
             termName={selectedTerm?.name}
+            teacherName={graphqlData?.teacherName}
+            classesToday={isWeekend ? null : classesToday}
+            totalClasses={stats?.totalLessons ?? 0}
+            totalSubjects={stats?.totalSubjects ?? 0}
+            nextLessonLabel={core.nextLesson?.lesson.subject.name}
+            nextLessonTime={core.nextLesson?.time}
             showPrint={canPrint}
             onPrint={handlePrint}
           />
@@ -345,7 +366,7 @@ const TeacherTimetable = () => {
               Outside school hours — your next class is in Up Next below.
             </StatusNote>
           )}
-          <div className="grid grid-cols-[minmax(0,280px)_1fr] items-start gap-5 xl:grid-cols-[minmax(0,300px)_1fr]">
+          <div className="grid grid-cols-[minmax(0,286px)_1fr] items-start gap-5 xl:grid-cols-[minmax(0,304px)_1fr]">
             <TeacherTimetableSidebar
               nextLesson={core.nextLesson}
               currentStatus={core.currentStatus}

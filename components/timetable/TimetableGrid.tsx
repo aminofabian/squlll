@@ -382,9 +382,11 @@ function TimetableGridTable({
                   ? 'bg-white dark:bg-slate-800'
                   : cn(
                       'sticky top-0 z-10',
-                      isTeacherCompact || isCompactGrid
-                        ? 'bg-slate-50/95 backdrop-blur-sm dark:bg-slate-800/95'
-                        : 'border-b-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700',
+                      isTeacherCompact
+                        ? 'border-b border-[#1a4d42]/8 bg-[#fbfaf6] dark:border-white/10 dark:bg-white/[0.04]'
+                        : isCompactGrid
+                          ? 'bg-slate-50/95 backdrop-blur-sm dark:bg-slate-800/95'
+                          : 'border-b-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700',
                     ),
               )}
             >
@@ -395,9 +397,11 @@ function TimetableGridTable({
                     ? cn(STICKY_TIME_CELL, 'sticky top-0 z-40', thPad, timeMinW)
                     : cn(
                         'sticky left-0 z-20 border-r',
-                        isTeacherCompact || isCompactGrid
-                          ? 'border-slate-200/90 bg-slate-100/95 dark:border-slate-700 dark:bg-slate-900/95'
-                          : 'border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 dark:border-slate-600 dark:from-slate-800 dark:to-slate-700',
+                        isTeacherCompact
+                          ? 'border-[#1a4d42]/8 bg-[#fbfaf6] dark:border-white/10 dark:bg-white/[0.04]'
+                          : isCompactGrid
+                            ? 'border-slate-200/90 bg-slate-100/95 dark:border-slate-700 dark:bg-slate-900/95'
+                            : 'border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 dark:border-slate-600 dark:from-slate-800 dark:to-slate-700',
                         timeMinW,
                         thPad,
                       ),
@@ -460,6 +464,7 @@ function TimetableGridTable({
                 tdPad={tdPad}
                 isCompactGrid={isCompactGrid}
                 mobileLayout={mobileLayout}
+                teacherCompact={isTeacherCompact}
               />
             )}
             {timeSlots.map((slot, slotIndex) => {
@@ -570,6 +575,7 @@ function TimetableGridTable({
                             <BreakCell
                               breakItem={cell.break}
                               compact={compact}
+                              teacherCompact={isTeacherCompact}
                               onClick={() => onBreakClick?.(cell.break!)}
                             />
                           ) : showAddButtons ? (
@@ -578,7 +584,7 @@ function TimetableGridTable({
                               onClick={() => onEmptySlotClick?.(dayOfWeek, slot.periodNumber)}
                             />
                           ) : (
-                            <FreeCell compact={compact} />
+                            <FreeCell compact={compact} teacherCompact={isTeacherCompact} />
                           )}
                         </td>
                       );
@@ -594,6 +600,7 @@ function TimetableGridTable({
                       tdPad={tdPad}
                       isCompactGrid={isCompactGrid}
                       mobileLayout={mobileLayout}
+                      teacherCompact={isTeacherCompact}
                     />
                   )}
                 </React.Fragment>
@@ -636,8 +643,7 @@ function LessonCell({
     viewType === 'teacher'
       ? lesson.grade.displayName || lesson.grade.name
       : lesson.teacher.name;
-  const showRoom =
-    !!lesson.room && !isStudentView && !(compact && viewType === 'teacher');
+  const showRoom = !!lesson.room && !isStudentView;
 
   const isTeacherCompact = compact && viewType === 'teacher';
   const isStudentCompact = compact && viewType === 'student';
@@ -649,19 +655,35 @@ function LessonCell({
   return (
     <div
       onClick={onClick}
+      style={isTeacherCompact ? { borderLeftColor: palette.accent } : undefined}
       className={cn(
         'relative group/lesson cursor-pointer transition-all duration-200',
         compact
-          ? cn('min-h-[36px] p-1', isStudentCompact ? 'rounded-none' : 'rounded-sm')
+          ? cn(
+              'min-h-[36px] p-1',
+              isStudentCompact
+                ? 'rounded-none'
+                : isTeacherCompact
+                  ? 'min-h-[58px] rounded-xl border border-l-[3px] border-[#1a4d42]/8 p-2 shadow-[0_1px_0_rgba(10,38,32,0.03)]'
+                  : 'rounded-sm',
+            )
           : 'min-h-[52px] rounded-md border-l-[3px] p-2',
         !isTeacherCompact && !isStudentCompact && palette.border,
         isCurrent
-          ? 'bg-primary text-white ring-1 ring-primary/20'
+          ? isTeacherCompact
+            ? 'border-[#0a2620] bg-[#0a2620] text-white shadow-[0_10px_24px_-14px_rgba(10,38,32,0.7)] ring-1 ring-[#0a2620]'
+            : 'bg-primary text-white ring-1 ring-primary/20'
           : isCompleted
-            ? 'bg-slate-100/90 dark:bg-slate-800/90 opacity-75'
+            ? isTeacherCompact
+              ? 'border-[#1a4d42]/6 bg-[#f2f4ef] opacity-70 dark:bg-white/[0.03]'
+              : 'bg-slate-100/90 dark:bg-slate-800/90 opacity-75'
             : isNext
-              ? `${palette.bg} ring-1 ring-primary/20`
-              : palette.bg,
+              ? isTeacherCompact
+                ? 'border-[#c49a52]/40 bg-[#fff8e9] ring-1 ring-[#c49a52]/30 dark:bg-[#c49a52]/10'
+                : `${palette.bg} ring-1 ring-primary/20`
+              : isTeacherCompact
+                ? 'bg-white hover:-translate-y-0.5 hover:border-[#246a59]/25 hover:shadow-[0_10px_22px_-16px_rgba(10,38,32,0.45)] dark:bg-white/[0.035]'
+                : palette.bg,
         hasConflict && 'ring-2 ring-red-400',
         !hasConflict &&
           isDoubleBlock &&
@@ -698,9 +720,13 @@ function LessonCell({
         <div className={cn(
           'min-w-0 flex-1 break-words font-semibold leading-snug',
           isStudentCompact && 'flex-none text-center',
-          compact ? 'text-[10px]' : 'text-xs font-bold',
+          isTeacherCompact
+            ? 'text-[11.5px] font-semibold tracking-[-0.01em]'
+            : compact
+              ? 'text-[10px]'
+              : 'text-xs font-bold',
           isStudentView && 'uppercase tracking-wide',
-          isCurrent ? 'text-white' : 'text-slate-900 dark:text-slate-100',
+          isCurrent ? 'text-white' : 'text-[#0a1f1a] dark:text-slate-100',
           isCompleted && 'line-through decoration-slate-400',
         )}>
         {subjectLabel}
@@ -725,7 +751,15 @@ function LessonCell({
           isCurrent ? 'text-white/80' : 'text-slate-600 dark:text-slate-400',
         )}>
           {!compact && <Users className="h-3 w-3 flex-shrink-0" />}
-          <span className="truncate">
+          <span
+            className={cn(
+              "truncate",
+              isTeacherCompact &&
+                (isCurrent
+                  ? "rounded-md bg-white/12 px-1.5 py-0.5 text-[9px] font-medium text-white/85"
+                  : "rounded-md bg-[#246a59]/8 px-1.5 py-0.5 text-[9px] font-semibold text-[#1a4d42]/75 dark:bg-white/5 dark:text-white/55"),
+            )}
+          >
             {classLabel}
             {lesson.isSubstitution && viewType !== 'teacher' && (
               <span className="text-[10px] text-amber-400 font-medium ml-0.5">Sub</span>
@@ -777,10 +811,12 @@ function LessonCell({
 function BreakCell({
   breakItem,
   compact,
+  teacherCompact = false,
   onClick,
 }: {
   breakItem: TimetableBreak;
   compact?: boolean;
+  teacherCompact?: boolean;
   onClick?: () => void;
 }) {
   const config = BREAK_TYPE_CONFIG[breakItem.type as BreakType] || BREAK_TYPE_CONFIG.BREAK;
@@ -792,16 +828,20 @@ function BreakCell({
       <div
         onClick={onClick}
         className={cn(
-          'flex min-h-[32px] flex-col items-center justify-center rounded-sm border px-1.5 py-1 text-center',
-          config.bgClass,
-          config.borderClass,
+          'flex min-h-[32px] flex-col items-center justify-center rounded-lg border px-1.5 py-1 text-center',
+          teacherCompact
+            ? breakItem.type === 'LUNCH'
+              ? 'border-[#c49a52]/16 bg-[#faf3e4] text-[#8a6427]'
+              : 'border-[#1a4d42]/7 bg-[#f5f3eb] text-[#1a4d42]/45'
+            : config.bgClass,
+          !teacherCompact && config.borderClass,
           onClick && 'cursor-pointer',
         )}
       >
-        <span className={cn('max-w-full truncate text-[9px] font-medium leading-tight', config.textClass)}>
+        <span className={cn('max-w-full truncate text-[9px] font-medium leading-tight', !teacherCompact && config.textClass)}>
           {label}
         </span>
-        <span className={cn('font-mono text-[8px] tabular-nums opacity-75', config.textClass)}>
+        <span className={cn('font-mono text-[8px] tabular-nums opacity-75', !teacherCompact && config.textClass)}>
           {breakItem.durationMinutes}m
         </span>
       </div>
@@ -967,6 +1007,7 @@ function TimetableBreakRow({
   tdPad,
   isCompactGrid,
   mobileLayout,
+  teacherCompact = false,
 }: {
   afterPeriod: number;
   breaks: TimetableBreak[];
@@ -976,6 +1017,7 @@ function TimetableBreakRow({
   tdPad: string;
   isCompactGrid?: boolean;
   mobileLayout?: boolean;
+  teacherCompact?: boolean;
 }) {
   const rowBreaks = breaks.filter((b) => b.afterPeriod === afterPeriod);
   const labelBreak = rowBreaks[0];
@@ -992,7 +1034,14 @@ function TimetableBreakRow({
   const emptyH = compact ? 'min-h-[28px]' : 'min-h-[40px]';
 
   return (
-    <tr className={cn(compact ? 'border-y' : 'border-y-2', config.borderClass, config.bgClass)}>
+    <tr
+      className={cn(
+        compact ? 'border-y' : 'border-y-2',
+        teacherCompact
+          ? 'border-[#1a4d42]/7 bg-[#f7f5ee]'
+          : cn(config.borderClass, config.bgClass),
+      )}
+    >
       <td
         className={cn(
           'border-b border-slate-200/90 p-0 dark:border-slate-700/90',
@@ -1007,11 +1056,19 @@ function TimetableBreakRow({
             timeLabel={timeLabel}
             compact={compact}
             className={timeMinW}
-            visualClasses={{
-              text: config.textClass,
-              rowBg: config.bgClass,
-              rowBorder: config.borderClass,
-            }}
+            visualClasses={
+              teacherCompact
+                ? {
+                    text: 'text-[#1a4d42]/45',
+                    rowBg: 'bg-[#f7f5ee]',
+                    rowBorder: 'border-[#1a4d42]/8',
+                  }
+                : {
+                    text: config.textClass,
+                    rowBg: config.bgClass,
+                    rowBorder: config.borderClass,
+                  }
+            }
           />
         ) : (
           <div className={cn('border-r-2 px-2 py-1.5', timeMinW, config.bgClass, config.borderClass)}>
@@ -1038,7 +1095,11 @@ function TimetableBreakRow({
             )}
           >
             {dayBreak ? (
-              <BreakCell breakItem={dayBreak} compact={compact} />
+              <BreakCell
+                breakItem={dayBreak}
+                compact={compact}
+                teacherCompact={teacherCompact}
+              />
             ) : (
               <div className={cn(emptyH, 'flex items-center justify-center text-[10px] text-slate-400 dark:text-slate-500')}>
                 —
@@ -1051,11 +1112,24 @@ function TimetableBreakRow({
   );
 }
 
-function FreeCell({ compact }: { compact?: boolean }) {
+function FreeCell({
+  compact,
+  teacherCompact = false,
+}: {
+  compact?: boolean;
+  teacherCompact?: boolean;
+}) {
   if (compact) {
     return (
-      <div className="w-full min-h-[36px] flex items-center justify-center text-slate-300 dark:text-slate-600">
-        <span className="text-xs select-none" aria-hidden>—</span>
+      <div className="flex min-h-[36px] w-full items-center justify-center text-slate-300 dark:text-slate-600">
+        {teacherCompact ? (
+          <span
+            className="h-1 w-1 rounded-full bg-[#1a4d42]/12 dark:bg-white/10"
+            aria-hidden
+          />
+        ) : (
+          <span className="select-none text-xs" aria-hidden>—</span>
+        )}
       </div>
     );
   }
