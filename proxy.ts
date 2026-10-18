@@ -223,6 +223,12 @@ export async function proxy(request: NextRequest) {
     const firstSegment = url.pathname.split('/').filter(Boolean)[0] ?? ''
     if (ADMIN_ROUTE_SEGMENTS.has(firstSegment)) {
       if (roles.length === 0) {
+        console.warn('[tenant-auth] No session role for admin route', {
+          host,
+          pathname: url.pathname,
+          hasAccessToken: Boolean(request.cookies.get('accessToken')?.value),
+          hasUserRole: Boolean(request.cookies.get('userRole')?.value),
+        })
         const loginUrl = new URL('/login', request.url)
         loginUrl.searchParams.set('next', `${url.pathname}${url.search}`)
         return NextResponse.redirect(loginUrl)

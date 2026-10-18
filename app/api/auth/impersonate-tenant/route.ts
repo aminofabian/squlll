@@ -185,8 +185,14 @@ export async function POST(request: Request) {
 
     const requestUrl = new URL(request.url)
     const isProduction = process.env.NODE_ENV === 'production'
-    // Cookie scope follows the host the browser is on.
-    const { domain, sameSite, secure } = getAuthCookieOptions(request)
+    const cookieScope = getAuthCookieOptions(request)
+    // This route runs on the apex (squl.co.ke or a proxy-internal host) and
+    // always redirects to <school>.squl.co.ke. Request-derived scope can be
+    // host-only behind a proxy, which makes the school subdomain see no
+    // session and bounce to /login?next=/dashboard. Pin the platform scope.
+    const domain = isProduction ? '.squl.co.ke' : cookieScope.domain
+    const sameSite = isProduction ? 'none' : cookieScope.sameSite
+    const secure = isProduction ? true : cookieScope.secure
 
     // Always redirect to the platform subdomain. The backend may prefer a
     // school's custom domain, but the cookies set here belong to the current
