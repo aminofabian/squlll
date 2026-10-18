@@ -202,7 +202,7 @@ export function SchemesPanel({
     return (
       <div className="grid gap-3 md:grid-cols-2">
         {[0, 1].map((index) => (
-          <div key={index} className="h-32 animate-pulse rounded-3xl bg-muted/60" />
+          <div key={index} className="h-20 animate-pulse rounded-2xl bg-muted/60" />
         ))}
       </div>
     )
@@ -215,7 +215,7 @@ export function SchemesPanel({
         title="No scheme of work yet"
         description={emptyHint}
         action={
-          <Button size="sm" className="rounded-xl" onClick={onCreate}>
+          <Button size="sm" className="rounded-lg" onClick={onCreate}>
             <Plus className="size-4" />
             Create scheme of work
           </Button>

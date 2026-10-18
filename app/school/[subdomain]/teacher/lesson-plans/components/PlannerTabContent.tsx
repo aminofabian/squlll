@@ -11,13 +11,13 @@ const SCHEMES_EMPTY_HINT =
 
 function WeekSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
+    <div className="space-y-3">
+      <div className="flex gap-1.5">
         {SKELETON_DAYS.map((day) => (
-          <div key={day} className="h-20 flex-1 animate-pulse rounded-2xl bg-muted/60" />
+          <div key={day} className="h-14 flex-1 animate-pulse rounded-xl bg-muted/60" />
         ))}
       </div>
-      <div className="h-36 animate-pulse rounded-2xl bg-muted/60" />
+      <div className="h-32 animate-pulse rounded-2xl bg-muted/60" />
     </div>
   )
 }

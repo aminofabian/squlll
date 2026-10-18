@@ -1,5 +1,4 @@
 import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { PLANNER_TABS, type PlannerTab } from '../constants/plannerTabs'
 
@@ -13,8 +12,8 @@ export function PlannerTabs({
   onNewScheme: () => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div role="tablist" className="inline-flex gap-1 overflow-x-auto rounded-2xl bg-muted/70 p-1 [scrollbar-width:none]">
+    <div className="flex items-center justify-between gap-2 border-b border-border">
+      <div role="tablist" className="-mb-px flex gap-4 overflow-x-auto [scrollbar-width:none]">
         {PLANNER_TABS.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
@@ -23,19 +22,18 @@ export function PlannerTabs({
             aria-selected={tab === value}
             onClick={() => onChange(value)}
             className={cn(
-              'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-all',
-              tab === value ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+              'inline-flex shrink-0 items-center gap-1.5 border-b-2 py-2 text-sm transition-colors',
+              tab === value ? 'border-primary font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
             )}
           >
-            <Icon className={cn('size-4', tab === value && 'text-primary')} />
+            <Icon className="size-4" />
             {label}
           </button>
         ))}
       </div>
-      <Button size="sm" variant="outline" className="shrink-0 rounded-xl" onClick={onNewScheme}>
-        <Plus className="size-4" />
-        <span className="hidden sm:inline">New scheme</span>
-      </Button>
+      <button type="button" onClick={onNewScheme} className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10">
+        <Plus className="size-3.5" /> New scheme
+      </button>
     </div>
   )
 }

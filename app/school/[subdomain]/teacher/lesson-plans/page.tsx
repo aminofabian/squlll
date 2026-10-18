@@ -4,7 +4,7 @@ import React from 'react'
 import { AlertCircle, CalendarRange } from 'lucide-react'
 import { CoverageNote } from './components/CoverageNote'
 import { PlannerEmptyState } from './components/PlannerEmptyState'
-import { PlannerHero } from './components/PlannerHero'
+import { PlannerHeader } from './components/PlannerHeader'
 import { PlannerStats } from './components/PlannerStats'
 import { PlannerTabContent } from './components/PlannerTabContent'
 import { PlannerTabs } from './components/PlannerTabs'
@@ -24,14 +24,12 @@ export default function TeacherLessonPlansPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-5 lg:px-0 lg:py-0">
-      <div>
-        <PlannerHero termName={page.selectedTerm?.name} week={page.week} onPrevious={page.previousWeek} onNext={page.nextWeek} onToday={page.thisWeek} />
-        <PlannerStats week={page.week} />
-      </div>
+    <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-5 lg:px-0 lg:py-0">
+      <PlannerHeader termName={page.selectedTerm?.name} week={page.week} onPrevious={page.previousWeek} onNext={page.nextWeek} onToday={page.thisWeek} />
+      <PlannerStats week={page.week} />
       <PlannerTabs tab={page.tab} onChange={page.setTab} onNewScheme={() => page.setSchemeDialogOpen(true)} />
       {page.error && (
-        <div role="alert" className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+        <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{page.error}</span>
         </div>

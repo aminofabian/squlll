@@ -28,15 +28,17 @@ export function WeekBoard({
   const plannedCount = periods.filter((period) => period.plan).length
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <DayStrip days={data.days} today={data.today} selectedDate={selectedDay?.date ?? ''} onSelect={onSelectDate} />
       {periods.length > 0 ? (
-        <>
-          <p className="px-1 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">{selectedDay?.dayName}</span> · {periods.length} lesson
-            {periods.length === 1 ? '' : 's'} · {plannedCount} planned
-          </p>
-          <ol className="space-y-3">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <header className="flex items-center justify-between border-b border-border px-4 py-2.5 text-xs">
+            <span className="font-medium">{selectedDay?.dayName}</span>
+            <span className="text-muted-foreground tabular-nums">
+              {plannedCount}/{periods.length} planned
+            </span>
+          </header>
+          <ol className="divide-y divide-border">
             {periods.map((period) => (
               <PeriodCard
                 key={`${period.timetableEntryId}-${period.date}`}
@@ -48,7 +50,7 @@ export function WeekBoard({
               />
             ))}
           </ol>
-        </>
+        </section>
       ) : (
         <PlannerEmptyState
           icon={Coffee}

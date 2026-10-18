@@ -17,31 +17,26 @@ export function PlanFilters({
   onQueryChange: (query: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap gap-1.5">
-        {PLAN_FILTERS.map((option) => {
-          const active = filter === option.value
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onFilterChange(option.value)}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/40',
-              )}
-            >
-              {option.label}
-              <span className={cn('rounded-full px-1.5 text-[10px] tabular-nums', active ? 'bg-white/20' : 'bg-muted')}>
-                {counts[option.value]}
-              </span>
-            </button>
-          )
-        })}
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap gap-1">
+        {PLAN_FILTERS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onFilterChange(option.value)}
+            className={cn(
+              'rounded-lg px-2.5 py-1 text-xs transition-colors',
+              filter === option.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            )}
+          >
+            {option.label}
+            <span className="ml-1 tabular-nums opacity-60">{counts[option.value]}</span>
+          </button>
+        ))}
       </div>
-      <div className="relative sm:w-72">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search topic, class or strand" className="rounded-xl pl-9" />
+      <div className="relative sm:w-64">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search topic, class or strand" className="h-8 rounded-lg pl-8 text-sm" />
       </div>
     </div>
   )
