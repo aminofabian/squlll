@@ -644,18 +644,18 @@ export default function ClassesPage() {
         onOpenChange={setShowSubjectsDrawer}
         direction="right"
       >
-        <DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] sm:max-w-xl">
-          <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 bg-white px-4 py-3.5 pr-4 dark:border-white/10 dark:bg-[#0c1a17]">
+        <DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl">
+          <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 bg-white px-4 py-4 pr-4 dark:border-white/10 dark:bg-[#0c1a17] sm:px-5">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#8fe3c8]">
-                  <BookOpen className="h-4 w-4" />
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#8fe3c8]">
+                  <BookOpen className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <DrawerTitle className="text-base font-semibold text-[#0a1f1a] dark:text-white">
+                  <DrawerTitle className="text-lg font-semibold tracking-tight text-[#0a1f1a] dark:text-white">
                     All subjects
                   </DrawerTitle>
-                  <DrawerDescription className="mt-0.5 truncate text-[11px] text-[#1a4d42]/55 dark:text-white/45">
+                  <DrawerDescription className="mt-0.5 truncate text-xs text-[#1a4d42]/55 dark:text-white/45">
                     {selectedGrade
                       ? `${selectedGrade.levelName} · ${selectedGrade.displayName}`
                       : "Every subject, grouped by level"}

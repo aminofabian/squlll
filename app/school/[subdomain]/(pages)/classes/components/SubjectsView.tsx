@@ -334,7 +334,7 @@ export function SubjectsView({
           size="sm"
           className={cn(
             classesPrimaryButton,
-            "h-8 shrink-0 gap-1.5 whitespace-nowrap px-2.5 text-[11px]",
+            "h-9 shrink-0 gap-1.5 whitespace-nowrap px-3 text-xs",
           )}
           onClick={onAddSubject}
         >
@@ -354,7 +354,7 @@ export function SubjectsView({
             size="sm"
             className={cn(
               classesPrimaryButton,
-              "h-8 shrink-0 gap-1.5 whitespace-nowrap px-2.5 text-[11px]",
+              "h-9 shrink-0 gap-1.5 whitespace-nowrap px-3 text-xs",
             )}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -404,7 +404,7 @@ export function SubjectsView({
     return (
       <div className="flex h-full min-h-0 flex-col">
         <div className="shrink-0 space-y-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411]">
-          <div className="h-8 w-full animate-pulse bg-[#e8f2ef] dark:bg-white/5" />
+          <div className="h-9 w-full animate-pulse bg-[#e8f2ef] dark:bg-white/5" />
           <div className="flex gap-1">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
@@ -414,11 +414,11 @@ export function SubjectsView({
             ))}
           </div>
         </div>
-        <div className="space-y-2 p-4">
-          {Array.from({ length: 9 }).map((_, index) => (
+        <div className="grid grid-cols-1 gap-2 p-4 md:grid-cols-2">
+          {Array.from({ length: 10 }).map((_, index) => (
             <div
               key={index}
-              className="h-12 animate-pulse bg-[#e8f2ef] dark:bg-white/5"
+              className="h-16 animate-pulse bg-[#e8f2ef] dark:bg-white/5"
             />
           ))}
         </div>
@@ -428,54 +428,56 @@ export function SubjectsView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 space-y-2.5 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411]">
-        <div className="flex items-center justify-between gap-2">
-          <p className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#246a59] dark:text-[#8fe3c8]">
-            <Layers className="h-3 w-3 shrink-0" />
-            <span className="truncate">
-              {scopedLevel ? scopedLevel.name : "All levels"}
+      <div className="shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#246a59] dark:text-[#8fe3c8]">
+              <Layers className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {scopedLevel ? scopedLevel.name : "All levels"}
+              </span>
+            </p>
+            <span className="hidden shrink-0 border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-[10px] tabular-nums text-[#1a4d42]/55 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/45 sm:inline-flex">
+              {staffedCount}/{scopeRows.length} staffed
             </span>
-          </p>
-          <span className="shrink-0 text-[10px] tabular-nums text-[#1a4d42]/45 dark:text-white/40">
-            {staffedCount}/{scopeRows.length} staffed
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/40 dark:text-white/35" />
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(event) => {
-                setSearchTerm(event.target.value);
-                setCollapsed(new Set());
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setSearchTerm("");
-                  event.currentTarget.blur();
-                }
-              }}
-              placeholder="Search name, code or teacher…"
-              aria-label="Search subjects by name, code or teacher"
-              className="h-8 border-[#1a4d42]/15 bg-white pl-8 pr-8 text-xs shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17] dark:placeholder:text-white/40"
-            />
-            {searchTerm ? (
-              <button
-                type="button"
-                onClick={() => setSearchTerm("")}
-                aria-label="Clear subject search"
-                className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center text-[#1a4d42]/40 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            ) : null}
           </div>
-          {addControl}
+
+          <div className="ml-auto flex w-full items-center gap-2 sm:w-auto">
+            <div className="relative min-w-0 flex-1 sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1a4d42]/40 dark:text-white/35" />
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCollapsed(new Set());
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setSearchTerm("");
+                    event.currentTarget.blur();
+                  }
+                }}
+                placeholder="Search name, code or teacher…"
+                aria-label="Search subjects by name, code or teacher"
+                className="h-9 border-[#1a4d42]/15 bg-white pl-9 pr-9 text-[13px] shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17] dark:placeholder:text-white/40"
+              />
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  aria-label="Clear subject search"
+                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center text-[#1a4d42]/40 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              ) : null}
+            </div>
+            {addControl}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           {FILTERS.map((item) => (
             <button
               key={item.id}
@@ -487,32 +489,37 @@ export function SubjectsView({
               aria-pressed={filter === item.id}
               className={cn(
                 classesFilterPill(filter === item.id),
-                "gap-1 px-2 py-1 text-[10px]",
+                "gap-1 px-2.5 py-1 text-[11px]",
               )}
             >
               {item.label}
               <span className="tabular-nums opacity-60">{counts[item.id]}</span>
             </button>
           ))}
-        </div>
 
-        <div className="h-1 w-full overflow-hidden bg-[#1a4d42]/10 dark:bg-white/10">
-          <div
-            className={cn(
-              "h-full transition-[width] duration-500",
-              coverage >= 1
-                ? "bg-emerald-500/80"
-                : coverage >= 0.5
-                  ? "bg-[#246a59]"
-                  : "bg-amber-500/80",
-            )}
-            style={{ width: `${Math.round(coverage * 100)}%` }}
-          />
+          <div className="mt-1 flex w-full items-center gap-2 sm:mt-0 sm:ml-auto sm:w-64">
+            <div className="h-1.5 flex-1 overflow-hidden bg-[#1a4d42]/10 dark:bg-white/10">
+              <div
+                className={cn(
+                  "h-full transition-[width] duration-500",
+                  coverage >= 1
+                    ? "bg-emerald-500/80"
+                    : coverage >= 0.5
+                      ? "bg-[#246a59]"
+                      : "bg-amber-500/80",
+                )}
+                style={{ width: `${Math.round(coverage * 100)}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[#1a4d42]/50 dark:text-white/40">
+              {Math.round(coverage * 100)}%
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#1a4d42]/10 bg-white px-4 py-1.5 dark:border-white/10 dark:bg-[#0c1a17]">
-        <p className="text-[10px] tabular-nums text-[#1a4d42]/50 dark:text-white/40">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#1a4d42]/10 bg-white px-4 py-2 dark:border-white/10 dark:bg-[#0c1a17] sm:px-5">
+        <p className="text-[11px] tabular-nums text-[#1a4d42]/50 dark:text-white/40">
           Showing{" "}
           <span className="font-semibold text-[#0a1f1a] dark:text-white">
             {filteredRows.length}
@@ -523,14 +530,14 @@ export function SubjectsView({
           <button
             type="button"
             onClick={toggleAllGroups}
-            className="text-[10px] font-semibold text-[#246a59] underline-offset-2 hover:underline dark:text-[#8fe3c8]"
+            className="text-[11px] font-semibold text-[#246a59] underline-offset-2 hover:underline dark:text-[#8fe3c8]"
           >
             {allCollapsed ? "Expand all" : "Collapse all"}
           </button>
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white dark:bg-[#0c1a17]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#f8fbfa] p-3 dark:bg-[#071411] sm:p-4">
         {scopeRows.length === 0 ? (
           <div className="flex flex-col items-center px-5 py-14 text-center">
             <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#e8f2ef] text-[#246a59] dark:bg-white/5 dark:text-[#8fe3c8]">
@@ -549,7 +556,7 @@ export function SubjectsView({
                 size="sm"
                 className={cn(
                   classesPrimaryButton,
-                  "mt-3 h-8 gap-1.5 whitespace-nowrap px-3 text-[11px]",
+                  "mt-3 h-9 gap-1.5 whitespace-nowrap px-3 text-xs",
                 )}
                 onClick={onAddSubject}
               >
@@ -586,61 +593,66 @@ export function SubjectsView({
             </button>
           </div>
         ) : (
-          groups.map((group) => {
-            const expanded = !collapsed.has(group.key);
-            return (
-              <section key={group.key}>
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.key)}
-                  aria-expanded={expanded}
-                  className="sticky top-0 z-10 flex w-full items-center gap-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa]/95 px-4 py-2 text-left backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95"
+          <div className="space-y-4">
+            {groups.map((group) => {
+              const expanded = !collapsed.has(group.key);
+              return (
+                <section
+                  key={group.key}
+                  className="border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]"
                 >
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0 text-[#1a4d42]/45 transition-transform dark:text-white/40",
-                      !expanded && "-rotate-90",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "h-1.5 w-1.5 shrink-0 rounded-lg",
-                      accentDot[group.accent],
-                    )}
-                  />
-                  <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0a1f1a] dark:text-white">
-                    {group.title}
-                  </span>
-                  <span className="hidden truncate text-[10px] text-[#1a4d42]/45 dark:text-white/35 sm:inline">
-                    {group.subtitle}
-                  </span>
-                  <span className="ml-auto shrink-0 text-[10px] font-semibold tabular-nums text-[#1a4d42]/50 dark:text-white/40">
-                    {group.rows.length}
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={expanded}
+                    className="sticky top-0 z-10 flex w-full items-center gap-2.5 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 text-left dark:border-white/10 dark:bg-[#0c1a17]"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-[#1a4d42]/45 transition-transform dark:text-white/40",
+                        !expanded && "-rotate-90",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "h-2 w-2 shrink-0 rounded-lg",
+                        accentDot[group.accent],
+                      )}
+                    />
+                    <span className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[#0a1f1a] dark:text-white">
+                      {group.title}
+                    </span>
+                    <span className="hidden truncate text-[11px] text-[#1a4d42]/45 dark:text-white/35 sm:inline">
+                      {group.subtitle}
+                    </span>
+                    <span className="ml-auto shrink-0 text-[11px] font-semibold tabular-nums text-[#1a4d42]/50 dark:text-white/40">
+                      {group.rows.length}
+                    </span>
+                  </button>
 
-                {expanded ? (
-                  <ul className="divide-y divide-[#1a4d42]/8 dark:divide-white/8">
-                    {group.rows.map((row) => (
-                      <SubjectRow
-                        key={`${group.key}:${row.id}`}
-                        row={row}
-                        showType={!scopedLevel}
-                        onAssign={() =>
-                          setAssignSubject({
-                            tenantSubjectIds: row.tenantSubjectIds,
-                            name: row.name,
-                          })
-                        }
-                        onEdit={() => setEditingSubject(row._tenantSubject)}
-                        onDelete={() => setDeleteTarget(row)}
-                      />
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-            );
-          })
+                  {expanded ? (
+                    <ul className="grid grid-cols-1 gap-2 p-2.5 sm:grid-cols-2">
+                      {group.rows.map((row) => (
+                        <SubjectRow
+                          key={`${group.key}:${row.id}`}
+                          row={row}
+                          showType={!scopedLevel}
+                          onAssign={() =>
+                            setAssignSubject({
+                              tenantSubjectIds: row.tenantSubjectIds,
+                              name: row.name,
+                            })
+                          }
+                          onEdit={() => setEditingSubject(row._tenantSubject)}
+                          onDelete={() => setDeleteTarget(row)}
+                        />
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              );
+            })}
+          </div>
         )}
       </div>
 
@@ -752,24 +764,24 @@ function SubjectRow({
   onDelete: () => void;
 }) {
   return (
-    <li className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-[#f8fbfa] dark:hover:bg-white/[0.03] sm:px-4">
+    <li className="group flex min-h-[64px] items-center gap-2 border border-[#1a4d42]/10 bg-white px-3 py-2.5 transition-colors hover:border-[#246a59]/35 hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-white/[0.03]">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p
-            className="truncate text-[13px] font-medium text-[#0a1f1a] dark:text-white"
+            className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white"
             title={row.name}
           >
             {row.name}
           </p>
           {row.code ? (
-            <span className="shrink-0 border border-[#1a4d42]/10 bg-[#f3f7f5] px-1.5 py-0.5 font-mono text-[9px] text-[#1a4d42]/50 dark:border-white/10 dark:bg-white/5 dark:text-white/40">
+            <span className="shrink-0 border border-[#1a4d42]/10 bg-[#f3f7f5] px-1.5 py-0.5 font-mono text-[10px] text-[#1a4d42]/50 dark:border-white/10 dark:bg-white/5 dark:text-white/40">
               {row.code}
             </span>
           ) : null}
           {showType ? (
             <span
               className={cn(
-                "shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                 row.subjectType === "core"
                   ? "bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/25 dark:text-[#8fe3c8]"
                   : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
@@ -779,7 +791,7 @@ function SubjectRow({
             </span>
           ) : null}
         </div>
-        <p className="mt-0.5 truncate text-[10px] text-[#1a4d42]/45 dark:text-white/35">
+        <p className="mt-1 truncate text-[11px] text-[#1a4d42]/45 dark:text-white/35">
           {row.teacher ? `Taught by ${row.teacher}` : "No teacher assigned yet"}
         </p>
       </div>
@@ -789,12 +801,12 @@ function SubjectRow({
           type="button"
           onClick={onAssign}
           title={`Change teacher for ${row.name}`}
-          className="hidden max-w-[8.5rem] shrink-0 items-center gap-1.5 border border-[#1a4d42]/10 bg-[#f8fbfa] px-1.5 py-0.5 text-left transition-colors hover:border-[#246a59]/35 dark:border-white/10 dark:bg-white/5 sm:inline-flex"
+          className="hidden max-w-[9rem] shrink-0 items-center gap-1.5 border border-[#1a4d42]/10 bg-[#f8fbfa] px-1.5 py-1 text-left transition-colors hover:border-[#246a59]/35 dark:border-white/10 dark:bg-white/5 lg:inline-flex"
         >
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#246a59]/10 text-[8px] font-bold text-[#246a59] dark:bg-[#246a59]/25 dark:text-[#8fe3c8]">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#246a59]/10 text-[9px] font-bold text-[#246a59] dark:bg-[#246a59]/25 dark:text-[#8fe3c8]">
             {initials(row.teacher)}
           </span>
-          <span className="truncate text-[10px] font-medium text-[#0a1f1a] dark:text-white">
+          <span className="truncate text-[11px] font-medium text-[#0a1f1a] dark:text-white">
             {row.teacher}
           </span>
         </button>
@@ -802,7 +814,7 @@ function SubjectRow({
         <button
           type="button"
           onClick={onAssign}
-          className="inline-flex h-7 shrink-0 items-center gap-1 border border-dashed border-amber-300 bg-amber-50 px-2 text-[10px] font-semibold text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+          className="inline-flex h-8 shrink-0 items-center gap-1 border border-dashed border-amber-300 bg-amber-50 px-2.5 text-[11px] font-semibold text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
         >
           <UserPlus className="h-3 w-3" />
           Assign
@@ -814,7 +826,7 @@ function SubjectRow({
           <button
             type="button"
             aria-label={`Actions for ${row.name}`}
-            className="flex h-7 w-7 shrink-0 items-center justify-center text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white"
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
