@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
 import { getAuthCookieOptions } from '@/lib/auth/cookie-domain'
+import { clearSessionCookies } from '@/lib/auth/session-cookies'
 
 const IMPERSONATE_MUTATION = `
   mutation ImpersonateTenantAdmin($tenantId: String!) {
@@ -12,7 +13,6 @@ const IMPERSONATE_MUTATION = `
       tenantName
       subdomain
       portalUrl
-      membershipId
       userId
       email
       userName
@@ -49,6 +49,18 @@ function publicPortalUrl(raw: unknown): string | null {
   }
 }
 
+function membershipIdFromToken(token: string): string | null {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const json = Buffer.from(payload, 'base64url').toString('utf8')
+    const claims = JSON.parse(json) as { membershipId?: unknown }
+    return typeof claims.membershipId === 'string' ? claims.membershipId : null
+  } catch {
+    return null
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -63,19 +75,50 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not signed in as super admin' }, { status: 401 })
     }
 
-    const graphqlRes = await fetch(resolveGraphqlEndpoint(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        query: IMPERSONATE_MUTATION,
-        variables: { tenantId },
-      }),
-    })
+    const graphqlController = new AbortController()
+    const graphqlTimeout = setTimeout(() => graphqlController.abort(), 15_000)
+    let graphqlRes: Response
+    try {
+      graphqlRes = await fetch(resolveGraphqlEndpoint(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: IMPERSONATE_MUTATION,
+          variables: { tenantId },
+        }),
+        signal: graphqlController.signal,
+      })
+    } catch (error) {
+      clearTimeout(graphqlTimeout)
+      const timedOut =
+        error instanceof Error && error.name === 'AbortError'
+      return NextResponse.json(
+        {
+          error: timedOut
+            ? 'The school portal sign-in timed out. Try again.'
+            : 'Could not reach the school portal service.',
+        },
+        { status: timedOut ? 504 : 502 },
+      )
+    } finally {
+      clearTimeout(graphqlTimeout)
+    }
 
-    const json = await graphqlRes.json()
+    let json: {
+      data?: { impersonateTenantAdmin?: Record<string, unknown> }
+      errors?: Array<{ message?: string }>
+    }
+    try {
+      json = await graphqlRes.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'The school portal service returned an invalid response.' },
+        { status: 502 },
+      )
+    }
     if (json.errors?.length) {
       return NextResponse.json(
         { error: json.errors[0]?.message || 'Impersonation failed' },
@@ -91,7 +134,7 @@ export async function POST(request: Request) {
           tenantName: string
           subdomain: string
           portalUrl: string
-          membershipId: string
+          membershipId?: string
           userId: string
           email: string
           userName: string
@@ -100,7 +143,7 @@ export async function POST(request: Request) {
         }
       | undefined
 
-    if (!payload?.accessToken || !payload.portalUrl) {
+    if (!payload?.accessToken) {
       return NextResponse.json(
         { error: 'Impersonation response incomplete' },
         { status: 500 },
@@ -165,14 +208,18 @@ export async function POST(request: Request) {
       path: '/',
       maxAge,
     })
-    cookieStore.set('membershipId', payload.membershipId, {
-      httpOnly: false,
-      secure,
-      sameSite,
-      domain,
-      path: '/',
-      maxAge,
-    })
+    const membershipId =
+      payload.membershipId || membershipIdFromToken(payload.accessToken)
+    if (membershipId) {
+      cookieStore.set('membershipId', membershipId, {
+        httpOnly: false,
+        secure,
+        sameSite,
+        domain,
+        path: '/',
+        maxAge,
+      })
+    }
     cookieStore.set('userRole', payload.role, {
       httpOnly: false,
       secure,
