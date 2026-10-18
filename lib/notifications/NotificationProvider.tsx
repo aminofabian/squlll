@@ -12,7 +12,7 @@ import {
 import { useParams, usePathname } from 'next/navigation'
 import { useRealtime } from '@/lib/realtime/RealtimeProvider'
 import { chatGraphqlFetch } from '@/lib/chat/graphql'
-import { getCookieValue } from '@/lib/chat/utils'
+import { hasSessionCookie } from '@/lib/realtime/getAccessToken'
 import {
   MARK_ALL_NOTIFICATIONS_READ,
   MARK_NOTIFICATION_READ,
@@ -55,7 +55,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const subdomain = typeof params?.subdomain === 'string' ? params.subdomain : ''
   const { socket } = useRealtime()
 
-  const hasSession = Boolean(getCookieValue('accessToken'))
+  const hasSession = hasSessionCookie()
   const skipFetch =
     !subdomain ||
     !hasSession ||

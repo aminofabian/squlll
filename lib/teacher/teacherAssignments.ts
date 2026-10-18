@@ -1,4 +1,5 @@
 import { graphqlClient } from '@/lib/graphql-client'
+import { graphqlFetch } from '@/app/school/[subdomain]/teacher/utils/graphqlFetch'
 
 export interface TeacherAssignment {
   id: string
@@ -68,9 +69,71 @@ const GET_MY_ASSIGNMENTS = `
   }
 `
 
+/**
+ * The assignment list is backed by teacher tests, whose lifecycle is
+ * `pending | active | completed`. For this screen "pending" means it has been
+ * published to learners and not yet completed, so it is shown as published.
+ */
+function normalizeStatus(status: string): TeacherAssignment['status'] {
+  if (status === 'completed') return 'completed'
+  if (status === 'draft') return 'draft'
+  return 'published'
+}
+
 export async function fetchMyAssignments(): Promise<TeacherAssignment[]> {
   const data = await graphqlClient.request<{ myAssignMents: TeacherAssignment[] }>(
     GET_MY_ASSIGNMENTS,
   )
-  return data.myAssignMents ?? []
+  return (data.myAssignMents ?? []).map((assignment) => ({
+    ...assignment,
+    status: normalizeStatus(String(assignment.status)),
+  }))
+}
+
+export interface CreateAssignmentInput {
+  title: string
+  tenantSubjectId: string
+  tenantGradeLevelIds: string[]
+  /** Full ISO timestamp for the due date/time. */
+  date: string
+  startTime: string
+  duration: number
+  totalMarks: number
+  instructions?: string
+}
+
+const CREATE_ASSIGNMENT = `
+  mutation CreateAssignment($input: CreateTestInput!) {
+    createTest(createTestInput: $input) {
+      id
+      title
+      status
+      date
+      gradeLevels {
+        id
+        gradeLevel {
+          name
+        }
+      }
+    }
+  }
+`
+
+export async function createAssignment(
+  subdomain: string,
+  input: CreateAssignmentInput,
+): Promise<{ id: string; title: string; classCount: number }> {
+  const result = await graphqlFetch<{
+    createTest: {
+      id: string
+      title: string
+      gradeLevels: Array<{ id: string }>
+    }
+  }>(CREATE_ASSIGNMENT, { input }, subdomain)
+
+  return {
+    id: result.createTest.id,
+    title: result.createTest.title,
+    classCount: result.createTest.gradeLevels?.length ?? 0,
+  }
 }

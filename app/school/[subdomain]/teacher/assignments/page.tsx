@@ -5,14 +5,13 @@ import {
   BookOpen,
   Calendar,
   Clock,
-  Users,
   FileText,
   Filter,
-  ChevronDown,
-  ChevronUp,
   Eye,
   Search,
   ArrowUpDown,
+  Plus,
+  CheckCircle2,
 } from "lucide-react";
 import { DynamicLogo } from "../../parent/components/DynamicLogo";
 import {
@@ -35,9 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useTeacherAssignments } from "@/lib/teacher/useTeacherAssignments";
-import type { TeacherAssignment } from "@/lib/teacher/teacherAssignments";
+import { CreateAssignmentDialog } from "./components/CreateAssignmentDialog";
 
 export default function AssignmentsPage() {
   const params = useParams();
@@ -59,6 +57,8 @@ export default function AssignmentsPage() {
     "date",
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createdNotice, setCreatedNotice] = useState<string | null>(null);
 
   // Get unique values for filters
   const uniqueGrades = Array.from(
@@ -134,23 +134,6 @@ export default function AssignmentsPage() {
     if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
     return 0;
   });
-
-  // Group assignments by grade for better organization
-  const groupedByGrade = sortedAssignments.reduce(
-    (groups, assignment) => {
-      assignment.gradeLevels.forEach((gradeLevel) => {
-        const gradeName = gradeLevel.gradeLevel.name;
-        if (!groups[gradeName]) {
-          groups[gradeName] = [];
-        }
-        if (!groups[gradeName].some((a) => a.id === assignment.id)) {
-          groups[gradeName].push(assignment);
-        }
-      });
-      return groups;
-    },
-    {} as Record<string, TeacherAssignment[]>,
-  );
 
   const handleSort = (newSortBy: typeof sortBy) => {
     if (sortBy === newSortBy) {
@@ -234,6 +217,13 @@ export default function AssignmentsPage() {
               </div>
             </div>
 
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="shrink-0 bg-primary hover:bg-primary/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New assignment
+            </Button>
           </div>
         </div>
       </div>
@@ -244,6 +234,20 @@ export default function AssignmentsPage() {
           <div className="w-full flex justify-center py-6 mb-8">
             <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
           </div>
+
+          {createdNotice && (
+            <div className="mb-6 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="flex-1">{createdNotice}</span>
+              <button
+                type="button"
+                className="text-xs font-medium underline"
+                onClick={() => setCreatedNotice(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {/* Filters and Search */}
           <Card className="mb-6 border-primary/20 shadow-sm">
@@ -402,6 +406,16 @@ export default function AssignmentsPage() {
                                 ? "Create your first assignment to get started"
                                 : "Try adjusting your filters"}
                             </p>
+                            {assignments.length === 0 && (
+                              <Button
+                                size="sm"
+                                className="mt-2 bg-primary hover:bg-primary/90"
+                                onClick={() => setCreateOpen(true)}
+                              >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create assignment
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -525,6 +539,21 @@ export default function AssignmentsPage() {
           </Card>
         </div>
       </div>
+
+      <CreateAssignmentDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        subdomain={subdomain}
+        onCreated={(created) => {
+          setCreatedNotice(
+            created.title +
+              " was created and published to " +
+              created.classCount +
+              (created.classCount === 1 ? " class." : " classes."),
+          );
+          void refetch();
+        }}
+      />
     </div>
   );
 }

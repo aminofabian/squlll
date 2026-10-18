@@ -10,7 +10,7 @@ import {
 } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { useParams, usePathname } from 'next/navigation'
-import { fetchAccessToken } from './getAccessToken'
+import { fetchAccessToken, hasSessionCookie } from './getAccessToken'
 
 interface RealtimeContextValue {
   socket: Socket | null
@@ -55,12 +55,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     let client: Socket | null = null
 
     const setup = async () => {
-      const hasSession =
-        typeof document !== 'undefined' &&
-        document.cookie
-          .split(';')
-          .some((cookie) => cookie.trim().startsWith('accessToken='))
-      if (!hasSession) return
+      // `accessToken` is httpOnly, so the session can only be detected via the
+      // readable marker cookie; the token itself comes from the server route.
+      if (!hasSessionCookie()) return
       const token = await fetchAccessToken()
       if (!active || !token) return
 
