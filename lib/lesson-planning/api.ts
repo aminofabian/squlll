@@ -423,6 +423,15 @@ const GET_LESSON_PLAN = `
   ${LESSON_PLAN_FRAGMENT}
 `
 
+const GET_LESSON_PLAN_FOR_PERIOD = `
+  query GetLessonPlanForPeriod($timetableEntryId: ID!, $date: String!) {
+    getLessonPlanForPeriod(timetableEntryId: $timetableEntryId, date: $date) {
+      ...LessonPlanFields
+    }
+  }
+  ${LESSON_PLAN_FRAGMENT}
+`
+
 const GET_MY_SCHEMES = `
   query GetMySchemesOfWork($termId: ID!) {
     getMySchemesOfWork(termId: $termId) {
@@ -597,6 +606,17 @@ export async function fetchLessonPlan(
     subdomain,
   )
   return result.getLessonPlan
+}
+
+export async function fetchLessonPlanForPeriod(
+  subdomain: string,
+  timetableEntryId: string,
+  date: string,
+): Promise<LessonPlan | null> {
+  const result = await graphqlFetch<{
+    getLessonPlanForPeriod: LessonPlan | null
+  }>(GET_LESSON_PLAN_FOR_PERIOD, { timetableEntryId, date }, subdomain)
+  return result.getLessonPlanForPeriod ?? null
 }
 
 export async function startLessonPlan(

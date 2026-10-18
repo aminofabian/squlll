@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTeacherTimetable } from "../hooks/useTeacherTimetable";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
 import { BookOpen, Printer, RefreshCw } from "lucide-react";
@@ -36,9 +36,23 @@ import {
   setLessonCompletion,
 } from "@/lib/teacher/lessonCompletion";
 import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
+import {
+  fetchLessonPlanForPeriod,
+  startLessonPlan,
+  type LessonPlan,
+} from "@/lib/lesson-planning/api";
+
+function lessonDateForDay(dayOfWeek: number): string {
+  const weekStart = getWeekStartDate();
+  const [year, month, day] = weekStart.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  date.setUTCDate(date.getUTCDate() + (dayOfWeek - 1));
+  return date.toISOString().slice(0, 10);
+}
 
 const TeacherTimetable = () => {
   const params = useParams();
+  const router = useRouter();
   const subdomain =
     typeof params.subdomain === "string"
       ? params.subdomain
@@ -59,10 +73,15 @@ const TeacherTimetable = () => {
     useState<TeacherLessonSelection | null>(null);
   const [swapSelection, setSwapSelection] =
     useState<TeacherLessonSelection | null>(null);
+  const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planPreparing, setPlanPreparing] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
   const termId = selectedTerm?.id;
 
   useEffect(() => {
     if (!subdomain || !termId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCompletedLessonIds([]);
       return;
     }
@@ -80,6 +99,80 @@ const TeacherTimetable = () => {
       cancelled = true;
     };
   }, [subdomain, termId]);
+
+  // Load the plan (if any) for the period the teacher opened, so the sheet can
+  // offer "View plan" instead of "Create plan".
+  useEffect(() => {
+    if (!selectedLesson || !subdomain || !termId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLessonPlan(null);
+      setPlanError(null);
+      setPlanLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setPlanLoading(true);
+    setPlanError(null);
+    setLessonPlan(null);
+
+    void fetchLessonPlanForPeriod(
+      subdomain,
+      selectedLesson.lesson.id,
+      lessonDateForDay(selectedLesson.dayOfWeek),
+    )
+      .then((plan) => {
+        if (!cancelled) setLessonPlan(plan);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setLessonPlan(null);
+        setPlanError(
+          err instanceof Error ? err.message : "Could not check the lesson plan",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setPlanLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLesson, subdomain, termId]);
+
+  const handleOpenPlan = useCallback(
+    (plan: LessonPlan) => {
+      setSelectedLesson(null);
+      router.push(`/teacher/lesson-plans/${plan.id}`);
+    },
+    [router],
+  );
+
+  const handleCreatePlan = useCallback(
+    async (selection: TeacherLessonSelection) => {
+      if (!subdomain || !termId) return;
+      setPlanPreparing(true);
+      setPlanError(null);
+      try {
+        const plan = await startLessonPlan(subdomain, {
+          timetableEntryId: selection.lesson.id,
+          termId,
+          date: lessonDateForDay(selection.dayOfWeek),
+        });
+        setSelectedLesson(null);
+        router.push(`/teacher/lesson-plans/${plan.id}`);
+      } catch (err) {
+        setPlanError(
+          err instanceof Error
+            ? err.message
+            : "Could not prepare the lesson plan",
+        );
+      } finally {
+        setPlanPreparing(false);
+      }
+    },
+    [subdomain, termId, router],
+  );
 
   useDomainRealtime({
     onTimetablePublished: (payload) => {
@@ -262,6 +355,14 @@ const TeacherTimetable = () => {
         onRequestSwap={(selection) => {
           setSelectedLesson(null);
           setSwapSelection(selection);
+        }}
+        lessonPlan={lessonPlan}
+        planLoading={planLoading}
+        planPreparing={planPreparing}
+        planError={planError}
+        onOpenPlan={handleOpenPlan}
+        onCreatePlan={(selection) => {
+          void handleCreatePlan(selection);
         }}
       />
       <LessonSwapDialog

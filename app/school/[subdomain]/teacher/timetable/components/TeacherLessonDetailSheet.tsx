@@ -6,7 +6,9 @@ import {
   ArrowLeftRight,
   CheckCircle2,
   Clock,
+  Loader2,
   MapPin,
+  PencilLine,
   Users,
 } from "lucide-react";
 import {
@@ -26,6 +28,8 @@ import {
 import { getSubjectShortCode } from "@/lib/timetable/lessonShortcodes";
 import { formatGradeShort } from "@/components/timetable/TeacherMobileWeekTable";
 import type { TimetableLesson, TimetableSlot } from "@/lib/timetable/types";
+import type { LessonPlan } from "@/lib/lesson-planning/api";
+import { LessonPlanStatusPill } from "@/components/lesson-planning/StatusPill";
 
 export type TeacherLessonSelection = {
   lesson: TimetableLesson;
@@ -41,6 +45,13 @@ export type TeacherLessonDetailSheetProps = {
   isCompleted?: boolean;
   onToggleComplete?: (lessonId: string) => void;
   onRequestSwap?: (selection: TeacherLessonSelection) => void;
+  /** The plan for this period on the displayed week, when one exists. */
+  lessonPlan?: LessonPlan | null;
+  planLoading?: boolean;
+  planPreparing?: boolean;
+  planError?: string | null;
+  onOpenPlan?: (plan: LessonPlan) => void;
+  onCreatePlan?: (selection: TeacherLessonSelection) => void;
 };
 
 function formatClassLabel(lesson: TimetableLesson): string {
@@ -62,6 +73,12 @@ export function TeacherLessonDetailSheet({
   isCompleted = false,
   onToggleComplete,
   onRequestSwap,
+  lessonPlan = null,
+  planLoading = false,
+  planPreparing = false,
+  planError = null,
+  onOpenPlan,
+  onCreatePlan,
 }: TeacherLessonDetailSheetProps) {
   const lesson = selection?.lesson;
   const dayOfWeek = selection?.dayOfWeek;
@@ -189,6 +206,62 @@ export function TeacherLessonDetailSheet({
                 ) : null,
               )}
             </div>
+
+            {selection && (onOpenPlan || onCreatePlan) ? (
+              <div className="border-t border-slate-100 px-3 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500">
+                      Lesson plan
+                    </p>
+                    {planLoading ? (
+                      <p className="mt-1 flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-500">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Checking…
+                      </p>
+                    ) : lessonPlan ? (
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <LessonPlanStatusPill status={lessonPlan.status} />
+                        <span className="truncate text-[12px] text-slate-600 dark:text-slate-300">
+                          {lessonPlan.topic || "No topic set yet"}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
+                        Not prepared for this lesson
+                      </p>
+                    )}
+                    {planError ? (
+                      <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                        {planError}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 shrink-0 rounded-none border-[#1a4d42]/15 text-[12px] font-semibold shadow-none"
+                    disabled={planLoading || planPreparing}
+                    onClick={() => {
+                      if (lessonPlan && onOpenPlan) {
+                        onOpenPlan(lessonPlan);
+                      } else if (selection && onCreatePlan) {
+                        onCreatePlan(selection);
+                      }
+                    }}
+                  >
+                    {planPreparing ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : lessonPlan ? (
+                      <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+                    ) : (
+                      <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {lessonPlan ? "View plan" : "Create plan"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
             {onRequestSwap || onToggleComplete ? (
               <div className="grid gap-2 border-t border-slate-100 p-3 dark:border-slate-800 sm:grid-cols-2">
