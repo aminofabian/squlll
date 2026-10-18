@@ -8,7 +8,7 @@ import { useStudentsStore } from "@/lib/stores/useStudentsStore"
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
 import { mockClasses } from "@/lib/data/mockclasses"
 import { LEGAL_META } from "@/lib/legal/legal-meta"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import type { ReactNode } from "react"
 import {
   Users,
@@ -653,6 +653,22 @@ function useAnimatedNumber(
 }
 
 type HeroPreviewMode = "phone" | "desktop"
+
+const DESKTOP_PREVIEW_QUERY = "(min-width: 1024px)"
+
+function subscribeDesktopPreview(onChange: () => void) {
+  const query = window.matchMedia(DESKTOP_PREVIEW_QUERY)
+  query.addEventListener("change", onChange)
+  return () => query.removeEventListener("change", onChange)
+}
+
+function getDesktopPreviewSnapshot() {
+  return window.matchMedia(DESKTOP_PREVIEW_QUERY).matches
+}
+
+function getDesktopPreviewServerSnapshot() {
+  return false
+}
 
 function HeroPreviewToggle({
   mode,
@@ -1787,14 +1803,15 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("")
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [demoPaused, setDemoPaused] = useState(false)
-  const [previewMode, setPreviewMode] = useState<HeroPreviewMode>("phone")
-
   // Desktop gets the full product view; phones keep the app frame.
-  useEffect(() => {
-    if (window.matchMedia("(min-width: 1024px)").matches) {
-      setPreviewMode("desktop")
-    }
-  }, [])
+  const isDesktopViewport = useSyncExternalStore(
+    subscribeDesktopPreview,
+    getDesktopPreviewSnapshot,
+    getDesktopPreviewServerSnapshot,
+  )
+  const [previewOverride, setPreviewOverride] = useState<HeroPreviewMode | null>(null)
+  const previewMode: HeroPreviewMode =
+    previewOverride ?? (isDesktopViewport ? "desktop" : "phone")
   const [walkthroughOpen, setWalkthroughOpen] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const studentsMetric = useAnimatedNumber(HERO_DEMO_STATS.students.target, { delay: 400 })
@@ -1968,7 +1985,7 @@ export default function Home() {
                 <HeroPreviewToggle
                   mode={previewMode}
                   onChange={(mode) => {
-                    setPreviewMode(mode)
+                    setPreviewOverride(mode)
                     setDemoPaused(true)
                   }}
                 />
