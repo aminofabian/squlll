@@ -1,0 +1,419 @@
+{
+  "slug": "common-cbc-data-entry-mistakes",
+  "path": "/blog/common-cbc-data-entry-mistakes",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Common CBC Data Entry Mistakes and How to Avoid Them",
+  "h1": "Common CBC Data Entry Mistakes and How to Avoid Them",
+  "description": "The CBC data entry mistakes that reach the report card and the KNEC portal — duplicate learners, wrong UPIs, missing strands and more — plus a checklist.",
+  "primaryKeyword": "CBC data entry mistakes",
+  "secondaryKeywords": [
+    "CBC assessment data errors",
+    "KNEC CBA upload mistakes",
+    "duplicate learner records Kenya",
+    "CBC data quality checklist",
+    "school assessment data entry"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "Most CBC data entry mistakes are predictable: duplicate learners, wrong UPIs, wrong term or learning area, free-text levels, missing sub-strands and absent learners recorded as zero. Prevent them with one learner identity, one controlled scale, capture at the point of evidence, a second-person review and a pre-upload audit.",
+  "intro": [
+    "**Quick answer:** CBC data entry mistakes are rarely random. They cluster around identity (duplicate learners, wrong UPI), structure (wrong strand, wrong term, free-text levels) and timing (capture at the last minute, no evidence). A short pre-upload audit catches most of them before they reach a report card or the KNEC portal. This guide is part of the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "The expensive part of a data error is not the typing. It is the unwinding: a parent who received the wrong report, a candidate whose score is attached to the wrong record, or a term that has to be re-opened after the reports were printed.",
+    "This guide lists the mistakes we see most often in Kenyan CBC records, why they survive, and the specific controls that prevent them. It is written to be used as a checklist, not just read."
+  ],
+  "sections": [
+    {
+      "id": "why-errors-survive",
+      "heading": "Why these errors survive",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Most schools do not lack effort. They lack a control at the point where the error enters the record. Four conditions make errors almost inevitable."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Capture happens at the end of term.** A whole term's evidence is entered in a hurry, from memory, with no chance to check the task.",
+            "**The record accepts anything.** A free-text level field cannot reject “E”, “Exceeding” or “75”.",
+            "**One person holds the file.** There is no second pair of eyes, and no audit trail when something changes.",
+            "**The portal is treated as the record.** The school discovers a mismatch only when the upload report does not match its own list."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A late entry is a guess with a date",
+          "text": "If a teacher cannot remember the evidence, the level they enter at the end of term is not an assessment. It is a reconstruction. Capture close to the task, while the evidence is still available."
+        }
+      ]
+    },
+    {
+      "id": "the-ten-mistakes",
+      "heading": "The ten mistakes to design out",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "The CBC data entry mistakes that cause the most rework.",
+          "headers": [
+            "Mistake",
+            "What it looks like",
+            "Prevention"
+          ],
+          "rows": [
+            [
+              "1. Duplicate learner",
+              "Two records for the same learner, often after a transfer",
+              "One admission number, one UPI, a duplicate check before import"
+            ],
+            [
+              "2. Wrong identity number",
+              "A transposed digit in a UPI or assessment number",
+              "Validate against the register; check the count and the digits"
+            ],
+            [
+              "3. Wrong term or year",
+              "Last term's record edited instead of this term's",
+              "Term-scoped records; lock closed terms"
+            ],
+            [
+              "4. Wrong learning area or strand",
+              "A level entered under the wrong sub-strand",
+              "Capture from the planned task; show the strand on entry"
+            ],
+            [
+              "5. Free-text level",
+              "EE, E, Exceeding, 4, 75% in one column",
+              "A controlled scale with no free text"
+            ],
+            [
+              "6. Missing sub-strand",
+              "A whole strand with no evidence",
+              "A completeness view by learner and strand"
+            ],
+            [
+              "7. Stream mismatch",
+              "Learner appears in East on the report and West in the portal",
+              "A term-scoped placement and a reconciliation step"
+            ],
+            [
+              "8. Absent recorded as zero",
+              "A learner who missed a task is treated as BE",
+              "An explicit absent/incomplete status"
+            ],
+            [
+              "9. Overwriting instead of correcting",
+              "The old level disappears with no history",
+              "Add a new event; keep the superseded value"
+            ],
+            [
+              "10. No evidence or late entry",
+              "A level with no task, date or note",
+              "Capture at the point of evidence; require a source"
+            ]
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "data-audit",
+          "caption": "Illustrative view: a pre-upload audit that separates passed checks from records needing review, before anything reaches a report card or the portal."
+        }
+      ]
+    },
+    {
+      "id": "identity-errors",
+      "heading": "Identity errors are the most expensive",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A wrong level can be corrected. A wrong identity can attach a term's evidence, or a national score, to the wrong child. Identity errors deserve the strongest controls."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Use one identifier as the key.** The UPI, admission number or KNEC assessment number should never be retyped from memory.",
+            "**Check for duplicates before every import.** Match on name, date of birth and guardian where the identifier is missing.",
+            "**Do not create a new record for a transfer.** Update the placement, not the learner.",
+            "**Reconcile the candidate count.** If the portal says 212 and the school says 211, stop and investigate.",
+            "**Record merge decisions.** If two records are merged, keep a note of what was combined and why."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "The one-minute identity check",
+          "text": "Before an upload, compare the portal candidate list with the school register by name and number. Twenty-one extra seconds per learner is cheaper than correcting a national record."
+        }
+      ]
+    },
+    {
+      "id": "level-vs-mark",
+      "heading": "A level is not a mark",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC reports performance levels, not percentages. The most common data quality problem is a spreadsheet that mixes both: a teacher enters 78 for one learner, ME for another, and 3 for a third, and the report card quietly treats them as the same kind of thing."
+        },
+        {
+          "type": "table",
+          "caption": "Keep the scale clean.",
+          "headers": [
+            "Input",
+            "Valid?",
+            "What to do"
+          ],
+          "rows": [
+            [
+              "EE, ME, AE, BE",
+              "Yes",
+              "Store against the sub-strand"
+            ],
+            [
+              "EE1–BE2",
+              "Yes, if the school uses the eight-point scale",
+              "Map to the report card rule, not to a percentage"
+            ],
+            [
+              "78%",
+              "Not a CBC level",
+              "Keep it as exam evidence only; do not store it in the level field"
+            ],
+            [
+              "Grade 4",
+              "Not a CBC level",
+              "Use a separate exam result field if needed"
+            ],
+            [
+              "Blank",
+              "Valid only as “not assessed”",
+              "Never default to ME"
+            ],
+            [
+              "Absent",
+              "A status, not a level",
+              "Record the absence explicitly"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "missing-vs-zero",
+      "heading": "Missing is not the same as low",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A learner who missed a task has no evidence. A learner who attempted the task and did not meet the expectation has evidence of BE. Treating the first as the second punishes a learner for being absent and hides an attendance or access problem."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Record absence separately** from the performance level.",
+            "**Show “not assessed” on the report** where the evidence does not exist.",
+            "**Follow up on patterns.** Repeated absence on assessment days is a signal, not a coincidence.",
+            "**Do not let a default value fill blanks.** A blank is information."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pre-upload-checklist",
+      "heading": "The pre-upload audit",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Run this audit before every report card run and every KNEC upload. It takes less time than fixing the errors afterwards."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Learner count matches the register and the portal.",
+            "No duplicate UPIs or admission numbers.",
+            "Every learner has the correct grade, stream and term.",
+            "Every assessed learning area has a level or a documented gap.",
+            "Every level is from the approved scale.",
+            "Every level has a date, task and teacher.",
+            "No blank level has been defaulted to ME.",
+            "Absent learners are recorded as absent, not as BE.",
+            "Transferred learners are excluded or marked as partial.",
+            "Moderation has been completed for a cross-stream sample.",
+            "The term is locked before generation or upload.",
+            "A second person has spot-checked 10 learners against the evidence."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Audit before the lock, not after the print",
+          "text": "The audit is only cheap if it runs before the report cards are printed and the portal is closed. Put it on the term calendar as a scheduled task with a named owner."
+        }
+      ]
+    },
+    {
+      "id": "who-checks",
+      "heading": "Who checks what",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "A simple data quality chain.",
+          "headers": [
+            "Role",
+            "Checks",
+            "Frequency"
+          ],
+          "rows": [
+            [
+              "Subject teacher",
+              "Level, strand, date and evidence",
+              "Every capture"
+            ],
+            [
+              "Class teacher",
+              "Completeness for their class, comments",
+              "Weekly and at lock"
+            ],
+            [
+              "DOS / coordinator",
+              "Cross-stream consistency and moderation",
+              "Mid-term and before lock"
+            ],
+            [
+              "Portal admin",
+              "Candidate count, upload status, exceptions",
+              "Before every upload"
+            ],
+            [
+              "Headteacher",
+              "Final approval and sign-off",
+              "Before upload and release"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The chain only works if each role has the access it needs and no more. A teacher should not be able to approve an upload; the head should not have to correct a strand."
+        }
+      ]
+    },
+    {
+      "id": "correcting-errors",
+      "heading": "Correcting an error once it has happened",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Stop the downstream process",
+              "text": "Do not print more reports or upload more records until you know the scope of the error."
+            },
+            {
+              "title": "Find the source",
+              "text": "Was it the learner identity, the strand, the scale, the term or the teacher? Fix the cause, not just the symptom."
+            },
+            {
+              "title": "Correct the record",
+              "text": "Add a corrected entry with a date and a reason. Keep the superseded value for the audit trail."
+            },
+            {
+              "title": "Re-run the affected outputs",
+              "text": "Regenerate only the affected report cards or uploads, not the whole school."
+            },
+            {
+              "title": "Document and review",
+              "text": "Record what happened, who fixed it and what control will prevent it next term."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not fix a record by editing a PDF",
+          "text": "A corrected PDF with an unchanged underlying record creates two truths. Fix the data and regenerate the document."
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL reduces the opportunity for error by controlling the shape of the record: one learner identity, a fixed set of learning areas and strands, a controlled performance scale, and an audit trail for changes."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Duplicate detection** before a learner is added or imported.",
+            "**Controlled levels** instead of free text.",
+            "**Completeness views** by learner, strand and stream.",
+            "**An audit trail** of who changed what and when.",
+            "**Role-based approval** so capture and sign-off are separate."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is a UPI and why does it matter?",
+      "answer": "The Unique Personal Identifier is the learner's unique identifier in Kenya's national education data systems. It helps keep one learner record across schools and years. A wrong or duplicated UPI can attach assessment data to the wrong learner, so it should be validated, not retyped from memory."
+    },
+    {
+      "question": "How do I correct an SBA score after it has been uploaded?",
+      "answer": "Correct the school record first, document the original value and the reason, then use the official KNEC correction route for the current window. Do not create a duplicate candidate or edit a downloaded report to make it match."
+    },
+    {
+      "question": "Who should enter CBC assessment data?",
+      "answer": "The teacher who collected the evidence should enter it, close to the task. The class teacher or DOS checks completeness, and the headteacher approves the final upload. Separating capture from approval is the strongest control."
+    },
+    {
+      "question": "How long should schools keep assessment evidence?",
+      "answer": "Follow the school's records retention policy and any KNEC requirements. As a practical minimum, keep the evidence and the locked term record long enough to resolve a dispute or reproduce a report card, and archive it securely rather than on a personal device."
+    },
+    {
+      "question": "Can we use one shared login for the whole staff?",
+      "answer": "No. A shared login destroys the audit trail and makes it impossible to know who changed a level. Use named accounts with the smallest access each role needs."
+    }
+  ],
+  "cta": {
+    "heading": "Catch the errors before the report card does",
+    "body": "Start a free term with SQUL and run a clean CBC record with controlled levels, duplicate checks and an audit trail.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "How to capture CBC rubrics and strands without Excel",
+      "href": "/blog/capture-cbc-rubrics-strands-without-excel"
+    },
+    {
+      "title": "Downloading and interpreting KNEC CBA portal reports",
+      "href": "/blog/knec-cba-portal-reports-guide"
+    },
+    {
+      "title": "How to handle learner transfers mid-term under CBC",
+      "href": "/blog/learner-transfers-mid-term-cbc"
+    },
+    {
+      "title": "Move from Excel to a school management system",
+      "href": "/blog/move-from-excel-to-school-management-system"
+    }
+  ]
+}

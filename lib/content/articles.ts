@@ -50,6 +50,17 @@ import featureReports from './data/school-reporting-analytics-software-kenya.jso
 import featureAdministration from './data/school-administration-software-kenya.json'
 import featureSchoolBus from './data/school-bus-tracking-software-kenya.json'
 import featureStaff from './data/school-hr-payroll-software-kenya.json'
+import cbcAssessmentAnchor from './data/cbc-assessment-management-complete-guide.json'
+import cbcCaptureRubrics from './data/capture-cbc-rubrics-strands-without-excel.json'
+import cbcFormativeSummative from './data/formative-vs-summative-assessment-kenya.json'
+import cbcTermReportCards from './data/generate-cbc-term-report-cards-automatically.json'
+import cbcMultipleStreams from './data/continuous-assessment-multiple-streams.json'
+import cbcLearnerTransfers from './data/learner-transfers-mid-term-cbc.json'
+import cbcHeadteacherReports from './data/headteacher-guide-kpsea-kjsea-reports.json'
+import cbcKnecPortal from './data/knec-cba-portal-reports-guide.json'
+import cbcExamTimetables from './data/exam-timetables-sync-cbc-schedules.json'
+import cbcProgressSixToNine from './data/tracking-learner-progress-grade-6-to-9.json'
+import cbcDataEntryMistakes from './data/common-cbc-data-entry-mistakes.json'
 
 /**
  * JSON imports are widened by TypeScript (e.g. `level: number`, `status: string`),
@@ -106,6 +117,17 @@ const ALL_ARTICLES: Article[] = [
   featureAdministration,
   featureSchoolBus,
   featureStaff,
+  cbcAssessmentAnchor,
+  cbcCaptureRubrics,
+  cbcFormativeSummative,
+  cbcTermReportCards,
+  cbcMultipleStreams,
+  cbcLearnerTransfers,
+  cbcHeadteacherReports,
+  cbcKnecPortal,
+  cbcExamTimetables,
+  cbcProgressSixToNine,
+  cbcDataEntryMistakes,
 ] as unknown as Article[]
 
 function countWords(value: unknown): number {

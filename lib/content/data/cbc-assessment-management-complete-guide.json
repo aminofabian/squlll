@@ -1,0 +1,673 @@
+{
+  "slug": "cbc-assessment-management-complete-guide",
+  "path": "/blog/cbc-assessment-management-complete-guide",
+  "kind": "pillar",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "The Complete Guide to CBC Assessment Management for Kenyan Schools (2026)",
+  "h1": "The Complete Guide to CBC Assessment Management for Kenyan Schools",
+  "description": "A practical guide to CBC assessment management in Kenya: strands, rubrics, SBA uploads, KPSEA and KJSEA reports, transfers and term report cards.",
+  "primaryKeyword": "CBC assessment management",
+  "secondaryKeywords": [
+    "CBC assessment guide Kenya",
+    "school based assessment management",
+    "CBC continuous assessment records",
+    "KNEC CBA portal school",
+    "CBC assessment tools for schools"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "CBC assessment management is the system a school uses to plan, capture, moderate, store and report assessment evidence under the Competency-Based Curriculum. In Kenya it covers learning areas, strands, sub-strands and performance levels from Grade 1 to Grade 9, the school-based assessment (SBA) uploaded to KNEC's CBA portal, and the reports that follow: term report cards, KPSEA at Grade 6 and KJSEA at Grade 9.",
+  "intro": [
+    "CBC assessment management is the quiet engine behind every credible CBC report: the routines, records and checks that turn classroom evidence into a result a parent, a headteacher and KNEC can all trust. It sits inside the wider job of running a school, which is why the best [school management software in Kenya](/blog/best-school-management-software-kenya) treats assessment as a core record rather than an add-on. This guide is the hub for that work.",
+    "Most schools do not fail at CBC because teachers cannot assess. They fail because the evidence lives in a class workbook, the marks live in a spreadsheet, the SBA scores live on the KNEC portal, and the report card lives in a Word template that three people edit differently. By the last week of term, nobody can tell which version is true.",
+    "The fix is not a new template. It is a short, disciplined operating system: one learner record, one curriculum map, one evidence trail, one approval step, and reports generated from the same data. This guide explains that system, connects the ten practical guides in this cluster, and shows where a school management platform like SQUL fits — and where it does not."
+  ],
+  "sections": [
+    {
+      "id": "what-cbc-assessment-management-means",
+      "heading": "What CBC assessment management actually means",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC assessment management is the end-to-end handling of assessment data under the Competency-Based Curriculum. It starts with planning what evidence will be collected, runs through capturing and moderating that evidence, and ends with reports that parents, schools and KNEC can act on. Assessment itself — the professional judgement a teacher makes about a learner — is not the software's job. Keeping that judgement accurate, complete and retrievable is."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Plan:** map learning areas to strands, sub-strands and the evidence that will show mastery.",
+            "**Capture:** record a performance level against the right learner, learning area, strand, term and teacher.",
+            "**Moderate:** compare levels across teachers and streams so the standard does not drift.",
+            "**Verify:** check that every candidate's school-based assessment (SBA) reached the KNEC CBA portal correctly.",
+            "**Report:** generate term report cards, school reports and parent conversations from the same record."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "That is a data lifecycle, not a document. Once a school sees it that way, most of the term-end panic disappears: the report card is a view of the record, the KNEC upload is an export of the record, and the board report is a summary of the same record."
+        },
+        {
+          "type": "figure",
+          "scene": "assessment-workflow",
+          "caption": "Illustrative view: classroom evidence, the school record, the KNEC CBA portal and the final reports are four views of one assessment record — not four separate jobs."
+        }
+      ]
+    },
+    {
+      "id": "four-records",
+      "heading": "The four records every CBC school must keep",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A school can lose a term of assessment work through one broken laptop, one deleted column or one teacher who leaves without handing over. These four records are the minimum defence."
+        },
+        {
+          "type": "table",
+          "caption": "The minimum CBC assessment record set.",
+          "headers": [
+            "Record",
+            "What it holds",
+            "Owner",
+            "Minimum standard"
+          ],
+          "rows": [
+            [
+              "Learner identity",
+              "Name, UPI, admission number, KNEC assessment number, grade, stream",
+              "Registrar / admin",
+              "One record per learner, no duplicates"
+            ],
+            [
+              "Curriculum map",
+              "Learning areas, strands, sub-strands and expected evidence for the term",
+              "DOS / assessment coordinator",
+              "Agreed before the term starts"
+            ],
+            [
+              "Assessment evidence",
+              "Level, date, task, teacher, strand and supporting evidence",
+              "Class and subject teachers",
+              "Every level traceable to a task"
+            ],
+            [
+              "Verification log",
+              "What was uploaded, by whom, when, and what changed after review",
+              "Headteacher / portal admin",
+              "Signed off before each KNEC deadline"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "If it only exists in one teacher's laptop, it is not a record",
+          "text": "A record is something the school can retrieve, explain and defend after the teacher has left the room. That means a shared system, a backup, and an audit trail — not a WhatsApp attachment."
+        }
+      ]
+    },
+    {
+      "id": "cbc-assessment-year",
+      "heading": "The CBC assessment year, term by term",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC assessment runs on a rhythm, not a single exam week. School-based assessment is administered through the year, with projects and practical tasks typically concentrated in Term 2 and written tests in Term 3. National assessment sits at the end of the cycle: KPSEA for Grade 6 and KJSEA for Grade 9."
+        },
+        {
+          "type": "figure",
+          "scene": "term-calendar",
+          "caption": "Illustrative view: a CBC assessment calendar that puts classroom tasks, SBA uploads and national assessment on one timeline."
+        },
+        {
+          "type": "paragraph",
+          "text": "In the 2026 schedule, KNEC released Term 3 assessment tools for Grades 3, 4, 5, 7 and 8 on 28 September, with scores due by 23 October. Grade 6 and Grade 9 candidates were left out of that round so schools could prepare them for KPSEA and KJSEA. Dates move from year to year, so treat this as a pattern to copy, not a permanent calendar: confirm the current circular and download the tools from the [KNEC CBA portal](https://cba.knec.ac.ke)."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Put the KNEC deadline on the same wall as the exam timetable",
+          "text": "The most common SBA failure is not a corrupt file. It is a school that finished teaching, sat its end-term exams, closed for the holiday — and remembered the portal deadline afterwards."
+        }
+      ]
+    },
+    {
+      "id": "who-owns-what",
+      "heading": "Who owns what: roles and decision rights",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC assessment fails when everyone assumes someone else is holding the spreadsheet. A simple split of responsibilities is enough, provided the same names appear on the term plan every term."
+        },
+        {
+          "type": "table",
+          "caption": "A workable ownership model for a Kenyan school.",
+          "headers": [
+            "Role",
+            "Owns",
+            "Decision rights"
+          ],
+          "rows": [
+            [
+              "Headteacher / principal",
+              "Overall accuracy and timely KNEC compliance",
+              "Approves the final SBA upload and result release"
+            ],
+            [
+              "DOS / assessment coordinator",
+              "Curriculum map, assessment calendar, moderation",
+              "Sets tasks, deadlines and moderation rules"
+            ],
+            [
+              "Class teacher",
+              "Learner-level completeness and report card comments",
+              "Confirms the class record is complete"
+            ],
+            [
+              "Subject teacher",
+              "Strand-level evidence and levels",
+              "Enters levels and attaches evidence"
+            ],
+            [
+              "ICT / portal admin",
+              "Accounts, exports, uploads, backups",
+              "Controls portal access; cannot change levels"
+            ],
+            [
+              "Board / sponsor",
+              "Oversight, not operation",
+              "Reviews aggregate reports, never individual edits"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Separate data entry from data approval",
+          "text": "The person who types a score should not be the only person who approves the upload. A second pair of eyes is the cheapest data-quality control a school has."
+        }
+      ]
+    },
+    {
+      "id": "kpsea-kjsea-plain-english",
+      "heading": "KPSEA and KJSEA in plain English",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "KPSEA is the national assessment at the end of Grade 6. KJSEA is the national assessment at the end of Grade 9. Neither is a stand-alone exam score: school-based assessment accumulated over earlier grades contributes to the final result. That is why a school's assessment records matter long before the candidate sits the national paper."
+        },
+        {
+          "type": "table",
+          "caption": "How the national assessment results are built (2026 guidance).",
+          "headers": [
+            "Assessment",
+            "When",
+            "What contributes",
+            "Reported as"
+          ],
+          "rows": [
+            [
+              "KPSEA",
+              "End of Grade 6",
+              "SBA in Grades 4, 5 and 6 (60%) + national assessment (40%)",
+              "Performance levels by learning area"
+            ],
+            [
+              "KJSEA",
+              "End of Grade 9",
+              "KPSEA (20%) + SBA in Grades 7 and 8 (20%) + Grade 9 national assessment (60%)",
+              "Performance levels by learning area"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "KJSEA reports four performance descriptors — Exceeding Expectations, Meeting Expectations, Approaching Expectations and Below Expectations — each subdivided into two, giving an eight-point scale from EE1 to BE2. It does not produce an aggregate score or a school mean, and KNEC has explicitly warned against ranking schools on it. Read [KNEC's explanation of the KJSEA grading scale](https://www.the-star.co.ke/news/2025-12-15-knec-explains-new-kjsea-grading-system) before you brief parents or the board."
+        },
+        {
+          "type": "figure",
+          "scene": "kpsea-kjsea",
+          "caption": "Illustrative view: the weighting behind KPSEA and KJSEA, and the level-based reporting that replaces aggregate scores. The distribution shown is illustrative, not real school data."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Weightings are policy, not constants",
+          "text": "The percentages above reflect KNEC guidance in 2026. Confirm the current circular before publishing a parent letter, and keep a dated copy of the guidance your school relied on."
+        }
+      ]
+    },
+    {
+      "id": "classroom-to-report",
+      "heading": "From classroom evidence to KNEC upload to report card",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The data flow is simple to describe and hard to keep clean. Each step should leave the record stronger, not create a second copy of it."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Plan the evidence",
+              "text": "Agree the strands, sub-strands and tasks for the term. A teacher should never wonder what to assess in week nine."
+            },
+            {
+              "title": "Capture at the point of evidence",
+              "text": "Enter the level while the task is fresh, with the date, strand and a note on the evidence used."
+            },
+            {
+              "title": "Moderate before locking",
+              "text": "Compare a sample of learners across streams. If one teacher's ME looks like another's EE, fix the standard before the data leaves the school."
+            },
+            {
+              "title": "Lock the term",
+              "text": "Freeze the assessment record so report cards and uploads come from a known version."
+            },
+            {
+              "title": "Upload and verify",
+              "text": "Export the SBA scores, upload them to the KNEC CBA portal, then verify the upload against the school record."
+            },
+            {
+              "title": "Generate the reports",
+              "text": "Print report cards, prepare the school report and brief parents from the same locked data."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The same record should produce at least four outputs: a learner report card, a class or stream analysis, a school-level summary for the board, and the SBA export for KNEC. If any of those is being rebuilt by hand, the school is paying for the same data twice."
+        },
+        {
+          "type": "figure",
+          "scene": "knec-portal",
+          "caption": "Illustrative view: a school CBA portal workspace for candidate registers, SBA upload status and downloadable reports. Portal labels change between releases — follow the current KNEC user manual for exact steps."
+        }
+      ]
+    },
+    {
+      "id": "where-excel-breaks",
+      "heading": "Where Excel breaks — and why it feels fine at first",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Excel is not the enemy. It is a flexible, familiar tool that gets a school through its first term of CBC recording. The trouble starts when the workbook becomes the school's only source of truth and several people need to edit it at once."
+        },
+        {
+          "type": "table",
+          "caption": "The failure modes that appear once a CBC workbook grows up.",
+          "headers": [
+            "Symptom",
+            "What it looks like",
+            "Real cost"
+          ],
+          "rows": [
+            [
+              "Version sprawl",
+              "Grade 7 Maths final v3 (2).xlsx on three laptops",
+              "Reports produced from the wrong version"
+            ],
+            [
+              "Levels as free text",
+              "EE, E, Exceeding, 4, 75% in the same column",
+              "No reliable count or comparison"
+            ],
+            [
+              "Hidden rows and filters",
+              "Some learners silently excluded from a totals row",
+              "Incomplete SBA upload"
+            ],
+            [
+              "No audit trail",
+              "Nobody knows who changed a level or when",
+              "Disputes that cannot be resolved"
+            ],
+            [
+              "Manual report merge",
+              "Mail-merge into a Word template for each stream",
+              "Days of rework and format drift"
+            ],
+            [
+              "Portal re-keying",
+              "The same scores typed into the CBA portal",
+              "Typos and missed candidates"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Still on Excel this term?",
+          "text": "You can survive one more term if you add a version owner, a locked column for levels and a second-person check before upload. The [CBC data entry mistakes guide](/blog/common-cbc-data-entry-mistakes) turns that into a checklist."
+        }
+      ]
+    },
+    {
+      "id": "term-rhythm",
+      "heading": "A term-by-term operating rhythm that holds",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Assessment management is mostly calendar discipline. This is the rhythm we see work in schools running CBC across several streams and campuses."
+        },
+        {
+          "type": "table",
+          "caption": "What must be true, and who checks it.",
+          "headers": [
+            "When",
+            "What must be true",
+            "Who checks"
+          ],
+          "rows": [
+            [
+              "Before term",
+              "Curriculum map, assessment tasks and report template agreed",
+              "DOS / headteacher"
+            ],
+            [
+              "Weeks 1–3",
+              "Every learner and stream loaded; baseline evidence captured",
+              "Class teacher / admin"
+            ],
+            [
+              "Mid-term",
+              "Strand coverage reviewed; gaps and absentees flagged",
+              "DOS / class teacher"
+            ],
+            [
+              "Two weeks before close",
+              "All levels entered; moderation complete; evidence attached",
+              "Subject teacher / DOS"
+            ],
+            [
+              "Upload week",
+              "SBA exported, uploaded and verified on the CBA portal",
+              "Headteacher / portal admin"
+            ],
+            [
+              "After results",
+              "Report cards released; support plans and next-term targets set",
+              "Class teacher / headteacher"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reports-people-trust",
+      "heading": "Reports people trust",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A report is not trusted because it is printed on good paper. It is trusted because the numbers on it can be explained. That means the person presenting the report can trace a level back to a task, a strand and a teacher."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Term report cards** for parents, generated from the locked learner record.",
+            "**KPSEA and KJSEA school reports** for the headteacher and board, read by learning area and level rather than a single mean.",
+            "**Class and stream analysis** for the DOS, showing where coverage or achievement is slipping.",
+            "**Parent conversations** that use the same evidence the teacher used, not a separate summary.",
+            "**Transfer records** that travel with a learner who moves mid-term."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Each of those has a dedicated guide below: [automatic term report cards](/blog/generate-cbc-term-report-cards-automatically), [KPSEA and KJSEA reports for headteachers](/blog/headteacher-guide-kpsea-kjsea-reports) and [KNEC CBA portal reports](/blog/knec-cba-portal-reports-guide)."
+        }
+      ]
+    },
+    {
+      "id": "choosing-a-cbc-system",
+      "heading": "Choosing a CBC assessment system",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Do not choose on the report card design. Choose on the data model behind it. A beautiful template cannot fix a record that never captured sub-strands, and a cheap tool that stores levels as free text will cost more in rework than it saves."
+        },
+        {
+          "type": "table",
+          "caption": "What to test in a demo — with your own data, not the vendor's.",
+          "headers": [
+            "Capability",
+            "Why it matters",
+            "How to test it"
+          ],
+          "rows": [
+            [
+              "Strand and sub-strand capture",
+              "CBC reporting needs more than a subject total",
+              "Enter one learner across three strands"
+            ],
+            [
+              "Eight-point scale",
+              "EE1–BE2 may be needed, not just EE/ME/AE/BE",
+              "Switch scales on the same record"
+            ],
+            [
+              "Multi-stream and multi-campus",
+              "One standard across East, West and North",
+              "Compare two streams side by side"
+            ],
+            [
+              "SBA export",
+              "The portal needs a clean, complete file",
+              "Export and inspect the columns"
+            ],
+            [
+              "Report card generation",
+              "Consistency across 40–200 learners",
+              "Print a class in one run"
+            ],
+            [
+              "Audit trail",
+              "Disputes need a history, not a guess",
+              "Change a level and view the log"
+            ],
+            [
+              "Role-based access",
+              "Teachers, DOS and head see different things",
+              "Log in as each role"
+            ],
+            [
+              "Phone capture",
+              "Teachers assess in classrooms, not offices",
+              "Enter a level on a phone"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For a deeper commercial comparison, see the [CBC report card software buyer's guide](/blog/cbc-report-card-software-kenya) and the [school management system features](/blog/school-management-system-features) overview. If you are moving off spreadsheets, the [Excel migration guide](/blog/move-from-excel-to-school-management-system) covers the import step."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "You do not need software to run CBC",
+          "text": "You need software to run CBC at scale — across streams, terms, teachers and a KNEC deadline — without rebuilding the same record four times."
+        }
+      ]
+    },
+    {
+      "id": "the-ten-guides",
+      "heading": "The ten guides in this cluster",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This anchor is the map. Each spoke solves one specific job, in the order a school usually meets it: capture the evidence, understand the assessment types, report it, run it across streams, move learners in and out, and survive national reporting."
+        },
+        {
+          "type": "guides",
+          "title": "Start with the job in front of you",
+          "intro": "Every guide links back here and across to the two or three siblings that share the same data.",
+          "items": [
+            {
+              "title": "How to Capture CBC Rubrics and Strands Without Excel",
+              "href": "/blog/capture-cbc-rubrics-strands-without-excel",
+              "kicker": "Capture",
+              "text": "Replace the class rubric workbook with a structure teachers can actually keep up with."
+            },
+            {
+              "title": "Formative vs. Summative Assessment: What Kenyan Teachers Need to Track",
+              "href": "/blog/formative-vs-summative-assessment-kenya",
+              "kicker": "Assess",
+              "text": "The difference that matters at term end — and the evidence that should not disappear."
+            },
+            {
+              "title": "Generating Term Report Cards Automatically from CBC Data",
+              "href": "/blog/generate-cbc-term-report-cards-automatically",
+              "kicker": "Report",
+              "text": "Turn a locked learner record into consistent, print-ready term report cards."
+            },
+            {
+              "title": "Managing Continuous Assessment Records Across Multiple Streams",
+              "href": "/blog/continuous-assessment-multiple-streams",
+              "kicker": "Scale",
+              "text": "Keep one standard when three teachers, five streams and two campuses are involved."
+            },
+            {
+              "title": "How to Handle Learner Transfers Mid-Term Under CBC Rules",
+              "href": "/blog/learner-transfers-mid-term-cbc",
+              "kicker": "Move",
+              "text": "What must travel with a learner, and what to check before either school uploads."
+            },
+            {
+              "title": "The Headteacher’s Guide to KPSEA and KJSEA School Reports",
+              "href": "/blog/headteacher-guide-kpsea-kjsea-reports",
+              "kicker": "Lead",
+              "text": "Read national reports by learning area and level — without inventing a mean score."
+            },
+            {
+              "title": "Downloading and Interpreting KNEC CBA Portal Reports",
+              "href": "/blog/knec-cba-portal-reports-guide",
+              "kicker": "Verify",
+              "text": "A practical walkthrough of the school portal, upload status and the reports that matter."
+            },
+            {
+              "title": "Creating Exam Timetables That Sync with CBC Schedules",
+              "href": "/blog/exam-timetables-sync-cbc-schedules",
+              "kicker": "Schedule",
+              "text": "Fit written tests, practicals, SBA windows and national dates into one clash-free plan."
+            },
+            {
+              "title": "Tracking Learner Progress Across Grade 6 to Grade 9",
+              "href": "/blog/tracking-learner-progress-grade-6-to-9",
+              "kicker": "Progress",
+              "text": "Follow a learner’s trajectory from KPSEA through junior school to KJSEA."
+            },
+            {
+              "title": "Common CBC Data Entry Mistakes and How to Avoid Them",
+              "href": "/blog/common-cbc-data-entry-mistakes",
+              "kicker": "Quality",
+              "text": "The ten errors that survive to the portal, and the pre-upload checklist that catches them."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is a school management platform built for Kenyan schools, and CBC assessment is one of its core records rather than a bolted-on report module. The point is not to replace the teacher's judgement. It is to make that judgement easy to capture, hard to lose and simple to report."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**CBC and 8-4-4 records in one place**, so a school with Grade 1–9 and legacy Form 1–4 data avoids double entry.",
+            "**Strand and sub-strand capture** with the performance scale your report card uses, entered on a phone or a laptop.",
+            "**Multi-stream and multi-campus consistency**, with one assessment standard and consolidated reports for the head.",
+            "**Term report cards generated from the locked record**, not merged into a template by hand.",
+            "**SBA exports and verification checks** before the KNEC deadline, with an audit trail of who changed what.",
+            "**Role-based access and daily backups**, so assessment data is visible to the right people and recoverable if something breaks.",
+            "**Live in about two weeks**, starting with a free term and then per-term pricing."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Bring your own worst-case term",
+          "text": "The best demo is not a clean class of 30. Ask the vendor to handle a learner who joined in week six, a stream with two missing strands, and a report card run for 212 learners."
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is CBC assessment management?",
+      "answer": "It is the end-to-end handling of assessment data under the Competency-Based Curriculum: planning evidence, capturing performance levels against learning areas and strands, moderating across teachers, uploading school-based assessment to KNEC, and generating report cards and school reports from the same record."
+    },
+    {
+      "question": "Is CBA the same as CBC?",
+      "answer": "No. CBC is the curriculum — what learners learn and the competencies they develop. CBA is the assessment framework used to judge that learning. In everyday Kenyan school language, people often use CBC and CBA interchangeably, but the distinction matters when you are describing records and reports."
+    },
+    {
+      "question": "What percentage of KPSEA and KJSEA comes from school-based assessment?",
+      "answer": "Under the 2026 guidance, KPSEA combines SBA from Grades 4, 5 and 6 (60%) with the Grade 6 national assessment (40%). KJSEA combines KPSEA (20%), SBA from Grades 7 and 8 (20%) and the Grade 9 national assessment (60%). Confirm the current KNEC circular before relying on these weightings."
+    },
+    {
+      "question": "Does KJSEA have a mean score or school ranking?",
+      "answer": "No. KJSEA reports performance levels by learning area on an eight-point scale from EE1 to BE2. KNEC has stated that it does not produce an aggregate score, a mean grade or a school mean score, and has warned against ranking schools on the results."
+    },
+    {
+      "question": "Who uploads SBA scores to the KNEC CBA portal?",
+      "answer": "The school does, through its headteacher or a delegated portal administrator, using the school's CBA portal account. Teachers and the DOS prepare and verify the underlying records; the head remains accountable for what is uploaded."
+    },
+    {
+      "question": "Can a school manage CBC assessment without software?",
+      "answer": "Yes, for a small school with one stream and a disciplined workbook. It becomes risky once several streams, teachers and terms are involved, because the report card, the KNEC upload and the board report are usually rebuilt by hand from the same data. Software is a scale decision more than a curriculum decision."
+    },
+    {
+      "question": "What records must move when a learner transfers mid-term?",
+      "answer": "At minimum: the learner profile and UPI, the assessment history by learning area and strand, evidence samples, attendance, and the transfer letter. If the learner is a KPSEA or KJSEA candidate, confirm which school owns the assessment centre and the SBA upload before either side submits."
+    }
+  ],
+  "cta": {
+    "heading": "Get your CBC records under control this term",
+    "body": "Start a free term with SQUL and move rubrics, strands and report cards into one record — before the next KNEC deadline.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "CBC report card software in Kenya: buyer’s guide",
+      "href": "/blog/cbc-report-card-software-kenya"
+    },
+    {
+      "title": "CBC implementation in Kenyan schools",
+      "href": "/blog/cbc-implementation-school-kenya"
+    },
+    {
+      "title": "School reporting and analytics software in Kenya",
+      "href": "/blog/school-reporting-analytics-software-kenya"
+    },
+    {
+      "title": "School calendar and term planning in Kenya",
+      "href": "/blog/school-calendar-term-planning-kenya"
+    },
+    {
+      "title": "Learner data protection in Kenyan schools",
+      "href": "/blog/learner-data-protection-kenya-school-software"
+    },
+    {
+      "title": "Best school management software in Kenya",
+      "href": "/blog/best-school-management-software-kenya"
+    }
+  ]
+}

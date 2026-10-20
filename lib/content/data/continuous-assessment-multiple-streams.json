@@ -1,0 +1,422 @@
+{
+  "slug": "continuous-assessment-multiple-streams",
+  "path": "/blog/continuous-assessment-multiple-streams",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Managing Continuous Assessment Records Across Multiple Streams",
+  "h1": "Managing Continuous Assessment Records Across Multiple Streams",
+  "description": "How Kenyan schools keep CBC continuous assessment consistent across streams — one record, one standard, shared moderation and consolidated reports.",
+  "primaryKeyword": "continuous assessment across multiple streams",
+  "secondaryKeywords": [
+    "CBC assessment multiple streams",
+    "multi stream school assessment records",
+    "CBC moderation across classes",
+    "stream assessment report Kenya",
+    "continuous assessment records school"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "Managing continuous assessment across multiple streams means treating the stream as a reporting dimension, not a separate school. Keep one learner record, one curriculum map and one assessment standard; allocate teachers by learning area; moderate a sample across streams; and consolidate reports only after the data is locked.",
+  "intro": [
+    "**Quick answer:** a stream should change **who teaches** and **which report a learner appears on**, not **what counts as meeting expectations**. The school needs one learner record, one strand map and one moderation standard, with the stream as a filter. This guide covers continuous assessment across multiple streams: the record design, the shared standard and the reports a head actually needs. It is part of the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "A single-stream school can survive on one teacher's workbook. Add East, West and North — or 7A, 7B and 7C — and the same workbook becomes three versions of the truth. The problem is not the number of learners. It is the number of independent interpretations of the standard.",
+    "This guide covers the record design, the shared assessment plan, teacher allocation, moderation and the consolidated reports a headteacher actually needs. It also covers the awkward cases: a learner who changes stream mid-term, a teacher who leaves, and a campus that wants to compare itself with its sister school."
+  ],
+  "sections": [
+    {
+      "id": "why-streams-multiply-work",
+      "heading": "Why streams multiply the work",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "In a single-stream class, the teacher holds the standard in their head. In a multi-stream grade, three teachers each hold a slightly different version. Nobody is being careless; they are interpreting the same rubric against different evidence."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Different tasks, same sub-strand.** East does a project, West does a written test, North does an oral task. The levels are not comparable without a common standard.",
+            "**Different capture formats.** One stream uses a workbook, another uses a shared sheet, a third uses paper. The office merges them by hand.",
+            "**Different teacher ownership.** A shared class means two teachers may both believe the other is entering the level.",
+            "**Different report deadlines.** One stream locks early, another late, and the whole-grade report waits for the slowest.",
+            "**Comparison pressure.** Once streams are visible side by side, the temptation to rank them appears before the data is moderated."
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "streams-matrix",
+          "caption": "Illustrative view: five streams, one grade, one completion view. The stream is a filter on the record — not a separate spreadsheet."
+        }
+      ]
+    },
+    {
+      "id": "one-record-three-dimensions",
+      "heading": "One record, three dimensions",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The record needs to answer three questions at once: who is the learner, where do they sit this term, and what evidence do we have? Those are three dimensions, not three files."
+        },
+        {
+          "type": "table",
+          "caption": "The dimensions a multi-stream record must hold.",
+          "headers": [
+            "Dimension",
+            "Fields",
+            "Why it matters"
+          ],
+          "rows": [
+            [
+              "Learner",
+              "UPI, admission number, name, grade",
+              "Identity must survive a stream change"
+            ],
+            [
+              "Placement",
+              "Stream, class teacher, academic year, term",
+              "Reports and registers are stream-specific"
+            ],
+            [
+              "Assessment",
+              "Learning area, strand, sub-strand, level, date, teacher",
+              "Evidence must be traceable after the teacher leaves"
+            ],
+            [
+              "Enrolment status",
+              "Active, transferred, left, repeated",
+              "Excludes learners who should not appear in a report"
+            ],
+            [
+              "Moderation",
+              "Sample, moderator, decision, date",
+              "Shows the standard was checked across streams"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The placement is a **term-scoped** field. A learner who moves from East to West in week six keeps the same learner record and gets a new placement row; the old assessment evidence stays attached to the learner, not to the stream."
+        }
+      ]
+    },
+    {
+      "id": "shared-assessment-plan",
+      "heading": "A shared assessment plan for every stream",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Streams can use different tasks, but they should be assessing the same sub-strands with the same scale. The simplest way to guarantee that is a shared assessment plan for the grade, agreed before the term starts."
+        },
+        {
+          "type": "table",
+          "caption": "A grade-level plan that lets streams differ without drifting.",
+          "headers": [
+            "Week",
+            "Sub-strand",
+            "Common evidence",
+            "Stream variation allowed"
+          ],
+          "rows": [
+            [
+              "3",
+              "Fractions",
+              "Card sort and short task",
+              "Different examples, same rubric"
+            ],
+            [
+              "5",
+              "Decimals",
+              "Class task",
+              "Oral or written response"
+            ],
+            [
+              "7",
+              "Ratios",
+              "Group project",
+              "Different contexts, same indicators"
+            ],
+            [
+              "9",
+              "Data handling",
+              "Written test",
+              "Common paper, common marking guide"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The plan does not need to be rigid. It needs to be **shared**. When a teacher in North asks “what does ME look like for this sub-strand?”, the answer should not depend on which staffroom they are standing in."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Common does not mean identical",
+          "text": "A project on fractions in East and a written task on fractions in West can both produce valid evidence. What must be common is the sub-strand, the indicators and the rubric — not the worksheet."
+        }
+      ]
+    },
+    {
+      "id": "teacher-allocation",
+      "heading": "Teacher allocation without invisible gaps",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Most missing assessment data is not a technology problem. It is an ownership problem. Two teachers share a class, each assumes the other entered the strand, and the gap appears at the lock date."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Name one owner per learning area per stream.** A shared class can have shared teaching, but the final level needs one owner.",
+            "**Publish the allocation.** A simple table on the staffroom wall and in the system prevents the “I thought you did it” conversation.",
+            "**Check the load.** A teacher covering three streams and four learning areas will capture less consistently than one covering two.",
+            "**Plan for absence.** If a teacher is away for a week, the assessment plan should say who covers the capture.",
+            "**Hand over explicitly.** When a teacher leaves, the record — not the workbook — is the handover."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moderation-across-streams",
+      "heading": "Moderation across streams",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Moderation is the control that makes a multi-stream report meaningful. It does not require re-marking every learner. It requires a sample, a shared rubric and a decision about what the standard looks like."
+        },
+        {
+          "type": "table",
+          "caption": "A 45-minute moderation cycle that works.",
+          "headers": [
+            "Step",
+            "What happens",
+            "Output"
+          ],
+          "rows": [
+            [
+              "1. Sample",
+              "Pick three learners per stream — one EE, one ME, one AE",
+              "Twelve pieces of evidence"
+            ],
+            [
+              "2. Read blind",
+              "Teachers level the samples without seeing the original level",
+              "Independent judgements"
+            ],
+            [
+              "3. Compare",
+              "Discuss differences of more than one sub-level",
+              "A shared interpretation"
+            ],
+            [
+              "4. Anchor",
+              "Agree one annotated example per level",
+              "A reference for the next task"
+            ],
+            [
+              "5. Record",
+              "Log the date, sample and decision",
+              "Evidence that moderation happened"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Moderate the task, not just the score",
+          "text": "If two teachers disagree, the cause is often an ambiguous task or rubric. Fix the task for the next assessment; do not simply negotiate the numbers down."
+        }
+      ]
+    },
+    {
+      "id": "capture-then-compare",
+      "heading": "Capture first, compare later",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Stream comparison is useful for the headteacher and dangerous for the staffroom. If teachers know their stream will be ranked on raw capture data, they will teach to the comparison — or stop capturing the learners who lower the average."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Compare after moderation**, not before.",
+            "**Compare learning areas and sub-strands**, not a single stream mean.",
+            "**Look for gaps and support needs**, not winners and losers.",
+            "**Share the analysis with the teachers who can act on it**, not as a league table.",
+            "**Keep individual learner data out of staffroom comparisons.**"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A headteacher's question should be “which sub-strand is weak across all streams, and what are we doing about it?” rather than “which stream is best?”. The first leads to teaching; the second leads to defensiveness."
+        }
+      ]
+    },
+    {
+      "id": "consolidated-reports",
+      "heading": "The consolidated reports a head actually needs",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Four views, four different decisions.",
+          "headers": [
+            "View",
+            "What it shows",
+            "Decision it supports"
+          ],
+          "rows": [
+            [
+              "Learner report card",
+              "One learner's levels and next steps",
+              "Parent conversation and support plan"
+            ],
+            [
+              "Stream summary",
+              "Completion, level distribution and gaps for one stream",
+              "Teacher support and moderation"
+            ],
+            [
+              "Grade summary",
+              "Learning-area patterns across all streams",
+              "Curriculum and staffing decisions"
+            ],
+            [
+              "Whole-school summary",
+              "Participation, completion and national assessment readiness",
+              "Board reporting and term planning"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The views should read the same locked record. If the grade summary is built from a different spreadsheet than the report cards, the school has two truths and no way to reconcile them."
+        }
+      ]
+    },
+    {
+      "id": "mid-term-changes",
+      "heading": "Mid-term changes: stream moves, teacher changes, splits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Learner changes stream.** Keep the learner record and evidence; add a new placement with an effective date. Do not create a second learner.",
+            "**Teacher changes.** Reassign the learning area and stream, and review any incomplete sub-strands before the new teacher starts.",
+            "**A stream is split.** Create the new stream and move the affected learners’ placements. The historical evidence stays with the learner.",
+            "**A campus is added.** Use the same curriculum map and scale, then decide which reports consolidate across campuses and which stay local.",
+            "**A learner is withdrawn.** Mark the enrolment status and exclude them from active reports, but retain the record for the required retention period."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Never fix a stream move by editing the learner's history",
+          "text": "Overwriting the old stream makes last term's report card impossible to reproduce. Add a new placement and keep the old one."
+        }
+      ]
+    },
+    {
+      "id": "multi-stream-checklist",
+      "heading": "A multi-stream assessment checklist",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "One learner record per learner, with UPI and admission number.",
+            "Stream and class teacher stored as a term-scoped placement.",
+            "One curriculum map for the grade, shared across streams.",
+            "One performance scale, documented and used by every teacher.",
+            "One named owner per learning area per stream.",
+            "A shared assessment plan with common sub-strands and rubrics.",
+            "A moderation sample across streams, with a written record.",
+            "A single lock date for the grade, not per stream.",
+            "Report cards generated from the locked record, not merged files.",
+            "A consolidated grade view that reads the same data."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL treats the stream as a filter on one learner and assessment record, so a school can run East, West and North without maintaining three versions of the same term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Stream-scoped placements** that preserve a learner's history when they move.",
+            "**Grade-level assessment plans** shared across streams.",
+            "**Completion views by stream** so gaps are visible before the lock date.",
+            "**Consolidated reports** for the headteacher and board, built from the same record.",
+            "**Multi-campus support** for schools running sister campuses under one standard."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Should all streams sit the same exam?",
+      "answer": "Not necessarily. Streams can use different tasks if they assess the same sub-strands against the same rubric. A common paper makes comparison easier, but a shared assessment plan and moderation matter more than identical worksheets."
+    },
+    {
+      "question": "Can we compare performance between streams?",
+      "answer": "Yes, after moderation and at the level of learning areas and sub-strands. Avoid publishing a raw stream ranking; it encourages teaching to the comparison and discourages honest capture of learners who need support."
+    },
+    {
+      "question": "What if two teachers disagree on a learner's level?",
+      "answer": "Go back to the evidence and the rubric, not the number. If the task is ambiguous, fix it for the next assessment. Record the moderation decision so the school can explain it later."
+    },
+    {
+      "question": "How do we handle a learner who changes stream mid-term?",
+      "answer": "Keep the same learner record and assessment evidence, and add a new stream placement with an effective date. Never overwrite the old placement — last term's report card must remain reproducible."
+    },
+    {
+      "question": "Does this work across multiple campuses?",
+      "answer": "Yes, if the campuses share a curriculum map, performance scale and moderation standard. Consolidated reports can then compare campuses without merging separate learner files by hand."
+    }
+  ],
+  "cta": {
+    "heading": "Run every stream on one standard",
+    "body": "Start a free term with SQUL and manage East, West and North from one learner record — with moderation and reports that agree.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "How to capture CBC rubrics and strands without Excel",
+      "href": "/blog/capture-cbc-rubrics-strands-without-excel"
+    },
+    {
+      "title": "Generating term report cards automatically from CBC data",
+      "href": "/blog/generate-cbc-term-report-cards-automatically"
+    },
+    {
+      "title": "Multi-campus school management in Kenya",
+      "href": "/blog/multi-campus-school-management-system"
+    },
+    {
+      "title": "Class management software in Kenya",
+      "href": "/blog/class-management-software-kenya"
+    }
+  ]
+}

@@ -1,0 +1,441 @@
+{
+  "slug": "formative-vs-summative-assessment-kenya",
+  "path": "/blog/formative-vs-summative-assessment-kenya",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Formative vs. Summative Assessment: What Kenyan Teachers Need to Track",
+  "h1": "Formative vs. Summative Assessment: What Kenyan Teachers Need to Track",
+  "description": "Formative vs summative assessment in Kenya, explained for teachers: what each one is for, what to record, and how both feed CBC reports.",
+  "primaryKeyword": "formative vs summative assessment Kenya",
+  "secondaryKeywords": [
+    "formative assessment CBC Kenya",
+    "summative assessment CBC",
+    "assessment for learning Kenya",
+    "school based assessment records",
+    "CBC continuous assessment teacher"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "Formative assessment is ongoing evidence used to adjust teaching — observations, class tasks, projects and feedback. Summative assessment is the end-of-cycle judgement used for reporting and progression — term exams, school-based assessment (SBA) and national assessments such as KPSEA and KJSEA. Kenyan teachers need to track both, but for different reasons: formative evidence explains the level, summative evidence reports it.",
+  "intro": [
+    "**Quick answer:** formative assessment is the evidence a teacher uses *during* learning to decide what to do next. Summative assessment is the evidence used *after* a period of learning to report a level, a grade or a progression decision. The practical difference for a Kenyan teacher is not the label on the paper — it is what gets recorded, when, and who reads it. This guide explains the formative vs summative assessment Kenya teachers need to track — what each is for, what to record, and how both feed CBC reports. It sits inside the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "The confusion is understandable. A class task can be formative for the teacher and summative for the report card. A term exam can be summative for the school and formative for the next term's planning. A project can be both. What matters is that the school is clear about **purpose** before it decides what to record.",
+    "Get that clarity and two things improve at once: teachers stop over-assessing, and report cards stop being a last-week reconstruction. Lose it, and the school ends up with a term's worth of marks that nobody can explain."
+  ],
+  "sections": [
+    {
+      "id": "the-difference",
+      "heading": "Formative vs summative assessment in Kenya: the difference that matters",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Formative assessment is assessment **for** learning. It happens while the learner is still learning the competency, and its main audience is the teacher and the learner. Summative assessment is assessment **of** learning. It happens at the end of a defined period and its main audience is the school, the parent and the next stage of the education system."
+        },
+        {
+          "type": "table",
+          "caption": "Two purposes, not two enemy camps.",
+          "headers": [
+            "Question",
+            "Formative",
+            "Summative"
+          ],
+          "rows": [
+            [
+              "Purpose",
+              "Adjust teaching and give feedback",
+              "Report achievement and support progression"
+            ],
+            [
+              "When",
+              "During the term, close to the task",
+              "End of a unit, term, grade or cycle"
+            ],
+            [
+              "Examples",
+              "Observation, class task, project, oral reading, exit ticket",
+              "Term exam, SBA written test, KPSEA, KJSEA"
+            ],
+            [
+              "Main audience",
+              "Teacher and learner",
+              "Parent, school, KNEC, next school"
+            ],
+            [
+              "Record depth",
+              "Sub-strand, task, date, evidence",
+              "Learning area level or national result"
+            ],
+            [
+              "Typical mistake",
+              "Recording nothing because it is “not an exam”",
+              "Treating one exam as the whole story"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Both are legitimate. A school that only does summative assessment teaches to tests and misses the learners who are quietly falling behind. A school that only does formative assessment has rich conversations and no defensible record. CBC needs the two connected, not balanced by guesswork."
+        },
+        {
+          "type": "figure",
+          "scene": "formative-summative",
+          "caption": "Illustrative view: the same learner record holds both formative evidence and summative results — the purpose tag is what stops them being confused."
+        }
+      ]
+    },
+    {
+      "id": "why-teachers-get-stuck",
+      "heading": "Why Kenyan teachers get stuck between the two",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC introduced a new vocabulary — strands, sub-strands, learning outcomes, performance levels, school-based assessment — on top of an existing exam culture. Teachers are often left to reconcile the language themselves, with a class of 45 learners and a term that ends sooner than the scheme of work expected."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**“Formative” is heard as “not recorded”.** In practice, formative assessment needs a light record — otherwise the teacher cannot see a pattern across the term.",
+            "**“Summative” is heard as “the only thing that counts”.** That pushes teachers to assess everything as a test, which narrows the curriculum.",
+            "**SBA and term exams are conflated.** SBA is a structured school-based assessment with its own tools and upload expectations; a teacher's own end-term exam is not automatically the same thing.",
+            "**CATs are labelled inconsistently.** A continuous assessment test can serve a formative purpose if the feedback changes teaching, or a summative purpose if it is used for reporting. The school must decide.",
+            "**Records are kept for the report, not for the learner.** A level without evidence is a number the teacher cannot defend when a parent asks."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Ask the purpose question first",
+          "text": "Before entering any assessment, ask: who will use this, and what decision will it change? If the answer is “the teacher, to regroup tomorrow's lesson”, it is formative. If it is “the school, to report a level”, it is summative. The same task can feed both — but record it under the purpose it actually served."
+        }
+      ]
+    },
+    {
+      "id": "what-to-track-formative",
+      "heading": "What to track for formative assessment",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Formative records should be light enough to sustain and specific enough to use. Five fields are usually enough: learner, learning area and sub-strand, what the learner did, the level or note, and what happens next."
+        },
+        {
+          "type": "table",
+          "caption": "A week of formative evidence in one class.",
+          "headers": [
+            "Learner",
+            "Sub-strand",
+            "Evidence",
+            "Level",
+            "Next step"
+          ],
+          "rows": [
+            [
+              "Brian Otieno",
+              "Fractions",
+              "Card sort, 12 Oct",
+              "EE",
+              "Move to word problems"
+            ],
+            [
+              "Grace Wambui",
+              "Fractions",
+              "Card sort, 12 Oct",
+              "ME",
+              "Practise unlike denominators"
+            ],
+            [
+              "Kevin Mwenda",
+              "Fractions",
+              "Card sort, 12 Oct",
+              "AE",
+              "Small-group re-teach"
+            ],
+            [
+              "Faith Njeri",
+              "Fractions",
+              "Card sort, 12 Oct",
+              "EE",
+              "Peer tutor for the group"
+            ]
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Keep the task description short.** “Fraction card sort” is enough; a full lesson plan belongs elsewhere.",
+            "**Record the exception.** Not every learner needs a paragraph of feedback every week. The learners who are EE or AE usually need the next step most.",
+            "**Use absence data.** A learner who missed the task has no evidence, and that is a different problem from a learner who scored AE.",
+            "**Review weekly, not termly.** A five-minute Friday review of the week's evidence is what turns capture into teaching.",
+            "**Do not convert everything to a mark.** Formative evidence is often a note, a level or a short observation — not a percentage."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "what-to-track-summative",
+      "heading": "What to track for summative assessment",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Summative records need more discipline because they feed reports, progression and, for candidates, national records. The school should be able to say exactly which assessment produced each reported level."
+        },
+        {
+          "type": "table",
+          "caption": "The summative events a Kenyan CBC school usually has to track.",
+          "headers": [
+            "Event",
+            "What it produces",
+            "Where it goes"
+          ],
+          "rows": [
+            [
+              "End-of-term examination",
+              "Learning area level or mark",
+              "Term report card and school analysis"
+            ],
+            [
+              "SBA written test",
+              "Sub-strand or learning area level",
+              "School record and KNEC CBA upload"
+            ],
+            [
+              "SBA project or practical",
+              "Level plus evidence",
+              "School record, moderation and KNEC upload"
+            ],
+            [
+              "KPSEA",
+              "Grade 6 national result",
+              "KNEC record and transition to junior school"
+            ],
+            [
+              "KJSEA",
+              "Grade 9 national result",
+              "KNEC record and senior school placement"
+            ],
+            [
+              "KCBE (Grade 12)",
+              "Senior school certificate",
+              "KNEC record and post-school pathways"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The exact tools, dates and upload windows are set by KNEC each year. In 2026, for example, Term 3 assessment tools for Grades 3, 4, 5, 7 and 8 were released in late September, with scores due by 23 October. A school should treat those dates as fixed external deadlines, not as flexible internal targets."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A term exam is not automatically SBA",
+          "text": "SBA follows KNEC's tools, scoring guides and upload requirements. A school's own end-term paper is useful summative evidence, but it does not replace the SBA process. Keep the two labelled separately so nobody assumes the portal has data it does not have."
+        }
+      ]
+    },
+    {
+      "id": "one-record-two-purposes",
+      "heading": "One record, two purposes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The cleanest design is a single learner record with a **purpose** field on every assessment event: formative, summative or national. That gives the school one place to look, while keeping the reporting logic honest."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Do not double count.** A task recorded as formative should not quietly become 20% of the term mark without a deliberate decision.",
+            "**Do not overwrite.** If a learner is re-assessed, add a new event and mark the old one as superseded. The history is the explanation.",
+            "**Do not mix scales.** A formative note (“needs support with denominators”) and a summative level (“AE”) are different kinds of data.",
+            "**Do not let the report card drive capture.** Decide the report card's rules once, then capture to those rules all term."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weighting-and-policy",
+      "heading": "Where the weights come from",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Teachers often ask how much formative work “counts”. The honest answer is: it depends on the reporting rule the school has adopted and, for national assessment, on KNEC's current framework. The national weightings are not a school's choice."
+        },
+        {
+          "type": "table",
+          "caption": "National assessment weights under 2026 guidance.",
+          "headers": [
+            "Assessment",
+            "School-based component",
+            "National component"
+          ],
+          "rows": [
+            [
+              "KPSEA (Grade 6)",
+              "SBA in Grades 4, 5 and 6 — 60%",
+              "Grade 6 national assessment — 40%"
+            ],
+            [
+              "KJSEA (Grade 9)",
+              "KPSEA 20% + SBA in Grades 7 and 8 — 20%",
+              "Grade 9 national assessment — 60%"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Check the current circular",
+          "text": "Weightings and reporting rules can change between cohorts. Before a parent meeting or a board paper, confirm the current KNEC guidance and keep a dated copy of what you used."
+        }
+      ]
+    },
+    {
+      "id": "common-pitfalls",
+      "heading": "Five pitfalls that flatten the distinction",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Assessing everything.** When every task becomes a recorded summative event, teachers spend more time recording than teaching — and learners experience assessment as surveillance.",
+            "**Recording only the mark.** A summative level without the task, date and evidence cannot be moderated or explained.",
+            "**Forgetting the absent learner.** A missing level is not the same as a low level. Flag absence explicitly so the report card does not punish a learner for being away.",
+            "**No feedback loop.** Formative evidence that never changes a lesson is just extra paperwork. The next step is the point.",
+            "**Treating parents as an audience for numbers only.** Parents need to know what the level means and what support looks like at home; a bare EE or BE does not tell them that."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "teacher-workflow",
+      "heading": "A workable teacher workflow",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Plan the evidence",
+              "text": "At the start of the term, list the sub-strands and the tasks that will produce evidence for each. Mark which are formative and which are summative."
+            },
+            {
+              "title": "Tag as you capture",
+              "text": "Every entry gets a purpose: formative, summative or national. This one field prevents most double counting."
+            },
+            {
+              "title": "Give feedback the same week",
+              "text": "Formative evidence is only useful if the learner sees the next step while the task still matters."
+            },
+            {
+              "title": "Review the gaps",
+              "text": "At mid-term, list learners with missing evidence and sub-strands with no assessment. Fix the gaps before the lock date."
+            },
+            {
+              "title": "Lock and report",
+              "text": "Once summative data is complete and moderated, lock the record and generate reports from it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "explaining-to-parents",
+      "heading": "Explaining the difference to parents",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Parents do not need the vocabulary. They need to know what the school saw, what it means, and what happens next. A short, plain explanation works better than a lecture on assessment theory."
+        },
+        {
+          "type": "quote",
+          "text": "Your child is meeting expectations in fractions. The class task showed they can compare fractions confidently, but they need more practice with unlike denominators. We are re-teaching that in small groups this week.",
+          "cite": "A parent-friendly formative update"
+        },
+        {
+          "type": "paragraph",
+          "text": "A summative report can then say the same thing in one line: the level, the evidence behind it and the next step. When the two messages agree, parents trust the report. When they contradict each other, the school spends the meeting explaining the system instead of the learner."
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL keeps formative and summative evidence in one learner record, each tagged by purpose, so a teacher can capture a class task without turning it into an exam and a DOS can see which summative records are still incomplete."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Formative capture** against the sub-strand, with a short note and a next step.",
+            "**Summative records** for term exams and SBA, kept separate from formative evidence.",
+            "**Gap views** for missing evidence and absent learners before the term locks.",
+            "**One report card** generated from the summative record, with the formative story available to the teacher.",
+            "**Role-based access** so teachers capture, the DOS moderates and the head approves."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Is a CAT formative or summative?",
+      "answer": "It depends on what the result is used for. If the CAT changes the next week's teaching and gives the learner feedback, it is serving a formative purpose. If it is used to report a term level, it is summative. Label it by purpose, not by the name on the paper."
+    },
+    {
+      "question": "Do formative assessment results go to KNEC?",
+      "answer": "No. KNEC's school-based assessment upload is a structured process using KNEC tools and scoring guides, not a teacher's everyday formative notes. Formative evidence supports the professional judgement behind the summative level; it is not uploaded as a separate score."
+    },
+    {
+      "question": "How much formative evidence is enough?",
+      "answer": "Enough to explain the summative level and to notice a learner who is slipping. In practice, one or two evidence points per sub-strand per term, plus the feedback that followed, is more useful than a daily tally that nobody reads."
+    },
+    {
+      "question": "Can parents see formative assessment?",
+      "answer": "They can, and a short formative update is often more useful than a bare level. Share the evidence, the level or observation, and the next step — not the teacher's working notes."
+    },
+    {
+      "question": "Does CBC weight formative assessment in the final result?",
+      "answer": "The national result draws on school-based assessment, which is a structured summative process, not every informal observation. KPSEA and KJSEA weight SBA and national assessment differently; confirm the current KNEC guidance before quoting percentages."
+    }
+  ],
+  "cta": {
+    "heading": "Keep formative and summative evidence in one place",
+    "body": "Start a free term with SQUL and capture the evidence behind every level — without turning every lesson into an exam.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "How to capture CBC rubrics and strands without Excel",
+      "href": "/blog/capture-cbc-rubrics-strands-without-excel"
+    },
+    {
+      "title": "Generating term report cards automatically from CBC data",
+      "href": "/blog/generate-cbc-term-report-cards-automatically"
+    },
+    {
+      "title": "The headteacher’s guide to KPSEA and KJSEA reports",
+      "href": "/blog/headteacher-guide-kpsea-kjsea-reports"
+    },
+    {
+      "title": "CBC implementation in Kenyan schools",
+      "href": "/blog/cbc-implementation-school-kenya"
+    }
+  ]
+}

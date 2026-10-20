@@ -1,0 +1,427 @@
+{
+  "slug": "generate-cbc-term-report-cards-automatically",
+  "path": "/blog/generate-cbc-term-report-cards-automatically",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Generating Term Report Cards Automatically from CBC Data",
+  "h1": "Generating Term Report Cards Automatically from CBC Data",
+  "description": "How to generate CBC term report cards automatically from assessment data — the prerequisites, the workflow, the exceptions and the mistakes to avoid.",
+  "primaryKeyword": "generate CBC term report cards",
+  "secondaryKeywords": [
+    "CBC report card generator",
+    "automatic term report cards Kenya",
+    "CBC report card template",
+    "print report cards from CBC data",
+    "term report card software Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "Generating CBC term report cards automatically means locking the term's assessment record, validating that every learner and learning area is complete, then rendering a consistent report card from that data. The report card is an output, not a document to be retyped. The hard work is the data readiness before the button — not the button itself.",
+  "intro": [
+    "**Quick answer:** a CBC term report card should be a **view** of the learner's locked assessment record, not a Word document that someone fills in by hand. Get the record right — learners, strands, levels, attendance and comments — and the report card becomes a batch job instead of a fortnight of retyping. This guide explains how to generate CBC term report cards automatically from that record. It is the operational companion to the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "Most schools already have the data. What they do not have is a reliable moment when the data is declared finished. Teachers keep correcting levels, the office keeps editing the template, and the printer is waiting. Automation does not fix that; a lock date does.",
+    "This guide covers what a CBC report card actually contains, the readiness checks before generation, the exceptions that break a batch run, and how to keep 40 or 400 report cards consistent without turning teachers into data-entry clerks."
+  ],
+  "sections": [
+    {
+      "id": "report-card-anatomy",
+      "heading": "What a CBC term report card actually contains",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A CBC report card is not a mark sheet with a new heading. It reports achievement against learning areas and strands, and it usually carries attendance, a teacher comment and a next-step note. Every field on it should come from a record the school already keeps."
+        },
+        {
+          "type": "table",
+          "caption": "The anatomy of a CBC term report card, and where each field comes from.",
+          "headers": [
+            "Section",
+            "What it shows",
+            "Source record"
+          ],
+          "rows": [
+            [
+              "Learner header",
+              "Name, admission number, grade, stream, term",
+              "Learner register"
+            ],
+            [
+              "Learning areas",
+              "The learning areas assessed this term",
+              "Curriculum map"
+            ],
+            [
+              "Strand detail",
+              "Strands and sub-strands assessed, with levels",
+              "Assessment record"
+            ],
+            [
+              "Overall level",
+              "A summary level per learning area",
+              "Assessment rule or teacher judgement"
+            ],
+            [
+              "Attendance",
+              "Days present, absent or late",
+              "Attendance register"
+            ],
+            [
+              "Class teacher comment",
+              "A short, evidence-based note",
+              "Teacher comment field"
+            ],
+            [
+              "Next steps",
+              "What the learner should work on",
+              "Teacher or support plan"
+            ],
+            [
+              "School header and signatures",
+              "School identity, term, approval",
+              "School settings"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "If a field cannot be traced to a record, it will be typed by hand — and hand-typed fields are where inconsistencies appear. The design goal is simple: every printed field has a source."
+        },
+        {
+          "type": "figure",
+          "scene": "report-card",
+          "caption": "Illustrative view: a report card rendered from a locked term record, with learning-area levels, attendance and a next-step note. One template, generated for the whole class."
+        }
+      ]
+    },
+    {
+      "id": "before-you-generate",
+      "heading": "Before you generate: the readiness checks",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A batch run is only as good as the data it reads. Run these checks before the first report card is generated, not after the first 40 are printed."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Every learner is on the list once.** Check for duplicate admissions, wrong streams and learners who transferred but were never removed.",
+            "**Every learning area has a level.** Missing levels should be visible as missing, not defaulted to ME.",
+            "**Every assessed sub-strand has evidence.** A level without a task, date or note cannot be defended.",
+            "**Attendance is reconciled.** Report cards often reveal attendance errors only after they reach parents.",
+            "**Comments are drafted and reviewed.** A blank comment field is a quality problem, not a formatting one.",
+            "**Moderation is complete.** If two streams were marked to different standards, the report card will make that visible to every parent.",
+            "**The term is locked.** No edits during generation; corrections go through a controlled reopen."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not default missing levels",
+          "text": "A report card that shows ME because the field was blank is worse than one that shows “not assessed”. The first hides a gap; the second starts a conversation that should have happened weeks earlier."
+        }
+      ]
+    },
+    {
+      "id": "generation-workflow",
+      "heading": "The generation workflow, step by step",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Freeze the record",
+              "text": "Set the term to locked. Only the headteacher or assessment coordinator can reopen it, and every reopen is logged."
+            },
+            {
+              "title": "Run the validation",
+              "text": "Check learners, learning areas, levels, attendance and comments. Fix exceptions before generating, not after."
+            },
+            {
+              "title": "Choose the template",
+              "text": "Select the approved term template. Templates should be versioned so a report can be reproduced exactly if a parent asks later."
+            },
+            {
+              "title": "Generate a preview batch",
+              "text": "Render 5–10 learners across different streams first. Read them as a parent would, not as an administrator."
+            },
+            {
+              "title": "Review the exceptions",
+              "text": "Handle learners with missing evidence, mid-term transfers, special needs accommodations or incomplete comments individually."
+            },
+            {
+              "title": "Generate the full batch",
+              "text": "Render the class, stream or whole school. Keep the output as PDFs as well as printed copies."
+            },
+            {
+              "title": "Approve and release",
+              "text": "The headteacher signs off. Release to parents by print, portal or WhatsApp, and archive the exact version released."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "comments-without-robots",
+      "heading": "Automating comments without sounding automated",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Template comments are useful for structure and dangerous for trust. A parent can tell when a comment was generated from a level and nothing else. The rule is: **the system drafts, the teacher edits, the evidence decides.**"
+        },
+        {
+          "type": "table",
+          "caption": "A comment structure that reads like a teacher, not a template.",
+          "headers": [
+            "Part",
+            "What to include",
+            "Example"
+          ],
+          "rows": [
+            [
+              "Strength",
+              "One specific thing the learner did well",
+              "Compares fractions confidently and explains the reasoning"
+            ],
+            [
+              "Evidence",
+              "The task, project or observation behind it",
+              "Fraction card sort and week 6 class task"
+            ],
+            [
+              "Next step",
+              "One realistic action for the next term",
+              "Practise unlike denominators with real-life examples"
+            ],
+            [
+              "Tone",
+              "Direct, respectful, no labels",
+              "Needs more practice — not “weak at maths”"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A useful trick is to let the system suggest the first two parts from the record, then require the teacher to write the next step. That keeps the comment grounded and keeps the professional judgement where it belongs."
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "The read-aloud test",
+          "text": "Read the comment aloud. If it could be sent to any learner in the class without changing a word, it is not a comment — it is a label."
+        }
+      ]
+    },
+    {
+      "id": "exceptions",
+      "heading": "The exceptions that break a batch run",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Every school has learners who do not fit the clean path. Plan for them before the batch, because the batch will not."
+        },
+        {
+          "type": "table",
+          "caption": "Common report card exceptions and how to handle them.",
+          "headers": [
+            "Exception",
+            "What goes wrong",
+            "What to do"
+          ],
+          "rows": [
+            [
+              "Mid-term transfer in",
+              "Missing earlier term evidence",
+              "Mark the term as partial; report only what the school assessed"
+            ],
+            [
+              "Mid-term transfer out",
+              "Report generated after the learner left",
+              "Generate a leaving report and export the record for the receiving school"
+            ],
+            [
+              "Long absence",
+              "Missing evidence is treated as a low level",
+              "Report attendance and “not assessed” where appropriate; agree the approach with the head"
+            ],
+            [
+              "Special needs accommodation",
+              "Standard template hides the accommodation",
+              "Use the approved accommodation note and keep the evidence with the record"
+            ],
+            [
+              "Late assessment entry",
+              "Level appears after the lock",
+              "Reopen, correct, re-lock and regenerate only the affected reports"
+            ],
+            [
+              "Split class or shared teacher",
+              "Two teachers own different strands",
+              "Agree one owner for the final level before generation"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The principle is transparency. A report card that explains a gap is more trustworthy than one that hides it behind a default level."
+        }
+      ]
+    },
+    {
+      "id": "consistency",
+      "heading": "Consistency across streams, classes and campuses",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The value of automation is not speed alone. It is that a parent in Grade 7 East and a parent in Grade 7 West receive the same structure, the same scale and the same standard of comment."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One template per level**, approved by the head and versioned by term.",
+            "**One performance scale**, even if different teachers capture at different levels of detail.",
+            "**One comment structure**, so parents know where to look for the next step.",
+            "**One approval step**, so no report leaves the school without a named sign-off.",
+            "**One archive**, so a report can be reproduced exactly months later."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "A report card is a school document",
+          "text": "The school's name is on it, not the teacher's. Consistency across streams is not bureaucracy — it is the difference between a school parents trust and a collection of individual classrooms."
+        }
+      ]
+    },
+    {
+      "id": "print-or-digital",
+      "heading": "Print, PDF or WhatsApp?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Most Kenyan schools still print report cards, and many parents expect a signed paper copy. That does not mean the digital copy is redundant. A PDF sent to a parent's phone is easier to keep, easier to replace and easier to discuss at home."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Print** for the formal, signed copy and the school file.",
+            "**PDF** for the parent's phone and for the learner's transfer package.",
+            "**WhatsApp or SMS** for the notification that the report is ready — not necessarily the full report as an unsecured attachment.",
+            "**Parent portal** for schools that want a persistent, access-controlled copy.",
+            "**Archive** the exact version released, whether print or digital."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A report card is personal data",
+          "text": "Send it to the right guardian, not to a class group. A batch WhatsApp broadcast of report cards is a data protection incident waiting to happen. See [learner data protection in Kenyan schools](/blog/learner-data-protection-kenya-school-software) for the practical rules."
+        }
+      ]
+    },
+    {
+      "id": "mistakes",
+      "heading": "Common report card generation mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Generating before the lock.** A report card produced from a moving record will not match the next one.",
+            "**Re-typing the report instead of fixing the data.** If a level is wrong, correct the record and regenerate — do not edit the PDF.",
+            "**Using a different template per stream.** It looks like a different school.",
+            "**Leaving comments blank.** A report card without a next step is a receipt, not a report.",
+            "**Printing the whole school before previewing one class.** Errors multiply at the printer.",
+            "**No archive of the released version.** When a parent disputes a level six months later, the school needs the exact document."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL generates term report cards from the learner's CBC record, so the report reflects the strands, levels and attendance already captured. Teachers write the next step; the system handles the layout, the batch and the archive."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One locked term record** feeding every report card in the school.",
+            "**Consistent templates** across streams, with print-ready output.",
+            "**Class teacher comments** drafted from the record and edited by the teacher.",
+            "**Batch generation** for a class, stream or the whole school.",
+            "**A versioned archive** of exactly what was released.",
+            "**Parent delivery over WhatsApp or SMS** from the same record."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How long does it take to generate CBC report cards automatically?",
+      "answer": "The generation itself is usually minutes. The time goes into readiness: completing levels, moderation, attendance reconciliation and comments. A school with a clean, locked record can generate a class in one batch; a school still chasing missing strands will take days regardless of the software."
+    },
+    {
+      "question": "Can I generate report cards for the whole school at once?",
+      "answer": "Yes, if every class is locked and validated. Most schools preview one class per stream first, fix exceptions, then run the whole school. The preview step is what catches template and data errors before they reach parents."
+    },
+    {
+      "question": "What happens if a learner has a missing level?",
+      "answer": "Do not default it. Show the learning area as not assessed or incomplete, flag the learner for review, and decide with the head how to explain the gap. A visible gap is more honest than an invented ME."
+    },
+    {
+      "question": "Can parents receive report cards digitally?",
+      "answer": "Yes. A PDF sent to the correct guardian's phone or published in a parent portal is increasingly common. Send it individually, not to a class group, and keep the exact version in the school archive."
+    },
+    {
+      "question": "Can we customise the report card template?",
+      "answer": "Most systems allow school branding and layout changes, but limit the number of variants. One approved template per level, versioned by term, keeps reports consistent and reproducible."
+    },
+    {
+      "question": "Are CBC report cards official records?",
+      "answer": "They are school records and should be retained and reproducible. National results such as KPSEA and KJSEA come from KNEC, not from the school report card. Keep the two clearly distinguished in parent communication."
+    }
+  ],
+  "cta": {
+    "heading": "Print your first CBC report card from data you already have",
+    "body": "Start a free term with SQUL and generate consistent, print-ready report cards from the locked term record.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "How to capture CBC rubrics and strands without Excel",
+      "href": "/blog/capture-cbc-rubrics-strands-without-excel"
+    },
+    {
+      "title": "Managing continuous assessment across multiple streams",
+      "href": "/blog/continuous-assessment-multiple-streams"
+    },
+    {
+      "title": "CBC report card software in Kenya: buyer’s guide",
+      "href": "/blog/cbc-report-card-software-kenya"
+    },
+    {
+      "title": "School reporting and analytics software in Kenya",
+      "href": "/blog/school-reporting-analytics-software-kenya"
+    }
+  ]
+}

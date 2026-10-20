@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { ArrowRight, CheckCircle2, Lightbulb, TriangleAlert } from 'lucide-react'
 import { RichText } from '@/lib/content/rich-text'
 import type { ArticleWithMeta, Block, Section } from '@/lib/content/types'
+import { ProductFigure } from './cbc-figures'
 
 const CALLOUT_STYLES: Record<
   NonNullable<Extract<Block, { type: 'callout' }>['variant']>,
@@ -150,9 +151,67 @@ function BlockView({ block }: { block: Block }) {
     case 'mock':
       return <MockFigure variant={block.variant} caption={block.caption} />
 
+    case 'figure':
+      return <ProductFigure scene={block.scene} caption={block.caption} />
+
+    case 'guides':
+      return <GuideLinks block={block} />
+
     default:
       return null
   }
+}
+
+function GuideLinks({ block }: { block: Extract<Block, { type: 'guides' }> }) {
+  return (
+    <div className="mt-8">
+      {block.title ? (
+        <p className="text-[0.5625rem] font-medium uppercase tracking-[0.18em] text-[#7c857d]">
+          {block.title}
+        </p>
+      ) : null}
+      {block.intro ? (
+        <p className="mt-2 max-w-2xl text-[0.9375rem] leading-[1.7] text-[#3f4a43]">
+          <RichText text={block.intro} />
+        </p>
+      ) : null}
+      <div className="mt-4 grid gap-px border border-[#14201b]/10 bg-[#14201b]/10 sm:grid-cols-2">
+        {block.items.map((item, index) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="group flex flex-col bg-[#f7f4ec] p-4 transition-colors duration-200 hover:bg-[#efeadd]"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[9px] tabular-nums text-[#a98a55]">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              {item.kicker ? (
+                <span className="text-[0.5rem] uppercase tracking-[0.14em] text-[#7c857d]">
+                  {item.kicker}
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-2 text-[0.8125rem] font-medium leading-snug text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
+              {item.title}
+            </p>
+            {item.text ? (
+              <p className="mt-1.5 flex-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">
+                {item.text}
+              </p>
+            ) : null}
+            <span className="mt-3 inline-flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.16em] text-[#1c3d32]">
+              Read guide
+              <ArrowRight
+                className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function SectionView({ section }: { section: Section }) {

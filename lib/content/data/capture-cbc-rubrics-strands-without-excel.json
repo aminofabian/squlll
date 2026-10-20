@@ -1,0 +1,474 @@
+{
+  "slug": "capture-cbc-rubrics-strands-without-excel",
+  "path": "/blog/capture-cbc-rubrics-strands-without-excel",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "How to Capture CBC Rubrics and Strands Without Excel",
+  "h1": "How to Capture CBC Rubrics and Strands Without Excel",
+  "description": "A practical, teacher-friendly way to capture CBC rubrics, strands and sub-strands without Excel — with a data model, a term setup and a class workflow.",
+  "primaryKeyword": "capture CBC rubrics and strands",
+  "secondaryKeywords": [
+    "CBC rubric recording sheet",
+    "CBC strands and sub-strands template",
+    "CBC assessment without Excel",
+    "teacher rubric capture Kenya",
+    "CBC performance levels recording"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "To capture CBC rubrics and strands without Excel, stop building a grid of subjects and start keeping one row per learner, per sub-strand, per assessment event. Each row holds the learning area, strand, sub-strand, performance level, date, teacher and evidence. That structure can be filtered, moderated, exported for SBA and turned into a report card — a spreadsheet of merged cells cannot.",
+  "intro": [
+    "**Quick answer:** the replacement for the class rubric workbook is not a prettier spreadsheet. It is a structured record: one row per learner, per sub-strand, per assessment event, with the level, date, teacher and evidence attached. This guide shows how to capture CBC rubrics and strands without Excel, set the record up for a Kenyan class, capture in the classroom without adding a second job, and keep it clean enough for moderation and reporting. For the whole-school picture, start with the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "Most teachers do not abandon Excel because they love spreadsheets. They abandon it because the workbook asks them to hold three different things at once: the curriculum structure, the learner list, and the evidence. When a strand changes, a learner transfers or a parent disputes a level, the workbook has no way to explain itself.",
+    "The good news is that the fix is small. You do not need to digitise every lesson. You need a record that answers four questions for every level: **who**, **which sub-strand**, **what evidence**, and **who recorded it**. Everything else is a view."
+  ],
+  "sections": [
+    {
+      "id": "why-excel-feels-right",
+      "heading": "Why the class rubric workbook feels right — until it doesn't",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A workbook is familiar, offline and fast to start. For one class, one term and one teacher, it can work. The problems appear when the record has to survive a second teacher, a second stream or a second term."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Columns become the curriculum.** A teacher adds a column for every task, and by week eight the sheet is 40 columns wide with no consistent definition of what each column measures.",
+            "**Merged cells hide learners.** A merged cell for a strand looks tidy on screen, but filters, counts and exports silently drop rows.",
+            "**Free-text levels drift.** One teacher types EE, another types Exceeding, another types 4. The school cannot count or compare any of them.",
+            "**The evidence lives elsewhere.** The photo of the project is on a phone, the rubric note is in an exercise book, and the level is in the sheet. Three places, no link.",
+            "**There is no history.** When a level is corrected, the old value disappears. Nobody can explain what changed or why."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Excel is a calculation tool, not a records system",
+          "text": "A records system enforces the shape of the data: one learner, one sub-strand, one level, one date. Excel lets anyone change the shape at any time — which is exactly why it is hard to trust at reporting time."
+        }
+      ]
+    },
+    {
+      "id": "what-you-are-recording",
+      "heading": "What you are actually recording",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC assessment language is precise, and the precision is useful. If teachers use the same terms in the same way, moderation becomes a conversation rather than an argument."
+        },
+        {
+          "type": "table",
+          "caption": "The CBC record vocabulary, with a Mathematics example.",
+          "headers": [
+            "Term",
+            "What it means",
+            "Example"
+          ],
+          "rows": [
+            [
+              "Learning area",
+              "The subject or broad area of learning",
+              "Mathematics"
+            ],
+            [
+              "Strand",
+              "A broad organising theme within the learning area",
+              "Numbers"
+            ],
+            [
+              "Sub-strand",
+              "A specific cluster of learning outcomes inside a strand",
+              "Fractions"
+            ],
+            [
+              "Learning outcome / indicator",
+              "What the learner should know or do",
+              "Compare and order fractions"
+            ],
+            [
+              "Performance level",
+              "The descriptor of how well the outcome was demonstrated",
+              "ME — Meeting Expectations"
+            ],
+            [
+              "Evidence",
+              "The task, observation or product behind the level",
+              "Fraction card sort, 12 Oct"
+            ],
+            [
+              "Assessment event",
+              "The occasion on which evidence was collected",
+              "Week 6 class task"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A report card only needs the learning area and an overall level. But an overall level is a **summary** of sub-strand evidence, not a separate judgement. If the sub-strand record is thin, the summary is a guess with a nice font."
+        }
+      ]
+    },
+    {
+      "id": "one-row-rule",
+      "heading": "The one-row rule: structure beats decoration",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The core design decision is simple: **one row per learner, per sub-strand, per assessment event**. A learner assessed on three sub-strands in one task creates three rows. A class of 45 learners assessed on four sub-strands creates 180 rows — which sounds like a lot until you realise the workbook already contains the same information, just spread across a grid nobody can filter."
+        },
+        {
+          "type": "table",
+          "caption": "The same evidence, stored as rows instead of a wide grid.",
+          "headers": [
+            "Learner",
+            "Learning area",
+            "Strand",
+            "Sub-strand",
+            "Level",
+            "Date",
+            "Teacher"
+          ],
+          "rows": [
+            [
+              "Brian Otieno",
+              "Mathematics",
+              "Numbers",
+              "Fractions",
+              "EE",
+              "2026-10-12",
+              "A. Wanjiru"
+            ],
+            [
+              "Brian Otieno",
+              "Mathematics",
+              "Numbers",
+              "Decimals",
+              "ME",
+              "2026-10-12",
+              "A. Wanjiru"
+            ],
+            [
+              "Grace Wambui",
+              "Mathematics",
+              "Numbers",
+              "Fractions",
+              "ME",
+              "2026-10-12",
+              "A. Wanjiru"
+            ],
+            [
+              "Grace Wambui",
+              "Mathematics",
+              "Numbers",
+              "Decimals",
+              "ME",
+              "2026-10-12",
+              "A. Wanjiru"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Rows look less impressive on a screen, but they do something a wide grid cannot: they let the school ask questions. Which learners are missing a level for Fractions? Which sub-strands has this class not assessed? Which teacher's ME rates look different from the rest of the stream? Those are reporting questions, and they need a structure, not a layout."
+        },
+        {
+          "type": "figure",
+          "scene": "cbc-rubric-grid",
+          "caption": "Illustrative view: one learner row across four sub-strands, with a live count of what is still missing. The grid is a view of the rows, not the record itself."
+        }
+      ]
+    },
+    {
+      "id": "set-up-the-term",
+      "heading": "Set up the term in six steps",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Do the setup once, before teaching starts. A school that sets up in week one spends the rest of the term capturing; a school that sets up in week ten spends the rest of the term reconstructing."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Load the learners",
+              "text": "Import the class list with UPI, admission number and stream. Check for duplicates before anything else — a duplicate learner is the most expensive error to unwind."
+            },
+            {
+              "title": "Load the curriculum map",
+              "text": "Add the learning areas, strands and sub-strands for the term. This is the school's agreed map, not each teacher's personal interpretation."
+            },
+            {
+              "title": "Agree the scale",
+              "text": "Decide whether the school reports EE/ME/AE/BE or the eight-point EE1–BE2 scale. Use one scale for capture and map it to the report card later."
+            },
+            {
+              "title": "Plan the evidence",
+              "text": "For each sub-strand, name the task, project or observation that will produce evidence. A sub-strand with no planned task is a sub-strand that will be filled in at the last minute."
+            },
+            {
+              "title": "Assign the teachers",
+              "text": "Match each learning area and stream to a teacher. If two teachers share a class, agree who owns the final level."
+            },
+            {
+              "title": "Publish the calendar",
+              "text": "Give teachers the capture windows and the lock date. The lock date is what makes the report card possible."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "capture-in-class",
+      "heading": "Capture in class without adding a second job",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The biggest reason digital capture fails is that it becomes an evening data-entry shift. The rule is to capture at the point of evidence, in the smallest useful unit."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Use a phone, not a laptop.** A teacher moving around a classroom will not open a spreadsheet; they will tap a learner and a level.",
+            "**Capture the exception first.** Mark the learners who are EE or BE explicitly, then confirm the majority as ME. It is faster and it surfaces the learners who need support.",
+            "**Attach one piece of evidence.** A photo of a project, a scanned rubric or a short note is enough. You do not need a portfolio for every sub-strand.",
+            "**Batch by task, not by learner.** After a task, capture all 45 learners for the same sub-strand while the standard is still fresh in your mind.",
+            "**Never transcribe twice.** If the level is entered on paper first, the paper is the source and the digital record is a copy. Choose one source of truth and stick to it."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "The 90-second rule",
+          "text": "If capturing a class set of levels takes longer than 90 seconds, the tool or the setup is wrong. Teachers will not sustain a workflow that feels like a second job — no matter how good the report card looks."
+        }
+      ]
+    },
+    {
+      "id": "four-levels-eight-points",
+      "heading": "The four levels and the eight-point scale",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC reports four performance descriptors. National reporting subdivides each into two, creating an eight-point scale. Schools need to decide which one their report card uses — and make sure the capture screen uses the same one."
+        },
+        {
+          "type": "table",
+          "caption": "Performance descriptors, with the eight-point subdivision.",
+          "headers": [
+            "Descriptor",
+            "Code",
+            "Sub-levels",
+            "What it signals"
+          ],
+          "rows": [
+            [
+              "Exceeding Expectations",
+              "EE",
+              "EE1, EE2",
+              "The learner applies the competency independently and beyond the expected level"
+            ],
+            [
+              "Meeting Expectations",
+              "ME",
+              "ME1, ME2",
+              "The learner demonstrates the competency as expected"
+            ],
+            [
+              "Approaching Expectations",
+              "AE",
+              "AE1, AE2",
+              "The learner is developing the competency with support"
+            ],
+            [
+              "Below Expectations",
+              "BE",
+              "BE1, BE2",
+              "The learner needs substantial support to demonstrate the competency"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The two sub-levels are not a way to rank learners more precisely. They are a way to record movement — a learner moving from AE2 to ME1 is showing progress even though the descriptor has only changed by one step. Use them to tell that story, not to create a league table."
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Agree the scale before the term, not after",
+          "text": "A school that captures EE/ME/AE/BE all term and then tries to print EE1–BE2 report cards has created a conversion problem for itself. Decide once, document it, and map any historical data deliberately."
+        }
+      ]
+    },
+    {
+      "id": "moderation",
+      "heading": "Moderation without a meeting for every learner",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Moderation is the difference between a record and a rumour. It does not require a meeting about every learner. It requires a sample, a common standard and a short conversation."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Sample across streams.** Pick three learners from each stream — one EE, one ME, one AE — and compare the evidence behind the levels.",
+            "**Cross-mark one task.** Give two teachers the same five pieces of work and compare their levels before they capture the rest.",
+            "**Anchor the standard with examples.** Keep one annotated example per level for each strand. New teachers then have something concrete to compare against.",
+            "**Record the moderation.** A short note — date, strand, sample size, decision — is enough to show that the school checked.",
+            "**Fix the standard, not the numbers.** If two teachers disagree, the answer is usually a clearer task or rubric, not an instruction to lower everyone's level."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "migrate-the-workbook",
+      "heading": "Moving the current workbook into the new record",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "You do not have to abandon the current term's data. Migrate it deliberately, and treat the migration as a data-cleaning exercise rather than a copy-and-paste."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Freeze the workbook",
+              "text": "Make one read-only copy and name it with the term and date. From this point, nobody edits it."
+            },
+            {
+              "title": "List the learners",
+              "text": "Extract the unique learner list and reconcile it against the admission register. Fix duplicates and missing UPIs first."
+            },
+            {
+              "title": "Reshape the grid",
+              "text": "Turn each subject column into a learning area row, and each task column into an assessment event. This is the step a spreadsheet cannot do for you."
+            },
+            {
+              "title": "Normalise the levels",
+              "text": "Map every variant — EE, E, Exceeding, 4, 75% — to one scale. Record the mapping so the school can explain it later."
+            },
+            {
+              "title": "Validate before importing",
+              "text": "Check that every learner has a level for every assessed sub-strand, and that no level sits outside the scale."
+            },
+            {
+              "title": "Lock and archive",
+              "text": "Import, spot-check 10 learners against the workbook, then archive the workbook as the evidence of the migration."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "capture-checklist",
+      "heading": "A one-page capture checklist",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "Every learner has a unique record and a UPI before capture begins.",
+            "The term's strands and sub-strands are agreed and loaded once.",
+            "One performance scale is in use across all streams.",
+            "Every sub-strand has a planned task or observation.",
+            "Teachers can capture from a phone in under 90 seconds per class set.",
+            "Each level can be traced to a date, a task and a teacher.",
+            "A moderation sample has been checked across streams.",
+            "The record can be filtered by learner, strand, stream and teacher.",
+            "The term can be locked without losing the ability to correct errors.",
+            "A backup exists outside the teacher's laptop."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "The test of a good record",
+          "text": "Hand the record to a teacher who did not create it and ask them to explain one learner's level. If they can do it in under a minute, the structure is working."
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL stores CBC assessment as structured rows against the learner, learning area, strand and sub-strand, rather than as a subject grid. Teachers capture levels on a phone, the DOS can see what is missing by stream, and the term record feeds report cards and SBA exports."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Strands and sub-strands** loaded once per term and shared across streams.",
+            "**Performance levels** captured against the learner, with date, teacher and evidence.",
+            "**Moderation views** that compare streams and flag missing sub-strands.",
+            "**A locked term record** that report cards and KNEC exports read from.",
+            "**Role-based access and daily backups**, so the record is not dependent on one laptop."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Do I need to record every sub-strand for every learner?",
+      "answer": "You need enough evidence to support the level you report. In practice that means every sub-strand you assessed should have a recorded level, and every learning area reported should be backed by sub-strand evidence. Sub-strands you did not assess should not be invented at term end."
+    },
+    {
+      "question": "Should I use EE/ME/AE/BE or the eight-point scale?",
+      "answer": "Use the scale your report card and KNEC reporting require. The four descriptors are the school-facing summary; the eight-point EE1–BE2 scale adds a sub-level for finer progress. Decide before the term and use one scale for capture, mapping only when you generate a report."
+    },
+    {
+      "question": "Can teachers capture rubrics on a phone?",
+      "answer": "Yes, and they should. A phone-based capture screen that takes a few taps per learner is far more likely to be used at the point of evidence than a laptop spreadsheet opened in the evening."
+    },
+    {
+      "question": "What evidence should be attached to a level?",
+      "answer": "One traceable artefact is enough: a photo of a project, a scanned task, a short observation note or a rubric sheet. The point is to be able to explain the level later, not to build a portfolio for every sub-strand."
+    },
+    {
+      "question": "Can I migrate the current term's Excel data?",
+      "answer": "Yes, if you freeze the workbook, reconcile the learner list, reshape the grid into one row per learner per sub-strand, normalise the level values and validate before importing. Archive the original workbook as evidence of the migration."
+    }
+  ],
+  "cta": {
+    "heading": "Retire the rubric workbook this term",
+    "body": "Start a free term with SQUL and capture strands, sub-strands and levels on a phone — then print the report from the same record.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "Formative vs. summative assessment in Kenya",
+      "href": "/blog/formative-vs-summative-assessment-kenya"
+    },
+    {
+      "title": "Managing continuous assessment across multiple streams",
+      "href": "/blog/continuous-assessment-multiple-streams"
+    },
+    {
+      "title": "Common CBC data entry mistakes",
+      "href": "/blog/common-cbc-data-entry-mistakes"
+    },
+    {
+      "title": "CBC report card software in Kenya",
+      "href": "/blog/cbc-report-card-software-kenya"
+    }
+  ]
+}

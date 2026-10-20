@@ -1,0 +1,382 @@
+{
+  "slug": "learner-transfers-mid-term-cbc",
+  "path": "/blog/learner-transfers-mid-term-cbc",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "How to Handle Learner Transfers Mid-Term Under CBC Rules",
+  "h1": "How to Handle Learner Transfers Mid-Term Under CBC Rules",
+  "description": "A practical checklist for mid-term learner transfers under CBC: what records must travel, how to protect assessment continuity and who owns the SBA upload.",
+  "primaryKeyword": "learner transfers mid-term",
+  "secondaryKeywords": [
+    "CBC learner transfer records",
+    "mid-term transfer Kenya school",
+    "transfer assessment history CBC",
+    "SBA upload transferring learner",
+    "learner transfer letter Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "A mid-term CBC transfer is a records-continuity problem before it is a paperwork problem. The receiving school needs the learner profile and UPI, the assessment history by learning area and strand, evidence samples, attendance and the transfer letter. If the learner is a KPSEA or KJSEA candidate, confirm which school owns the assessment centre and the SBA upload before either side submits.",
+  "intro": [
+    "**Quick answer:** under CBC, a learner who moves mid-term should carry a **record**, not just a letter. The receiving school needs enough assessment history to place the learner and continue the strand map, and the two schools need to agree who is responsible for any pending school-based assessment (SBA) upload. This guide covers learner transfers mid-term under CBC: what must travel, what each school should check, and who owns the assessment upload. It is part of the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "Transfers are routine in Kenyan schools: a family relocates, a parent changes jobs, a learner moves from a private academy to a public junior school, or a board decides a different placement is better. What is not routine is the data handover. In too many cases the learner arrives with a file of certificates and no assessment history.",
+    "That gap matters more under CBC than it did under 8-4-4. A learner's level is built from evidence over time, not from a single end-of-year mark. If the receiving school cannot see the strands already covered, it either repeats them or assumes they were done. Both are guesses."
+  ],
+  "sections": [
+    {
+      "id": "what-a-cbc-transfer-involves",
+      "heading": "What a CBC transfer actually involves",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A transfer has three workstreams running at once: admission, records and assessment responsibility. Schools often complete the first, half-complete the second, and discover the third when a national deadline appears."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Admission:** the receiving school accepts the learner and creates or updates the learner record.",
+            "**Records:** the assessment history, attendance and evidence move with the learner.",
+            "**Assessment responsibility:** the two schools agree who uploads pending SBA and, for candidates, which assessment centre owns the learner."
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "transfer-record",
+          "caption": "Illustrative view: a transfer package that includes the learner profile, assessment history, evidence and attendance — not just a transfer letter."
+        }
+      ]
+    },
+    {
+      "id": "what-must-travel",
+      "heading": "What must travel with the learner",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "The minimum transfer package for a CBC learner.",
+          "headers": [
+            "Record",
+            "Why the receiving school needs it",
+            "Format"
+          ],
+          "rows": [
+            [
+              "Learner profile and UPI",
+              "Identity, age, grade and stream placement",
+              "Printed summary and digital record"
+            ],
+            [
+              "Assessment history",
+              "Learning areas, strands, sub-strands and levels already assessed",
+              "Structured export, not a photo of a workbook"
+            ],
+            [
+              "Evidence samples",
+              "A small sample that explains the levels",
+              "PDF or image set, indexed to the strand"
+            ],
+            [
+              "Attendance record",
+              "Continuity and any long absence that explains a gap",
+              "Term summary"
+            ],
+            [
+              "Transfer letter",
+              "The formal request and release",
+              "Signed letter"
+            ],
+            [
+              "Support or accommodation notes",
+              "Continuity for learners who need adjustments",
+              "Only with the appropriate consent"
+            ],
+            [
+              "Fee clearance",
+              "Administrative, not academic — but it blocks release",
+              "School finance record"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A photo of a mark sheet is not an assessment history",
+          "text": "If the receiving school cannot filter the history by learning area, strand and term, it cannot place the learner properly. Send a structured export, even if it is a clean spreadsheet, and index the evidence."
+        }
+      ]
+    },
+    {
+      "id": "receiving-school-checks",
+      "heading": "What the receiving school should check",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The first week is not the time to assume continuity. The receiving school should run a short baseline and compare it with the record it received."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Map the strands.** Which sub-strands has the learner already covered, and which are still open this term?",
+            "**Check the levels against evidence.** A record that says EE everywhere without evidence deserves a conversation, not automatic acceptance.",
+            "**Run a baseline task.** It is not a punishment or a re-marking exercise; it is how the school confirms placement and support needs.",
+            "**Check attendance and gaps.** A long absence may explain a missing strand, and that changes the support plan.",
+            "**Confirm the candidate status.** If the learner is in Grade 6 or Grade 9, resolve the national assessment question before teaching begins."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "Do not punish the learner for a thin record",
+          "text": "A learner arriving with incomplete records is not a learner with no ability. Use the baseline to establish where they are, then record the gap transparently."
+        }
+      ]
+    },
+    {
+      "id": "sending-school-checks",
+      "heading": "What the sending school must close out",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The sending school's job is to leave a clean record behind. That means completing what can be completed, exporting what exists, and documenting what does not."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Complete the current term's captured levels** up to the transfer date.",
+            "**Generate a leaving report** that shows the learning areas and strands assessed so far.",
+            "**Export the structured record**, not just a PDF report card.",
+            "**Index the evidence** by learning area and strand; do not send an unlabelled folder of photos.",
+            "**Record the transfer date** against the placement so the learner does not appear in future class lists.",
+            "**Archive the package** the school sent, so it can be reproduced if challenged."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "knec-candidate-status",
+      "heading": "If the learner is a KPSEA or KJSEA candidate",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "This is the part schools most often get wrong. A candidate's SBA scores and assessment centre are tied to a school and a registration. Moving the learner's file does not automatically move the assessment record."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Confirm the assessment centre.** Which school is the learner registered under for the national assessment?",
+            "**Agree SBA ownership.** Which school will upload the pending scores, and by when?",
+            "**Avoid duplicate uploads.** Two schools uploading the same candidate is harder to unwind than one late upload.",
+            "**Document the decision.** A short email or signed note between the heads is enough to prevent a later dispute.",
+            "**Contact KNEC or the county education office** if the case is unclear. Do not guess at a national process."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A transfer does not erase a registration",
+          "text": "The learner's national assessment record is held against a registration and a centre. Sort out the ownership question before the upload window closes, not after."
+        }
+      ]
+    },
+    {
+      "id": "step-by-step",
+      "heading": "A step-by-step transfer process",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Receive the request",
+              "text": "Log the guardian's request, the reason, the proposed date and the receiving school."
+            },
+            {
+              "title": "Clear the learner",
+              "text": "Complete fee, library and property clearance, and confirm there is no disciplinary or safeguarding hold that must be disclosed appropriately."
+            },
+            {
+              "title": "Complete the record to date",
+              "text": "Enter any outstanding levels, confirm attendance and generate a leaving report."
+            },
+            {
+              "title": "Export the package",
+              "text": "Profile, assessment history, evidence index, attendance and transfer letter — one folder, one index."
+            },
+            {
+              "title": "Agree assessment ownership",
+              "text": "If the learner is a candidate, confirm the centre and the SBA upload owner in writing."
+            },
+            {
+              "title": "Receive and verify",
+              "text": "The receiving school checks the package against a baseline and records any gaps."
+            },
+            {
+              "title": "Create the new placement",
+              "text": "Add the learner to the new class and stream with an effective date; keep the old placement for history."
+            },
+            {
+              "title": "Archive both sides",
+              "text": "Both schools keep a copy of what was sent and received, with the date."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mid-term-vs-end-term",
+      "heading": "Mid-term vs end-of-term transfers",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "The timing changes the record work.",
+          "headers": [
+            "Timing",
+            "Assessment risk",
+            "What to do"
+          ],
+          "rows": [
+            [
+              "Early term",
+              "Most of the term still ahead; placement is easier",
+              "Baseline and map the strands from the previous term"
+            ],
+            [
+              "Mid-term",
+              "Partial evidence and a mixed strand map",
+              "Send a partial-term record, mark it partial, and agree what the receiving school will assess"
+            ],
+            [
+              "End of term",
+              "Report cards and promotions are already in motion",
+              "Send the full term report and confirm which school reports the term"
+            ],
+            [
+              "Candidate year",
+              "SBA and national registration are live",
+              "Resolve centre and upload ownership before anything else"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-protection",
+      "heading": "Share the record, not the whole file",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A transfer is a legitimate reason to share learner data, but it is not a licence to send everything. Share what the receiving school needs for admission, placement and continuity — and nothing else."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Use a secure channel.** A password-protected folder or a direct system transfer beats a WhatsApp group.",
+            "**Limit special-category data.** Medical, safeguarding or special-needs information should travel only with the appropriate consent and to the people who need it.",
+            "**Record who received it.** A transfer log protects both schools.",
+            "**Delete excess copies.** The sending school should not keep a second informal copy on a personal device.",
+            "**Follow the school's data protection policy.** See [learner data protection in Kenyan schools](/blog/learner-data-protection-kenya-school-software)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "common-mistakes",
+      "heading": "Common transfer mistakes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Sending only a report card.** It shows the summary, not the strand history the receiving school needs.",
+            "**Creating a second learner record.** Duplicates split the assessment history and confuse the UPI.",
+            "**Overwriting the old stream.** The previous term's report becomes impossible to reproduce.",
+            "**Assuming the receiving school will handle KNEC.** Candidate ownership must be explicit.",
+            "**Sending unindexed evidence.** A folder of 200 photos is not a record.",
+            "**No archive.** When a parent disputes the transfer, neither school can show what was sent."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL keeps the learner, placement and assessment history in one record, so a mid-term transfer becomes an export and a new placement rather than a rebuild."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One learner record** across streams, terms and campuses.",
+            "**A transfer package** that includes the profile, assessment history and evidence index.",
+            "**Historical placements** so the old class and report remain reproducible.",
+            "**Role-based access** so only authorised staff can export or receive a record.",
+            "**An audit trail** of who exported what, when."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can a learner transfer mid-term under CBC?",
+      "answer": "Yes. The school should complete the record to the transfer date, generate a leaving report, export the assessment history and evidence index, and confirm any candidate or SBA ownership with the receiving school."
+    },
+    {
+      "question": "Who uploads SBA scores after a transfer?",
+      "answer": "The school that owns the learner's assessment registration and centre at the time of the upload. The two heads should agree this in writing before the deadline. If it is unclear, contact KNEC or the county education office rather than uploading twice."
+    },
+    {
+      "question": "What happens to a learner's KPSEA or KJSEA registration?",
+      "answer": "Registration is tied to a candidate record and assessment centre, not to the file transfer. Moving schools does not automatically move the registration. Confirm the centre and the responsible school before the national assessment."
+    },
+    {
+      "question": "Should the receiving school re-assess the learner?",
+      "answer": "A short baseline is good practice. It confirms placement, identifies support needs and tests whether the transfer record matches the learner's current performance. It should not be used to penalise a learner for a thin record."
+    },
+    {
+      "question": "What records can a school withhold?",
+      "answer": "A school should share what is necessary for admission, placement and assessment continuity. Sensitive information such as medical or safeguarding records should be shared only with the appropriate consent and only with staff who need it."
+    }
+  ],
+  "cta": {
+    "heading": "Make transfers a record export, not a rebuild",
+    "body": "Start a free term with SQUL and keep every learner's assessment history intact — even when they change stream, school or campus.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "Downloading and interpreting KNEC CBA portal reports",
+      "href": "/blog/knec-cba-portal-reports-guide"
+    },
+    {
+      "title": "School admissions and learner records in Kenya",
+      "href": "/blog/school-admissions-learner-records-kenya"
+    },
+    {
+      "title": "Tracking learner progress across Grade 6 to Grade 9",
+      "href": "/blog/tracking-learner-progress-grade-6-to-9"
+    },
+    {
+      "title": "Learner data protection in Kenyan schools",
+      "href": "/blog/learner-data-protection-kenya-school-software"
+    }
+  ]
+}

@@ -1,0 +1,303 @@
+{
+  "slug": "exam-timetables-sync-cbc-schedules",
+  "path": "/blog/exam-timetables-sync-cbc-schedules",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Creating Exam Timetables That Sync with CBC Schedules",
+  "h1": "Creating Exam Timetables That Sync with CBC Schedules",
+  "description": "How to build a CBC exam timetable that fits SBA windows, practicals, national assessment dates, venues and invigilators — without clashes.",
+  "primaryKeyword": "CBC exam timetable",
+  "secondaryKeywords": [
+    "CBC assessment timetable Kenya",
+    "school exam timetable software",
+    "SBA practical timetable",
+    "KPSEA KJSEA timetable planning",
+    "exam timetable clash detection"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "A CBC exam timetable is a constraint plan, not a list of dates. It has to fit the term calendar, KNEC's SBA and national assessment windows, practical and project assessments, venue capacity, invigilator availability and learner subject combinations — and it has to be published in a version everyone can trust.",
+  "intro": [
+    "**Quick answer:** build the CBC exam timetable from the outside in. Fix the external dates first (term close, KNEC SBA upload, KPSEA or KJSEA), then the school's assessment window, then the papers, practicals and venues, and only then the invigilators. This guide is part of the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "Most timetable problems are not caused by a missing algorithm. They are caused by a date that was decided late, a venue that was assumed, or a practical that was never scheduled at all. A timetable that ignores SBA is a timetable that creates a second, invisible exam week.",
+    "This guide covers the inputs, the build sequence, the clash types worth checking, the CBC-specific assessments that get forgotten, and how to publish a version that staff and parents can rely on."
+  ],
+  "sections": [
+    {
+      "id": "why-cbc-changes-the-timetable",
+      "heading": "Why CBC changes the exam timetable",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Under 8-4-4, an exam timetable was mostly a list of papers. Under CBC, assessment is spread across written tests, projects, practical tasks and observation. That means the timetable has to schedule **evidence collection**, not just exam rooms."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Projects run over weeks.** A project deadline is not the same as an exam slot; the school needs submission, observation and moderation time.",
+            "**Practicals need equipment and technicians.** Two classes cannot share one laboratory at the same time.",
+            "**SBA has external windows.** KNEC sets upload deadlines, and the school's internal schedule has to leave time to mark, moderate and upload.",
+            "**National assessments are fixed.** KPSEA and KJSEA dates are not the school's to move.",
+            "**Learners have different combinations.** Senior school pathways and electives make learner-level clashes more likely."
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "exam-timetable",
+          "caption": "Illustrative view: a week of CBC assessments with written papers, practical slots and the SBA upload window on the same plan."
+        }
+      ]
+    },
+    {
+      "id": "inputs",
+      "heading": "The inputs you need before you build",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Gather these before the first draft.",
+          "headers": ["Input", "Why it matters", "Owner"],
+          "rows": [
+            ["Term dates and closing day", "The hard boundary for marking and reporting", "Headteacher"],
+            ["KNEC SBA and national dates", "External deadlines the school cannot move", "Assessment coordinator"],
+            ["Learning areas and papers", "Duration, weighting and whether practical", "DOS"],
+            ["Learner combinations", "Which learners sit which papers", "Class teachers"],
+            ["Venues and capacity", "Halls, labs, classrooms and equipment", "Admin"],
+            ["Invigilators and cover", "Teacher availability and conflicts", "Deputy / DOS"],
+            ["Accommodations", "Extra time, separate rooms or assistive devices", "SNE coordinator"],
+            ["Boarding and transport", "Meal times, prep and bus schedules", "Boarding / admin"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "The date nobody writes down",
+          "text": "The most important input is the **last safe day to upload SBA**. Put it on the timetable as a hard deadline, then work backwards to marking, moderation and the last written test."
+        }
+      ]
+    },
+    {
+      "id": "build-sequence",
+      "heading": "Build the timetable from the outside in",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            { "title": "Fix the external dates", "text": "Term close, KNEC upload deadline, national assessment dates and any public holidays. These are immovable." },
+            { "title": "Set the school assessment window", "text": "Choose the start and end of the school's written assessment period, leaving time for marking and moderation." },
+            { "title": "List every paper and practical", "text": "Include duration, venue type, equipment and whether it is individual or group." },
+            { "title": "Map learner combinations", "text": "Check that no learner is scheduled for two papers at once, including electives and pathway subjects." },
+            { "title": "Allocate venues", "text": "Match capacity and equipment. Labs and halls are the scarce resources; schedule them first." },
+            { "title": "Allocate invigilators", "text": "Check teacher availability against the normal timetable and duty roster. Avoid double-booking the same person." },
+            { "title": "Run a dry run", "text": "Print the timetable and walk the first day: rooms, keys, attendance sheets, extra scripts, sick bay." },
+            { "title": "Publish and version", "text": "Give every teacher and learner the same version, with a date and a change process." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clash-types",
+      "heading": "The five clash types to check",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "A clash is not only two papers at the same time.",
+          "headers": ["Clash", "Example", "How to catch it"],
+          "rows": [
+            ["Learner clash", "A learner takes two electives scheduled together", "Build from learner combinations, not class lists"],
+            ["Teacher clash", "The same invigilator is in two rooms", "Check against the duty roster and cover"],
+            ["Venue clash", "Two practicals need Lab 2", "Allocate labs and equipment first"],
+            ["Equipment clash", "One projector, two presentations", "List shared equipment explicitly"],
+            ["Assessment clash", "A school exam sits inside the SBA upload window", "Put external deadlines on the same calendar"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "A clash-free timetable can still be unfair",
+          "text": "Three heavy papers on one day is not a clash, but it is a learner welfare problem. Spread the load where the assessment rules allow it."
+        }
+      ]
+    },
+    {
+      "id": "cbc-specific-assessments",
+      "heading": "The CBC assessments that get forgotten",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Projects with a submission deadline.** Schedule the submission, the observation window and the moderation, not just the final date.",
+            "**Practical tasks.** Book the lab, the equipment and the technician; a practical without a venue is a cancelled practical.",
+            "**Oral and performance tasks.** These need quiet rooms and time, and they rarely fit a standard exam slot.",
+            "**Portfolio reviews.** Give teachers a scheduled window to review evidence rather than doing it at night.",
+            "**Moderation.** Put a moderation session on the timetable before the lock date, not after the reports are printed.",
+            "**SBA upload.** Treat the upload as a scheduled task with a named owner, not an afterthought."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A useful test: if the timetable only lists written papers, it is not a CBC assessment timetable. It is an exam week with CBC labels."
+        }
+      ]
+    },
+    {
+      "id": "national-assessment-dates",
+      "heading": "Working around KPSEA and KJSEA",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "National assessment dates are fixed by KNEC and take priority over school exams. In a candidate year, the school timetable should protect preparation time and avoid scheduling heavy internal assessments in the days immediately before the national window."
+        },
+        {
+          "type": "table",
+          "caption": "What to protect in a candidate year.",
+          "headers": ["Period", "School priority", "Timetable rule"],
+          "rows": [
+            ["Before the national window", "Revision, rehearsals, candidate briefing", "No new high-stakes internal exam in the final week"],
+            ["National assessment days", "Attendance, transport, venue readiness", "No school exams for candidate classes"],
+            ["After the national window", "Transition, reports, placement support", "Light assessment; focus on reporting and support"],
+            ["SBA upload window", "Marking, moderation, verification", "Protect staff time; do not schedule competing events"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not rely on last year's dates",
+          "text": "National assessment and SBA windows change. Confirm the current KNEC calendar and put the confirmed dates on the school timetable before you publish it."
+        }
+      ]
+    },
+    {
+      "id": "publish-and-change",
+      "heading": "Publishing and changing the timetable",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A timetable that lives in three versions is worse than no timetable. Publish one version, date it, and make the change process explicit."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One source of truth.** The office, staffroom, learners and parents should see the same version.",
+            "**Date every version.** “Version 3 · 12 October” prevents the wrong timetable being printed.",
+            "**Publish to phones.** Teachers and learners should not have to photograph a noticeboard.",
+            "**Announce changes once, clearly.** A change notice should say what changed, who is affected and what to do.",
+            "**Keep the old version.** If a learner missed a paper because of a change, the school needs the history."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exceptions",
+      "heading": "Absentees, accommodations and make-up assessments",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Absentee:** record the absence, do not enter a zero as if it were a level, and schedule a make-up where the assessment rules allow.",
+            "**Late arrival:** decide the rule in advance and apply it consistently across streams.",
+            "**Special needs accommodation:** schedule extra time and a separate room, and brief the invigilator.",
+            "**Boarding learner:** check meal and prep times; a 2 p.m. paper after a 1 p.m. lunch is a welfare issue.",
+            "**Transfer in:** confirm which papers the learner can reasonably sit and record the gap transparently.",
+            "**Malpractice or irregularity:** follow the school's policy and KNEC guidance; do not improvise a replacement score."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "Schedule the make-up before you need it",
+          "text": "Put a make-up window on the timetable at the start. It is much easier to fill an existing slot than to invent one after a learner misses a paper."
+        }
+      ]
+    },
+    {
+      "id": "timetable-checklist",
+      "heading": "A CBC exam timetable checklist",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "External dates (term close, SBA upload, national assessment) are on the plan.",
+            "Every written paper, practical, project and oral task is listed.",
+            "Learner combinations have been checked for clashes.",
+            "Lab and hall capacity has been confirmed.",
+            "Invigilators are checked against the duty roster.",
+            "Accommodations have a room, time and briefed invigilator.",
+            "Moderation and upload windows are scheduled with named owners.",
+            "A make-up window exists.",
+            "The timetable has a version number and a publish date.",
+            "The first day has been walked through as a dry run."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL connects the timetable to the same classes, teachers and assessment records used elsewhere, so a change in a class or a teacher is visible before it becomes an exam-day surprise."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Timetable and duty roster** in one place, published to staff phones.",
+            "**Class and teacher records** that flag double-booking before publication.",
+            "**Assessment windows** alongside the school calendar.",
+            "**Report generation** from the assessments the timetable produces.",
+            "**One version** for the office, staff and parents."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I avoid exam timetable clashes?",
+      "answer": "Build from learner combinations rather than class lists, allocate scarce venues and equipment first, check invigilators against the duty roster, and put external SBA and national dates on the same calendar. Then run a dry run of day one."
+    },
+    {
+      "question": "How should practicals be scheduled?",
+      "answer": "Book the venue, equipment and technician first, then place the practical around them. Practicals usually need more time than a written paper and cannot be stacked in the same lab."
+    },
+    {
+      "question": "Should school exams be scheduled during the KNEC SBA upload window?",
+      "answer": "No. The upload window needs staff time for marking, moderation and verification. Protect it as a hard deadline and avoid competing high-stakes events."
+    },
+    {
+      "question": "What do we do about learners who miss a paper?",
+      "answer": "Record the absence honestly, do not enter a zero as a performance level, and use a pre-scheduled make-up window where the assessment rules allow. Apply the same rule consistently across streams."
+    },
+    {
+      "question": "Can we reuse the normal school timetable for exams?",
+      "answer": "Only for the venue and invigilator baseline. Exams need longer blocks, different room capacities and learner-level checks, so the normal timetable is an input rather than the final plan."
+    }
+  ],
+  "cta": {
+    "heading": "Build the assessment calendar once",
+    "body": "Start a free term with SQUL and keep the exam timetable, SBA windows and report deadlines on one plan.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    { "title": "The complete guide to CBC assessment management", "href": "/blog/cbc-assessment-management-complete-guide" },
+    { "title": "School timetable software in Kenya", "href": "/blog/school-timetable-software-kenya" },
+    { "title": "School calendar and term planning in Kenya", "href": "/blog/school-calendar-term-planning-kenya" },
+    { "title": "Generating term report cards automatically from CBC data", "href": "/blog/generate-cbc-term-report-cards-automatically" },
+    { "title": "Common CBC data entry mistakes", "href": "/blog/common-cbc-data-entry-mistakes" }
+  ]
+}

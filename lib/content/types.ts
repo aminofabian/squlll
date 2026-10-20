@@ -31,6 +31,35 @@ export type Block =
       variant: 'fees' | 'whatsapp' | 'reports' | 'timetable' | 'attendance'
       caption?: string
     }
+  /**
+   * A richer, illustrative product-UI scene used by the CBC & academic
+   * management cluster. Like `mock`, these are drawn in the DOM — no real
+   * learner data and no raster screenshots that go stale.
+   */
+  | { type: 'figure'; scene: FigureScene; caption?: string }
+  /** A grid of links used by a pillar to lay out its spoke cluster. */
+  | { type: 'guides'; title?: string; intro?: string; items: GuideLink[] }
+
+export type FigureScene =
+  | 'assessment-workflow'
+  | 'term-calendar'
+  | 'cbc-rubric-grid'
+  | 'formative-summative'
+  | 'report-card'
+  | 'streams-matrix'
+  | 'transfer-record'
+  | 'kpsea-kjsea'
+  | 'knec-portal'
+  | 'exam-timetable'
+  | 'progress-6-9'
+  | 'data-audit'
+
+export type GuideLink = {
+  title: string
+  href: string
+  text?: string
+  kicker?: string
+}
 
 export type Section = {
   /** Anchor id, also used by the auto-generated table of contents. */

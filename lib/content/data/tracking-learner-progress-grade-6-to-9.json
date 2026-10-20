@@ -1,0 +1,401 @@
+{
+  "slug": "tracking-learner-progress-grade-6-to-9",
+  "path": "/blog/tracking-learner-progress-grade-6-to-9",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Tracking Learner Progress Across Grade 6 to Grade 9",
+  "h1": "Tracking Learner Progress Across Grade 6 to Grade 9",
+  "description": "How Kenyan schools track CBC learner progress from KPSEA in Grade 6 through junior school to KJSEA in Grade 9 — without reducing it to one number.",
+  "primaryKeyword": "track learner progress",
+  "secondaryKeywords": [
+    "CBC learner progress tracker",
+    "Grade 6 to Grade 9 transition Kenya",
+    "KPSEA to KJSEA progress",
+    "junior school assessment records",
+    "learner progress report Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "Tracking progress from Grade 6 to Grade 9 means following the same learner across KPSEA, a Grade 7 baseline, Grade 8 growth and KJSEA — by learning area, strand coverage, attendance and support needs. It is a trajectory, not a single number, and it should inform teaching and transition rather than predict a final result.",
+  "intro": [
+    "**Quick answer:** a learner's CBC story runs from Grade 6 to Grade 9 across two national assessment points and three years of school-based evidence. To track it, keep the same learner identity, capture a baseline at the start of Grade 7, record strand coverage and levels each term, and read the trajectory by learning area. This guide explains how to track learner progress from Grade 6 to Grade 9 across KPSEA, junior school and KJSEA. It is part of the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "The transition from primary to junior school is where records most often break. The learner moves to a new class, often a new school, and the receiving teachers see a KPSEA result but not the strand history behind it. By Grade 9, the school is making senior school placement decisions with a thin view of how the learner got there.",
+    "This guide explains what to track, how to establish a baseline, how to avoid turning progress into a prediction, and how to use the record in parent conversations and transition planning."
+  ],
+  "sections": [
+    {
+      "id": "why-the-story-gets-lost",
+      "heading": "Why the story gets lost between Grade 6 and Grade 9",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "CBC assessment is cumulative, but school records are often organised by year and by class. A learner can move from Grade 6 to Grade 7 with a KPSEA result, a report card and a file of certificates — and no strand-level history that the new teacher can use."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**New school, new record.** The receiving school starts a fresh file and never sees the primary evidence.",
+            "**New teachers, new standard.** Grade 7 teachers interpret the rubrics independently of the primary school.",
+            "**KPSEA becomes the whole story.** A single national result is treated as a complete description of the learner.",
+            "**Terms are recorded, not trajectories.** Each report card is filed separately, so nobody sees the direction of travel.",
+            "**Support plans restart.** A learner who needed help in Grade 6 is identified again in Grade 8, after two lost years."
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "progress-6-9",
+          "caption": "Illustrative view: a learner trajectory from Grade 6 KPSEA through a Grade 7 baseline to Grade 8 growth and Grade 9 KJSEA, with strand coverage alongside the levels."
+        }
+      ]
+    },
+    {
+      "id": "what-to-track",
+      "heading": "What to track across the four years",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "The record that should follow the learner.",
+          "headers": [
+            "Stage",
+            "What to record",
+            "Why it matters"
+          ],
+          "rows": [
+            [
+              "Grade 6 · KPSEA",
+              "Learning-area levels, participation and any support notes",
+              "The exit profile from primary"
+            ],
+            [
+              "Grade 7 · baseline",
+              "A short diagnostic by learning area and strand",
+              "Where the learner starts junior school"
+            ],
+            [
+              "Grade 7–8 · terms",
+              "Levels, strand coverage, attendance and evidence",
+              "The growth story between national assessments"
+            ],
+            [
+              "Grade 9 · KJSEA",
+              "Learning-area levels and participation",
+              "The exit profile from junior school"
+            ],
+            [
+              "Throughout",
+              "Support plans, accommodations and interventions",
+              "Continuity for learners who need help"
+            ],
+            [
+              "Transition",
+              "Interests, pathway choices and attendance",
+              "Senior school placement and guidance"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The exact national report formats and timelines are set by KNEC. The school's job is to keep the **local record** that sits underneath them: the strands, the evidence, the support and the attendance."
+        }
+      ]
+    },
+    {
+      "id": "measures-that-help",
+      "heading": "Measures that help — and measures that mislead",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Use these with care.",
+          "headers": [
+            "Measure",
+            "What it tells you",
+            "Caution"
+          ],
+          "rows": [
+            [
+              "Performance level by learning area",
+              "Where the learner is against expectations",
+              "A level is not a percentage; do not average it"
+            ],
+            [
+              "Strand coverage",
+              "How much of the curriculum has been assessed",
+              "Coverage is not the same as mastery"
+            ],
+            [
+              "Level movement",
+              "Whether the learner is improving over time",
+              "Movement can reflect a different task, not just learning"
+            ],
+            [
+              "Assessment completion",
+              "Whether evidence exists for every strand",
+              "A missing level is not a low level"
+            ],
+            [
+              "Attendance",
+              "Opportunity to learn",
+              "Attendance explains gaps; it does not excuse them"
+            ],
+            [
+              "Support plan status",
+              "Whether an intervention is happening",
+              "A plan without a review is paperwork"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not average performance levels",
+          "text": "EE, ME, AE and BE are descriptors, not points on a continuous scale. Converting them to numbers and averaging them creates a false precision — and a number that cannot be explained to a parent."
+        }
+      ]
+    },
+    {
+      "id": "grade-7-baseline",
+      "heading": "The Grade 7 baseline is the missing link",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A baseline is not a repeat of KPSEA and not a mini-KJSEA. It is a short diagnostic in the first few weeks of Grade 7 that tells the teacher what the learner can do now, in this school's curriculum and language."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Keep it short.** One task per learning area is enough to establish a starting point.",
+            "**Use the same sub-strand language** as the term's curriculum map, so the baseline connects to teaching.",
+            "**Do not grade it for the report card.** It is a placement and planning tool, not a summative event.",
+            "**Record it in the same learner record** as the rest of the term, tagged as a baseline.",
+            "**Share the pattern with the class teacher**, not a ranking of learners."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "A baseline is a map, not a label",
+          "text": "The purpose is to know where to start teaching, not to decide who is “good” at a subject. The moment it becomes a label, it stops being useful."
+        }
+      ]
+    },
+    {
+      "id": "progress-not-prediction",
+      "heading": "Progress, not prediction",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "It is tempting to use Grade 7 and Grade 8 data to predict a Grade 9 result. Resist it. A prediction based on a handful of levels is fragile, and it can become a self-fulfilling expectation for the learner."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Use the trajectory to plan support**, not to set a target level.",
+            "**Look for direction and consistency**, not a precise forecast.",
+            "**Ask what changed** when a learner moves up or down — a new task, a new teacher, an attendance issue.",
+            "**Keep the learner in the conversation.** A trajectory is a description, not a destiny."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "early-warning",
+      "heading": "Early-warning signs worth acting on",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Small signals that become large problems by Grade 9.",
+          "headers": [
+            "Signal",
+            "What it might mean",
+            "First action"
+          ],
+          "rows": [
+            [
+              "Missing evidence in two consecutive terms",
+              "The learner is not being assessed, not necessarily failing",
+              "Check attendance and teacher allocation"
+            ],
+            [
+              "Level drop in one learning area",
+              "A specific gap or a change in task demand",
+              "Review the strand and re-teach"
+            ],
+            [
+              "Attendance below the school threshold",
+              "Lost opportunity to learn",
+              "Contact the guardian and agree a plan"
+            ],
+            [
+              "Repeated AE/BE in the same strand",
+              "A persistent misconception",
+              "Small-group support and a different task"
+            ],
+            [
+              "No support plan review",
+              "The intervention has stalled",
+              "Schedule a review with the class teacher"
+            ],
+            [
+              "Learner disengagement",
+              "Assessment is being experienced as failure",
+              "Talk to the learner; adjust the next task"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The earlier the signal, the cheaper the response. A conversation in Grade 7 is worth more than a crisis meeting in Grade 9."
+        }
+      ]
+    },
+    {
+      "id": "parent-conversations",
+      "heading": "Talking to parents about progress",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Parents understand progress better than they understand levels. Show the direction, name one strength, name one next step, and explain what the school is doing."
+        },
+        {
+          "type": "quote",
+          "text": "In Mathematics, your child moved from approaching to meeting expectations between Grade 7 and Grade 8, and the Grade 8 evidence shows they can now handle ratio problems. The next step is explaining their reasoning in writing.",
+          "cite": "A progress conversation, not a prediction"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Avoid comparing with another learner.** Compare with the learner's own earlier evidence.",
+            "**Explain the level in plain language.** “Meeting expectations” is not “average”.",
+            "**Name the evidence.** A parent trusts a level more when they can see the task behind it.",
+            "**Be honest about gaps.** A missing strand is a plan, not a secret."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grade-9-transition",
+      "heading": "Using the record for Grade 9 transition",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "By Grade 9, the learner is not only producing a result; they are choosing a senior school pathway. The progress record should inform that conversation alongside interests, aptitudes and the learner's own view."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Look across learning areas**, not only at the strongest subject.",
+            "**Consider strand-level strengths** — a learner may be stronger in a particular strand than the overall level suggests.",
+            "**Include attendance and support history**, because they explain the trajectory.",
+            "**Listen to the learner.** The record is evidence, not a decision.",
+            "**Share the record with the receiving school** where appropriate and with consent."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "progress-checklist",
+      "heading": "A progress-tracking checklist",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "The same learner identity (UPI and assessment number) is used across grades.",
+            "KPSEA results and support notes are attached to the learner record.",
+            "A Grade 7 baseline exists in every learning area.",
+            "Levels and strand coverage are captured each term.",
+            "Attendance is part of the progress view.",
+            "Support plans have an owner and a review date.",
+            "The school can show movement over time, not just the latest level.",
+            "Parent conversations use the learner's own trajectory.",
+            "Grade 9 transition conversations use more than one data point.",
+            "The record can be transferred with the learner."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL keeps the learner's assessment history across grades and terms, so a teacher can see where a learner started, what has changed and which strands still need work."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**One learner record** from primary through junior school.",
+            "**Baseline and term assessments** in the same history.",
+            "**Strand coverage and level movement** rather than a single average.",
+            "**Attendance and support notes** alongside achievement.",
+            "**Transferable records** for learners who change school or campus."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can I compare KPSEA and KJSEA results directly?",
+      "answer": "They are different assessments at different stages, with different contributing components. You can describe a learner's trajectory across them, but a direct numerical comparison is misleading. Compare learning-area patterns and the evidence in between."
+    },
+    {
+      "question": "What is a good measure of progress under CBC?",
+      "answer": "A combination of level movement over time, strand coverage, assessment completion and attendance. Avoid averaging performance levels; they are descriptors, not points on a scale."
+    },
+    {
+      "question": "What about learners who join in Grade 7 or Grade 8?",
+      "answer": "Run the same baseline, attach whatever prior record the learner brings, and mark the missing history explicitly. Do not invent prior levels; use the baseline as the starting point."
+    },
+    {
+      "question": "How do we share progress with parents?",
+      "answer": "Use the learner's own trajectory, one strength and one next step, with the evidence behind it. Avoid comparing with other learners or predicting a final result."
+    },
+    {
+      "question": "Does the Grade 9 record determine senior school placement?",
+      "answer": "KJSEA and the learner's performance inform placement, alongside interests and other criteria. The school's progress record is valuable for guidance and support, but it does not replace the official placement process."
+    }
+  ],
+  "cta": {
+    "heading": "Follow the learner, not just the term",
+    "body": "Start a free term with SQUL and keep a four-year assessment trajectory in one record — from Grade 6 to Grade 9.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "The headteacher’s guide to KPSEA and KJSEA reports",
+      "href": "/blog/headteacher-guide-kpsea-kjsea-reports"
+    },
+    {
+      "title": "How to handle learner transfers mid-term under CBC",
+      "href": "/blog/learner-transfers-mid-term-cbc"
+    },
+    {
+      "title": "Generating term report cards automatically from CBC data",
+      "href": "/blog/generate-cbc-term-report-cards-automatically"
+    },
+    {
+      "title": "School management software for primary schools in Kenya",
+      "href": "/blog/school-management-software-primary-schools-kenya"
+    }
+  ]
+}

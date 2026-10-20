@@ -10,14 +10,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.squl.co.ke'
 export const metadata: Metadata = {
   title: 'Blog | Guides for Kenyan Schools | SQUL',
   description:
-    'Practical guides for Kenyan schools — running a school, fees and M-Pesa, WhatsApp and SMS parent messaging, CBC report cards, timetables and attendance.',
+    'Practical guides for Kenyan schools — running a school, CBC assessment, fees and M-Pesa, WhatsApp and SMS parent messaging, timetables and attendance.',
   alternates: { canonical: '/blog' },
   openGraph: {
     type: 'website',
     url: `${siteUrl}/blog`,
     title: 'SQUL Blog | Guides for Kenyan Schools',
     description:
-      'Practical guides on school management, M-Pesa fees, WhatsApp messaging, CBC report cards, timetables and attendance for Kenyan schools.',
+      'Practical guides on school management, CBC assessment, M-Pesa fees, WhatsApp messaging, timetables and attendance for Kenyan schools.',
     siteName: 'SQUL',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SQUL — guides for Kenyan schools' }],
   },
@@ -101,9 +101,9 @@ export default function BlogIndexPage() {
             <span className="mt-1 block italic text-[#d8c9ab]">Kenyan schools.</span>
           </h1>
           <p className="mt-7 max-w-2xl text-[1.0625rem] leading-[1.7] text-white/60">
-            Three libraries in one place: how to run a school in Kenya, how to
-            choose and use school software, and a feature-by-feature tour of what
-            an all-in-one system does.
+            Four libraries in one place: how to run a school in Kenya, how to
+            choose and use school software, a feature-by-feature tour of what an
+            all-in-one system does, and the day-to-day work of CBC assessment.
           </p>
         </div>
       </div>

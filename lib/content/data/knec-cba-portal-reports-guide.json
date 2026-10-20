@@ -1,0 +1,386 @@
+{
+  "slug": "knec-cba-portal-reports-guide",
+  "path": "/blog/knec-cba-portal-reports-guide",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "Downloading and Interpreting KNEC CBA Portal Reports",
+  "h1": "Downloading and Interpreting KNEC CBA Portal Reports",
+  "description": "A practical guide to the KNEC CBA portal: the reports schools download, how to read upload status, reconcile scores and verify before the deadline.",
+  "primaryKeyword": "KNEC CBA portal reports",
+  "secondaryKeywords": [
+    "KNEC CBA portal login",
+    "school CBA portal reports",
+    "SBA upload status",
+    "KNEC assessment reports download",
+    "CBA portal verification Kenya"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "The KNEC CBA portal is the school's official window for candidate registers, SBA tools, score uploads, verification and reports. Download the candidate register and upload-status report first, reconcile them against the school's own assessment record, then download the assessment summary. “Uploaded” is not the same as “verified” — check both before the deadline.",
+  "intro": [
+    "**Quick answer:** treat the KNEC CBA portal as an external ledger, not as your school's assessment record. Download the candidate register and upload-status report, reconcile them to your own locked record, resolve missing or mismatched scores, then archive the verified reports. This guide explains how to download and interpret KNEC CBA portal reports, reconcile them to the school record and verify before the deadline. It is part of the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "The portal is unforgiving in a very specific way: it accepts what you upload, but it does not know whether what you uploaded is right. A score can be “successfully uploaded” and still be the wrong score for the wrong learner. The reconciliation step is the school's job.",
+    "Portal labels, menus and report names change between releases. This guide describes the categories of report a school should look for and how to read them; always follow the current KNEC user manual for the exact clicks."
+  ],
+  "sections": [
+    {
+      "id": "what-the-portal-is",
+      "heading": "What the CBA portal is — and is not",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The Competency-Based Assessment portal at [cba.knec.ac.ke](https://cba.knec.ac.ke) is KNEC's system for school-based assessment and national assessment administration. Schools use it to access SBA tools, register or confirm candidates, upload scores and download reports."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**It is the official submission channel.** A score that is not on the portal is not part of the national record.",
+            "**It is not the school's assessment record.** The school still needs its own locked record, with evidence, to explain and reconcile what was uploaded.",
+            "**It is not a reporting tool for parents.** Portal reports are for authorised school staff; parent communication is a separate step.",
+            "**It is not static.** Menus and report names change, so train staff on the current manual rather than on last year's screenshots."
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "knec-portal",
+          "caption": "Illustrative view: a school CBA portal workspace with candidate, upload and report areas. This is a mental model, not a reproduction of the live portal."
+        }
+      ]
+    },
+    {
+      "id": "before-you-log-in",
+      "heading": "Before you log in",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Confirm the account owner.** The school account belongs to the institution, not to an individual teacher's personal email.",
+            "**Know your role.** The headteacher, portal administrator and DOS may have different access. Do not share one password across the staffroom.",
+            "**Use a secure connection.** Avoid logging in on a public network or a cyber café computer.",
+            "**Have the school record ready.** You need the locked term data and the candidate list to reconcile against.",
+            "**Download the current user manual.** KNEC publishes guidance on the portal; read it before the deadline week."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Password reset is not a data recovery plan",
+          "text": "If the only person who knows the portal password has left, reset it early — not on the upload deadline. Record the institutional owner in the school's handover file."
+        }
+      ]
+    },
+    {
+      "id": "reports-to-download",
+      "heading": "The reports to download",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The exact names vary, but most school portal releases provide the same categories. Download each one to a dated folder before you start reconciling."
+        },
+        {
+          "type": "table",
+          "caption": "Typical CBA portal reports and what they are for.",
+          "headers": [
+            "Report",
+            "What it shows",
+            "What to do with it"
+          ],
+          "rows": [
+            [
+              "Candidate register",
+              "Registered learners, assessment numbers and centre",
+              "Reconcile against the school's candidate list"
+            ],
+            [
+              "SBA upload status",
+              "Which scores have reached the portal",
+              "Identify missing or partial uploads"
+            ],
+            [
+              "Missing scores report",
+              "Candidates or learning areas without a score",
+              "Trace each gap to the school record"
+            ],
+            [
+              "Assessment summary",
+              "School-level results by learning area",
+              "Read the distribution, not a mean"
+            ],
+            [
+              "Candidate results",
+              "Individual learner levels",
+              "Support plans and parent conversations"
+            ],
+            [
+              "SBA tools and scoring guides",
+              "The assessment tasks and marking guidance",
+              "Administer and score before uploading"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "If a report you expect is not visible, it may be role-restricted, released later in the cycle or renamed. Ask the school's portal administrator before assuming the data is missing."
+        }
+      ]
+    },
+    {
+      "id": "download-and-organise",
+      "heading": "Download and organise like a record",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A portal download is evidence. Treat it like a signed document: name it, date it, store it in one place and keep the exact version."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Use a naming convention:** `2026_T3_Grade9_SBA-upload-status_2026-10-20.pdf`.",
+            "**Keep the original download** alongside any working copy. Do not edit the original.",
+            "**Store PDFs and spreadsheets** in the school's shared drive, not on a personal desktop.",
+            "**Record who downloaded it and when** in a simple portal log.",
+            "**Archive at the end of the cycle** with the school's assessment records."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "read-upload-status",
+      "heading": "How to read upload status",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The most common interpretation error is treating “uploaded” as “correct”. Upload status tells you whether data reached the portal; it does not tell you whether the data matches the school record."
+        },
+        {
+          "type": "table",
+          "caption": "Three different questions, three different checks.",
+          "headers": [
+            "Status",
+            "What it answers",
+            "What it does not answer"
+          ],
+          "rows": [
+            [
+              "Captured",
+              "The school has a level in its own record",
+              "Whether it was uploaded"
+            ],
+            [
+              "Uploaded",
+              "The score reached the portal",
+              "Whether it is correct or complete"
+            ],
+            [
+              "Verified",
+              "The school has checked the portal against its record",
+              "Whether the learner sat the assessment"
+            ],
+            [
+              "Missing",
+              "No score is visible on the portal",
+              "Whether the school has the evidence"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "“4 missing” is a question, not a verdict",
+          "text": "Four missing scores could mean four absent learners, four late transfers or four failed uploads. Each has a different fix. Read the candidate list before you panic."
+        }
+      ]
+    },
+    {
+      "id": "reconcile",
+      "heading": "Reconcile the portal against the school record",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Match the candidate count",
+              "text": "Does the portal list the same number of candidates as the school? Investigate every difference before uploading anything else."
+            },
+            {
+              "title": "Match identities",
+              "text": "Check names, assessment numbers and UPI against the register. A transposed digit can attach a score to the wrong learner."
+            },
+            {
+              "title": "Match learning areas",
+              "text": "Confirm that every learning area the school assessed appears on the portal and vice versa."
+            },
+            {
+              "title": "Spot-check scores",
+              "text": "Pick 10 learners across streams and compare the portal to the locked record, strand by strand."
+            },
+            {
+              "title": "Record the exceptions",
+              "text": "List every mismatch, its cause and the action taken. This is your audit trail if a result is challenged."
+            },
+            {
+              "title": "Re-upload only what changed",
+              "text": "Avoid re-uploading the whole school to fix four records; you increase the risk of new errors."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "correcting-errors",
+      "heading": "Correcting errors without making them worse",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Correction rules depend on the portal window and KNEC's current guidance. The principle is always the same: change as little as possible, document what you changed, and do not create a duplicate record."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Before the deadline:** correct the school record first, then re-upload the affected learner or learning area.",
+            "**After the deadline:** do not assume you can edit. Contact KNEC or the county education office for the official correction route.",
+            "**Wrong learner:** stop and escalate. A score attached to the wrong identity is a data protection and assessment integrity issue.",
+            "**Missing candidate:** check the registration and centre before creating anything new.",
+            "**Keep the before-and-after evidence.** A screenshot or downloaded report of the original state is useful if the correction is questioned."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "Do not create a second candidate record to fix a typo",
+          "text": "Duplicates are much harder to remove than they are to prevent. Fix the identity through the official route, even if it takes a day longer."
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "heading": "Portal security is assessment integrity",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "**Named accounts, not shared passwords.** If the portal supports individual users, use them.",
+            "**Least privilege.** Teachers do not need candidate registration or upload rights to do their job.",
+            "**Log out on shared machines.** A school computer in the staffroom is not a secure session.",
+            "**Beware of phishing.** KNEC will not ask for your password by WhatsApp or email.",
+            "**Do not forward candidate reports to a class group.** Results are personal data; send them to the right guardian.",
+            "**Keep an access log.** Who downloaded what, and when, is part of the school's audit trail."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For the wider rules on learner data, see [learner data protection in Kenyan schools](/blog/learner-data-protection-kenya-school-software)."
+        }
+      ]
+    },
+    {
+      "id": "term-end-checklist",
+      "heading": "A term-end portal checklist",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            "The school record is locked and the candidate list is reconciled.",
+            "The portal candidate count matches the school's count.",
+            "Every assessed learning area has a score, or a documented reason for a gap.",
+            "The upload-status report has been downloaded and dated.",
+            "Ten learners have been spot-checked against the school record.",
+            "Exceptions have an owner, a cause and an action.",
+            "The headteacher has approved the final upload.",
+            "The verified reports are archived in the school's shared drive.",
+            "The portal password and account owner are recorded in the handover file.",
+            "Parents have been told how and when results will be shared."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL is not the KNEC portal and does not replace it. It is the school-side record that makes the portal work: the locked assessment data, the candidate list and the evidence you reconcile against."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**A locked term record** to compare with the portal, learner by learner.",
+            "**SBA export views** that reduce manual re-keying.",
+            "**Candidate and assessment history** that survives staff changes.",
+            "**An audit trail** of who changed a score and when.",
+            "**Role-based access** so the portal administrator and head see what they need."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I reset my KNEC CBA portal password?",
+      "answer": "Use the “forgot password” function on the portal and the institutional contact details registered to the school. If the registered email is no longer accessible, contact KNEC or the county education office for the official recovery route. Do this well before a deadline."
+    },
+    {
+      "question": "Who should have access to the school CBA portal?",
+      "answer": "The headteacher and a named portal administrator at minimum, with the smallest set of rights each role needs. Avoid sharing one password across the staffroom; named access makes the audit trail meaningful."
+    },
+    {
+      "question": "Can we edit SBA scores after the deadline?",
+      "answer": "Do not assume you can. Correction windows and procedures are set by KNEC and can change. Contact KNEC or the county education office for the official route, and document what you changed."
+    },
+    {
+      "question": "Are the reports downloadable as PDF or Excel?",
+      "answer": "It depends on the report and the portal release. Many reports can be downloaded or printed; some views are on-screen only. Download what you can, keep the original file, and screenshot only as a last resort."
+    },
+    {
+      "question": "What should I do if a score is attached to the wrong learner?",
+      "answer": "Stop, document the original state and escalate through the official KNEC route. A misattributed score is both an assessment integrity and a data protection issue; do not create a duplicate candidate to work around it."
+    },
+    {
+      "question": "What if the portal is down on the deadline day?",
+      "answer": "Keep evidence of the attempt (timestamped screenshot), contact KNEC or the county office immediately, and keep your locked school record ready. Do not wait until the last hour of the window to upload."
+    }
+  ],
+  "cta": {
+    "heading": "Reconcile the portal against a record you trust",
+    "body": "Start a free term with SQUL and keep the locked assessment record that makes every KNEC upload checkable.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "The headteacher’s guide to KPSEA and KJSEA reports",
+      "href": "/blog/headteacher-guide-kpsea-kjsea-reports"
+    },
+    {
+      "title": "How to handle learner transfers mid-term under CBC",
+      "href": "/blog/learner-transfers-mid-term-cbc"
+    },
+    {
+      "title": "Common CBC data entry mistakes",
+      "href": "/blog/common-cbc-data-entry-mistakes"
+    },
+    {
+      "title": "Learner data protection in Kenyan schools",
+      "href": "/blog/learner-data-protection-kenya-school-software"
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "slug": "headteacher-guide-kpsea-kjsea-reports",
+  "path": "/blog/headteacher-guide-kpsea-kjsea-reports",
+  "kind": "cluster",
+  "topic": "CBC & Academic Management",
+  "status": "published",
+  "title": "The Headteacher’s Guide to KPSEA and KJSEA School Reports",
+  "h1": "The Headteacher’s Guide to KPSEA and KJSEA School Reports",
+  "description": "How headteachers should read KPSEA and KJSEA school reports: learning-area levels, SBA completeness, participation and support decisions — without a mean score.",
+  "primaryKeyword": "KPSEA and KJSEA school reports",
+  "secondaryKeywords": [
+    "KPSEA results analysis",
+    "KJSEA school report",
+    "CBC national assessment report",
+    "headteacher KPSEA guide",
+    "KJSEA grading explained"
+  ],
+  "intent": "Informational",
+  "funnelStage": "MoFu",
+  "author": "SQUL Team",
+  "updated": "2026-10-20",
+  "kicker": "CBC & academic management",
+  "quickAnswer": "KPSEA and KJSEA school reports should be read by learning area and performance level, not by a school mean. A headteacher should check participation, SBA completeness, the distribution of levels across learning areas, and the progress of specific groups — then turn those findings into curriculum, staffing and support decisions.",
+  "intro": [
+    "**Quick answer:** KPSEA and KJSEA do not produce a school mean score, and treating them as if they do will mislead your board. Read them as a set of learning-area distributions, check that the school-based assessment behind them is complete, and use the patterns to make decisions about teaching. This guide explains how to read KPSEA and KJSEA school reports without inventing a mean score. It sits inside the [complete guide to CBC assessment management](/blog/cbc-assessment-management-complete-guide).",
+    "For a headteacher, national results season is a test of communication as much as analysis. Parents want a simple answer, the board wants a headline, and the staffroom wants to know whether the school is “doing well”. The report itself is more nuanced than any of those questions.",
+    "This guide explains what the reports contain, how the results are built, the views worth looking at, and how to brief a board without inventing a ranking the system was designed to avoid."
+  ],
+  "sections": [
+    {
+      "id": "what-the-reports-contain",
+      "heading": "What the reports actually contain",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "KPSEA is the national assessment at the end of Grade 6; KJSEA is the national assessment at the end of Grade 9. Both report learner achievement by learning area using performance levels. The school-level view is a summary of those learner records, not a separate score."
+        },
+        {
+          "type": "table",
+          "caption": "The reports a headteacher is likely to work with.",
+          "headers": [
+            "Report",
+            "What it shows",
+            "Best used for"
+          ],
+          "rows": [
+            [
+              "Candidate register",
+              "Who was registered and where",
+              "Participation and centre checks"
+            ],
+            [
+              "SBA upload status",
+              "Which scores reached the portal",
+              "Data completeness before results"
+            ],
+            [
+              "Learner results",
+              "Levels by learning area for each candidate",
+              "Individual support and parent conversations"
+            ],
+            [
+              "School summary",
+              "Distribution of levels by learning area",
+              "Curriculum and staffing decisions"
+            ],
+            [
+              "Transition information",
+              "Placement or pathway information, where provided",
+              "Supporting learners and parents"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The exact reports, labels and access rights depend on the KNEC portal release and the school's role. Use the current KNEC user manual for the clicks; use this guide for the reading."
+        }
+      ]
+    },
+    {
+      "id": "how-results-are-built",
+      "heading": "How the national results are built",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Neither KPSEA nor KJSEA is a single exam score. School-based assessment accumulated in earlier grades contributes, which means a headteacher should be checking SBA completeness long before results season."
+        },
+        {
+          "type": "table",
+          "caption": "National assessment composition under 2026 guidance.",
+          "headers": [
+            "Assessment",
+            "School-based component",
+            "National component"
+          ],
+          "rows": [
+            [
+              "KPSEA (Grade 6)",
+              "SBA in Grades 4, 5 and 6 — 60%",
+              "Grade 6 national assessment — 40%"
+            ],
+            [
+              "KJSEA (Grade 9)",
+              "KPSEA 20% + SBA in Grades 7 and 8 — 20%",
+              "Grade 9 national assessment — 60%"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "These percentages can change",
+          "text": "The 2026 guidance is not a permanent law of nature. Confirm the current KNEC circular before you put a percentage on a parent letter or a board slide, and keep a dated copy of the guidance you used."
+        }
+      ]
+    },
+    {
+      "id": "how-to-read-the-report",
+      "heading": "Six views worth looking at",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A headteacher does not need to read 212 individual results one by one. Start with the pattern, then go to the learners behind it."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Participation:** how many registered candidates sat, and how many have complete records. A high absence rate changes the story before any level does.",
+            "**Learning-area distribution:** for each learning area, how many learners are EE, ME, AE and BE. This is the core view, and it replaces a mean.",
+            "**Level movement:** compare the same cohort's earlier SBA profile with the national outcome. Movement matters more than a single snapshot.",
+            "**SBA completeness:** missing or corrected scores can explain an unexpected result. Check the upload log before you interpret.",
+            "**Groups:** compare boys and girls, boarding and day, or learners with special needs — not to rank them, but to find support gaps.",
+            "**Subjects with a long tail:** a learning area with many BE learners is a curriculum and staffing question, not a discipline question."
+          ]
+        },
+        {
+          "type": "figure",
+          "scene": "kpsea-kjsea",
+          "caption": "Illustrative view: the weighting behind KPSEA and KJSEA, and a level distribution by learning area. The distribution shown is illustrative, not real school data."
+        }
+      ]
+    },
+    {
+      "id": "no-mean-score",
+      "heading": "Why there is no school mean — and why that is not a downgrade",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "KJSEA reports four descriptors — Exceeding, Meeting, Approaching and Below Expectations — each subdivided into two, giving an eight-point scale from EE1 to BE2. KNEC has stated that it does not produce an aggregate score, a mean grade or a school mean score, and has warned schools against circulating fake analysis that uses them."
+        },
+        {
+          "type": "paragraph",
+          "text": "That is a deliberate design choice, not a missing feature. A single mean hides the learner who excels in Mathematics but struggles in English, and it invites schools to compete on a number that the assessment was built to avoid. A headteacher's job is to explain the distribution, not to manufacture a headline."
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "What to say instead of a mean",
+          "text": "“In Mathematics, 41% of our candidates met or exceeded expectations; in English, 63% did. Our priority for next term is the group approaching expectations in Mathematics.” That is more useful than a school mean, and it is defensible."
+        }
+      ]
+    },
+    {
+      "id": "reading-a-distribution",
+      "heading": "Reading a level distribution without panicking",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "An illustrative learning-area distribution and the questions it raises.",
+          "headers": [
+            "Level",
+            "Share of candidates",
+            "What it might mean"
+          ],
+          "rows": [
+            [
+              "EE",
+              "18%",
+              "Strong cohort or a genuinely demanding standard — check the evidence"
+            ],
+            [
+              "ME",
+              "47%",
+              "The majority are meeting expectations; look for the next step"
+            ],
+            [
+              "AE",
+              "27%",
+              "A large group needs targeted support before Grade 10"
+            ],
+            [
+              "BE",
+              "8%",
+              "Individual support plans and a review of the evidence"
+            ],
+            [
+              "Missing",
+              "0%",
+              "Good — but confirm the SBA upload was complete"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "A distribution is not a verdict. A school with a high AE share may have a strong cohort that is one step away, or a curriculum gap, or an assessment standard that shifted. The report tells you where to look; it does not tell you why."
+        }
+      ]
+    },
+    {
+      "id": "briefing-the-board",
+      "heading": "Briefing the board in one page",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Boards do not need a data dump. They need a short, honest account of what the results show, what the school is doing about it, and what support it needs."
+        },
+        {
+          "type": "table",
+          "caption": "A one-page board brief.",
+          "headers": [
+            "Section",
+            "What to include",
+            "Avoid"
+          ],
+          "rows": [
+            [
+              "Participation",
+              "Registered, sat, complete records",
+              "Comparing with another school's raw numbers"
+            ],
+            [
+              "Learning areas",
+              "Two or three patterns, with percentages",
+              "A single school mean"
+            ],
+            [
+              "Groups",
+              "Any group with a materially different distribution",
+              "Naming individual learners"
+            ],
+            [
+              "Actions",
+              "Two or three concrete changes for next term",
+              "Vague promises to “improve performance”"
+            ],
+            [
+              "Risks",
+              "SBA data gaps, staffing, attendance",
+              "Blaming the previous cohort"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "If the board asks for a rank, explain that the national framework does not produce a school mean and that a rank would misrepresent the results. Offer the learning-area comparison instead."
+        }
+      ]
+    },
+    {
+      "id": "talking-to-parents",
+      "heading": "Talking to parents about the result",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Parents want three things: what the level means, how their child did relative to expectations, and what happens next. They do not need a lecture on psychometrics."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Explain the level in plain language.** “Meeting expectations” means the learner demonstrated the expected competency, not that they are average.",
+            "**Name a strength and a next step.** A level without a next step feels like a verdict.",
+            "**Do not compare children.** Share the individual result and the school's support plan.",
+            "**Be careful with predictions.** A Grade 9 result informs placement; it does not determine a learner's future.",
+            "**Keep the evidence available.** If a parent questions a level, the school should be able to show the assessment record behind it."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "from-report-to-plan",
+      "heading": "From report to school improvement plan",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "steps",
+          "items": [
+            {
+              "title": "Pick two priorities",
+              "text": "Choose the learning areas with the largest AE or BE share, not the ones that make the school look best."
+            },
+            {
+              "title": "Check the assessment quality",
+              "text": "Ask whether the result reflects teaching, the cohort, or a gap in SBA capture. Fix the data question first."
+            },
+            {
+              "title": "Name the intervention",
+              "text": "A priority without an action is a wish. Specify the support, the owner and the review date."
+            },
+            {
+              "title": "Brief the staff",
+              "text": "Share the distribution and the two priorities. Teachers need the pattern, not a ranking of their classes."
+            },
+            {
+              "title": "Review at mid-term",
+              "text": "Check whether the intervention is reaching the learners it was designed for."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "The best board paper is short",
+          "text": "One page, three numbers, two actions and a named owner will do more than ten pages of charts. The board's job is oversight, not data entry."
+        }
+      ]
+    },
+    {
+      "id": "where-squl-fits",
+      "heading": "Where SQUL fits",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQUL keeps the assessment record behind the national result, so a headteacher can move from a learning-area pattern to the learners and evidence underneath it without rebuilding a spreadsheet."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**SBA completeness views** before the KNEC upload window.",
+            "**Learning-area distributions** by grade, stream and cohort.",
+            "**Learner-level drill-down** from a distribution to the evidence.",
+            "**Board-ready summaries** that use levels, not invented means.",
+            "**Role-based access** so the head, DOS and board see the right level of detail."
+          ]
+        }
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Is there a school mean score for KJSEA?",
+      "answer": "No. KJSEA reports performance levels by learning area on an eight-point scale. KNEC has stated that it does not produce aggregate scores, mean grades or school mean scores, and has warned against fake analysis that uses them."
+    },
+    {
+      "question": "How is KJSEA graded?",
+      "answer": "Four descriptors — Exceeding, Meeting, Approaching and Below Expectations — each subdivided into two, giving EE1 to BE2. Each learning area is reported separately rather than combined into a total."
+    },
+    {
+      "question": "What is the KCBE?",
+      "answer": "The Kenya Certificate of Basic Education is the senior school certificate at the end of Grade 12. Under the current framework, formative assessment in Grades 10 and 11 and the Grade 12 summative assessment contribute to the final subject score. Confirm the current KNEC guidance."
+    },
+    {
+      "question": "How should a headteacher present results to the board?",
+      "answer": "Use participation, two or three learning-area distributions, any group-level gaps and two or three concrete actions with owners. Avoid a school mean or a ranking, and explain why the framework does not produce one."
+    },
+    {
+      "question": "How are learners with special needs reflected in the reports?",
+      "answer": "They should be included in participation and support planning, with any approved accommodations reflected in the record. Avoid aggregating them into a headline that hides their individual needs; confirm the current KNEC guidance for reporting."
+    }
+  ],
+  "cta": {
+    "heading": "See the record behind the result",
+    "body": "Start a free term with SQUL and connect SBA completeness, learning-area levels and learner evidence before results season.",
+    "label": "Start your free term",
+    "href": "/register"
+  },
+  "related": [
+    {
+      "title": "The complete guide to CBC assessment management",
+      "href": "/blog/cbc-assessment-management-complete-guide"
+    },
+    {
+      "title": "Downloading and interpreting KNEC CBA portal reports",
+      "href": "/blog/knec-cba-portal-reports-guide"
+    },
+    {
+      "title": "Tracking learner progress across Grade 6 to Grade 9",
+      "href": "/blog/tracking-learner-progress-grade-6-to-9"
+    },
+    {
+      "title": "School leadership and governance in Kenya",
+      "href": "/blog/school-leadership-and-governance-kenya"
+    },
+    {
+      "title": "School reporting and analytics software in Kenya",
+      "href": "/blog/school-reporting-analytics-software-kenya"
+    }
+  ]
+}
