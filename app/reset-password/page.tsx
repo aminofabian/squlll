@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -30,19 +30,10 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [token, setToken] = useState('')
 
   const searchParams = useSearchParams()
   const router = useRouter()
-
-  useEffect(() => {
-    const tokenParam = searchParams.get('token')
-    if (tokenParam) {
-      setToken(tokenParam)
-    } else {
-      setError('Invalid or missing reset token. Please request a new password reset.')
-    }
-  }, [searchParams])
+  const token = searchParams.get('token') ?? ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -85,10 +76,6 @@ function ResetPasswordForm() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (!token && !error) {
-    return <ResetPasswordLoading />
   }
 
   return (

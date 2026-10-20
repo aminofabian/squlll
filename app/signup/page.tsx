@@ -251,7 +251,11 @@ function TeacherSignupForm() {
     <AuthRecoveryShell
       kicker="Teacher invitation"
       title="Activate your account."
-      description="Set a password to join your school's workspace. Your invitation link has been verified."
+      description={
+        token
+          ? "Set a password to join your school's workspace. Your invitation link has been verified."
+          : 'This invitation link could not be verified. Ask your school administrator for a fresh one.'
+      }
     >
       {error && (
         <div
@@ -269,10 +273,7 @@ function TeacherSignupForm() {
             name="password"
             render={({ field }) => (
               <FormItem className={inputStyles.formItem}>
-                <FormLabel className={inputStyles.label}>
-                  <KeyRound className="h-3 w-3" />
-                  Password
-                </FormLabel>
+                <FormLabel className={inputStyles.label}>Password</FormLabel>
                 <div className={inputStyles.container}>
                   <div className="relative">
                     <KeyRound className={inputStyles.icon} />
@@ -282,7 +283,7 @@ function TeacherSignupForm() {
                         placeholder="Create a strong password"
                         className={cn(inputStyles.base, 'pr-12')}
                         onFocus={() => setPasswordFocused(true)}
-                        onBlur={(e) => {
+                        onBlur={() => {
                           setPasswordFocused(false)
                           field.onBlur()
                         }}
@@ -371,10 +372,7 @@ function TeacherSignupForm() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem className={inputStyles.formItem}>
-                <FormLabel className={inputStyles.label}>
-                  <Shield className="h-3 w-3" />
-                  Confirm password
-                </FormLabel>
+                <FormLabel className={inputStyles.label}>Confirm password</FormLabel>
                 <div className={inputStyles.container}>
                   <div className="relative">
                     <Shield className={inputStyles.icon} />

@@ -1,138 +1,113 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { 
-  Home, 
-  ArrowLeft, 
-  School, 
-  Users, 
-  GraduationCap, 
-  BookOpen,
-  Search
-} from 'lucide-react'
+import { ArrowRight, ArrowUpRight } from 'lucide-react'
+import { SqulWordmark } from '@/components/brand/SqulMark'
+
+const QUICK_LINKS = [
+  { label: 'The platform', href: '/#platform' },
+  { label: 'Schools on SQUL', href: '/schools' },
+  { label: 'Custom domains', href: '/custom-domains' },
+  { label: 'Guides', href: '/blog' },
+  { label: 'Start a free term', href: '/register' },
+]
 
 export default function NotFound() {
   const router = useRouter()
 
-  const handleGoBack = () => {
-    router.back()
-  }
-
-  const handleGoHome = () => {
-    router.push('/')
-  }
-
-  const quickLinks = [
-    {
-      title: 'Home',
-      description: 'Go to main page',
-      icon: Home,
-      href: '/',
-    },
-    {
-      title: 'Dashboard',
-      description: 'Access dashboard',
-      icon: School,
-      href: '/dashboard',
-    },
-    {
-      title: 'Login',
-      description: 'Sign in to your account',
-      icon: Users,
-      href: '/login',
-    },
-    {
-      title: 'Register',
-      description: 'Create new account',
-      icon: GraduationCap,
-      href: '/register',
-    },
-  ]
-
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
-        <Card className="shadow-lg">
-          <CardContent className="p-8 text-center">
-            {/* 404 Number */}
-            <div className="mb-6">
-              <div className="text-8xl font-bold text-primary/20 mb-2">
-                404
-              </div>
-              <div className="flex items-center justify-center gap-2 text-gray-600">
-                <School className="w-5 h-5" />
-                <span className="text-sm font-medium">
-                  Squl Platform
-                </span>
-              </div>
-            </div>
+    <div className="squl-marketing flex min-h-screen flex-col bg-[#f7f4ec] text-[#14201b]">
+      <header className="border-b border-[#14201b]/10">
+        <div className="mk-container flex h-[4.5rem] items-center justify-between gap-6">
+          <Link href="/" aria-label="SQUL home" className="transition-opacity hover:opacity-70">
+            <SqulWordmark markSize={28} />
+          </Link>
+          <p className="font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+            Error 404
+          </p>
+        </div>
+      </header>
 
-            {/* Main Message */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                Page Not Found
-              </h1>
-              <p className="text-gray-600 text-lg mb-2">
-                Sorry, we couldn't find the page you're looking for.
-              </p>
-              <p className="text-gray-500 text-sm">
-                The page may have been moved, deleted, or you may have entered an incorrect URL.
-              </p>
-            </div>
+      <main className="mk-container flex flex-1 flex-col justify-center py-16 sm:py-24">
+        <div className="grid gap-14 lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-7">
+            <p className="mk-eyebrow">Page not found</p>
+            <p className="mt-10 font-display text-[clamp(5.5rem,12vw,10rem)] leading-[0.78] tracking-[-0.05em] text-[#14201b]">
+              404
+            </p>
+            <h1 className="mt-10 max-w-xl font-display text-[clamp(2rem,3.6vw,3.1rem)] leading-[1.04] tracking-[-0.02em] text-[#14201b]">
+              This page has left
+              <span className="block italic text-[#1c3d32]">the staff room.</span>
+            </h1>
+            <p className="mt-5 max-w-md text-[1rem] leading-[1.7] text-[#4d574f]">
+              The page may have moved, or the link is out of date. Let&apos;s get
+              you back to the work that matters.
+            </p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Button onClick={handleGoBack} variant="outline" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Go Back
-              </Button>
-              <Button onClick={handleGoHome} className="flex items-center gap-2">
-                <Home className="w-4 h-4" />
-                Go to Home
-              </Button>
+            <div className="mt-9 flex flex-wrap items-center gap-4">
+              <Link href="/" className="mk-btn mk-btn--ink">
+                Back to home
+                <ArrowRight className="mk-arrow h-3.5 w-3.5" aria-hidden />
+              </Link>
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="mk-link text-[0.8125rem]"
+              >
+                Go back a step
+              </button>
             </div>
+          </div>
 
-            {/* Quick Links */}
-            <div className="border-t pt-6">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Search className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">
-                  Quick Links
-                </span>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {quickLinks.map((link) => (
-                  <Button
-                    key={link.title}
-                    variant="ghost"
-                    onClick={() => router.push(link.href)}
-                    className="flex flex-col items-center gap-2 h-auto p-4 text-center hover:bg-primary/5"
+          <div className="lg:col-span-4 lg:col-start-9">
+            <p className="mk-caption">Try instead</p>
+            <ul className="mt-4 border-t border-[#14201b]/10">
+              {QUICK_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="group flex items-center justify-between gap-4 border-b border-[#14201b]/8 py-3.5 text-[0.8125rem] text-[#4d574f] transition-colors duration-200 hover:text-[#14201b]"
                   >
-                    <link.icon className="w-5 h-5 text-primary" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {link.title}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {link.description}
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
+                    {link.label}
+                    <ArrowUpRight
+                      className="h-3.5 w-3.5 text-[#14201b]/25 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#1c3d32]"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-            {/* Support Text */}
-            <div className="mt-8 pt-6 border-t">
-              <p className="text-xs text-gray-500">
-                If you continue to experience issues, please contact support.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <p className="mt-8 text-[0.6875rem] leading-relaxed text-[#7c857d]">
+              If this keeps happening, write to{' '}
+              <a
+                href="mailto:support@squl.co.ke"
+                className="text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4 hover:decoration-[#14201b]"
+              >
+                support@squl.co.ke
+              </a>
+              .
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-[#14201b]/10">
+        <div className="mk-container flex flex-wrap items-center justify-between gap-4 py-6">
+          <p className="font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+            © {new Date().getFullYear()} SQUL · Nairobi, Kenya
+          </p>
+          <div className="flex gap-6 text-[0.625rem] text-[#7c857d]">
+            <Link href="/privacy" className="transition-colors hover:text-[#14201b]">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-[#14201b]">
+              Terms
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
-} 
+}

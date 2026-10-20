@@ -419,7 +419,7 @@ export default function SignupPage() {
                     >
                       {idx < currentStep ? <Check size={10} aria-hidden /> : String(idx + 1).padStart(2, "0")}
                     </span>
-                    <span className="hidden sm:inline">{step.title}</span>
+                    <span className={cn(idx === currentStep ? "inline" : "hidden sm:inline")}>{step.title}</span>
                   </button>
                   {idx < STEPS.length - 1 && (
                     <span className="mx-1 h-px w-5 bg-[#14201b]/10" aria-hidden />

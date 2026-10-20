@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, MapPin, Phone, type LucideIcon } from "lucide-react";
+import { SqulWordmark } from "@/components/brand/SqulMark";
 import { LEGAL_META } from "@/lib/legal/legal-meta";
 
 type LegalSection = {
@@ -12,125 +12,130 @@ type LegalDocumentProps = {
   sections: LegalSection[];
 };
 
-type ContactItem = {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  href: string | null;
-};
-
 const FOOTER_LINKS = [
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Service", href: "/terms" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
   { label: "Delete account", href: "/account-deletion" },
 ];
 
-const CONTACT_ITEMS: ContactItem[] = [
-  {
-    icon: Mail,
-    label: "Email",
-    value: LEGAL_META.contactEmail,
-    href: `mailto:${LEGAL_META.contactEmail}`,
-  },
-  {
-    icon: Phone,
-    label: "Phone",
-    value: LEGAL_META.contactPhone,
-    href: `tel:${LEGAL_META.contactPhoneHref}`,
-  },
-  {
-    icon: MapPin,
-    label: "Post",
-    value: LEGAL_META.postalAddress,
-    href: null,
-  },
+const CONTACT_ITEMS = [
+  { label: "Email", value: LEGAL_META.contactEmail, href: `mailto:${LEGAL_META.contactEmail}` },
+  { label: "Phone", value: LEGAL_META.contactPhone, href: `tel:${LEGAL_META.contactPhoneHref}` },
+  { label: "Post", value: LEGAL_META.postalAddress, href: null },
 ];
+
+function sectionId(index: number) {
+  return `section-${index + 1}`;
+}
 
 export function LegalDocument({ title, sections }: LegalDocumentProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-gray-800">
-      <header className="border-b border-gray-200">
-        <nav className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-900 text-sm font-bold text-white">
-              {LEGAL_META.productName.charAt(0)}
-            </span>
-            <span className="font-semibold text-emerald-900">
-              {LEGAL_META.productName}
-            </span>
+    <div className="squl-marketing flex min-h-screen flex-col bg-[#f7f4ec] text-[#14201b]">
+      <header className="border-b border-[#14201b]/10">
+        <div className="mk-container flex h-[4.5rem] items-center justify-between gap-6">
+          <Link href="/" aria-label="SQUL home" className="transition-opacity hover:opacity-70">
+            <SqulWordmark markSize={28} />
           </Link>
-          <Link href="/" className="text-sm text-gray-600 hover:text-emerald-800">
+          <Link
+            href="/"
+            className="text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] transition-colors duration-200 hover:text-[#14201b]"
+          >
             Back to home
           </Link>
-        </nav>
+        </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900">{title}</h1>
-        <p className="mb-8 text-sm text-gray-500">
-          Last updated: {LEGAL_META.lastUpdated}
-        </p>
+      <main className="flex-1">
+        <div className="mk-container border-b border-[#14201b]/10 pb-12 pt-16 sm:pt-20">
+          <p className="mk-eyebrow">Legal</p>
+          <h1 className="mt-7 max-w-3xl font-display text-[clamp(2.5rem,4.6vw,3.9rem)] leading-[1.02] tracking-[-0.025em] text-[#14201b]">
+            {title}
+          </h1>
+          <p className="mt-5 text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+            Last updated · {LEGAL_META.lastUpdated}
+          </p>
+        </div>
 
-        {sections.map((section) => (
-          <section key={section.heading} className="mb-8">
-            <h2 className="mb-3 text-xl font-semibold text-gray-900">
-              {section.heading}
-            </h2>
-            {section.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="mb-3 leading-relaxed">
-                {paragraph}
-              </p>
+        <div className="mk-container grid gap-12 py-14 lg:grid-cols-12 lg:gap-10">
+          <aside className="lg:col-span-3">
+            <nav aria-label="Contents" className="lg:sticky lg:top-8">
+              <p className="mk-caption">Contents</p>
+              <ol className="mt-4 border-t border-[#14201b]/10">
+                {sections.map((section, index) => (
+                  <li key={section.heading}>
+                    <a
+                      href={`#${sectionId(index)}`}
+                      className="group flex items-baseline gap-3 border-b border-[#14201b]/8 py-2.5 text-[0.6875rem] leading-snug text-[#4d574f] transition-colors duration-200 hover:text-[#14201b]"
+                    >
+                      <span className="font-mono text-[0.5rem] tabular-nums text-[#14201b]/30">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      {section.heading.replace(/^\d+\.\s*/, "")}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </aside>
+
+          <article className="lg:col-span-8 lg:col-start-5">
+            {sections.map((section, index) => (
+              <section
+                key={section.heading}
+                id={sectionId(index)}
+                className="scroll-mt-24 border-t border-[#14201b]/10 py-8 first:border-t-0 first:pt-0"
+              >
+                <h2 className="font-display text-[1.5rem] leading-[1.2] tracking-[-0.015em] text-[#14201b]">
+                  {section.heading}
+                </h2>
+                {section.paragraphs.map((paragraph) => (
+                  <p
+                    key={paragraph.slice(0, 48)}
+                    className="mt-4 text-[0.9375rem] leading-[1.8] text-[#3f4a43]"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </section>
             ))}
-          </section>
-        ))}
+          </article>
+        </div>
       </main>
 
-      <footer className="border-t border-gray-200 bg-gray-50">
-        <div className="mx-auto max-w-3xl px-4 py-10">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-900">
-              Contact {LEGAL_META.productName}
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">{LEGAL_META.entityName}</p>
-
-            <ul className="mt-6 grid gap-5 sm:grid-cols-3">
-              {CONTACT_ITEMS.map(({ icon: Icon, label, value, href }) => (
-                <li key={label} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-800">
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-xs font-medium uppercase tracking-wide text-gray-400">
-                      {label}
-                    </span>
-                    {href ? (
-                      <a
-                        href={href}
-                        className="block break-words text-sm font-medium text-gray-800 transition-colors hover:text-emerald-800"
-                      >
-                        {value}
-                      </a>
-                    ) : (
-                      <span className="block text-sm font-medium text-gray-800">
-                        {value}
-                      </span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
+      <footer className="border-t border-[#14201b]/10 bg-[#f2ede0]">
+        <div className="mk-container py-12">
+          <div className="grid gap-8 sm:grid-cols-3">
+            {CONTACT_ITEMS.map((item) => (
+              <div key={item.label}>
+                <p className="text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+                  {item.label}
+                </p>
+                {item.href ? (
+                  <a
+                    href={item.href}
+                    className="mt-2 block break-words text-[0.8125rem] text-[#14201b] transition-colors hover:text-[#1c3d32]"
+                  >
+                    {item.value}
+                  </a>
+                ) : (
+                  <p className="mt-2 break-words text-[0.8125rem] leading-relaxed text-[#4d574f]">
+                    {item.value}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="mt-8 flex flex-col gap-4 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              © {new Date().getFullYear()} {LEGAL_META.productName}. All rights reserved.
-            </span>
-            <nav className="flex flex-wrap gap-x-6 gap-y-2">
+          <div className="mt-10 flex flex-col gap-4 border-t border-[#14201b]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+              © {new Date().getFullYear()} {LEGAL_META.productName} · {LEGAL_META.entityName}
+            </p>
+            <nav className="flex flex-wrap gap-x-6 gap-y-2 text-[0.625rem] text-[#7c857d]">
               {FOOTER_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="transition-colors hover:text-emerald-800"
+                  className="transition-colors duration-200 hover:text-[#14201b]"
                 >
                   {link.label}
                 </Link>

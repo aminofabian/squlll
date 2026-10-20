@@ -42,6 +42,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
   const opaque = solid || mobileOpen
 
   return (
+    <>
     <header
       className={[
         'z-50 w-full transition-[background-color,border-color] duration-200',
@@ -128,6 +129,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
           </button>
         </div>
       </div>
+    </header>
 
       {mobileOpen && (
         <div
@@ -172,6 +174,6 @@ export function Header({ variant = 'default' }: HeaderProps) {
           </p>
         </div>
       )}
-    </header>
+    </>
   )
 }

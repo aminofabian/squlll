@@ -104,14 +104,14 @@ export default async function SchoolsPage() {
         <div className="relative mk-container pb-20 pt-32 lg:pb-24 lg:pt-40">
           <p className="mk-eyebrow mk-eyebrow--light">The directory</p>
           <h1 className="mt-8 max-w-4xl font-display text-[clamp(2.7rem,5.4vw,4.35rem)] leading-[1.0] tracking-[-0.025em] text-[#f7f4ec]">
-            Schools running their day
-            <span className="mt-1 block italic text-[#d8c9ab]">on SQUL, across Kenya.</span>
+            Schools running
+            <span className="mt-1 block italic text-[#d8c9ab]">their day on SQUL.</span>
           </h1>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-12">
             <p className="max-w-xl text-[1rem] leading-[1.7] text-white/60 lg:col-span-5">
-              From admissions desks to M-Pesa fee counters — a growing directory of
-              campuses that publish their public site with us.
+              Across Kenya, from admissions desks to M-Pesa fee counters — a growing
+              directory of campuses that publish their public site with us.
             </p>
             <div className="flex items-end justify-between gap-6 lg:col-span-4 lg:col-start-9">
               {schools.length > 0 ? (
