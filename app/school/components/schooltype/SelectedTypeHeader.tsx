@@ -12,39 +12,29 @@ interface SelectedTypeHeaderProps {
 export const SelectedTypeHeader: React.FC<SelectedTypeHeaderProps> = ({
   selectedSchoolType,
   getSelectedLevelsCount,
-  selectedType
+  selectedType,
 }) => {
   if (!selectedSchoolType) return null
-  
+
+  const count = getSelectedLevelsCount(selectedType)
+
   return (
-    <div className="bg-white/90 backdrop-blur-sm border-l-2 border-l-[#246a59] p-2 shadow-sm rounded-r-md">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h2 className="text-sm font-semibold text-[#246a59] truncate">
-              {selectedSchoolType.title.toUpperCase()}
-            </h2>
-            {selectedSchoolType.emoji && (
-              <span className="text-xs flex-shrink-0">{selectedSchoolType.emoji}</span>
-            )}
-          </div>
-          <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{selectedSchoolType.description}</p>
+    <div className="border-b border-[#14201b]/10 pb-6">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div className="min-w-0">
+          <p className="text-[0.5625rem] uppercase tracking-[0.2em] text-[#7c857d]">
+            Curriculum
+          </p>
+          <h2 className="mt-3 font-display text-[2rem] leading-none tracking-[-0.02em] text-[#14201b]">
+            {selectedSchoolType.title}
+          </h2>
+          <p className="mt-3 max-w-[62ch] text-[0.8125rem] leading-relaxed text-[#4d574f]">
+            {selectedSchoolType.description}
+          </p>
         </div>
-        <div className="flex-shrink-0 bg-[#246a59]/10 px-2 py-0.5 rounded border border-[#246a59]/20">
-          <span className="text-[10px] font-semibold text-[#246a59]">
-            {getSelectedLevelsCount(selectedType)} SELECTED
-          </span>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-1 mt-1.5 hide-scrollbar overflow-x-auto pb-0.5 max-w-full">
-        {selectedSchoolType.menu.map((item, index) => (
-          <span 
-            key={index}
-            className="inline-flex items-center px-1 py-0.5 text-[9px] font-medium bg-gray-50 text-gray-600 rounded border border-gray-200/60"
-          >
-            {item}
-          </span>
-        ))}
+        <p className="shrink-0 text-[0.5625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+          {count} {count === 1 ? 'level' : 'levels'} selected
+        </p>
       </div>
     </div>
   )

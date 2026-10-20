@@ -38,15 +38,15 @@ export function DoneBanner({
   detail: string;
 }) {
   return (
-    <div className="flex items-start gap-3 border border-emerald-600/25 bg-emerald-50/90 dark:bg-emerald-950/40 dark:border-emerald-700/40 p-5 shadow-sm">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-emerald-600/30 bg-emerald-100 dark:bg-emerald-900/50">
-        <CheckCircle2 className="h-5 w-5 text-emerald-700" />
+    <div className="flex items-start gap-3 border border-[#1c3d32]/20 bg-[#efeadd] p-5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#1c3d32]/20 bg-[#f7f4ec]">
+        <CheckCircle2 className="h-5 w-5 text-[#1c3d32]" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">
+        <p className="text-sm font-semibold text-[#14201b]">
           {label}
         </p>
-        <p className="text-sm text-emerald-800/85 dark:text-emerald-300/90 mt-1">
+        <p className="text-sm text-[#4d574f] mt-1">
           {detail}
         </p>
       </div>
@@ -188,10 +188,10 @@ export function AcademicYearStepContent({
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center" aria-hidden>
-            <div className="w-full border-t border-[#1a4d42]/12 dark:border-white/10" />
+            <div className="w-full border-t border-[#1c3d32]/12 dark:border-white/10" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white dark:bg-[#0c1a17] px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/45">
+            <span className="bg-white dark:bg-[#0c1a17] px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1c3d32]/45">
               or customize
             </span>
           </div>
@@ -242,14 +242,14 @@ export function AcademicYearStepContent({
         </section>
 
         {preview && (
-          <div className="border border-[#246a59]/25 bg-[#246a59]/[0.06] px-4 py-3 flex items-center justify-between gap-3">
+          <div className="border border-[#1c3d32]/25 bg-[#1c3d32]/[0.06] px-4 py-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+              <p className="text-sm font-medium text-[#14201b] dark:text-white">
                 {form.name || "Untitled year"}
               </p>
-              <p className="text-xs text-[#1a4d42]/65 mt-0.5">{preview.range}</p>
+              <p className="text-xs text-[#1c3d32]/65 mt-0.5">{preview.range}</p>
             </div>
-            <span className="text-xs font-semibold tabular-nums text-[#246a59] bg-white dark:bg-[#0a1f1a] px-2.5 py-1 border border-[#246a59]/20">
+            <span className="text-xs font-semibold tabular-nums text-[#1c3d32] bg-white dark:bg-[#14201b] px-2.5 py-1 border border-[#1c3d32]/20">
               {preview.days} days
             </span>
           </div>
@@ -258,7 +258,7 @@ export function AcademicYearStepContent({
         <Button
           onClick={onCreate}
           disabled={isCreating || !isValid}
-          className="w-full h-12 rounded-lg text-base font-medium bg-[#0a1f1a] hover:bg-[#246a59] shadow-sm"
+          className="w-full h-12 rounded-[2px] text-base font-medium bg-[#14201b] hover:bg-[#1c3d32] shadow-sm"
         >
           {isCreating ? (
             <>
@@ -324,7 +324,7 @@ export function TermsStepContent({
 
   if (!hasAcademicYear) {
     return (
-      <p className="text-sm text-[#1a4d42]/70 border border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/5 dark:text-white/60 p-4">
+      <p className="text-sm text-[#1c3d32]/70 border border-[#1c3d32]/12 bg-[#efeadd] dark:bg-white/5 dark:text-white/60 p-4">
         Go back and create an academic year first.
       </p>
     );
@@ -352,10 +352,10 @@ export function TermsStepContent({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm leading-relaxed text-[#1a4d42]/75 dark:text-white/60">
+      <p className="text-sm leading-relaxed text-[#1c3d32]/75 dark:text-white/60">
         A school year is usually split into teaching terms. Choose how you&apos;d
         like to set up{" "}
-        <strong className="text-[#0a1f1a] dark:text-white">
+        <strong className="text-[#14201b] dark:text-white">
           {academicYearName}
         </strong>{" "}
         — you can fine-tune every date afterwards.
@@ -384,17 +384,17 @@ export function TermsStepContent({
       </div>
 
       {termMode === "suggested" && (
-        <div className="space-y-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-4 border border-[#1c3d32]/12 bg-[#f7f4ec] p-4 dark:border-white/10 dark:bg-white/5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+              <p className="text-sm font-semibold text-[#14201b] dark:text-white">
                 How many terms?
               </p>
-              <p className="mt-0.5 text-xs text-[#1a4d42]/60 dark:text-white/50">
+              <p className="mt-0.5 text-xs text-[#1c3d32]/60 dark:text-white/50">
                 Most Kenyan schools use three.
               </p>
             </div>
-            <div className="flex items-center border border-[#1a4d42]/15 bg-white p-0.5 dark:border-white/15 dark:bg-[#0a1f1a]">
+            <div className="flex items-center border border-[#1c3d32]/15 bg-white p-0.5 dark:border-white/15 dark:bg-[#14201b]">
               {[2, 3, 4].map((n) => (
                 <button
                   key={n}
@@ -404,8 +404,8 @@ export function TermsStepContent({
                   className={cn(
                     "h-9 w-11 text-sm font-semibold transition-colors",
                     suggestedTermCount === n
-                      ? "bg-[#0a1f1a] text-white dark:bg-emerald-400 dark:text-[#0a1f1a]"
-                      : "text-[#1a4d42]/60 hover:text-[#0a1f1a] dark:text-white/50 dark:hover:text-white",
+                      ? "bg-[#14201b] text-white dark:bg-emerald-400 dark:text-[#14201b]"
+                      : "text-[#1c3d32]/60 hover:text-[#14201b] dark:text-white/50 dark:hover:text-white",
                   )}
                 >
                   {n}
@@ -416,27 +416,27 @@ export function TermsStepContent({
           <button
             type="button"
             onClick={onApplySuggested}
-            className="inline-flex w-full items-center justify-center gap-2 border border-[#246a59]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#246a59] transition-colors hover:bg-[#246a59]/[0.06] dark:bg-[#0a1f1a] sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 border border-[#1c3d32]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#1c3d32] transition-colors hover:bg-[#1c3d32]/[0.06] dark:bg-[#14201b] sm:w-auto"
           >
             <Sparkles className="h-4 w-4" />
             Fill in the dates
           </button>
-          <p className="text-xs text-[#1a4d42]/55 dark:text-white/45">
+          <p className="text-xs text-[#1c3d32]/55 dark:text-white/45">
             We&apos;ll spread the dates evenly — tweak any of them below.
           </p>
         </div>
       )}
 
       {termMode === "moe" && (
-        <div className="space-y-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/5">
-          <p className="text-sm leading-relaxed text-[#1a4d42]/75 dark:text-white/60">
+        <div className="space-y-4 border border-[#1c3d32]/12 bg-[#f7f4ec] p-4 dark:border-white/10 dark:bg-white/5">
+          <p className="text-sm leading-relaxed text-[#1c3d32]/75 dark:text-white/60">
             For Kenyan public schools — we&apos;ll fill in the Ministry of
             Education&apos;s official term names and dates for {moeYear}.
           </p>
           <button
             type="button"
             onClick={onApplyMoe}
-            className="inline-flex w-full items-center justify-center gap-2 border border-[#246a59]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#246a59] transition-colors hover:bg-[#246a59]/[0.06] dark:bg-[#0a1f1a] sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 border border-[#1c3d32]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#1c3d32] transition-colors hover:bg-[#1c3d32]/[0.06] dark:bg-[#14201b] sm:w-auto"
           >
             <Sparkles className="h-4 w-4" />
             Use official MoE dates
@@ -445,7 +445,7 @@ export function TermsStepContent({
       )}
 
       {termMode === "custom" && (
-        <div className="space-y-4 border border-[#1a4d42]/12 bg-[#f8fbfa] p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-4 border border-[#1c3d32]/12 bg-[#f7f4ec] p-4 dark:border-white/10 dark:bg-white/5">
           <div className="grid gap-3 sm:grid-cols-3">
             <FieldGroup label="Term name">
               <Input
@@ -482,7 +482,7 @@ export function TermsStepContent({
           <button
             type="button"
             onClick={onAddCustomTerm}
-            className="inline-flex w-full items-center justify-center gap-2 border border-[#246a59]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#246a59] transition-colors hover:bg-[#246a59]/[0.06] dark:bg-[#0a1f1a] sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 border border-[#1c3d32]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#1c3d32] transition-colors hover:bg-[#1c3d32]/[0.06] dark:bg-[#14201b] sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Add this term
@@ -493,10 +493,10 @@ export function TermsStepContent({
       {termDrafts.length > 0 ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/50 dark:text-white/40">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32]/50 dark:text-white/40">
               {includedCount} term{includedCount === 1 ? "" : "s"} ready to save
             </p>
-            <p className="text-xs text-[#1a4d42]/45 dark:text-white/35">
+            <p className="text-xs text-[#1c3d32]/45 dark:text-white/35">
               Mark the term you&apos;re in right now
             </p>
           </div>
@@ -510,8 +510,8 @@ export function TermsStepContent({
                   className={cn(
                     "border p-3 transition-colors",
                     included
-                      ? "border-[#1a4d42]/15 bg-white dark:border-white/10 dark:bg-[#0c1a17]"
-                      : "border-dashed border-[#1a4d42]/20 bg-[#f8fbfa] dark:bg-white/5",
+                      ? "border-[#1c3d32]/15 bg-white dark:border-white/10 dark:bg-[#0c1a17]"
+                      : "border-dashed border-[#1c3d32]/20 bg-[#f7f4ec] dark:bg-white/5",
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -528,14 +528,14 @@ export function TermsStepContent({
                         className={cn(
                           "cursor-pointer text-sm font-semibold",
                           included
-                            ? "text-[#0a1f1a] dark:text-white"
-                            : "text-[#1a4d42]/45 line-through",
+                            ? "text-[#14201b] dark:text-white"
+                            : "text-[#1c3d32]/45 line-through",
                         )}
                       >
                         {term.name || "Unnamed term"}
                       </Label>
                       {included && (
-                        <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/40">
+                        <p className="mt-0.5 text-xs text-[#1c3d32]/50 dark:text-white/40">
                           {formatDisplayDate(term.startDate)} →{" "}
                           {formatDisplayDate(term.endDate)}
                         </p>
@@ -549,8 +549,8 @@ export function TermsStepContent({
                         className={cn(
                           "shrink-0 border px-2.5 py-1.5 text-xs font-semibold transition-colors",
                           isActive
-                            ? "border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
-                            : "border-[#1a4d42]/15 bg-[#f3f7f5] text-[#1a4d42]/60 hover:border-emerald-300 hover:text-emerald-700 dark:border-white/15 dark:bg-white/5 dark:text-white/50",
+                            ? "border-[#1c3d32]/30 bg-[#efeadd] text-[#1c3d32] dark:border-emerald-700 dark:bg-[#1c3d32]/20 dark:text-[#d8c9ab]"
+                            : "border-[#1c3d32]/15 bg-[#efeadd] text-[#1c3d32]/60 hover:border-[#1c3d32]/30 hover:text-[#1c3d32] dark:border-white/15 dark:bg-white/5 dark:text-white/50",
                         )}
                       >
                         {isActive ? "Current term" : "Set as current"}
@@ -563,7 +563,7 @@ export function TermsStepContent({
                       }
                       aria-label={`Remove ${term.name || "term"}`}
                       title="Remove this term"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-transparent text-[#1a4d42]/40 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-transparent text-[#1c3d32]/40 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -597,8 +597,8 @@ export function TermsStepContent({
           </ul>
         </div>
       ) : (
-        <div className="border border-dashed border-[#1a4d42]/20 bg-[#f8fbfa] p-6 text-center dark:border-white/10 dark:bg-white/5">
-          <p className="text-sm text-[#1a4d42]/60 dark:text-white/50">
+        <div className="border border-dashed border-[#1c3d32]/20 bg-[#f7f4ec] p-6 text-center dark:border-white/10 dark:bg-white/5">
+          <p className="text-sm text-[#1c3d32]/60 dark:text-white/50">
             No terms yet — pick an option above and we&apos;ll add them here.
           </p>
         </div>
@@ -691,7 +691,7 @@ export function StreamsStepContent({
 }: StreamsStepProps) {
   if (gradeRows.length === 0) {
     return (
-      <p className="text-sm text-[#1a4d42]/70 border border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/5 dark:text-white/60 p-4">
+      <p className="text-sm text-[#1c3d32]/70 border border-[#1c3d32]/12 bg-[#efeadd] dark:bg-white/5 dark:text-white/60 p-4">
         No grades found from your curriculum setup. Finish setup first or add
         levels on the Classes page.
       </p>
@@ -756,25 +756,25 @@ export function StreamsStepContent({
   return (
     <div className="space-y-4">
       {/* What is a stream? */}
-      <div className="border border-[#1a4d42]/12 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 p-3 sm:p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#246a59] mb-2">
+      <div className="border border-[#1c3d32]/12 bg-[#f7f4ec] dark:bg-white/[0.03] dark:border-white/10 p-3 sm:p-3.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32] mb-2">
           What&apos;s a stream?
         </p>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-[#0a1f1a] dark:text-white">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-[#14201b] dark:text-white">
           <span className="font-medium">{sampleGrade}</span>
-          <span className="text-[#1a4d42]/35" aria-hidden>
+          <span className="text-[#1c3d32]/35" aria-hidden>
             →
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="border border-[#246a59]/30 bg-[#246a59]/10 px-2 py-0.5 text-xs font-semibold text-[#246a59]">
+            <span className="border border-[#1c3d32]/30 bg-[#1c3d32]/10 px-2 py-0.5 text-xs font-semibold text-[#1c3d32]">
               {sampleGrade}A
             </span>
-            <span className="border border-[#246a59]/30 bg-[#246a59]/10 px-2 py-0.5 text-xs font-semibold text-[#246a59]">
+            <span className="border border-[#1c3d32]/30 bg-[#1c3d32]/10 px-2 py-0.5 text-xs font-semibold text-[#1c3d32]">
               {sampleGrade}B
             </span>
           </span>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-[#1a4d42]/60 dark:text-white/45">
+        <p className="mt-2 text-xs leading-relaxed text-[#1c3d32]/60 dark:text-white/45">
           A stream is a class section students join — like 4A or 4B. Most schools
           keep one to three per grade. We&apos;ll set the same pattern for every
           grade, and you can adjust any grade below.
@@ -783,7 +783,7 @@ export function StreamsStepContent({
 
       {/* Bulk apply */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45 mb-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32]/45 mb-2">
           Quick start — all {gradeRows.length} grades
         </p>
         <div className="grid grid-cols-3 gap-1.5">
@@ -810,21 +810,21 @@ export function StreamsStepContent({
                 title={preset.hint}
                 className={`border px-2 py-2.5 text-center transition-colors ${
                   active
-                    ? "border-[#246a59] bg-[#246a59] text-white"
-                    : "border-[#1a4d42]/12 bg-white hover:border-[#246a59]/40 dark:bg-[#0c1a17] dark:border-white/10"
+                    ? "border-[#1c3d32] bg-[#1c3d32] text-white"
+                    : "border-[#1c3d32]/12 bg-white hover:border-[#1c3d32]/40 dark:bg-[#0c1a17] dark:border-white/10"
                 }`}
               >
                 <span className="block text-xs font-semibold">{preset.label}</span>
                 <span
                   className={`block text-[10px] mt-0.5 tabular-nums font-medium ${
-                    active ? "text-white/80" : "text-[#246a59]/75"
+                    active ? "text-white/80" : "text-[#1c3d32]/75"
                   }`}
                 >
                   {preset.names.join(" · ")}
                 </span>
                 <span
                   className={`hidden sm:block text-[10px] mt-0.5 leading-snug ${
-                    active ? "text-white/60" : "text-[#1a4d42]/45"
+                    active ? "text-white/60" : "text-[#1c3d32]/45"
                   }`}
                 >
                   {preset.hint}
@@ -838,15 +838,15 @@ export function StreamsStepContent({
       {/* Compact grade roster */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32]/45">
             Per grade
           </p>
-          <p className="text-[10px] text-[#1a4d42]/40">
+          <p className="text-[10px] text-[#1c3d32]/40">
             Seats = max learners · edit anytime
           </p>
         </div>
 
-        <ul className="border border-[#1a4d42]/12 dark:border-white/10 divide-y divide-[#1a4d42]/10 max-h-[min(22rem,50vh)] overflow-y-auto">
+        <ul className="border border-[#1c3d32]/12 dark:border-white/10 divide-y divide-[#1c3d32]/10 max-h-[min(22rem,50vh)] overflow-y-auto">
           {gradeRows.map((grade) => {
             const drafts = gradeStreamPlans[grade.gradeId] || [];
             const pending = gradePendingNames(grade, drafts);
@@ -858,21 +858,21 @@ export function StreamsStepContent({
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="min-w-0 flex items-baseline gap-2">
-                    <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white truncate">
+                    <p className="text-sm font-semibold text-[#14201b] dark:text-white truncate">
                       {grade.gradeName}
                     </p>
-                    <p className="text-[10px] text-[#1a4d42]/45 truncate hidden sm:block">
+                    <p className="text-[10px] text-[#1c3d32]/45 truncate hidden sm:block">
                       {grade.levelName}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {grade.existingStreams.length > 0 && (
-                      <span className="text-[10px] text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5">
+                      <span className="text-[10px] text-[#1c3d32] bg-[#efeadd] px-1.5 py-0.5">
                         has {grade.existingStreams.join(", ")}
                       </span>
                     )}
                     {pending.length > 0 && (
-                      <span className="text-[10px] font-semibold tabular-nums text-[#246a59] bg-[#246a59]/10 px-1.5 py-0.5">
+                      <span className="text-[10px] font-semibold tabular-nums text-[#1c3d32] bg-[#1c3d32]/10 px-1.5 py-0.5">
                         +{pending.length} new
                       </span>
                     )}
@@ -883,9 +883,9 @@ export function StreamsStepContent({
                   {drafts.map((draft) => (
                     <div
                       key={draft.id}
-                      className="inline-flex items-center border border-[#246a59]/25 bg-[#f3f7f5] transition-all duration-150 hover:border-[#246a59]/45 hover:shadow-sm dark:bg-[#071411] dark:border-[#246a59]/35"
+                      className="inline-flex items-center border border-[#1c3d32]/25 bg-[#efeadd] transition-all duration-150 hover:border-[#1c3d32]/45 hover:shadow-sm dark:bg-[#071411] dark:border-[#1c3d32]/35"
                     >
-                      <span className="pl-2 pr-1 text-[10px] font-semibold uppercase tracking-wide text-[#246a59]/70">
+                      <span className="pl-2 pr-1 text-[10px] font-semibold uppercase tracking-wide text-[#1c3d32]/70">
                         Stream
                       </span>
                       <Input
@@ -899,12 +899,12 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} stream name`}
-                        className="h-8 w-10 rounded-lg border-0 bg-transparent px-0 text-center text-sm font-bold text-[#0a1f1a] shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06] dark:text-white"
+                        className="h-8 w-10 rounded-[2px] border-0 bg-transparent px-0 text-center text-sm font-bold text-[#14201b] shadow-none focus-visible:ring-0 focus:bg-[#1c3d32]/[0.06] dark:text-white"
                         placeholder="?"
                       />
-                      <span className="h-5 w-px bg-[#1a4d42]/15" aria-hidden />
+                      <span className="h-5 w-px bg-[#1c3d32]/15" aria-hidden />
                       <span
-                        className="pl-1.5 pr-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45"
+                        className="pl-1.5 pr-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1c3d32]/45"
                         title="Max learners per stream"
                       >
                         Seats
@@ -922,7 +922,7 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} ${draft.name || "stream"} seats (max learners)`}
-                        className="h-8 w-11 rounded-lg border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1a4d42]/70 shadow-none focus-visible:ring-0 focus:bg-[#246a59]/[0.06]"
+                        className="h-8 w-11 rounded-[2px] border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1c3d32]/70 shadow-none focus-visible:ring-0 focus:bg-[#1c3d32]/[0.06]"
                         title="Seats (max learners)"
                       />
                       <button
@@ -930,7 +930,7 @@ export function StreamsStepContent({
                         onClick={() =>
                           removeGradeDraft(grade.gradeId, draft.id)
                         }
-                        className="mr-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-[#1a4d42]/35 transition-all duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
+                        className="mr-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-[#1c3d32]/35 transition-all duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
                         aria-label={`Remove stream ${draft.name || ""} from ${grade.gradeName}`}
                         title="Remove stream"
                       >
@@ -942,7 +942,7 @@ export function StreamsStepContent({
                   <button
                     type="button"
                     onClick={() => addStreamToGrade(grade.gradeId, grade)}
-                    className="inline-flex h-8 items-center gap-1 border border-dashed border-[#1a4d42]/25 px-2 text-[11px] font-medium text-[#1a4d42]/55 transition-colors hover:border-[#246a59]/50 hover:bg-[#246a59]/[0.04] hover:text-[#246a59]"
+                    className="inline-flex h-8 items-center gap-1 border border-dashed border-[#1c3d32]/25 px-2 text-[11px] font-medium text-[#1c3d32]/55 transition-colors hover:border-[#1c3d32]/50 hover:bg-[#1c3d32]/[0.04] hover:text-[#1c3d32]"
                   >
                     <Plus className="h-3 w-3" />
                     Add
@@ -958,14 +958,14 @@ export function StreamsStepContent({
       <div
         className={`border px-3 py-2.5 ${
           plannedCreates > 0
-            ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
-            : "border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/[0.03]"
+            ? "border-[#14201b] bg-[#14201b] text-white"
+            : "border-[#1c3d32]/12 bg-[#efeadd] dark:bg-white/[0.03]"
         }`}
       >
         {plannedCreates > 0 ? (
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300/90">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d8c9ab]/90">
                 Creating on Continue
               </p>
               <p className="mt-1 text-sm font-medium leading-snug">
@@ -990,12 +990,12 @@ export function StreamsStepContent({
                 {gradesWithPlans > 6 ? "…" : ""}
               </p>
             </div>
-            <span className="shrink-0 font-display text-2xl tabular-nums text-emerald-300">
+            <span className="shrink-0 font-display text-2xl tabular-nums text-[#d8c9ab]">
               {String(plannedCreates).padStart(2, "0")}
             </span>
           </div>
         ) : (
-          <p className="text-sm text-[#1a4d42]/65 dark:text-white/50 leading-snug">
+          <p className="text-sm text-[#1c3d32]/65 dark:text-white/50 leading-snug">
             Pick a quick start above to create streams, or continue and add them
             later from Classes.
           </p>
@@ -1029,12 +1029,12 @@ export function PaymentsStepContent({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-[#1a4d42]/70 dark:text-white/55">
+      <p className="text-sm leading-relaxed text-[#1c3d32]/70 dark:text-white/55">
         Configure M-Pesa Express (till) and at least one bank paybill. Skip if
         you want to finish this from the dashboard later.
       </p>
 
-      <div className="space-y-3">
+      <div>
         <PaymentSetupCard
           icon={Smartphone}
           title="M-Pesa Express"
@@ -1059,7 +1059,7 @@ export function PaymentsStepContent({
         />
       </div>
 
-      <p className="text-xs leading-relaxed text-[#1a4d42]/55 dark:text-white/45">
+      <p className="text-xs leading-relaxed text-[#1c3d32]/55 dark:text-white/45">
         Tip: till setup only works after SQUL ops turn on the platform custody
         rail. Bank details always save and print on fee letters.
       </p>
@@ -1089,47 +1089,38 @@ function PaymentSetupCard({
   onAction: () => void
 }) {
   return (
-    <div
-      className={cn(
-        'border bg-[#f8fbfa] p-4 dark:bg-white/[0.03]',
-        ready
-          ? 'border-emerald-600/30 shadow-sm'
-          : 'border-[#1a4d42]/12 dark:border-white/10',
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#246a59] bg-[#0a1f1a] text-emerald-300">
-          <Icon className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
-              {title}
+    <div className="border-t border-[#14201b]/10 py-5 first:border-t-0 first:pt-0">
+      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#1c3d32]/55" strokeWidth={1.5} />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-[0.8125rem] font-medium text-[#14201b]">{title}</p>
+              {loading ? (
+                <Loader2 className="h-3 w-3 animate-spin text-[#7c857d]" />
+              ) : ready ? (
+                <span className="inline-flex items-center gap-1 text-[0.5rem] uppercase tracking-[0.16em] text-[#1c3d32]">
+                  <CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2} />
+                  Ready
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1.5 max-w-[48ch] text-xs leading-relaxed text-[#4d574f]">
+              {description}
             </p>
-            {loading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#1a4d42]/40" />
-            ) : ready ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                <CheckCircle2 className="h-3 w-3" />
-                Ready
-              </span>
-            ) : null}
+            <p className="mt-2.5 text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+              {loading ? 'Checking…' : ready ? readyLabel : waitingLabel}
+            </p>
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-[#1a4d42]/60 dark:text-white/50">
-            {description}
-          </p>
-          <p className="mt-2 truncate text-[11px] font-medium text-[#1a4d42]/70 dark:text-white/55">
-            {loading ? 'Checking…' : ready ? readyLabel : waitingLabel}
-          </p>
         </div>
+        <button
+          type="button"
+          onClick={onAction}
+          className="shrink-0 border-b border-[#14201b]/30 pb-0.5 text-[0.75rem] font-medium text-[#14201b] transition-colors duration-200 hover:border-[#14201b]"
+        >
+          {actionLabel}
+        </button>
       </div>
-      <Button
-        type="button"
-        className="mt-3 h-9 w-full rounded-lg bg-[#0a1f1a] text-white hover:bg-[#246a59]"
-        onClick={onAction}
-      >
-        {actionLabel}
-      </Button>
     </div>
   )
 }

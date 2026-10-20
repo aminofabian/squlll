@@ -376,3 +376,304 @@
 .dashboard-feed-enter {
   animation: dashboard-feed-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SQUL — Editorial design system (marketing surfaces)
+   Quiet luxury: warm paper, forest ink, hairline rules, generous air.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --mk-paper: #f7f4ec;
+  --mk-paper-deep: #efeadd;
+  --mk-card: #fcfaf4;
+  --mk-ink: #14201b;
+  --mk-ink-soft: #4d574f;
+  --mk-ink-faint: #7c857d;
+  --mk-forest: #1c3d32;
+  --mk-forest-deep: #0d201a;
+  --mk-forest-soft: #2c574a;
+  --mk-sage: #8ea294;
+  --mk-brass: #a98a55;
+  --mk-hairline: rgba(20, 32, 27, 0.13);
+  --mk-hairline-soft: rgba(20, 32, 27, 0.07);
+  --mk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.squl-marketing {
+  --radius: 0.125rem;
+  background-color: var(--mk-paper);
+  color: var(--mk-ink);
+  font-family: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.squl-marketing ::selection {
+  background: rgba(28, 61, 50, 0.16);
+  color: var(--mk-ink);
+}
+
+/* Layout rhythm */
+.mk-container {
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+@media (min-width: 640px) {
+  .mk-container { padding-inline: 2.5rem; }
+}
+@media (min-width: 1024px) {
+  .mk-container { padding-inline: 3.5rem; }
+}
+
+.mk-section {
+  position: relative;
+  padding-block: clamp(5.5rem, 9vw, 8.5rem);
+}
+
+.mk-hairline {
+  border-top: 1px solid var(--mk-hairline-soft);
+}
+
+.mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-figtree), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--mk-forest);
+}
+.mk-eyebrow::before {
+  content: "";
+  width: 1.75rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+}
+.mk-eyebrow--plain::before { display: none; }
+.mk-eyebrow--light { color: rgba(247, 244, 236, 0.65); }
+
+.mk-display {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  color: var(--mk-ink);
+  text-wrap: balance;
+}
+.mk-display em {
+  font-style: italic;
+  color: var(--mk-forest);
+}
+
+.mk-lede {
+  max-width: 60ch;
+  font-size: clamp(1.0625rem, 1.15vw, 1.1875rem);
+  line-height: 1.7;
+  color: var(--mk-ink-soft);
+  text-wrap: pretty;
+}
+
+.mk-caption {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mk-ink-faint);
+}
+
+/* Buttons — square, quiet, confident */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  height: 3.25rem;
+  padding-inline: 1.6rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--font-figtree), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  line-height: 1;
+  transition:
+    background-color 0.22s var(--mk-ease),
+    color 0.22s var(--mk-ease),
+    border-color 0.22s var(--mk-ease),
+    transform 0.22s var(--mk-ease);
+}
+.mk-btn svg { transition: transform 0.22s var(--mk-ease); }
+.mk-btn:hover svg.mk-arrow { transform: translateX(3px); }
+.mk-btn:active { transform: translateY(1px); }
+
+.mk-btn--ink { background: var(--mk-ink); color: var(--mk-paper); }
+.mk-btn--ink:hover { background: var(--mk-forest); }
+
+.mk-btn--paper { background: var(--mk-paper); color: var(--mk-ink); }
+.mk-btn--paper:hover { background: #fffdf8; }
+
+.mk-btn--outline {
+  border-color: rgba(20, 32, 27, 0.22);
+  color: var(--mk-ink);
+  background: transparent;
+}
+.mk-btn--outline:hover {
+  border-color: var(--mk-ink);
+  background: rgba(20, 32, 27, 0.04);
+}
+
+.mk-btn--ghost-light {
+  border-color: rgba(247, 244, 236, 0.28);
+  color: var(--mk-paper);
+  background: transparent;
+}
+.mk-btn--ghost-light:hover {
+  border-color: rgba(247, 244, 236, 0.65);
+  background: rgba(247, 244, 236, 0.06);
+}
+
+/* Text link with a quiet underline reveal */
+.mk-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--mk-ink);
+  text-decoration: none;
+}
+.mk-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.2rem;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  transform-origin: left;
+  transform: scaleX(0.35);
+  transition: transform 0.22s var(--mk-ease), opacity 0.22s var(--mk-ease);
+}
+.mk-link:hover::after { transform: scaleX(1); opacity: 0.8; }
+
+/* Hairline list rows */
+.mk-row {
+  display: grid;
+  align-items: baseline;
+  gap: 1rem 2rem;
+  padding-block: 1.9rem;
+  border-top: 1px solid var(--mk-hairline-soft);
+  transition: background-color 0.22s var(--mk-ease);
+}
+.mk-row:last-child { border-bottom: 1px solid var(--mk-hairline-soft); }
+.mk-row:hover { background: rgba(20, 32, 27, 0.018); }
+
+/* Fine paper grain, layered at 3–4% so the surface feels printed */
+.mk-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.mk-grain--light {
+  opacity: 0.05;
+  mix-blend-mode: screen;
+}
+
+/* Display type scale helpers */
+.mk-h2 {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.35rem, 4.3vw, 3.85rem);
+  line-height: 1.03;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+.mk-h3 {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.65rem, 2.3vw, 2.15rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+.mk-body {
+  font-size: 0.9688rem;
+  line-height: 1.7;
+  color: var(--mk-ink-soft);
+  text-wrap: pretty;
+}
+
+/* Cards are rare: a sheet of paper, never a box with a shadow */
+.mk-sheet {
+  background: var(--mk-card);
+  border: 1px solid var(--mk-hairline-soft);
+}
+
+/* Product frame for app screenshots */
+.mk-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(20, 32, 27, 0.1);
+  background: #e9e7e0;
+  box-shadow:
+    0 2px 4px rgba(20, 32, 27, 0.04),
+    0 40px 80px -48px rgba(20, 32, 27, 0.35);
+}
+
+.mk-frame img {
+  filter: saturate(0.92) contrast(1.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-btn,
+  .mk-btn svg,
+  .mk-link::after,
+  .mk-row {
+    transition: none !important;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* Onboarding: keep the flow flat and square, matching the editorial system. */
+.onboarding-flow .shadow-sm,
+.onboarding-flow .shadow-md,
+.onboarding-flow .shadow-lg {
+  box-shadow: none;
+}
+.onboarding-flow input,
+.onboarding-flow textarea,
+.onboarding-flow select {
+  border-radius: 2px;
+}
+.onboarding-flow .rdp-root {
+  --rdp-accent-color: #1c3d32;
+  --rdp-accent-background-color: rgba(28, 61, 50, 0.08);
+}
+
+.mk-link--light {
+  color: var(--mk-paper);
+}
+.mk-link--light::after {
+  background: var(--mk-paper);
+}

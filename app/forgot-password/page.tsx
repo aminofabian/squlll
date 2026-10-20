@@ -1,44 +1,31 @@
-"use client"
+'use client'
 
-import { AuthWrapper } from "@/components/auth/AuthFormWrapper"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useState } from "react"
+import Link from 'next/link'
+import { useState } from 'react'
+import { ArrowRight } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { AuthRecoveryShell } from '@/components/auth/AuthRecoveryShell'
 
-// Admin Logo Component for Forgot Password
-function AdminLogo() {
-  return (
-    <div className="flex items-center justify-center mb-8">
-      <div className="relative">
-        <div className="w-16 h-16 bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-slate-600 flex items-center justify-center shadow-2xl">
-          <div className="text-white font-mono font-bold text-xl tracking-wider">GA</div>
-        </div>
-        <div className="cabsolute -top-2 -right-1 w-4 h-4 bg-amber-500 border-2 border-background"></div>
-      </div>
-    </div>
-  )
-}
+const inputClass =
+  'h-12 rounded-[2px] border-[#14201b]/15 bg-[#fcfaf4] text-[0.875rem] shadow-none placeholder:text-[#14201b]/30 focus-visible:border-[#1c3d32] focus-visible:ring-2 focus-visible:ring-[#1c3d32]/10'
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
-    setMessage("")
+    setError('')
+    setMessage('')
 
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
 
@@ -57,143 +44,75 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Header Section */}
-        <div className="text-center mb-12">
-          <AdminLogo />
-          
-          <div className="space-y-4">
-            <div className="inline-block px-4 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-600 text-xs font-mono tracking-wide text-amber-600 dark:text-amber-400 uppercase">
-              Password Recovery
-            </div>
-            
-            <h1 className="text-3xl font-mono font-bold tracking-wide uppercase">
-              <span className="text-slate-900 dark:text-slate-100">RESET</span>
-              <span className="text-custom-blue">ACCESS</span>
-              <span className="text-slate-600 dark:text-slate-400 block text-lg mt-2">Account Recovery Portal</span>
-            </h1>
-            
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Enter your email address to receive password reset instructions
+    <AuthRecoveryShell
+      kicker="Password recovery"
+      title="Reset access."
+      description="Enter the email on your school account and we'll send a link to choose a new password."
+    >
+      {message ? (
+        <div>
+          <div className="border-l-2 border-[#a98a55] pl-5">
+            <p className="text-[0.625rem] font-medium uppercase tracking-[0.16em] text-[#7c857d]">
+              Instructions sent
             </p>
+            <p className="mt-2 text-[0.875rem] leading-[1.7] text-[#3f4a43]">{message}</p>
           </div>
+
+          <p className="mt-6 text-[0.75rem] leading-relaxed text-[#7c857d]">
+            Check your inbox and spam folder. The link expires after one hour — if
+            you didn&apos;t request it, you can safely ignore the email.
+          </p>
+
+          <Link href="/login" className="mk-btn mk-btn--ink mt-8 h-12 w-full">
+            Back to sign in
+            <ArrowRight className="mk-arrow h-3.5 w-3.5" aria-hidden />
+          </Link>
         </div>
-
-        {/* Forgot Password Form */}
-        <div className="relative">
-          <AuthWrapper 
-            title="Password Recovery Request" 
-            description="We'll send reset instructions to your registered email"
-          >
-            {message ? (
-              <div className="space-y-6">
-                <div className="p-4 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded">
-                  <div className="font-medium mb-2">✅ Request Sent</div>
-                  <div>{message}</div>
-                </div>
-                
-                <div className="text-center space-y-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wide">
-                    Next Steps
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Check your email inbox and spam folder for the password reset link. 
-                    The link will expire in 1 hour for security purposes.
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <Link
-                    href="/login"
-                    className="block w-full text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-sm uppercase tracking-wide border border-slate-300 dark:border-slate-600"
-                  >
-                    ← Back to Login
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {error && (
-                  <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
-                    {error}
-                  </div>
-                )}
-                
-                <div className="space-y-3">
-                  <Label htmlFor="email" className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                    Administrator Email
-                  </Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter your registered email address"
-                    className="h-12 border-2 border-slate-300 dark:border-slate-600 focus:border-slate-500 font-mono bg-slate-50 dark:bg-slate-900 placeholder:text-slate-400"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <Button 
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-12 mt-8 bg-amber-600 hover:bg-amber-700 text-white font-mono tracking-wide uppercase text-sm disabled:bg-slate-200 disabled:text-slate-500"
-                >
-                  {isLoading ? 'Sending Reset Link...' : 'Send Reset Instructions'}
-                </Button>
-
-                <div className="border-t-2 border-slate-200 dark:border-slate-700 pt-6">
-                  <div className="text-center space-y-3">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wide">
-                      Security Information
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Password reset requests are logged for security. The reset link will be valid for 1 hour only.
-                      If you didn't request this, you can safely ignore this action.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <Link
-                    href="/login"
-                    className="block w-full text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-sm uppercase tracking-wide border border-slate-300 dark:border-slate-600"
-                  >
-                    ← Back to Login
-                  </Link>
-                </div>
-              </form>
-            )}
-          </AuthWrapper>
-          
-          {/* System Status */}
-          <div className="absolute -top-3 -right-3">
-            <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 dark:bg-amber-950 border-2 border-amber-200 dark:border-amber-800">
-              <div className="w-3 h-3 bg-amber-500"></div>
-              <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-                RECOVERY MODE
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <div className="inline-flex items-center gap-4 px-6 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-            <div className="text-xs font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              SQUL Admin v2.1.0
-            </div>
-            <div className="w-px h-4 bg-slate-300 dark:bg-slate-600"></div>
-            <Link 
-              href="/privacy" 
-              className="text-xs font-mono text-custom-blue hover:text-custom-blue/80 uppercase tracking-wide"
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div
+              role="alert"
+              className="border-l-2 border-[#a04a3a] py-1 pl-4 text-[0.8125rem] leading-relaxed text-[#8a3a2c]"
             >
-              Privacy
-            </Link>
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="email"
+              className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]"
+            >
+              Work email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@schoolname.ac.ke"
+              className={inputClass}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
-        </div>
-      </div>
-    </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="mk-btn mk-btn--ink h-12 w-full disabled:cursor-not-allowed disabled:bg-[#14201b]/20 disabled:text-[#14201b]/40"
+          >
+            {isLoading ? 'Sending…' : 'Send reset instructions'}
+            {isLoading ? null : <ArrowRight className="mk-arrow h-3.5 w-3.5" aria-hidden />}
+          </button>
+
+          <p className="pt-2 text-[0.6875rem] leading-relaxed text-[#7c857d]">
+            For security, reset requests are logged and the link is valid for one
+            hour. If you didn&apos;t request this, no action is needed.
+          </p>
+        </form>
+      )}
+    </AuthRecoveryShell>
   )
-} 
+}

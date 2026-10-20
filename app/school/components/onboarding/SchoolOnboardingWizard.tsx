@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   useAcademicYears,
   type AcademicYear,
@@ -636,8 +635,8 @@ export function SchoolOnboardingWizard() {
                 hint="Edit anytime from Dashboard → Till · paybill · bank"
               />
             </div>
-            <div className="border border-[#246a59]/20 bg-[#246a59]/[0.06] p-4">
-              <p className="text-sm text-[#1a4d42]/75 dark:text-white/60 leading-relaxed">
+            <div className="mt-6 border-l border-[#a98a55]/60 pl-5">
+              <p className="text-[0.8125rem] leading-relaxed text-[#4d574f]">
                 Your dashboard is where you manage daily operations. You can
                 return to payment settings from the school snapshot anytime.
               </p>
@@ -652,12 +651,12 @@ export function SchoolOnboardingWizard() {
 
   if (yearsLoading && currentStep === 1 && !hasAcademicYear) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#f3f7f5] dark:bg-[#071411]">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#efeadd] dark:bg-[#071411]">
         <div className="relative">
-          <div className="h-12 w-12 border-2 border-[#246a59]/20" />
-          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-[#246a59]" />
+          <div className="h-12 w-12 border-2 border-[#1c3d32]/20" />
+          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-[#1c3d32]" />
         </div>
-        <p className="text-[11px] tracking-[0.14em] text-[#1a4d42]/60 uppercase font-semibold">
+        <p className="text-[11px] tracking-[0.14em] text-[#1c3d32]/60 uppercase font-semibold">
           Loading your school…
         </p>
       </div>
@@ -756,20 +755,20 @@ function SummaryRow({
   hint?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 text-sm border border-[#1a4d42]/10 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 px-3 py-2.5">
+    <div className="flex items-start gap-3 border-b border-[#14201b]/10 py-3.5 last:border-b-0">
       <span
-        className={`mt-0.5 h-3.5 w-3.5 shrink-0 flex items-center justify-center ${done ? "bg-[#246a59]" : "border border-[#1a4d42]/25 bg-transparent"}`}
+        className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
+          done ? "border-[#1c3d32] bg-[#1c3d32]" : "border-[#14201b]/20 bg-transparent"
+        }`}
       >
-        {done ? (
-          <span className="block h-1.5 w-1.5 bg-white" />
-        ) : null}
+        {done ? <span className="block h-1 w-1 rounded-full bg-[#f7f4ec]" /> : null}
       </span>
       <span>
-        <span className={done ? "text-[#0a1f1a] dark:text-white font-medium" : "text-[#1a4d42]/50"}>
+        <span className={done ? "text-[0.8125rem] font-medium text-[#14201b]" : "text-[0.8125rem] text-[#7c857d]"}>
           {label}
         </span>
         {hint && (
-          <span className="block text-xs text-[#1a4d42]/50 mt-0.5">{hint}</span>
+          <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-[#7c857d]">{hint}</span>
         )}
       </span>
     </div>
@@ -787,20 +786,21 @@ function ChecklistItem({
 }) {
   const router = useRouter();
   return (
-    <li className="flex items-start justify-between gap-4 border border-[#1a4d42]/12 p-3.5 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 transition-colors hover:border-[#246a59]/35">
+    <li className="flex items-start justify-between gap-6 border-t border-[#14201b]/10 py-4">
       <div>
-        <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">{title}</p>
-        <p className="text-xs text-[#1a4d42]/55 dark:text-white/45 mt-0.5">{description}</p>
+        <p className="text-[0.8125rem] font-medium text-[#14201b]">{title}</p>
+        <p className="mt-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">{description}</p>
       </div>
-      <Button
+      <button
         type="button"
-        variant="outline"
-        size="sm"
-        className="shrink-0 rounded-lg border-[#1a4d42]/20 hover:bg-[#246a59] hover:text-white hover:border-[#246a59]"
         onClick={() => router.push(href)}
+        className="group mt-0.5 inline-flex shrink-0 items-center gap-1.5 border-b border-[#14201b]/25 pb-0.5 text-[0.6875rem] font-medium text-[#14201b] transition-colors hover:border-[#14201b]"
       >
         Open
-      </Button>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden>
+          <path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
     </li>
   );
 }

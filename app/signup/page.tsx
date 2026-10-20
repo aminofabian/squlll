@@ -1,6 +1,6 @@
 "use client"
 
-import { AuthWrapper } from "@/components/auth/AuthFormWrapper"
+import { AuthRecoveryShell } from "@/components/auth/AuthRecoveryShell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -8,16 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useState, useEffect, Suspense } from "react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CheckCircle2, AlertCircle, Info, User, Mail, Building2, KeyRound, RefreshCw, Globe2, ArrowLeft, ArrowRight, Loader2, GraduationCap, Shield, Eye, EyeOff } from "lucide-react"
+import { KeyRound, Loader2, Shield, Eye, EyeOff } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { toast } from 'sonner'
 
@@ -62,32 +55,26 @@ interface AcceptInvitationResponse {
 // Loading component for Suspense fallback
 function SignupLoading() {
   return (
-    <AuthWrapper title="Loading...">
-      <div className="flex flex-col items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-slate-500">Preparing signup form...</p>
-      </div>
-    </AuthWrapper>
+    <div className="onboarding-flow flex min-h-screen flex-col items-center justify-center bg-[#f7f4ec]">
+      <Loader2 className="h-5 w-5 animate-spin text-[#1c3d32]" />
+      <p className="mt-4 text-[0.625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+        Preparing your invitation…
+      </p>
+    </div>
   )
 }
 
 const inputStyles = {
-  base: `h-12 w-full bg-white border-0 px-4 pl-11 text-slate-900 
-    ring-1 ring-inset ring-gray-200
-    placeholder:text-gray-400 
-    focus:ring-2 focus:ring-inset focus:ring-[#246a59]
-    transition-all duration-300 ease-out
-    hover:ring-[#246a59]/20`,
-  icon: `absolute left-3 top-4 h-4 w-4 text-[#246a59]/60
-    transition-all duration-300 ease-out
-    group-focus-within:text-[#246a59]
-    group-hover:text-[#246a59]/80`,
-  label: `text-slate-900 text-[16px] leading-loose mb-3 block relative z-10 font-medium
-    flex items-center gap-2
-    before:content-[''] before:w-1.5 before:h-1.5 before:bg-[#246a59]/80 before:rounded-sm before:transition-all before:duration-300
-    group-focus-within:before:scale-110 group-focus-within:before:bg-[#246a59]`,
-  error: "text-sm text-red-500 mt-2 pl-4 border-l-2 border-red-500/30",
-  container: `group relative mt-2`,
+  base: `h-12 w-full rounded-[2px] border border-[#14201b]/15 bg-[#fcfaf4] px-4 pl-10
+    text-[0.875rem] text-[#14201b] shadow-none
+    placeholder:text-[#14201b]/30
+    focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/10
+    transition-colors duration-200`,
+  icon: `pointer-events-none absolute left-3 top-4 h-3.5 w-3.5 text-[#7c857d]`,
+  label: `mb-2 flex items-center gap-2 text-[0.625rem] font-medium uppercase
+    tracking-[0.14em] text-[#4d574f]`,
+  error: "mt-2 text-[0.6875rem] text-[#a04a3a]",
+  container: `relative mt-2`,
   formItem: `mb-6`,
 }
 
@@ -128,13 +115,6 @@ function TeacherSignupForm() {
     if (/[0-9]/.test(password)) strength++
     if (/[^A-Za-z0-9]/.test(password)) strength++
     return strength
-  }
-
-  const getStrengthColor = (strength: number) => {
-    if (strength <= 2) return "bg-red-500"
-    if (strength <= 3) return "bg-yellow-500"
-    if (strength <= 4) return "bg-blue-500"
-    return "bg-green-500"
   }
 
   const getStrengthText = (strength: number) => {
@@ -216,304 +196,236 @@ function TeacherSignupForm() {
 
   if (success) {
     return (
-      <AuthWrapper title="Account Activated">
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
-            </div>
-            <h1 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-2">
-              Welcome to the Team!
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Your teacher account has been successfully activated
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6 mb-6">
-            <h3 className="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-4">
-              Account Details
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Name:</span>
-                </div>
-                <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
-                  {success.user.name}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Email:</span>
-                </div>
-                <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
-                  {success.user.email}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Role:</span>
-                </div>
-                <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
-                  Teacher
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
-            <h3 className="text-sm font-mono font-bold text-primary uppercase tracking-wide mb-3">
-              Next Steps
-            </h3>
-            <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>Complete your teacher profile</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>Explore your class assignments</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>Set up your timetable</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Redirecting to your dashboard in a few seconds...
-            </p>
-            <Button
-              onClick={() => {
-                const subdomain = success.teacher?.tenant?.subdomain
-                if (subdomain) {
-                  // Redirect to the school's teacher portal
-                  const isProd = window.location.hostname !== 'localhost'
-                  const baseUrl = isProd 
-                    ? `https://${subdomain}.squl.co.ke` 
-                    : `http://${subdomain}.localhost:3001`
-                  window.location.href = `${baseUrl}/teacher`
-                } else {
-                  // Fallback to generic teacher route if no subdomain available
-                  router.push('/teacher')
-                }
-              }}
-              className="w-full bg-primary hover:bg-primary-dark text-white"
+      <AuthRecoveryShell
+        kicker="Teacher invitation"
+        title="You're in."
+        description="Your teacher account is active. Continue to your school workspace to see classes, timetable and messages."
+      >
+        <div className="border-y border-[#14201b]/10">
+          {[
+            ['Name', success.user.name],
+            ['Email', success.user.email],
+            ['School', success.teacher?.tenant?.schoolName ?? 'Your school'],
+            ['Role', 'Teacher'],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="flex items-baseline justify-between gap-4 border-b border-[#14201b]/8 py-3 last:border-b-0"
             >
-              Continue to Dashboard
-            </Button>
-          </div>
+              <span className="text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+                {label}
+              </span>
+              <span className="truncate text-right text-[0.8125rem] font-medium text-[#14201b]">
+                {value}
+              </span>
+            </div>
+          ))}
         </div>
-      </AuthWrapper>
+
+        <p className="mt-6 text-[0.75rem] leading-relaxed text-[#7c857d]">
+          Taking you to your dashboard in a few seconds…
+        </p>
+
+        <Button
+          onClick={() => {
+            const subdomain = success.teacher?.tenant?.subdomain
+            if (subdomain) {
+              const isProd = window.location.hostname !== 'localhost'
+              const baseUrl = isProd
+                ? `https://${subdomain}.squl.co.ke`
+                : `http://${subdomain}.localhost:3001`
+              window.location.href = `${baseUrl}/teacher`
+            } else {
+              router.push('/teacher')
+            }
+          }}
+          className="mt-6 h-12 w-full rounded-[2px] bg-[#14201b] text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none hover:bg-[#1c3d32]"
+        >
+          Continue to dashboard
+        </Button>
+      </AuthRecoveryShell>
     )
   }
 
   return (
-    <AuthWrapper title="Complete Signup">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <GraduationCap className="h-8 w-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-2">
-            Complete Your Signup
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Set up your password to activate your teacher account
-          </p>
+    <AuthRecoveryShell
+      kicker="Teacher invitation"
+      title="Activate your account."
+      description="Set a password to join your school's workspace. Your invitation link has been verified."
+    >
+      {error && (
+        <div
+          role="alert"
+          className="mb-6 border-l-2 border-[#a04a3a] py-1 pl-4 text-[0.8125rem] leading-relaxed text-[#8a3a2c]"
+        >
+          {error}
         </div>
+      )}
 
-        {/* Token Status */}
-        {token && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <div>
-                <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Invitation Verified
-                </p>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Your invitation token has been validated successfully
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className={inputStyles.formItem}>
+                <FormLabel className={inputStyles.label}>
+                  <KeyRound className="h-3 w-3" />
+                  Password
+                </FormLabel>
+                <div className={inputStyles.container}>
+                  <div className="relative">
+                    <KeyRound className={inputStyles.icon} />
+                    <FormControl>
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a strong password"
+                        className={cn(inputStyles.base, 'pr-12')}
+                        onFocus={() => setPasswordFocused(true)}
+                        onBlur={(e) => {
+                          setPasswordFocused(false)
+                          field.onBlur()
+                        }}
+                        value={field.value}
+                        onChange={field.onChange}
+                        name={field.name}
+                      />
+                    </FormControl>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-4 h-4 w-4 text-[#7c857d] transition-colors hover:text-[#14201b]"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </button>
+                  </div>
 
-        {error && (
-          <Alert className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
-            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-            <AlertTitle className="text-red-800 dark:text-red-200">Signup Failed</AlertTitle>
-            <AlertDescription className="text-red-600 dark:text-red-400">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Password Field */}
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem className={inputStyles.formItem}>
-                  <FormLabel className={inputStyles.label}>
-                    <KeyRound className="h-4 w-4" />
-                    Password
-                  </FormLabel>
-                  <div className={inputStyles.container}>
-                    <div className="relative">
-                      <KeyRound className={inputStyles.icon} />
-                      <FormControl>
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Create a strong password"
-                          className={cn(inputStyles.base, "pr-12")}
-                          onFocus={() => setPasswordFocused(true)}
-                          onBlur={(e) => {
-                            setPasswordFocused(false);
-                            field.onBlur();
-                          }}
-                          value={field.value}
-                          onChange={field.onChange}
-                          name={field.name}
-                        />
-                      </FormControl>
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-4 h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showPassword ? <EyeOff /> : <Eye />}
-                      </button>
-                    </div>
-                    
-                    {/* Password Strength Indicator */}
-                    {passwordFocused && password && (
-                      <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                            Password Strength
-                          </span>
-                          <span className={cn("text-xs font-medium", 
-                            passwordStrength <= 2 ? "text-red-600" :
-                            passwordStrength <= 3 ? "text-yellow-600" :
-                            passwordStrength <= 4 ? "text-blue-600" : "text-green-600"
-                          )}>
-                            {getStrengthText(passwordStrength)}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className={cn("h-2 rounded-full transition-all duration-300", getStrengthColor(passwordStrength))}
-                            style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                          />
-                        </div>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 space-y-1">
-                          <div className={cn("flex items-center gap-2", password.length >= 8 ? "text-green-600" : "")}>
-                            <div className={cn("w-1 h-1 rounded-full", password.length >= 8 ? "bg-green-500" : "bg-gray-300")} />
-                            At least 8 characters
-                          </div>
-                          <div className={cn("flex items-center gap-2", /[A-Z]/.test(password) ? "text-green-600" : "")}>
-                            <div className={cn("w-1 h-1 rounded-full", /[A-Z]/.test(password) ? "bg-green-500" : "bg-gray-300")} />
-                            One uppercase letter
-                          </div>
-                          <div className={cn("flex items-center gap-2", /[a-z]/.test(password) ? "text-green-600" : "")}>
-                            <div className={cn("w-1 h-1 rounded-full", /[a-z]/.test(password) ? "bg-green-500" : "bg-gray-300")} />
-                            One lowercase letter
-                          </div>
-                          <div className={cn("flex items-center gap-2", /[0-9]/.test(password) ? "text-green-600" : "")}>
-                            <div className={cn("w-1 h-1 rounded-full", /[0-9]/.test(password) ? "bg-green-500" : "bg-gray-300")} />
-                            One number
-                          </div>
-                          <div className={cn("flex items-center gap-2", /[^A-Za-z0-9]/.test(password) ? "text-green-600" : "")}>
-                            <div className={cn("w-1 h-1 rounded-full", /[^A-Za-z0-9]/.test(password) ? "bg-green-500" : "bg-gray-300")} />
-                            One special character
-                          </div>
-                        </div>
+                  {passwordFocused && password && (
+                    <div className="mt-3 border border-[#14201b]/10 bg-[#efeadd] p-3.5">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-[0.625rem] uppercase tracking-[0.12em] text-[#4d574f]">
+                          Strength
+                        </span>
+                        <span
+                          className={cn(
+                            'text-[0.625rem] font-medium uppercase tracking-[0.1em]',
+                            passwordStrength <= 2
+                              ? 'text-[#a04a3a]'
+                              : passwordStrength <= 3
+                                ? 'text-[#a98a55]'
+                                : 'text-[#1c3d32]',
+                          )}
+                        >
+                          {getStrengthText(passwordStrength)}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
-            />
-
-            {/* Confirm Password Field */}
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem className={inputStyles.formItem}>
-                  <FormLabel className={inputStyles.label}>
-                    <Shield className="h-4 w-4" />
-                    Confirm Password
-                  </FormLabel>
-                  <div className={inputStyles.container}>
-                    <div className="relative">
-                      <Shield className={inputStyles.icon} />
-                      <FormControl>
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm your password"
-                          className={cn(inputStyles.base, "pr-12")}
-                          {...field}
+                      <div className="h-px w-full bg-[#14201b]/10">
+                        <div
+                          className={cn(
+                            'h-px transition-all duration-200',
+                            passwordStrength <= 2
+                              ? 'bg-[#a04a3a]'
+                              : passwordStrength <= 3
+                                ? 'bg-[#a98a55]'
+                                : 'bg-[#1c3d32]',
+                          )}
+                          style={{ width: `${(passwordStrength / 5) * 100}%` }}
                         />
-                      </FormControl>
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-4 h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff /> : <Eye />}
-                      </button>
+                      </div>
+                      <ul className="mt-3 space-y-1">
+                        {[
+                          ['At least 8 characters', password.length >= 8],
+                          ['One uppercase letter', /[A-Z]/.test(password)],
+                          ['One lowercase letter', /[a-z]/.test(password)],
+                          ['One number', /[0-9]/.test(password)],
+                          ['One special character', /[^A-Za-z0-9]/.test(password)],
+                        ].map(([label, met]) => (
+                          <li
+                            key={label as string}
+                            className={cn(
+                              'flex items-center gap-2 text-[0.6875rem]',
+                              met ? 'text-[#1c3d32]' : 'text-[#7c857d]',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'h-[3px] w-[3px] rounded-full',
+                                met ? 'bg-[#1c3d32]' : 'bg-[#14201b]/25',
+                              )}
+                            />
+                            {label}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
+                  )}
+                </div>
+                <FormMessage className={inputStyles.error} />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem className={inputStyles.formItem}>
+                <FormLabel className={inputStyles.label}>
+                  <Shield className="h-3 w-3" />
+                  Confirm password
+                </FormLabel>
+                <div className={inputStyles.container}>
+                  <div className="relative">
+                    <Shield className={inputStyles.icon} />
+                    <FormControl>
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Repeat your password"
+                        className={cn(inputStyles.base, 'pr-12')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-4 h-4 w-4 text-[#7c857d] transition-colors hover:text-[#14201b]"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff /> : <Eye />}
+                    </button>
                   </div>
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
-            />
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading || !token}
-              className="w-full h-12 bg-primary hover:bg-primary-dark text-white font-medium transition-all duration-300"
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Activating Account...
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Complete Teacher Signup
-                </div>
-              )}
-            </Button>
-          </form>
-        </Form>
+                <FormMessage className={inputStyles.error} />
+              </FormItem>
+            )}
+          />
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Having trouble? Contact your school administrator for assistance.
-          </p>
-        </div>
-      </div>
-    </AuthWrapper>
+          <Button
+            type="submit"
+            disabled={isLoading || !token}
+            className="h-12 w-full rounded-[2px] bg-[#14201b] text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none transition-colors duration-200 hover:bg-[#1c3d32] disabled:bg-[#14201b]/20 disabled:text-[#14201b]/40"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Activating…
+              </span>
+            ) : (
+              'Activate account'
+            )}
+          </Button>
+        </form>
+      </Form>
+
+      <p className="mt-8 border-t border-[#14201b]/10 pt-5 text-[0.6875rem] leading-relaxed text-[#7c857d]">
+        Having trouble? Ask your school administrator for a fresh invitation, or{' '}
+        <Link href="/login" className="text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4">
+          sign in
+        </Link>
+        .
+      </p>
+    </AuthRecoveryShell>
   )
 }
 

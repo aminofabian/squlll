@@ -8,13 +8,13 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  GraduationCap,
   ArrowLeft,
   Check,
   Circle,
   Phone,
 } from "lucide-react";
 import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
+import { SqulWordmark } from "@/components/brand/SqulMark";
 import {
   formatKenyanPhone,
   normalizeKenyanPhone,
@@ -307,96 +307,85 @@ export default function SignupPage() {
   // ─── Render ──────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#f6faf8] font-sans">
+    <div className="onboarding-flow min-h-screen bg-[#f7f4ec] font-sans text-[#14201b]">
       <div className="grid min-h-screen lg:grid-cols-2">
         {/* Brand panel */}
-        <div className="relative hidden overflow-hidden bg-[#0a1f1a] lg:flex lg:flex-col">
-          <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <aside className="relative hidden overflow-hidden bg-[#0d201a] lg:flex lg:flex-col">
+          <div className="absolute inset-0" aria-hidden>
             <img
               src="/schooll.png"
               alt=""
-              className="h-full w-full object-cover object-[50%_35%]"
+              className="h-full w-full object-cover object-[50%_35%] opacity-45 grayscale-[0.2]"
             />
-            <div className="absolute inset-0 bg-[#0a1f1a]/88" />
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0a1f1a]/70 via-[#1d5547]/35 to-[#0a1f1a]/90" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1f1a] via-transparent to-[#0a1f1a]/40" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0d201a] via-[#0d201a]/85 to-[#0d201a]/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d201a] via-transparent to-[#0d201a]/50" />
+            <div className="mk-grain mk-grain--light" />
           </div>
+
           <div className="relative z-10 flex flex-1 flex-col justify-between p-10 xl:p-14">
             <div>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
+                className="inline-flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.16em] text-white/40 transition-colors duration-200 hover:text-white"
               >
-                <ArrowLeft size={16} aria-hidden />
+                <ArrowLeft size={13} aria-hidden />
                 Back to home
               </Link>
-              <div className="mt-14 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
-                  <GraduationCap size={22} className="text-white" aria-hidden />
-                </div>
-                <span className="font-display text-3xl tracking-wide text-white">
-                  SQUL
-                </span>
+
+              <div className="mt-16">
+                <SqulWordmark tone="light" markSize={32} />
               </div>
-              <h1 className="mt-10 max-w-md font-display text-4xl leading-[1.12] tracking-tight text-white xl:text-[2.65rem]">
+
+              <h1 className="mt-12 max-w-md font-display text-[clamp(2.6rem,3.8vw,3.5rem)] leading-[1.0] tracking-[-0.025em] text-[#f7f4ec]">
                 Start your
-                <span className="block text-emerald-300/95">free term</span>
+                <span className="mt-1 block italic text-[#d8c9ab]">free term.</span>
               </h1>
-              <p className="mt-5 max-w-sm text-base leading-relaxed text-white/65">
-                Set up M-Pesa fees, admissions, and CBC marks for your school—90-day trial, no card required.
+              <p className="mt-6 max-w-sm text-[0.9375rem] leading-[1.7] text-white/55">
+                Set up M-Pesa fees, admissions and CBC marks for your school —
+                90 days free, no card required.
               </p>
             </div>
 
-            <ul className="space-y-4 border-t border-white/10 pt-10 text-sm text-white/55">
-              <li className="flex items-start gap-3">
-                <Check size={18} className="mt-0.5 shrink-0 text-emerald-300/80" aria-hidden />
-                <span>Go live in days—not a six-month IT project.</span>
+            <ul className="border-t border-white/10 pt-5">
+              <li className="flex items-baseline gap-3 border-b border-white/8 py-3.5 text-[0.75rem] leading-relaxed text-white/45">
+                <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#a98a55]" aria-hidden />
+                Go live in days — not a six-month IT project.
               </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/80" aria-hidden />
-                <span>Import your learner list and train the bursar before reporting day.</span>
+              <li className="flex items-baseline gap-3 py-3.5 text-[0.75rem] leading-relaxed text-white/45">
+                <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#a98a55]" aria-hidden />
+                Import your learner list and train the bursar before reporting day.
               </li>
             </ul>
           </div>
-        </div>
+        </aside>
 
         {/* Form panel */}
-        <div className="flex flex-col justify-center px-4 py-10 sm:px-8 lg:px-12 xl:px-16">
-          <div className="mx-auto w-full max-w-lg">
-            <div className="mb-6 lg:hidden">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-[#1d5547] hover:text-[#2d8570]"
-              >
-                <ArrowLeft size={16} aria-hidden />
-                Back to home
-              </Link>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#1d5547]/25 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
-                  <GraduationCap size={20} className="text-white" aria-hidden />
-                </div>
-                <span className="font-display text-2xl text-[#1d5547]">SQUL</span>
-              </div>
+        <main className="flex min-h-screen flex-col px-6 py-8 sm:px-10 lg:px-14">
+          <div className="flex items-center justify-between">
+            <div className="lg:hidden">
+              <SqulWordmark markSize={28} />
             </div>
+            <Link
+              href="/"
+              className="ml-auto text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] transition-colors duration-200 hover:text-[#14201b]"
+            >
+              Back to home
+            </Link>
+          </div>
 
-            <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-900/10 shadow-sm lg:hidden">
-              <img
-                src="/schooll.png"
-                alt="Kenyan school building"
-                className="h-44 w-full object-cover object-[50%_35%] sm:h-52"
-              />
-            </div>
-
-            <div className="mb-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547]">
-                Create account
-              </p>
-              <h2 className="mt-2 font-display text-3xl tracking-tight text-slate-900">
-                Set up your school
+          <div className="mx-auto flex w-full max-w-[30rem] flex-1 flex-col justify-center py-10">
+            <div className="mb-7">
+              <p className="mk-eyebrow">Create account</p>
+              <h2 className="mt-6 font-display text-[2.4rem] leading-[1.03] tracking-[-0.02em] text-[#14201b]">
+                Set up your school.
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Three quick steps—your details, school name, then confirm. Already on SQUL?{" "}
-                <Link href="/login" className="font-semibold text-[#1d5547] hover:text-[#2d8570]">
+              <p className="mt-4 text-[0.8125rem] leading-[1.7] text-[#4d574f]">
+                Three short steps — your details, school name, then confirm.
+                Already on SQUL?{" "}
+                <Link
+                  href="/login"
+                  className="text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4 transition-colors hover:decoration-[#14201b]"
+                >
                   Sign in
                 </Link>
                 .
@@ -404,7 +393,7 @@ export default function SignupPage() {
             </div>
 
             {/* Step indicators */}
-            <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
+            <div className="mb-8 flex items-center gap-2 border-y border-[#14201b]/10 py-4">
               {STEPS.map((step, idx) => (
                 <div key={step.id} className="flex items-center gap-2">
                   <button
@@ -414,47 +403,39 @@ export default function SignupPage() {
                     }}
                     disabled={idx > currentStep}
                     className={cn(
-                      "flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-                      idx === currentStep &&
-                        "bg-[#1d5547] text-white shadow-sm",
-                      idx < currentStep &&
-                        "cursor-pointer bg-[#1d5547]/10 text-[#1d5547] hover:bg-[#1d5547]/15",
-                      idx > currentStep && "bg-slate-100 text-slate-400",
+                      "flex items-center gap-2 text-[0.6875rem] font-medium transition-colors duration-200",
+                      idx === currentStep && "text-[#14201b]",
+                      idx < currentStep && "cursor-pointer text-[#4d574f] hover:text-[#14201b]",
+                      idx > currentStep && "text-[#14201b]/25",
                     )}
                   >
                     <span
                       className={cn(
-                        "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
-                        idx === currentStep && "bg-white/20",
-                        idx < currentStep && "bg-[#1d5547]/15",
-                        idx > currentStep && "bg-slate-200",
+                        "flex h-5 w-5 items-center justify-center rounded-full border font-mono text-[0.5rem] tabular-nums",
+                        idx === currentStep && "border-[#1c3d32] bg-[#1c3d32] text-[#f7f4ec]",
+                        idx < currentStep && "border-[#1c3d32]/30 text-[#1c3d32]",
+                        idx > currentStep && "border-[#14201b]/15 text-[#14201b]/25",
                       )}
                     >
-                      {idx < currentStep ? (
-                        <Check size={12} aria-hidden />
-                      ) : (
-                        idx + 1
-                      )}
+                      {idx < currentStep ? <Check size={10} aria-hidden /> : String(idx + 1).padStart(2, "0")}
                     </span>
                     <span className="hidden sm:inline">{step.title}</span>
                   </button>
                   {idx < STEPS.length - 1 && (
-                    <div className="h-px w-4 bg-emerald-900/15 sm:w-6" />
+                    <span className="mx-1 h-px w-5 bg-[#14201b]/10" aria-hidden />
                   )}
                 </div>
               ))}
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm">
+            <div>
               {(error || success) && (
                 <div
                   role={error ? "alert" : "status"}
                   className={cn(
-                    "border-b px-6 py-3 text-sm font-medium",
-                    error &&
-                      "border-red-200 bg-red-50 text-red-700",
-                    success &&
-                      "border-emerald-200 bg-emerald-50 text-emerald-800",
+                    "mb-5 border-l-2 py-1.5 pl-4 text-[0.8125rem] leading-relaxed",
+                    error && "border-[#a04a3a] text-[#8a3a2c]",
+                    success && "border-[#1c3d32] text-[#1c3d32]",
                   )}
                 >
                   {error}
@@ -464,7 +445,7 @@ export default function SignupPage() {
 
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-5 p-6 sm:p-8"
+                className="space-y-5"
               >
             {/* ── Step 0: Personal Info ── */}
             <div className={cn("space-y-4", currentStep !== 0 && "hidden")}>
@@ -507,13 +488,13 @@ export default function SignupPage() {
                           key={i}
                           className={cn(
                             "flex items-center gap-1.5 text-xs transition-colors",
-                            met ? "text-[#1d5547]" : "text-slate-400",
+                            met ? "text-[#1c3d32]" : "text-[#7c857d]",
                           )}
                         >
                           {met ? (
                             <Check size={14} className="shrink-0" aria-hidden />
                           ) : (
-                            <Circle size={14} className="shrink-0 text-slate-300" aria-hidden />
+                            <Circle size={12} className="shrink-0 text-[#14201b]/20" aria-hidden />
                           )}
                           {rule.text}
                         </div>
@@ -535,11 +516,11 @@ export default function SignupPage() {
                 disabled={isSubmitting}
               />
               <div>
-                <label className="mb-1.5 block font-ui text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
                   School portal address
                 </label>
-                <div className="flex overflow-hidden rounded-lg border border-emerald-900/15 bg-[#f6faf8] transition-all focus-within:ring-2 focus-within:ring-[#1d5547]/25">
-                  <span className="flex items-center border-r border-emerald-900/10 px-3 text-sm text-slate-500">
+                <div className="flex overflow-hidden rounded-[2px] border border-[#14201b]/15 bg-[#fcfaf4] transition-colors focus-within:border-[#1c3d32] focus-within:ring-2 focus-within:ring-[#1c3d32]/10">
+                  <span className="flex items-center border-r border-[#14201b]/10 px-3 text-[0.8125rem] text-[#7c857d]">
                     https://
                   </span>
                   <input
@@ -552,9 +533,9 @@ export default function SignupPage() {
                       });
                       setIsUrlEdited(true);
                     }}
-                    className="flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0"
+                    className="h-12 flex-1 border-0 bg-transparent px-3 text-[0.875rem] text-[#14201b] placeholder:text-[#14201b]/30 focus:ring-0"
                   />
-                  <span className="flex items-center border-l border-emerald-900/10 px-3 text-sm text-slate-500">
+                  <span className="flex items-center border-l border-[#14201b]/10 px-3 text-[0.8125rem] text-[#7c857d]">
                     .squl.co.ke
                   </span>
                 </div>
@@ -568,17 +549,17 @@ export default function SignupPage() {
                       );
                       form.setValue("schoolUrl", url, { shouldValidate: true });
                     }}
-                    className="mt-1.5 text-xs font-medium text-[#1d5547] hover:text-[#2d8570] hover:underline"
+                    className="mt-2 text-[0.6875rem] font-medium text-[#1c3d32] underline decoration-[#1c3d32]/25 underline-offset-4 hover:decoration-[#1c3d32]"
                   >
                     Reset to auto-generated
                   </button>
                 )}
                 {form.formState.errors.schoolUrl && (
-                  <p className="mt-1.5 text-xs text-red-600">
+                  <p className="mt-2 text-[0.6875rem] text-[#a04a3a]">
                     {form.formState.errors.schoolUrl.message}
                   </p>
                 )}
-                <p className="mt-1.5 text-xs text-slate-500">
+                <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#7c857d]">
                   Your staff and parents will use this link. We suggest one from your school name.
                 </p>
               </div>
@@ -586,7 +567,7 @@ export default function SignupPage() {
 
             {/* ── Step 2: Review ── */}
             <div className={cn("space-y-4", currentStep !== 2 && "hidden")}>
-              <h3 className="font-ui text-xs font-semibold uppercase tracking-[0.14em] text-[#1d5547]">
+              <h3 className="text-[0.625rem] font-medium uppercase tracking-[0.16em] text-[#7c857d]">
                 Review before you create
               </h3>
               <ReviewRow label="Full Name" value={form.watch("name")} />
@@ -596,7 +577,7 @@ export default function SignupPage() {
                 value={formatKenyanPhone(form.watch("phoneNumber"))}
               />
               <ReviewRow label="Password" value="••••••••" />
-              <hr className="border-emerald-900/10" />
+              <hr className="border-[#14201b]/10" />
               <ReviewRow label="School Name" value={form.watch("schoolName")} />
               <ReviewRow
                 label="School URL"
@@ -609,20 +590,20 @@ export default function SignupPage() {
                   <input
                     type="checkbox"
                     {...form.register("acceptTerms")}
-                    className="mt-0.5 h-4 w-4 rounded border-emerald-900/20 text-[#1d5547] focus:ring-[#1d5547]/30"
+                    className="mt-0.5 h-3.5 w-3.5 rounded-[2px] border-[#14201b]/25 text-[#1c3d32] focus:ring-[#1c3d32]/25"
                   />
-                  <span className="text-xs leading-relaxed text-slate-600">
+                  <span className="text-[0.75rem] leading-relaxed text-[#4d574f]">
                     I agree to the{" "}
                     <Link
                       href="/terms"
-                      className="font-medium text-[#1d5547] hover:text-[#2d8570] hover:underline"
+                      className="font-medium text-[#14201b] underline decoration-[#14201b]/25 underline-offset-2 hover:decoration-[#14201b]"
                     >
                       Terms of Service
                     </Link>{" "}
                     and{" "}
                     <Link
                       href="/privacy"
-                      className="font-medium text-[#1d5547] hover:text-[#2d8570] hover:underline"
+                      className="font-medium text-[#14201b] underline decoration-[#14201b]/25 underline-offset-2 hover:decoration-[#14201b]"
                     >
                       Privacy Policy
                     </Link>
@@ -637,7 +618,7 @@ export default function SignupPage() {
             </div>
 
             {/* ── Navigation Buttons ── */}
-            <div className="flex items-center justify-between border-t border-emerald-900/10 pt-5">
+            <div className="flex items-center justify-between border-t border-[#14201b]/10 pt-6">
               <div>
                 {!isFirstStep && (
                   <Button
@@ -645,7 +626,7 @@ export default function SignupPage() {
                     variant="ghost"
                     onClick={handlePrev}
                     disabled={isSubmitting}
-                    className="text-slate-600 hover:text-slate-900"
+                    className="text-[#4d574f] hover:bg-transparent hover:text-[#14201b]"
                   >
                     Back
                   </Button>
@@ -656,7 +637,7 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     onClick={handleNext}
-                    className="bg-[#1d5547] font-semibold text-white hover:bg-[#2d8570]"
+                    className="h-11 rounded-[2px] bg-[#14201b] px-6 text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none hover:bg-[#1c3d32]"
                   >
                     Continue
                   </Button>
@@ -664,7 +645,7 @@ export default function SignupPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="min-w-[140px] bg-[#1d5547] font-semibold text-white hover:bg-[#2d8570] disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+                    className="h-11 min-w-[9.5rem] rounded-[2px] bg-[#14201b] px-6 text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none hover:bg-[#1c3d32] disabled:bg-[#14201b]/20 disabled:text-[#14201b]/40"
                   >
                     {isSubmitting ? "Creating…" : "Create school"}
                   </Button>
@@ -674,17 +655,17 @@ export default function SignupPage() {
               </form>
             </div>
 
-            <p className="mt-8 text-center text-sm text-slate-500">
+            <p className="mt-8 text-[0.8125rem] text-[#4d574f]">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-semibold text-[#1d5547] hover:text-[#2d8570]"
+                className="font-medium text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4 hover:decoration-[#14201b]"
               >
                 Sign in
               </Link>
             </p>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
@@ -715,11 +696,11 @@ function Field({
 
   return (
     <div>
-      <label className="mb-1.5 block font-ui text-sm font-medium text-slate-700">
+      <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
         {label}
       </label>
       <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#7c857d]">
           {icon}
         </div>
         <input
@@ -729,16 +710,16 @@ function Field({
           disabled={disabled}
           onFocus={onFocus}
           className={cn(
-            "h-11 w-full rounded-lg border bg-[#f6faf8] pl-10 pr-3 text-sm transition-all",
-            "text-slate-900 placeholder:text-slate-400",
+            "h-12 w-full rounded-[2px] border bg-[#fcfaf4] pl-10 pr-3 text-[0.875rem] transition-colors",
+            "text-[#14201b] placeholder:text-[#14201b]/30",
             error
-              ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
-              : "border-emerald-900/15 focus:border-[#1d5547]/40 focus:ring-2 focus:ring-[#1d5547]/20",
-            "disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400",
+              ? "border-[#a04a3a]/60 focus:border-[#a04a3a] focus:ring-2 focus:ring-[#a04a3a]/15"
+              : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/10",
+            "disabled:cursor-not-allowed disabled:bg-[#efeadd] disabled:text-[#14201b]/40",
           )}
         />
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-600">{error.message}</p>}
+      {error && <p className="mt-2 text-[0.6875rem] text-[#a04a3a]">{error.message}</p>}
     </div>
   );
 }
@@ -756,23 +737,23 @@ function PhoneField({
 
   return (
     <div>
-      <label className="mb-1.5 flex items-center justify-between font-ui text-sm font-medium text-slate-700">
+      <label className="mb-2 flex items-center justify-between text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
         <span>Phone Number</span>
-        <span className="text-[11px] font-normal text-slate-400">
+        <span className="text-[0.5625rem] font-normal normal-case tracking-normal text-[#7c857d]">
           for urgent school updates
         </span>
       </label>
       <div
         className={cn(
-          "flex overflow-hidden rounded-lg border bg-[#f6faf8] transition-all focus-within:ring-2",
+          "flex overflow-hidden rounded-[2px] border bg-[#fcfaf4] transition-colors focus-within:ring-2",
           error
-            ? "border-red-300 focus-within:border-red-400 focus-within:ring-red-500/20"
-            : "border-emerald-900/15 focus-within:border-[#1d5547]/40 focus-within:ring-[#1d5547]/20",
+            ? "border-[#a04a3a]/60 focus-within:border-[#a04a3a] focus-within:ring-[#a04a3a]/15"
+            : "border-[#14201b]/15 focus-within:border-[#1c3d32] focus-within:ring-[#1c3d32]/10",
           disabled && "opacity-50",
         )}
       >
-        <span className="flex items-center gap-1.5 border-r border-emerald-900/10 pl-3 pr-2.5 text-sm font-semibold text-slate-600">
-          <Phone className="h-3.5 w-3.5 text-[#1d5547]/70" aria-hidden />
+        <span className="flex items-center gap-1.5 border-r border-[#14201b]/10 pl-3 pr-2.5 text-[0.8125rem] font-medium text-[#4d574f]">
+          <Phone className="h-3.5 w-3.5 text-[#1c3d32]/60" aria-hidden />
           +254
         </span>
         <input
@@ -783,13 +764,13 @@ function PhoneField({
           placeholder="712 345 678"
           maxLength={16}
           disabled={disabled}
-          className="h-11 flex-1 border-0 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0 disabled:cursor-not-allowed"
+          className="h-12 flex-1 border-0 bg-transparent px-3 text-[0.875rem] text-[#14201b] placeholder:text-[#14201b]/30 focus:ring-0 disabled:cursor-not-allowed"
         />
       </div>
       {error ? (
-        <p className="mt-1.5 text-xs text-red-600">{error.message}</p>
+        <p className="mt-2 text-[0.6875rem] text-[#a04a3a]">{error.message}</p>
       ) : (
-        <p className="mt-1.5 text-xs text-slate-500">
+        <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#7c857d]">
           Kenyan mobile number. We&apos;ll only call or text about your school
           account.
         </p>
@@ -802,9 +783,9 @@ function PhoneField({
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-1.5">
-      <span className="shrink-0 text-sm text-slate-500">{label}</span>
-      <span className="truncate text-right text-sm font-medium text-slate-900">
+    <div className="flex items-baseline justify-between gap-4 border-b border-[#14201b]/8 py-3">
+      <span className="shrink-0 text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">{label}</span>
+      <span className="truncate text-right text-[0.8125rem] font-medium text-[#14201b]">
         {value}
       </span>
     </div>

@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Clock } from 'lucide-react'
+import Link from 'next/link'
+import { SqulWordmark } from '@/components/brand/SqulMark'
 
 interface HeaderProps {
   subdomain: string
@@ -14,29 +15,34 @@ export const Header: React.FC<HeaderProps> = ({
   subdomain,
   currentStep,
   totalSteps,
-  badgeLabel = 'SCHOOL SETUP',
+  badgeLabel = 'School setup',
 }) => {
+  const label = subdomain
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 bg-white/90 backdrop-blur-sm p-2 rounded-md border border-gray-200/60 shadow-sm">
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#246a59] to-[#1a4d42] rounded-md flex items-center justify-center shadow-sm relative overflow-hidden">
-            <span className="relative text-sm font-bold text-white">
-              {subdomain.charAt(0).toUpperCase()}
-            </span>
+    <header className="border-b border-[#14201b]/10">
+      <div className="mx-auto flex max-w-[84rem] items-center justify-between gap-6 px-6 py-5 lg:px-10">
+        <div className="flex min-w-0 items-center gap-5">
+          <Link href="/" aria-label="SQUL home" className="transition-opacity hover:opacity-70">
+            <SqulWordmark markSize={28} />
+          </Link>
+          <span className="h-4 w-px shrink-0 bg-[#14201b]/15" aria-hidden />
+          <div className="min-w-0">
+            <p className="truncate text-[0.8125rem] font-medium leading-none text-[#14201b]">
+              {label}
+            </p>
+            <p className="mt-1.5 text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+              {badgeLabel}
+            </p>
           </div>
         </div>
-        <div className="min-w-0">
-          <h1 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
-            {subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-          </h1>
-          <p className="text-[9px] text-gray-500">{badgeLabel}</p>
-        </div>
+        <p className="shrink-0 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[#7c857d]">
+          Step {currentStep} <span className="text-[#14201b]/25">/ {totalSteps}</span>
+        </p>
       </div>
-      <div className="flex items-center gap-1 text-[10px] bg-[#246a59]/10 px-2 py-1 rounded border border-[#246a59]/20">
-        <Clock className="w-3 h-3 text-[#246a59]" />
-        <span className="text-[#246a59] font-semibold">STEP {currentStep}/{totalSteps}</span>
-      </div>
-    </div>
+    </header>
   )
 }

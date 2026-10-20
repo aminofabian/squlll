@@ -1,20 +1,13 @@
 'use client'
 
 import { Header } from "@/components/Header"
-import { Button } from "@/components/ui/button"
+import { SqulWordmark } from "@/components/brand/SqulMark"
 import Image from "next/image"
 import Link from "next/link"
-import { useStudentsStore } from "@/lib/stores/useStudentsStore"
-import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
-import { mockClasses } from "@/lib/data/mockclasses"
 import { LEGAL_META } from "@/lib/legal/legal-meta"
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import type { ReactNode } from "react"
 import {
-  Users,
-  GraduationCap,
-  BookOpen,
-  DollarSign,
   Play,
   Search,
   LayoutGrid,
@@ -29,7 +22,6 @@ import {
   NotebookPen,
   Smartphone,
   Monitor,
-  Star,
   UserCheck,
   Shield,
   Building2,
@@ -126,14 +118,6 @@ const LANDING_PLATFORM_MODULES: {
   },
 ]
 
-function LandingPlatformIcon({ icon: Icon }: { icon: LucideIcon }) {
-  return (
-    <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-sm ring-1 ring-[#1d5547]/30">
-      <Icon size={22} strokeWidth={2} className="text-white" aria-hidden />
-    </div>
-  )
-}
-
 const LANDING_WORKFLOW_BLOCKS: {
   id: string
   num: string
@@ -180,56 +164,15 @@ const LANDING_WORKFLOW_BLOCKS: {
   },
 ]
 
-function LandingWorkflowIcon({ icon: Icon }: { icon: LucideIcon }) {
-  return (
-    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#1d5547] shadow-sm ring-1 ring-[#1d5547]/25">
-      <Icon size={26} strokeWidth={2} className="text-white" aria-hidden />
-    </div>
-  )
-}
-
-function LandingWorkflowCard({
-  num,
-  icon,
-  title,
-  description,
-  bullets,
-}: (typeof LANDING_WORKFLOW_BLOCKS)[number]) {
-  return (
-    <div className="group relative h-full">
-      <div className="relative flex h-full flex-col rounded-2xl border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1d5547]/20 hover:shadow-md">
-        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
-          {num}
-        </div>
-        <div className="mb-6 flex items-start gap-5">
-          <LandingWorkflowIcon icon={icon} />
-          <div className="min-w-0 pt-1">
-            <h3 className="font-display text-2xl leading-snug text-slate-900">{title}</h3>
-            <div className="mt-2 h-0.5 w-10 rounded-full bg-gradient-to-r from-[#1d5547]/60 to-transparent" />
-          </div>
-        </div>
-        <p className="mb-6 text-sm leading-relaxed text-slate-600">{description}</p>
-        <ul className="mt-auto grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {bullets.map((item) => (
-            <li key={item} className="flex items-center gap-2 text-sm text-slate-600">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600/70" />
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
-}
-
 const LANDING_DEEP_DIVES: {
   id: string
   icon: LucideIcon
   title: string
   intro: string
-  image: string
-  imageAlt: string
+  image?: string
+  imageAlt?: string
   imageRight: boolean
+  imageKind: "report" | "photo" | "ledger"
   items: { title: string; description: string }[]
 }[] = [
   {
@@ -238,9 +181,8 @@ const LANDING_DEEP_DIVES: {
     title: "CBC marks & class setup",
     intro:
       "Teachers enter rubrics and exam marks once—SQUL holds class lists, subject registers, and the term reports parents collect on closing day.",
-    image: "/screenshots/class.jpg",
-    imageAlt: "Teachers reviewing class lists in a Kenyan school",
     imageRight: true,
+    imageKind: "report",
     items: [
       {
         title: "Streams & subjects",
@@ -265,6 +207,7 @@ const LANDING_DEEP_DIVES: {
     image: "/students/sq.png",
     imageAlt: "Learners in a Kenyan classroom",
     imageRight: false,
+    imageKind: "photo",
     items: [
       {
         title: "Digital admissions",
@@ -286,9 +229,8 @@ const LANDING_DEEP_DIVES: {
     title: "Bursar desk & M-Pesa",
     intro:
       "The work that happens before the principal's Monday meeting—matched payments, class arrears, and summaries the board expects.",
-    image: "/screenshots/teachers.jpg",
-    imageAlt: "School staff coordinating fees and administration",
     imageRight: true,
+    imageKind: "ledger",
     items: [
       {
         title: "M-Pesa reconciliation",
@@ -306,7 +248,7 @@ const LANDING_DEEP_DIVES: {
   },
 ]
 
-/** Lucide component for each FAQ icon key in `./landing-faq`. */
+
 const FAQ_ICON_COMPONENTS: Record<LandingFaqIconName, LucideIcon> = {
   shield: Shield,
   campus: Building2,
@@ -371,28 +313,6 @@ const LANDING_APP_DOWNLOAD_URL =
   process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL?.trim() ||
   "https://github.com/aminofabian/squlll/releases/download/app-android-latest/squl-app.apk"
 
-function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
-  return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-sm">
-      <Icon size={18} strokeWidth={2} className="text-white" aria-hidden />
-    </div>
-  )
-}
-
-function LandingFaqCard({ icon, question, answer }: (typeof LANDING_FAQ_ITEMS)[number]) {
-  return (
-    <div className="h-full rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
-      <div className="flex gap-4">
-        <LandingFaqIcon icon={icon} />
-        <div className="min-w-0">
-          <h3 className="font-ui text-base font-semibold leading-snug text-slate-900">{question}</h3>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">{answer}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function Reveal({
   children,
   className = "",
@@ -421,7 +341,7 @@ function Reveal({
           }
         })
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -6% 0px" },
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -431,8 +351,8 @@ function Reveal({
     <div
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`${className} transition-all duration-700 ease-out will-change-transform motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-        visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+      className={`${className} transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
       }`}
     >
       {children}
@@ -440,111 +360,136 @@ function Reveal({
   )
 }
 
-function LandingSectionHeader({
+/** Editorial section opener: kicker + display headline on the left, lede on the right. */
+function SectionIntro({
   kicker,
   title,
   description,
-  tone = "white",
-  wide = false,
+  aside,
 }: {
   kicker: string
   title: ReactNode
   description: ReactNode
-  tone?: "white" | "soft"
-  wide?: boolean
+  aside?: ReactNode
 }) {
   return (
     <Reveal>
-      <div className="relative mb-12 sm:mb-14">
-        <div
-          className={`relative overflow-hidden rounded-3xl border border-emerald-900/10 px-6 py-8 sm:px-8 sm:py-9 ${
-            tone === "soft" ? "bg-[#f7f6f2]" : "bg-white shadow-sm"
-          }`}
-        >
-          <div className="absolute left-0 top-0 hidden h-full w-1 rounded-full bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
-          <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
-            {kicker}
-          </p>
-          <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
-            {title}
-          </h2>
-          <p
-            className={`mt-5 max-w-3xl text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left ${
-              wide ? "" : "max-w-2xl"
-            }`}
-          >
-            {description}
-          </p>
+      <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+        <div className="lg:col-span-7">
+          <p className="mk-eyebrow">{kicker}</p>
+          <h2 className="mk-h2 mt-7">{title}</h2>
+        </div>
+        <div className="flex flex-col justify-end gap-8 pb-1 lg:col-span-4 lg:col-start-9">
+          <p className="mk-lede">{description}</p>
+          {aside}
         </div>
       </div>
     </Reveal>
   )
 }
 
-function LandingDeepDiveBlock({
-  icon,
-  title,
-  intro,
-  items,
-  image,
-  imageAlt,
-  imageRight,
-}: (typeof LANDING_DEEP_DIVES)[number]) {
-  const copy = (
-    <div className="space-y-6">
-      <div className="flex items-start gap-4">
-        <LandingWorkflowIcon icon={icon} />
-        <div className="min-w-0 pt-1">
-          <h3 className="font-display text-2xl leading-snug text-slate-900 sm:text-3xl">{title}</h3>
-        </div>
-      </div>
-      <p className="text-base leading-relaxed text-slate-600">{intro}</p>
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div
-            key={item.title}
-            className="rounded-2xl border border-emerald-900/10 bg-white px-5 py-4 shadow-sm"
-          >
-            <h4 className="font-ui text-sm font-semibold text-[#1d5547]">{item.title}</h4>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.description}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
-  const visual = (
-    <div className="relative overflow-hidden rounded-3xl border border-emerald-900/10 shadow-[0_30px_70px_-40px_rgba(10,31,26,0.25)]">
-      <Image
-        src={image}
-        alt={imageAlt}
-        width={1200}
-        height={800}
-        sizes="(min-width: 768px) 50vw, 100vw"
-        className="h-[min(380px,55vw)] w-full object-cover md:h-[420px]"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a1f1a]/50 via-transparent to-transparent" />
-    </div>
-  )
-
+/**
+ * The six modules, set as a ledger rather than a card grid.
+ * A hairline between rows does the work six shadows used to.
+ */
+function PlatformLedger() {
   return (
-    <div className="grid items-center gap-10 md:grid-cols-2 md:gap-14 lg:gap-16">
-      {imageRight ? (
-        <>
-          {copy}
-          {visual}
-        </>
-      ) : (
-        <>
-          {visual}
-          {copy}
-        </>
-      )}
+    <Reveal className="mt-14 sm:mt-16">
+      <div>
+        {LANDING_PLATFORM_MODULES.map((feature, index) => {
+          const Icon = feature.icon
+          return (
+            <div
+              key={feature.title}
+              className="mk-row group grid gap-x-8 gap-y-1.5 md:grid-cols-[2.5rem_15rem_1fr_8rem] md:items-baseline"
+            >
+              <span className="font-mono text-[0.6875rem] tabular-nums text-[#14201b]/25">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 className="flex items-baseline gap-3 font-display text-[1.35rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
+                <Icon
+                  className="h-[15px] w-[15px] shrink-0 self-center text-[#1c3d32]/45"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
+                {feature.title}
+              </h3>
+              <p className="max-w-[46ch] text-[0.9375rem] leading-[1.65] text-[#4d574f]">
+                {feature.description}
+              </p>
+              <span className="hidden justify-self-end text-right text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] md:block">
+                {feature.highlight}
+              </span>
+              <span className="text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] md:hidden">
+                {feature.highlight}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </Reveal>
+  )
+}
+
+function WorkflowEntry({
+  num,
+  icon: Icon,
+  title,
+  description,
+  bullets,
+}: (typeof LANDING_WORKFLOW_BLOCKS)[number]) {
+  return (
+    <article className="group border-t border-[#14201b]/12 pt-7">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[0.625rem] tabular-nums tracking-[0.1em] text-[#14201b]/30">
+          {num}
+        </span>
+        <Icon
+          className="h-4 w-4 text-[#1c3d32]/40 transition-colors duration-200 group-hover:text-[#1c3d32]/70"
+          strokeWidth={1.5}
+          aria-hidden
+        />
+      </div>
+      <h3 className="mk-h3 mt-6">{title}</h3>
+      <p className="mt-3 text-[0.9375rem] leading-[1.7] text-[#4d574f]">{description}</p>
+      <ul className="mt-6 grid gap-x-8 gap-y-2 sm:grid-cols-2">
+        {bullets.map((item) => (
+          <li key={item} className="flex items-baseline gap-2.5 text-[0.8125rem] text-[#4d574f]">
+            <span className="h-[3px] w-[3px] shrink-0 translate-y-[-3px] rounded-full bg-[#a98a55]" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </article>
+  )
+}
+
+/** A quiet brass stamp — a detail, not a badge. */
+function TermStamp() {
+  return (
+    <div
+      className="relative flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center rounded-full border border-[#1c3d32]/20"
+      role="img"
+      aria-label="Term ready for 2026"
+    >
+      <div className="absolute inset-[6px] rounded-full border border-[#1c3d32]/10" />
+      <div className="relative text-center">
+        <p className="text-[0.5rem] font-medium uppercase tracking-[0.26em] text-[#1c3d32]/55">
+          Term
+        </p>
+        <p className="font-display text-[1.55rem] leading-none tracking-[-0.02em] text-[#1c3d32]">
+          Ready
+        </p>
+        <span className="mx-auto mt-2 block h-px w-6 bg-[#a98a55]/50" />
+        <p className="mt-2 font-mono text-[0.5625rem] tabular-nums tracking-[0.1em] text-[#1c3d32]/45">
+          2026
+        </p>
+      </div>
     </div>
   )
 }
 
-function LandingBursarSnapshot({
+function BursarSnapshot({
   activeStudents,
   feeCollectionRate,
   totalClasses,
@@ -556,71 +501,395 @@ function LandingBursarSnapshot({
   totalSubjects: number
 }) {
   const tiles = [
-    { label: "Learners on roll", value: activeStudents.toLocaleString(), icon: Users, tone: "text-emerald-700" },
-    { label: "Fees collected", value: `${feeCollectionRate}%`, icon: DollarSign, tone: "text-[#1d5547]" },
-    { label: "Classes timetabled", value: totalClasses.toLocaleString(), icon: GraduationCap, tone: "text-emerald-800" },
-    { label: "Subjects taught", value: totalSubjects.toLocaleString(), icon: BookOpen, tone: "text-[#1d5547]" },
+    { label: "Learners on roll", value: activeStudents.toLocaleString() },
+    { label: "Fees collected", value: `${feeCollectionRate}%` },
+    { label: "Classes timetabled", value: totalClasses.toLocaleString() },
+    { label: "Subjects taught", value: totalSubjects.toLocaleString() },
   ]
 
   return (
-    <div className="group relative">
-      <div className="relative overflow-hidden rounded-3xl border border-[#1d5547]/15 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-md">
-        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
-          03
-        </div>
-        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-start">
-          <LandingWorkflowIcon icon={LayoutGrid} />
-          <div className="min-w-0">
-            <h3 className="font-display text-2xl leading-snug text-slate-900">Bursar & admin snapshot</h3>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
-              See enrolment, fee collection, and class setup on one screen—the numbers your principal asks for before staff meeting.
+    <div className="mt-20 grid gap-10 border-y border-[#14201b]/10 py-12 lg:grid-cols-12 lg:gap-16">
+      <div className="lg:col-span-4">
+        <p className="mk-eyebrow">The morning view</p>
+        <h3 className="mt-5 font-display text-[1.75rem] leading-[1.1] tracking-[-0.015em]">
+          Bursar &amp; admin snapshot
+        </h3>
+        <p className="mt-4 max-w-sm text-[0.9375rem] leading-[1.7] text-[#4d574f]">
+          Enrolment, fee collection and class setup on one screen — the numbers your
+          principal asks for before staff meeting.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:col-span-8 lg:grid-cols-4">
+        {tiles.map((tile) => (
+          <div key={tile.label} className="border-l border-[#14201b]/12 pl-6">
+            <p className="font-display text-[2.4rem] leading-none tracking-[-0.02em] text-[#14201b]">
+              {tile.value}
+            </p>
+            <p className="mt-3 text-[0.625rem] uppercase leading-relaxed tracking-[0.15em] text-[#7c857d]">
+              {tile.label}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Product capture in a restrained browser frame — no fake widgets, no glare. */
+/** A term report, set like a document rather than a screenshot. */
+function ReportCardVisual() {
+  const rows = [
+    { subject: "Mathematics", score: "88", grade: "A" },
+    { subject: "English", score: "81", grade: "B+" },
+    { subject: "Biology", score: "86", grade: "A" },
+    { subject: "History", score: "79", grade: "B+" },
+    { subject: "Computer Studies", score: "92", grade: "A" },
+  ]
+
+  return (
+    <figure>
+      <div className="relative overflow-hidden border border-[#14201b]/10 bg-[#fcfaf4]">
+        <span className="absolute inset-x-0 top-0 h-px bg-[#a98a55]/50" aria-hidden />
+        <div className="px-6 py-7 sm:px-9 sm:py-9">
+          <div className="flex items-start justify-between gap-6 border-b border-[#14201b]/12 pb-6">
+            <div>
+              <p className="text-[0.5625rem] uppercase tracking-[0.2em] text-[#7c857d]">
+                Term 2 · 2026 · CBC
+              </p>
+              <p className="mt-2.5 font-display text-[1.75rem] leading-none tracking-[-0.015em]">
+                Grace Wanjiku
+              </p>
+              <p className="mt-2 text-[0.6875rem] text-[#7c857d]">
+                Form 2 East · Admission #2043
+              </p>
+            </div>
+            <span
+              className="flex h-16 w-16 shrink-0 -rotate-6 flex-col items-center justify-center rounded-full border border-[#a98a55]/45 text-center text-[0.4375rem] font-medium uppercase leading-[1.5] tracking-[0.12em] text-[#a98a55]/80"
+              aria-hidden
+            >
+              Ready
+              <br />
+              to print
+            </span>
+          </div>
+
+          <div className="mt-1">
+            <div className="grid grid-cols-[1fr_3rem_2.5rem] gap-4 py-3 text-[0.5rem] uppercase tracking-[0.16em] text-[#7c857d]">
+              <span>Subject</span>
+              <span className="text-right">Score</span>
+              <span className="text-right">Grade</span>
+            </div>
+            {rows.map((row) => (
+              <div
+                key={row.subject}
+                className="grid grid-cols-[1fr_3rem_2.5rem] items-baseline gap-4 border-t border-[#14201b]/8 py-3"
+              >
+                <span className="text-[0.8125rem] text-[#14201b]">{row.subject}</span>
+                <span className="text-right font-mono text-[0.6875rem] tabular-nums text-[#7c857d]">
+                  {row.score}
+                </span>
+                <span className="text-right font-display text-[1.05rem] leading-none text-[#14201b]">
+                  {row.grade}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 flex items-end justify-between border-t border-[#14201b]/12 pt-5">
+            <div>
+              <p className="text-[0.5rem] uppercase tracking-[0.18em] text-[#7c857d]">Mean score</p>
+              <p className="mt-1.5 font-display text-[2.5rem] leading-none tracking-[-0.02em]">
+                84.5
+              </p>
+            </div>
+            <p className="max-w-[11rem] text-right text-[0.625rem] leading-relaxed text-[#7c857d]">
+              Marks entered once. Printed for every parent on closing day.
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {tiles.map((tile) => {
-            const Icon = tile.icon
-            return (
+      </div>
+      <figcaption className="mt-3 flex items-center justify-between text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+        <span>Term report · Form 2</span>
+        <span>CBC</span>
+      </figcaption>
+    </figure>
+  )
+}
+
+/** M-Pesa reconciliation as a quiet morning ledger. */
+function FeeLedgerVisual() {
+  const rows = [
+    { name: "Amina Karanja", ref: "SFH7K2 · Paybill", amount: "12,400", status: "Matched" },
+    { name: "Brian Ochieng", ref: "SFH6P9 · Till", amount: "8,000", status: "Matched" },
+    { name: "David Mutua", ref: "No reference", amount: "5,500", status: "Review" },
+  ]
+
+  return (
+    <figure>
+      <div className="relative overflow-hidden border border-[#14201b]/10 bg-[#fcfaf4]">
+        <span className="absolute inset-x-0 top-0 h-px bg-[#a98a55]/50" aria-hidden />
+        <div className="px-6 py-7 sm:px-8 sm:py-8">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-[0.5625rem] uppercase tracking-[0.2em] text-[#7c857d]">
+                Bursar · live
+              </p>
+              <p className="mt-2 font-display text-[1.6rem] leading-none tracking-[-0.015em]">
+                M-Pesa, matched.
+              </p>
+            </div>
+            <p className="text-right font-mono text-[0.5rem] uppercase leading-[1.7] tracking-[0.1em] text-[#7c857d]">
+              Tue · 10:14
+              <br />
+              Paybill 4107
+            </p>
+          </div>
+
+          <div className="mt-7 flex items-end justify-between border-y border-[#14201b]/10 py-4">
+            <div>
+              <p className="text-[0.5rem] uppercase tracking-[0.16em] text-[#7c857d]">
+                Collected today
+              </p>
+              <p className="mt-1.5 font-display text-[2rem] leading-none tabular-nums tracking-[-0.02em]">
+                KES 25,900
+              </p>
+            </div>
+            <p className="text-[0.625rem] text-[#a98a55]">+12% on last Tuesday</p>
+          </div>
+
+          <div className="mt-1">
+            {rows.map((row) => (
               <div
-                key={tile.label}
-                className="rounded-xl border border-emerald-900/8 bg-[#f7f6f2] px-4 py-4 transition-colors group-hover:bg-[#f1ede4]"
+                key={row.name}
+                className="grid grid-cols-[1fr_auto_4.75rem] items-center gap-3 border-b border-[#14201b]/8 py-3.5"
               >
-                <div className="mb-2 flex items-center gap-2">
-                  <Icon className={`h-4 w-4 ${tile.tone}`} strokeWidth={2} />
-                  <span className={`font-ui text-xl font-bold tabular-nums ${tile.tone}`}>{tile.value}</span>
+                <div className="min-w-0">
+                  <p className="truncate text-[0.8125rem] text-[#14201b]">{row.name}</p>
+                  <p className="mt-0.5 font-mono text-[0.4375rem] uppercase tracking-[0.1em] text-[#7c857d]">
+                    {row.ref}
+                  </p>
                 </div>
-                <p className="text-xs leading-snug text-slate-600">{tile.label}</p>
+                <p className="font-mono text-[0.6875rem] tabular-nums text-[#14201b]">
+                  {row.amount}
+                </p>
+                <p
+                  className={`flex items-center justify-end gap-1.5 text-[0.5rem] uppercase tracking-[0.1em] ${
+                    row.status === "Matched" ? "text-[#1c3d32]" : "text-[#a98a55]"
+                  }`}
+                >
+                  <span
+                    className={`h-1 w-1 rounded-full ${
+                      row.status === "Matched" ? "bg-[#1c3d32]/60" : "bg-[#a98a55]"
+                    }`}
+                    aria-hidden
+                  />
+                  {row.status}
+                </p>
               </div>
-            )
-          })}
+            ))}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-[0.625rem] text-[#7c857d]">
+            <span>Receipts sent to 2 parents by SMS</span>
+            <span>1 to review</span>
+          </div>
+        </div>
+      </div>
+      <figcaption className="mt-3 flex items-center justify-between text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+        <span>Fee reconciliation · Morning</span>
+        <span>M-Pesa</span>
+      </figcaption>
+    </figure>
+  )
+}
+
+function PhotoFrame({ src, alt }: { src: string; alt: string }) {
+  return (
+    <figure>
+      <div className="mk-frame relative aspect-[5/4] w-full">
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(min-width: 1024px) 58vw, 100vw"
+          className="object-cover"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0d201a]/30 via-transparent to-transparent"
+          aria-hidden
+        />
+      </div>
+      <figcaption className="mt-3 flex items-center justify-between text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+        <span>From the schoolroom</span>
+        <span>Kenya</span>
+      </figcaption>
+    </figure>
+  )
+}
+
+function DeepDive({
+  index,
+  icon: Icon,
+  title,
+  intro,
+  items,
+  image,
+  imageAlt,
+  imageRight,
+  imageKind,
+}: (typeof LANDING_DEEP_DIVES)[number] & { index: number }) {
+  const visual = (
+    <div
+      className={`lg:col-span-7 ${imageRight ? "lg:order-2" : "lg:order-1"}`}
+    >
+      {imageKind === "photo" ? (
+        <PhotoFrame src={image ?? "/students/sq.png"} alt={imageAlt ?? ""} />
+      ) : imageKind === "report" ? (
+        <ReportCardVisual />
+      ) : (
+        <FeeLedgerVisual />
+      )}
+    </div>
+  )
+
+  const copy = (
+    <div className={`lg:col-span-5 ${imageRight ? "lg:order-1" : "lg:order-2"}`}>
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-[0.625rem] tabular-nums text-[#14201b]/30">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span className="h-px w-6 bg-[#14201b]/20" aria-hidden />
+        <Icon className="h-3.5 w-3.5 text-[#1c3d32]/45" strokeWidth={1.5} aria-hidden />
+      </div>
+      <h3 className="mt-5 font-display text-[clamp(2rem,3.4vw,2.9rem)] leading-[1.03] tracking-[-0.02em]">
+        {title}
+      </h3>
+      <p className="mt-5 text-[1rem] leading-[1.7] text-[#4d574f]">{intro}</p>
+      <dl className="mt-8">
+        {items.map((item) => (
+          <div key={item.title} className="border-t border-[#14201b]/10 py-4">
+            <dt className="text-[0.8125rem] font-medium text-[#14201b]">{item.title}</dt>
+            <dd className="mt-1.5 text-[0.8125rem] leading-[1.6] text-[#4d574f]">
+              {item.description}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+
+  return (
+    <article className="grid items-center gap-10 lg:grid-cols-12 lg:gap-16">
+      {copy}
+      {visual}
+    </article>
+  )
+}
+
+/** FAQ as a quiet accordion — one answer at a time, hairline rules, 260ms. */
+function FaqAccordion() {
+  const [open, setOpen] = useState<number | null>(0)
+
+  return (
+    <div>
+      {LANDING_FAQ_ITEMS.map((item, index) => {
+        const isOpen = open === index
+        return (
+          <div key={item.question} className="border-t border-[#14201b]/10 last:border-b">
+            <button
+              type="button"
+              onClick={() => setOpen(isOpen ? null : index)}
+              aria-expanded={isOpen}
+              className="group flex w-full items-start justify-between gap-8 py-6 text-left"
+            >
+              <span className="flex items-baseline gap-5">
+                <span className="font-mono text-[0.625rem] tabular-nums text-[#14201b]/25">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="font-display text-[1.3rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32] sm:text-[1.45rem]">
+                  {item.question}
+                </span>
+              </span>
+              <span className="relative mt-2 flex h-3 w-3 shrink-0 items-center justify-center">
+                <span className="absolute h-px w-3 bg-[#14201b]/45" aria-hidden />
+                <span
+                  className={`absolute h-3 w-px bg-[#14201b]/45 transition-[transform,opacity] duration-200 ${
+                    isOpen ? "rotate-90 opacity-0" : "opacity-100"
+                  }`}
+                  aria-hidden
+                />
+              </span>
+            </button>
+            <div
+              className={`grid transition-[grid-template-rows] duration-[260ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+              }`}
+            >
+              <div className="overflow-hidden">
+                <p className="max-w-[58ch] pb-7 pl-[2.3rem] pr-10 text-[0.9375rem] leading-[1.7] text-[#4d574f]">
+                  {item.answer}
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Trust numbers as a light breathing strip between the hero and the platform. */
+function TrustStrip() {
+  return (
+    <div className="border-b border-[#14201b]/10 bg-[#f7f4ec]">
+      <div className="mk-container py-10 sm:py-12">
+        <p className="mk-caption">Trusted across Kenya</p>
+        <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
+          {HERO_TRUST_STATS.map((stat, index) => (
+            <TrustStat
+              key={stat.label}
+              target={stat.target}
+              format={stat.format}
+              label={stat.label}
+              delay={index * 90}
+              decimals={"decimals" in stat ? stat.decimals : undefined}
+            />
+          ))}
         </div>
       </div>
     </div>
   )
 }
 
-function LandingTermReadyBadge() {
+function TrustStat({
+  target,
+  format,
+  label,
+  delay = 0,
+  decimals,
+}: {
+  target: number
+  format: (v: number) => string
+  label: string
+  delay?: number
+  decimals?: number
+}) {
+  const { value } = useAnimatedNumber(target, {
+    delay: delay + 200,
+    decimals: decimals ?? (Number.isInteger(target) ? 0 : 1),
+  })
   return (
-    <div
-      className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full sm:h-[7.75rem] sm:w-[7.75rem]"
-      role="img"
-      aria-label="Term ready for 2026"
-    >
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#e8f5f0] via-white to-[#dceee6] shadow-[0_16px_40px_-18px_rgba(29,85,71,0.25)] ring-1 ring-[#1d5547]/20" />
-      <div className="absolute inset-[5px] rounded-full border border-[#1d5547]/12" />
-      <div className="relative text-center">
-        <p className="font-ui text-[8px] font-semibold uppercase tracking-[0.22em] text-[#1d5547]/65">
-          Term
-        </p>
-        <p className="font-display text-[1.35rem] leading-none tracking-tight text-[#1d5547] sm:text-2xl">
-          Ready
-        </p>
-        <div className="mx-auto mt-1.5 h-px w-8 bg-[#1d5547]/20" />
-        <p className="font-ui mt-1.5 text-[9px] font-medium tabular-nums text-emerald-700">2026</p>
-      </div>
+    <div>
+      <p className="font-display text-[2.1rem] leading-none tracking-[-0.02em] tabular-nums text-[#14201b] sm:text-[2.4rem]">
+        {format(value)}
+      </p>
+      <p className="mt-3 text-[0.625rem] uppercase leading-relaxed tracking-[0.15em] text-[#7c857d]">
+        {label}
+      </p>
     </div>
   )
 }
+
 
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3
@@ -693,7 +962,7 @@ function HeroPreviewToggle({
 }) {
   return (
     <div
-      className="mx-auto flex w-fit items-center gap-1 rounded-full border border-white/15 bg-[#0a1f1a]/80 p-1 shadow-lg backdrop-blur-md"
+      className="flex w-fit items-center border border-white/15 bg-[#0b1a15]/55 backdrop-blur-md"
       role="group"
       aria-label="Preview layout"
     >
@@ -701,26 +970,26 @@ function HeroPreviewToggle({
         type="button"
         onClick={() => onChange("phone")}
         aria-pressed={mode === "phone"}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+        className={`flex items-center gap-2 px-3.5 py-2 text-[0.5625rem] font-medium uppercase tracking-[0.16em] transition-colors duration-200 ${
           mode === "phone"
-            ? "bg-[#f7f6f2] text-[#14201c] shadow-sm"
-            : "text-white/60 hover:text-white"
+            ? "bg-[#f7f4ec] text-[#14201b]"
+            : "text-white/45 hover:text-white"
         }`}
       >
-        <Smartphone className="h-3.5 w-3.5" strokeWidth={2} />
+        <Smartphone className="h-3 w-3" strokeWidth={1.75} />
         App
       </button>
       <button
         type="button"
         onClick={() => onChange("desktop")}
         aria-pressed={mode === "desktop"}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+        className={`flex items-center gap-2 px-3.5 py-2 text-[0.5625rem] font-medium uppercase tracking-[0.16em] transition-colors duration-200 ${
           mode === "desktop"
-            ? "bg-[#f7f6f2] text-[#14201c] shadow-sm"
-            : "text-white/60 hover:text-white"
+            ? "bg-[#f7f4ec] text-[#14201b]"
+            : "text-white/45 hover:text-white"
         }`}
       >
-        <Monitor className="h-3.5 w-3.5" strokeWidth={2} />
+        <Monitor className="h-3 w-3" strokeWidth={1.75} />
         Desktop
       </button>
     </div>
@@ -1541,14 +1810,16 @@ function HeroLiveDemoStrip({
   onSelectStudent: (id: string) => void
 }) {
   return (
-    <div className="mt-6 w-full border-t border-white/10 pt-5">
+    <div className="mt-8 w-full border-t border-white/10 pt-5">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+        <p className="text-[0.5625rem] font-medium uppercase tracking-[0.2em] text-[#d8c9ab]/75">
           See it update live
         </p>
-        <p className="text-[10px] text-white/45">Tap a student →</p>
+        <p className="text-[0.5625rem] uppercase tracking-[0.16em] text-white/40">
+          Choose a learner
+        </p>
       </div>
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-4 flex items-center gap-4">
         <div className="flex shrink-0 -space-x-2.5">
           {HERO_STUDENTS.map((student, i) => {
             const isSelected = student.id === selectedStudentId
@@ -1557,10 +1828,10 @@ function HeroLiveDemoStrip({
                 key={student.id}
                 type="button"
                 onClick={() => onSelectStudent(student.id)}
-                className={`hero-stat-pop rounded-full relative h-9 w-9 overflow-hidden ring-2 transition-all hover:z-10 hover:scale-105 sm:h-10 sm:w-10 ${
+                className={`hero-stat-pop relative h-8 w-8 overflow-hidden rounded-full ring-1 transition-all duration-200 hover:z-10 hover:scale-105 sm:h-9 sm:w-9 ${
                   isSelected
-                    ? "ring-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.35)]"
-                    : "ring-[#0a1f1a]/80 hover:ring-emerald-400/60"
+                    ? "ring-[#d8c9ab] ring-offset-2 ring-offset-[#0b1a15]"
+                    : "ring-white/25 hover:ring-white/60"
                 }`}
                 style={{ animationDelay: `${500 + i * 70}ms` }}
                 aria-label={`${student.name}, ${student.status}`}
@@ -1572,7 +1843,7 @@ function HeroLiveDemoStrip({
                   width={80}
                   height={80}
                   sizes="64px"
-                  className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
+                  className="h-full w-full scale-[1.55] object-cover object-[center_20%]"
                 />
               </button>
             )
@@ -1580,60 +1851,11 @@ function HeroLiveDemoStrip({
         </div>
         <p
           key={selectedStudent.id}
-          className="hero-profile-in rounded-lg min-w-0 flex-1 text-left text-sm font-medium leading-snug text-white"
+          className="hero-profile-in min-w-0 flex-1 text-left text-[0.8125rem] font-medium leading-snug text-white/75"
         >
           {selectedStudent.pitchLine}
         </p>
       </div>
-    </div>
-  )
-}
-
-function HeroTrustBar() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/15 bg-[#0a1f1a]/80 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.6)] backdrop-blur-lg">
-      <div className="border-b border-white/10 px-4 py-3 text-center sm:px-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70">
-          Trusted across Kenya
-        </p>
-      </div>
-      <div className="grid grid-cols-2 divide-x divide-y divide-white/10 sm:grid-cols-4 sm:divide-y-0">
-        {HERO_TRUST_STATS.map((stat, i) => (
-          <HeroTrustStat
-            key={stat.label}
-            target={stat.target}
-            format={stat.format}
-            label={stat.label}
-            delay={i * 100}
-            decimals={"decimals" in stat ? stat.decimals : undefined}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function HeroTrustStat({
-  target,
-  format,
-  label,
-  delay = 0,
-  decimals,
-}: {
-  target: number
-  format: (v: number) => string
-  label: string
-  delay?: number
-  decimals?: number
-}) {
-  const { value } = useAnimatedNumber(target, {
-    delay: delay + 300,
-    decimals: decimals ?? (Number.isInteger(target) ? 0 : 1),
-  })
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center px-3 py-4 text-center sm:px-5 sm:py-5">
-      <p className="text-lg font-bold tabular-nums text-white sm:text-xl">{format(value)}</p>
-      <p className="mt-1 max-w-[10rem] text-[10px] leading-snug text-white/65 sm:text-[11px]">{label}</p>
     </div>
   )
 }
@@ -1808,8 +2030,6 @@ function getHeroModuleMetric(
 }
 
 export default function Home() {
-  const { students } = useStudentsStore()
-  const { config } = useSchoolConfigStore()
   const [hoveredModule, setHoveredModule] = useState<string | null>(null)
   const [selectedStudentId, setSelectedStudentId] = useState(HERO_DEFAULT_STUDENT_ID)
   // undefined = derive from student; null = Home overview; string = explicit module
@@ -1868,82 +2088,39 @@ export default function Home() {
     return () => window.clearInterval(timer)
   }, [demoPaused])
   
-  // Calculate real statistics from the stores
-  const stats = useMemo(() => {
-    const totalStudents = students.length
-    const activeStudents = students.filter(s => s.isActive).length
-    const totalFeesOwed = students.reduce((sum, s) => sum + s.feesOwed, 0)
-    const totalFeesPaid = students.reduce((sum, s) => sum + s.totalFeesPaid, 0)
-    const totalClasses = mockClasses.filter(c => c.status === 'active').length
-    const totalSubjects = config?.selectedLevels.reduce((sum, level) => sum + level.subjects.length, 0) || 0
-    
-    // Calculate gender distribution
-    const maleStudents = students.filter(s => s.gender.toLowerCase() === 'male').length
-    const femaleStudents = students.filter(s => s.gender.toLowerCase() === 'female').length
-    
-    // Calculate fee collection rate
-    const feeCollectionRate = totalFeesPaid > 0 ? Math.round((totalFeesPaid / (totalFeesPaid + totalFeesOwed)) * 100) : 0
-    
-    return {
-      totalStudents,
-      activeStudents,
-      totalFeesOwed,
-      totalFeesPaid,
-      totalClasses,
-      totalSubjects,
-      maleStudents,
-      femaleStudents,
-      feeCollectionRate
-    }
-  }, [students, config])
-
   return (
-    <div className="squl-marketing bg-background font-sans">
-      {/* Hero — two-column pitch + product preview */}
-      <section className="relative overflow-x-hidden bg-[#0f2923]">
+    <div className="squl-marketing font-sans">
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-[#0b1a15]">
         <Header variant="hero" />
 
-        <div className="absolute inset-0">
+        <div className="absolute inset-0" aria-hidden>
           <Image
             src="/students/sq.png"
             alt=""
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[42%_center] lg:object-[55%_center]"
+            className="object-cover object-[70%_42%] opacity-90 saturate-[0.9] lg:object-[62%_45%]"
           />
-          <div className="absolute inset-0 bg-[#0a1f1a]/80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a1f1a] from-0% via-[#0a1f1a]/95 via-50% to-[#0a1f1a]/55 to-100% lg:via-[#0a1f1a]/88 lg:to-[#0a1f1a]/25" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1f1a]/90 via-transparent via-60% to-[#0f2923]" />
-          <div className="landing-hero-tail pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-40 sm:h-48 lg:h-56" aria-hidden />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1a15] via-[#0b1a15]/95 to-[#0b1a15]/30 lg:via-[#0b1a15]/85 lg:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0b1a15] via-transparent to-[#0b1a15]/55" />
+          <div className="mk-grain mk-grain--light" />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 pt-[4.5rem] sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
-          <div className="grid grid-cols-1 gap-7 sm:gap-8 lg:grid-cols-12 lg:items-center lg:gap-8 lg:pt-3 xl:gap-10">
-            {/* Left — pitch */}
-            <div
-              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center overflow-hidden rounded-3xl border border-white/20 bg-[#0a1f1a]/88 px-6 py-9 text-center shadow-[0_24px_80px_-32px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-9 sm:py-11 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:p-10 lg:text-left"
-              onMouseEnter={() => setDemoPaused(true)}
-              onMouseLeave={() => setDemoPaused(false)}
-            >
-              <div className="mb-4 flex items-center justify-center gap-2 lg:justify-start">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                <span className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
-                  School operations, connected
-                </span>
-              </div>
+        <div className="relative mk-container pb-16 pt-32 sm:pt-36 lg:pb-20 lg:pt-40">
+          <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
+            <div className="order-1 lg:col-span-6 xl:col-span-5">
+              <p className="mk-eyebrow mk-eyebrow--light">School operations, connected</p>
 
-              <h1 className="font-display w-full text-balance leading-[1.04] tracking-[-0.02em] text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.9)]">
-                <span className="block text-[2rem] sm:text-[2.4rem] lg:text-[2.75rem] xl:text-[3rem]">
-                  School management software
-                </span>
-                <span className="mt-1 block text-[2rem] italic text-emerald-200 drop-shadow-[0_2px_20px_rgba(0,0,0,0.85)] sm:text-[2.4rem] lg:text-[2.75rem] xl:text-[3rem]">
-                  built for Kenyan schools
-                </span>
+              <h1 className="mt-8 font-display text-[clamp(2.6rem,4vw,3.55rem)] leading-[0.99] tracking-[-0.025em] text-[#f7f4ec]">
+                School management
+                <span className="mt-2 block italic text-[#d8c9ab]">built for Kenyan schools.</span>
               </h1>
 
-              <p className="mx-auto mt-4 max-w-xl font-sans text-[15px] leading-relaxed text-pretty text-white/85 sm:text-base lg:mx-0">
-                Stop running your school through WhatsApp, Excel &amp; paper — admissions, M-Pesa fees, CBC marks, and parent SMS in one system trusted by schools across Kenya.
+              <p className="mt-7 max-w-[35rem] text-[1.0625rem] leading-[1.7] text-pretty text-white/65">
+                The software that holds admissions, M-Pesa fees, CBC marks and parent SMS
+                in one quiet system — so your office runs the way it should.
               </p>
 
               <HeroLiveDemoStrip
@@ -1952,50 +2129,28 @@ export default function Home() {
                 onSelectStudent={selectStudent}
               />
 
-              <div className="mt-6 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center lg:justify-start">
-                <Link href="/register" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className="h-12 w-full rounded-xl border-0 bg-[#f7f6f2] px-8 text-sm font-semibold text-[#14201c] shadow-lg shadow-black/20 hover:bg-white sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
-                  >
-                    Start Your Free Term
-                  </Button>
+              <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+                  Start your free term
+                  <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
                 </Link>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="lg"
                   onClick={() => setDemoOpen(true)}
-                  className="h-12 w-full rounded-xl border-white/25 bg-white/5 px-6 text-sm font-semibold text-white shadow-none backdrop-blur-sm hover:bg-white/10 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
+                  className="mk-btn mk-btn--ghost-light w-full sm:w-auto"
                 >
-                  <Play className="mr-2 h-3.5 w-3.5 fill-white" />
-                  See a demo
-                </Button>
+                  <Play className="h-3 w-3 fill-current" aria-hidden />
+                  See SQUL in motion
+                </button>
               </div>
 
-              <div className="mt-5 flex flex-col items-center gap-1.5 sm:items-start">
-                <p className="text-xs leading-relaxed text-white/65 sm:text-sm">
-                  90-day free trial · Full term access · No credit card
-                </p>
-                <a
-                  href={LANDING_APP_DOWNLOAD_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-white/65 underline-offset-4 transition-colors hover:text-white hover:underline sm:text-sm"
-                >
-                  <Smartphone className="h-3.5 w-3.5" />
-                  Download the Android app
-                </a>
-              </div>
+              <p className="mt-6 text-[0.625rem] uppercase tracking-[0.17em] text-white/45">
+                90-day free term · No credit card · Full access
+              </p>
             </div>
 
-            {/* Right — dashboard preview */}
-            <div
-              className="relative order-2 z-10 w-full min-w-0 overflow-visible lg:order-none lg:col-span-6"
-              onMouseEnter={() => setDemoPaused(true)}
-              onMouseLeave={() => setDemoPaused(false)}
-            >
-              <div className="mb-4 flex justify-center lg:mb-5">
+            <div className="order-2 lg:col-span-6 lg:col-start-7">
+              <div className="mb-5 flex justify-end">
                 <HeroPreviewToggle
                   mode={previewMode}
                   onChange={(mode) => {
@@ -2007,9 +2162,7 @@ export default function Home() {
               <div
                 key={previewMode}
                 className={`hero-profile-in ${
-                  previewMode === "phone"
-                    ? "flex justify-center"
-                    : "overflow-visible pb-8 pt-1"
+                  previewMode === "phone" ? "flex justify-center" : "overflow-visible pb-6"
                 }`}
               >
                 <HeroDashboardPanel
@@ -2038,436 +2191,361 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          <div className="mt-8 sm:mt-9 lg:mt-10">
-            <HeroTrustBar />
-          </div>
         </div>
       </section>
 
-      <main className="relative">
-        {/* Second screen — blends from dark hero into light content */}
-        <section className="landing-section-blend relative -mt-px overflow-hidden pb-24 sm:pb-28">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[min(480px,55vh)] overflow-hidden opacity-[0.18]" aria-hidden>
-            <Image
-              src="/students/sq.png"
-              alt=""
-              fill
-              sizes="100vw"
-              className="object-cover object-[50%_25%] lg:object-[58%_30%]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0f2923]/90 via-[#1a332c]/75 to-transparent" />
-          </div>
+      <main>
+        <TrustStrip />
 
-          <div className="relative z-10 mx-auto max-w-7xl px-4 pt-12 sm:px-6 sm:pt-14 lg:px-8 lg:pt-16">
-            <Reveal>
-            <div className="relative mb-12 sm:mb-14">
-              <div className="overflow-hidden rounded-3xl border border-white/40 bg-white/95 shadow-[0_32px_80px_-48px_rgba(10,31,26,0.35)] backdrop-blur-md">
-                <div className="absolute left-0 top-0 hidden h-full w-1 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700/40 sm:block" />
-                <div className="px-6 py-8 sm:px-8 sm:py-9 lg:pl-10">
-                  <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:text-left">
-                    Beyond the dashboard
-                  </p>
-                  <div className="flex flex-col items-center gap-8 text-center sm:flex-row sm:items-center sm:gap-10 sm:text-left">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="font-display text-4xl leading-[1.1] tracking-tight text-slate-900 sm:text-5xl">
-                        Run admissions, fees, and CBC
-                        <span className="block text-[#1d5547]">from one Kenyan-built system</span>
-                      </h2>
-                      <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">
-                        SQUL keeps your bursar, teachers, and parents on the same page—M-Pesa receipts, class lists, CBC marks, and SMS updates stay in sync from opening day through Term 3 reports.
-                      </p>
-                    </div>
-                    <LandingTermReadyBadge />
-                  </div>
-                </div>
-              </div>
-            </div>
-            </Reveal>
-
-            <div className="grid gap-6 md:grid-cols-2 md:gap-7 lg:grid-cols-3 lg:gap-8">
-              {LANDING_PLATFORM_MODULES.map((feature, index) => {
-                return (
-                  <Reveal key={feature.title} delay={index * 60}>
-                  <div className="group relative h-full">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="relative flex h-full flex-col rounded-2xl border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#1d5547]/25 group-hover:shadow-md">
-                      <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
-                        {String(index + 1).padStart(2, "0")}
-                      </div>
-                      <LandingPlatformIcon icon={feature.icon} />
-                      <h3 className="mb-3 font-display text-xl leading-snug text-slate-900">
-                        {feature.title}
-                      </h3>
-                      <p className="mb-6 flex-grow text-sm leading-relaxed text-slate-600">
-                        {feature.description}
-                      </p>
-                      <span className="font-ui w-fit rounded-full bg-[#f1ede4] px-3 py-1 text-xs font-semibold text-[#1d5547] ring-1 ring-[#e7e5dd]">
-                        {feature.highlight}
-                      </span>
-                    </div>
-                  </div>
-                  </Reveal>
-                )
-              })}
-            </div>
-
-          </div>
-        </section>
-
-        {/* Third screen — day-to-day workflows */}
-        <section className="relative border-t border-emerald-900/8 bg-gradient-to-b from-[#fbfaf6] via-[#f7f6f2] to-[#fbfaf6] py-20 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <LandingSectionHeader
-              kicker="How schools run day to day"
+        {/* ── Platform ──────────────────────────────────────────────────── */}
+        <section id="platform" className="mk-section scroll-mt-24">
+          <div className="mk-container">
+            <SectionIntro
+              kicker="The platform"
               title={
                 <>
-                  Everything your admin team touches—
-                  <span className="block text-[#1d5547]">in one Kenyan-built system</span>
+                  Everything the office runs on,
+                  <span className="block">
+                    <em>under one roof.</em>
+                  </span>
                 </>
               }
-              description="From CBC marks in the staff room to M-Pesa in the bursar&apos;s office—SQUL connects the workflows your team already runs, without forcing a new way of working."
+              description="Six modules, one record. Enter an admission, a payment or a mark once — and it stays true in the bursar's office, the staff room and the parent's phone."
+              aside={<TermStamp />}
             />
 
-            <div className="grid gap-8">
-              <div className="grid gap-8 md:grid-cols-2">
-                {LANDING_WORKFLOW_BLOCKS.slice(0, 2).map((block, i) => (
-                  <Reveal key={block.id} delay={i * 80} className="h-full">
-                    <LandingWorkflowCard {...block} />
-                  </Reveal>
-                ))}
-              </div>
+            <PlatformLedger />
 
-              <Reveal>
-                <LandingBursarSnapshot
-                  activeStudents={stats.activeStudents}
-                  feeCollectionRate={stats.feeCollectionRate}
-                  totalClasses={stats.totalClasses}
-                  totalSubjects={stats.totalSubjects}
-                />
-              </Reveal>
-
-              <div className="grid gap-8 md:grid-cols-2">
-                {LANDING_WORKFLOW_BLOCKS.slice(2, 4).map((block, i) => (
-                  <Reveal key={block.id} delay={i * 80} className="h-full">
-                    <LandingWorkflowCard {...block} />
-                  </Reveal>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* Testimonial */}
-        <section className="relative border-t border-emerald-900/10 bg-[#f7f6f2] py-20 sm:py-24">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <Reveal>
-            <figure className="rounded-3xl border border-emerald-900/10 bg-[#fbfaf6] px-6 py-12 text-center shadow-sm sm:px-12">
-              <div className="mb-8 flex items-center justify-center gap-4">
-                <span className="h-px w-10 bg-[#1d5547]/30" aria-hidden />
-                <span className="font-ui text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547]">
-                  What a bursar says
-                </span>
-                <span className="h-px w-10 bg-[#1d5547]/30" aria-hidden />
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#14201b]/10 pt-6">
+                <p className="text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+                  All six modules included in every term
+                </p>
+                <Link href="/register" className="mk-link text-[0.8125rem]">
+                  Begin with your learner list
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
               </div>
-              <blockquote className="font-display text-2xl leading-snug tracking-tight text-slate-900 sm:text-[1.75rem]">
-                “We stopped chasing parents for fees in the office. SQUL matches the M-Pesa
-                payments and the SMS reminders do the chasing for us.”
-              </blockquote>
-              <figcaption className="mt-8">
-                <div className="mb-3 flex items-center justify-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
-                  ))}
-                </div>
-                <p className="font-ui text-sm font-semibold text-slate-900">Jane Njeri</p>
-                <p className="mt-0.5 text-sm text-slate-500">Bursar, Unity Secondary School · Nakuru</p>
-              </figcaption>
-            </figure>
             </Reveal>
           </div>
         </section>
 
-        {/* Fourth screen — in the schoolroom */}
-        <section className="relative border-t border-emerald-900/10 bg-[#fbfaf6] py-20 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <LandingSectionHeader
-              tone="soft"
-              wide
-              kicker="Built for real schoolrooms"
+        {/* ── Day to day ────────────────────────────────────────────────── */}
+        <section className="mk-section border-t border-[#14201b]/10 bg-[#f2ede0]">
+          <div className="mk-container">
+            <SectionIntro
+              kicker="Day to day"
+              title={
+                <>
+                  Every job in your week,
+                  <span className="block">
+                    <em>joined end to end.</em>
+                  </span>
+                </>
+              }
+              description="From CBC marks in the staff room to M-Pesa in the bursar's office, SQUL follows the way your team already works — without a second register."
+            />
+
+            <div className="mt-16 grid gap-x-16 gap-y-14 md:grid-cols-2">
+              {LANDING_WORKFLOW_BLOCKS.map((block, index) => (
+                <Reveal key={block.id} delay={index * 60}>
+                  <WorkflowEntry {...block} />
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal>
+              <BursarSnapshot
+                activeStudents={1284}
+                feeCollectionRate={94}
+                totalClasses={38}
+                totalSubjects={12}
+              />
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── Testimonial ───────────────────────────────────────────────── */}
+        <section className="mk-section">
+          <div className="mk-container">
+            <Reveal>
+              <figure className="mx-auto max-w-4xl text-center">
+                <p className="mk-caption">What a bursar says</p>
+                <blockquote className="mt-10 text-balance font-display text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.2] tracking-[-0.015em] text-[#14201b]">
+                  “We stopped chasing parents for fees in the office. SQUL matches the
+                  M-Pesa payments and the SMS reminders do the chasing for us.”
+                </blockquote>
+                <figcaption className="mt-10 flex flex-col items-center">
+                  <span className="h-px w-8 bg-[#a98a55]/60" aria-hidden />
+                  <p className="mt-6 text-[0.8125rem] font-medium text-[#14201b]">Jane Njeri</p>
+                  <p className="mt-1.5 text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+                    Bursar · Unity Secondary School, Nakuru
+                  </p>
+                </figcaption>
+              </figure>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── In the schoolroom ─────────────────────────────────────────── */}
+        <section className="mk-section border-t border-[#14201b]/10">
+          <div className="mk-container">
+            <SectionIntro
+              kicker="In the schoolroom"
               title={
                 <>
                   See SQUL in the work
-                  <span className="block text-[#1d5547]">your team already does</span>
+                  <span className="block">
+                    <em>your team already does.</em>
+                  </span>
                 </>
               }
-              description="Kenyan classrooms, bursar counters, and staff rooms—not stock photos of generic offices. Each block below maps to a job your administrators run every week."
+              description="Kenyan classrooms, bursar counters and staff rooms — each view below is a job your administrators run every week."
             />
 
-            <div className="space-y-20 sm:space-y-24">
-              {LANDING_DEEP_DIVES.map((dive, i) => (
-                <Reveal key={dive.id} delay={i * 80}>
-                  <LandingDeepDiveBlock {...dive} />
+            <div className="mt-20 space-y-24 lg:space-y-32">
+              {LANDING_DEEP_DIVES.map((dive, index) => (
+                <Reveal key={dive.id} delay={index * 60}>
+                  <DeepDive {...dive} index={index} />
                 </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Custom domains — the school's own web address */}
+        {/* ── Domains ───────────────────────────────────────────────────── */}
         <section
           id="custom-domains"
-          className="relative border-t border-emerald-900/10 bg-[#fbfaf6] py-20 sm:py-24"
+          className="mk-section scroll-mt-24 border-t border-[#14201b]/10 bg-[#f2ede0]"
         >
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <LandingSectionHeader
+          <div className="mk-container">
+            <SectionIntro
               kicker="Your own web address"
               title={
                 <>
-                  Give your school a
-                  <span className="block text-[#1d5547]">domain parents trust</span>
+                  A domain parents
+                  <span className="block">
+                    <em>already trust.</em>
+                  </span>
                 </>
               }
-              description="Run your site on myschool.ac.ke with free HTTPS — connect a domain you already own, or buy a new one and pay with M-Pesa, straight from your dashboard."
+              description="Run your school site on myschool.ac.ke with free HTTPS — connect a domain you already own, or buy a new one and pay with M-Pesa from your dashboard."
             />
 
-            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
-              <Reveal>
-                <div className="grid gap-4 sm:grid-cols-2">
+            <div className="mt-16 grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
+              <Reveal className="lg:col-span-7">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <ConnectDomainPreview image={DOMAIN_HOME_SHOTS.connect} />
                   <LiveDomainPreview image={DOMAIN_HOME_SHOTS.live} />
                 </div>
               </Reveal>
 
-              <Reveal delay={120}>
-                <ul className="space-y-6">
+              <div className="lg:col-span-4 lg:col-start-9">
+                <ul>
                   {DOMAIN_HOME_HIGHLIGHTS.map((item) => (
-                    <li key={item.title} className="flex gap-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-sm">
+                    <li key={item.title} className="border-t border-[#14201b]/12 py-5 last:border-b">
+                      <div className="flex items-center gap-3">
                         <item.icon
-                          size={18}
-                          strokeWidth={2}
-                          className="text-white"
+                          className="h-3.5 w-3.5 shrink-0 text-[#1c3d32]/50"
+                          strokeWidth={1.5}
                           aria-hidden
                         />
-                      </span>
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {item.title}
-                        </p>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                          {item.body}
-                        </p>
+                        <p className="text-[0.8125rem] font-medium text-[#14201b]">{item.title}</p>
                       </div>
+                      <p className="mt-2 pl-[1.6rem] text-[0.8125rem] leading-[1.65] text-[#4d574f]">
+                        {item.body}
+                      </p>
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/custom-domains">
-                    <Button className="h-11 rounded-lg bg-[#1d5547] px-5 font-semibold text-white hover:bg-[#246a59]">
-                      See how domains work
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/custom-domains"
+                    className="mk-btn mk-btn--ink h-11 px-5 text-[0.8125rem]"
+                  >
+                    How domains work
+                    <ArrowRight className="mk-arrow h-3.5 w-3.5" aria-hidden />
                   </Link>
-                  <Link href="/register">
-                    <Button
-                      variant="outline"
-                      className="h-11 rounded-lg border-[#1a4d42]/25 px-5 font-semibold text-[#0a1f1a]"
-                    >
-                      Start free term
-                    </Button>
+                  <Link
+                    href="/register"
+                    className="mk-btn mk-btn--outline h-11 px-5 text-[0.8125rem]"
+                  >
+                    Start free term
                   </Link>
                 </div>
-              </Reveal>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Fifth screen — questions principals & bursars ask */}
-        <section className="relative border-t border-emerald-900/10 bg-gradient-to-b from-[#f7f6f2] to-[#fbfaf6] py-20 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <LandingSectionHeader
-              kicker="Before you sign up"
-              title={
-                <>
-                  Questions principals
-                  <span className="block text-[#1d5547]">and bursars ask us</span>
-                </>
-              }
-              description="Straight answers about data, timelines, parents, and phones—no enterprise jargon."
-            />
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {LANDING_FAQ_ITEMS.map((item, i) => (
-                <Reveal key={item.question} delay={i * 50} className="h-full">
-                  <LandingFaqCard {...item} />
-                </Reveal>
-              ))}
-            </div>
-
-            <Reveal>
-            <div className="relative mt-14 overflow-hidden rounded-3xl bg-[#0a1f1a] sm:mt-16">
-              <div
-                className="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px]"
-                aria-hidden
-              />
-              <div className="absolute -top-28 left-1/2 h-64 w-[560px] -translate-x-1/2 bg-[#1d5547]/45 blur-[120px]" aria-hidden />
-              <div className="relative flex flex-col items-center px-6 py-16 text-center sm:px-10 sm:py-20">
-                <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
-                  Next term starts here
+        {/* ── FAQ ───────────────────────────────────────────────────────── */}
+        <section className="mk-section border-t border-[#14201b]/10">
+          <div className="mk-container">
+            <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+              <div className="lg:col-span-4">
+                <p className="mk-eyebrow">Before you sign up</p>
+                <h2 className="mk-h2 mt-7">
+                  Questions,
+                  <span className="block">
+                    <em>answered plainly.</em>
+                  </span>
+                </h2>
+                <p className="mk-lede mt-6">
+                  Data, timelines, parents and phones — no enterprise jargon.
                 </p>
-                <h3 className="font-display mt-5 text-3xl leading-[1.12] tracking-tight text-white sm:text-4xl md:text-5xl">
-                  Ready to run your next term
-                  <span className="block text-emerald-200">on SQUL?</span>
-                </h3>
-                <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Import your learner list, match your fee structure, and go live before
-                  parents&apos; reporting day. No IT project, no consultants.
-                </p>
-                <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
-                  <Link href="/register" className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="h-12 w-full rounded-xl border-0 bg-[#f7f6f2] px-8 font-semibold text-[#14201c] shadow-lg shadow-black/25 hover:bg-white sm:w-auto sm:px-10 sm:text-base"
-                    >
-                      Start Your Free Term
-                    </Button>
-                  </Link>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={() => setDemoOpen(true)}
-                    className="h-12 w-full rounded-xl border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
-                  >
-                    <Play className="mr-2 h-3.5 w-3.5 fill-white" />
-                    See a demo
-                  </Button>
-                </div>
-                <p className="mt-6 font-ui text-xs font-medium uppercase tracking-[0.14em] text-white/45">
-                  90-day free trial · No credit card
-                </p>
+                <a
+                  href={`mailto:${LEGAL_META.contactEmail}`}
+                  className="mk-link mt-8 text-[0.8125rem]"
+                >
+                  Ask us anything
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+                </a>
+              </div>
+              <div className="lg:col-span-7 lg:col-start-6">
+                <FaqAccordion />
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* ── Closing ───────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden bg-[#0d201a]">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-60"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgba(247,244,236,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,244,236,0.045) 1px, transparent 1px)",
+              backgroundSize: "88px 44px",
+            }}
+            aria-hidden
+          />
+          <div className="mk-grain mk-grain--light" aria-hidden />
+          <div className="relative mk-container py-24 text-center sm:py-32">
+            <Reveal>
+              <p className="mk-eyebrow mk-eyebrow--light justify-center">Next term</p>
+              <h2 className="mx-auto mt-8 max-w-3xl font-display text-[clamp(2.6rem,5.6vw,4.6rem)] leading-[1.02] tracking-[-0.025em] text-[#f7f4ec]">
+                Begin the term
+                <span className="mt-1 block italic text-[#d8c9ab]">with a calmer office.</span>
+              </h2>
+              <p className="mx-auto mt-7 max-w-xl text-[1rem] leading-[1.7] text-white/55">
+                Import your learner list, match your fee structure, and go live before
+                parents&apos; reporting day. No IT project, no consultants.
+              </p>
+              <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+                  Start your free term
+                  <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setDemoOpen(true)}
+                  className="mk-btn mk-btn--ghost-light w-full sm:w-auto"
+                >
+                  <Play className="h-3 w-3 fill-current" aria-hidden />
+                  See SQUL in motion
+                </button>
+              </div>
+              <p className="mt-7 text-[0.625rem] uppercase tracking-[0.18em] text-white/40">
+                90-day free term · No credit card · Cancel anytime
+              </p>
             </Reveal>
           </div>
         </section>
 
-        {/* Footer — the end-of-day timetable */}
-        <footer className="relative overflow-hidden border-t border-white/10 bg-[#0a1f1a] text-[#f7f6f2]">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-40"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, rgba(247,246,242,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,246,242,0.045) 1px, transparent 1px)",
-              backgroundSize: "72px 36px",
-            }}
-            aria-hidden
-          />
-          <div className="pointer-events-none absolute -top-40 left-[15%] h-80 w-80 rounded-full bg-[#246a59]/20 blur-[120px]" aria-hidden />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0a1f1a] to-transparent" aria-hidden />
-
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 py-5">
-              <div className="flex items-center gap-2.5 font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200/80">
-                <SchoolBell className="h-4 w-4" />
+        {/* ── Footer ────────────────────────────────────────────────────── */}
+        <footer className="relative overflow-hidden bg-[#0d201a] text-[#f7f4ec]">
+          <div className="mk-grain mk-grain--light" aria-hidden />
+          <div className="relative mk-container">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-5">
+              <div className="flex items-center gap-2.5 text-[0.625rem] font-medium uppercase tracking-[0.18em] text-[#d8c9ab]/70">
+                <SchoolBell className="h-3.5 w-3.5" />
                 End of day · 4:00 PM
               </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-white/40">
                 <span>Nairobi · 1°17′S 36°49′E</span>
                 <span>Term 1 / 2026</span>
               </div>
             </div>
 
-            <div className="grid gap-14 py-14 lg:grid-cols-12 lg:gap-12 lg:py-20">
-              <div className="lg:col-span-5">
-                <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
-                  The gate is open
-                </p>
-                <h2 className="mt-5 text-balance font-display text-[clamp(2.5rem,6vw,5.25rem)] leading-[0.92] tracking-[-0.03em] text-[#f7f6f2]">
-                  School’s out.
-                  <span className="mt-2 block text-balance italic text-emerald-200">
+            <div className="grid gap-14 py-16 lg:grid-cols-12 lg:gap-10 lg:py-24">
+              <div className="lg:col-span-6">
+                <p className="mk-eyebrow mk-eyebrow--light">The gate is open</p>
+                <h2 className="mt-6 font-display text-[clamp(2.75rem,6vw,5rem)] leading-[0.95] tracking-[-0.03em] text-[#f7f4ec]">
+                  School&apos;s out.
+                  <span className="mt-2 block text-balance italic text-[#d8c9ab]">
                     The next term starts here.
                   </span>
                 </h2>
-                <p className="mt-6 max-w-md text-sm leading-relaxed text-white/65 sm:text-base">
-                  One system for admissions, M-Pesa fees, CBC marks and parent SMS — built in Nairobi for Kenyan schools.
+                <p className="mt-6 max-w-md text-sm leading-[1.7] text-white/50">
+                  One system for admissions, M-Pesa fees, CBC marks and parent SMS — built
+                  in Nairobi for Kenyan schools.
                 </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link href="/register" className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="h-12 w-full rounded-xl border-0 bg-[#f7f6f2] px-7 font-semibold text-[#14201c] shadow-lg shadow-black/20 hover:bg-white sm:w-auto"
-                    >
-                      Start your free term
-                    </Button>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link href="/register" className="mk-btn mk-btn--paper h-11 px-5 text-[0.8125rem]">
+                    Start your free term
                   </Link>
-                  <Link href="/login" className="w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-12 w-full rounded-xl border-white/25 bg-transparent px-7 font-semibold text-white hover:bg-white/10 sm:w-auto"
-                    >
-                      Sign in
-                    </Button>
+                  <Link
+                    href="/login"
+                    className="mk-btn mk-btn--ghost-light h-11 px-5 text-[0.8125rem]"
+                  >
+                    Sign in
                   </Link>
                 </div>
-                <p className="mt-5 font-ui text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                <p className="mt-5 text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
                   90-day free trial · No credit card
                 </p>
               </div>
 
-              <div className="lg:col-span-7">
-                <div className="relative rounded-2xl bg-[#f7f6f2] p-5 text-[#14201c] shadow-[0_40px_90px_-50px_rgba(0,0,0,0.85)] sm:p-7">
-                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#14201c]/10 pb-4">
+              <div className="lg:col-span-6 lg:pl-8">
+                <div className="bg-[#f7f4ec] p-6 text-[#14201b] sm:p-8">
+                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#14201b]/10 pb-5">
                     <div>
-                      <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1d5547]">
+                      <p className="text-[0.5625rem] font-medium uppercase tracking-[0.2em] text-[#1c3d32]">
                         The week, in links
                       </p>
-                      <p className="mt-1 font-display text-2xl leading-tight tracking-tight">
+                      <p className="mt-2 font-display text-2xl leading-tight tracking-[-0.015em]">
                         Six periods. One system.
                       </p>
                     </div>
-                    <div className="text-right font-mono text-[10px] uppercase leading-relaxed tracking-[0.1em] text-[#14201c]/40">
+                    <div className="text-right font-mono text-[0.5625rem] uppercase leading-relaxed tracking-[0.12em] text-[#14201b]/35">
                       <p>Periods 01—06</p>
                       <p>07:30 — 16:00</p>
                     </div>
                   </div>
 
-                  <div className="divide-y divide-[#14201c]/10">
+                  <div>
                     {LANDING_FOOTER_PERIODS.map((period, index) => (
                       <Link
                         key={period.label}
                         href={period.href}
-                        className="group grid grid-cols-[3.3rem_1.2rem_1fr_auto] items-center gap-3 py-3.5 transition-colors hover:bg-[#14201c]/[0.035]"
+                        className="group grid grid-cols-[3rem_1.1rem_1fr_auto] items-center gap-3 border-b border-[#14201b]/8 py-3.5 transition-colors duration-200 hover:bg-[#14201b]/[0.03]"
                       >
-                        <span className="font-mono text-[10px] tabular-nums text-[#14201c]/40">
+                        <span className="font-mono text-[0.5625rem] tabular-nums text-[#14201b]/35">
                           {period.time}
                         </span>
-                        <span className="font-mono text-[9px] tabular-nums text-[#14201c]/25">
+                        <span className="font-mono text-[0.5625rem] tabular-nums text-[#14201b]/20">
                           {String(index + 1).padStart(2, "0")}
                         </span>
-                        <span className="font-display text-lg leading-snug tracking-tight text-[#14201c] transition-colors group-hover:text-[#1d5547] sm:text-xl">
+                        <span className="font-display text-[1.1rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
                           {period.label}
                         </span>
                         <ArrowUpRight
-                          className="h-4 w-4 text-[#1d5547]/35 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#1d5547]"
+                          className="h-3.5 w-3.5 text-[#1c3d32]/30 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#1c3d32]"
                           aria-hidden
                         />
                       </Link>
                     ))}
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#14201c]/10 pt-4 font-ui text-[11px] font-medium text-[#14201c]/55">
-                    <Link href="/schools" className="transition-colors hover:text-[#1d5547]">
+                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.6875rem] font-medium text-[#14201b]/50">
+                    <Link href="/schools" className="transition-colors hover:text-[#1c3d32]">
                       Schools on SQUL
                     </Link>
                     <button
                       type="button"
                       onClick={() => setWalkthroughOpen(true)}
-                      className="transition-colors hover:text-[#1d5547]"
+                      className="transition-colors hover:text-[#1c3d32]"
                     >
                       Book a walkthrough
                     </button>
@@ -2475,11 +2553,11 @@ export default function Home() {
                       href={LANDING_APP_DOWNLOAD_URL}
                       target="_blank"
                       rel="noreferrer"
-                      className="transition-colors hover:text-[#1d5547]"
+                      className="transition-colors hover:text-[#1c3d32]"
                     >
                       Download the app
                     </a>
-                    <Link href="/login" className="transition-colors hover:text-[#1d5547]">
+                    <Link href="/login" className="transition-colors hover:text-[#1c3d32]">
                       Sign in
                     </Link>
                   </div>
@@ -2487,48 +2565,45 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid gap-8 border-t border-white/10 py-8 lg:grid-cols-12 lg:gap-8">
-              <div className="lg:col-span-4">
-                <Link href="/" className="inline-flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
-                    <GraduationCap size={16} className="text-white" aria-hidden />
-                  </span>
-                  <span className="font-display text-xl tracking-wide text-white">SQUL</span>
+            <div className="grid gap-8 border-t border-white/10 py-8 lg:grid-cols-12">
+              <div className="lg:col-span-5">
+                <Link href="/" className="inline-flex items-center" aria-label="SQUL home">
+                  <SqulWordmark tone="light" markSize={28} />
                 </Link>
-                <p className="mt-3 max-w-xs text-xs leading-relaxed text-white/40">
+                <p className="mt-4 max-w-xs text-xs leading-relaxed text-white/35">
                   School operations, connected. Built in Nairobi for Kenyan classrooms.
                 </p>
               </div>
               <div className="lg:col-span-4">
-                <p className="font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300/70">
+                <p className="text-[0.5625rem] font-medium uppercase tracking-[0.2em] text-[#d8c9ab]/60">
                   Talk to us
                 </p>
-                <div className="mt-3 flex flex-col gap-1.5 text-xs text-white/45">
+                <div className="mt-4 flex flex-col gap-1.5 text-xs text-white/40">
                   <a
                     href={`mailto:${LEGAL_META.contactEmail}`}
-                    className="transition-colors hover:text-emerald-200"
+                    className="transition-colors hover:text-[#d8c9ab]"
                   >
                     {LEGAL_META.contactEmail}
                   </a>
                   <a
                     href={`tel:${LEGAL_META.contactPhoneHref}`}
-                    className="transition-colors hover:text-emerald-200"
+                    className="transition-colors hover:text-[#d8c9ab]"
                   >
                     {LEGAL_META.contactPhone}
                   </a>
                   <span>{LEGAL_META.postalAddress}</span>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 lg:col-span-4 lg:items-end">
-                <div className="flex gap-5 text-xs text-white/45">
-                  <Link href="/privacy" className="transition-colors hover:text-emerald-200">
+              <div className="flex flex-col gap-3 lg:col-span-3 lg:items-end">
+                <div className="flex gap-5 text-xs text-white/40">
+                  <Link href="/privacy" className="transition-colors hover:text-[#d8c9ab]">
                     Privacy
                   </Link>
-                  <Link href="/terms" className="transition-colors hover:text-emerald-200">
+                  <Link href="/terms" className="transition-colors hover:text-[#d8c9ab]">
                     Terms
                   </Link>
                 </div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/30">
+                <p className="font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-white/35">
                   © {new Date().getFullYear()} SQUL · All rights reserved
                 </p>
               </div>
@@ -2538,11 +2613,7 @@ export default function Home() {
       </main>
 
       <WalkthroughDialog open={walkthroughOpen} onOpenChange={setWalkthroughOpen} />
-      <WalkthroughDialog
-        variant="demo"
-        open={demoOpen}
-        onOpenChange={setDemoOpen}
-      />
+      <WalkthroughDialog variant="demo" open={demoOpen} onOpenChange={setDemoOpen} />
     </div>
   )
 }

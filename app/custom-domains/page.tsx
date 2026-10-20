@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  CheckCircle2,
   CreditCard,
   Globe,
   Link2,
@@ -15,7 +14,7 @@ import {
   Users2,
 } from "lucide-react";
 import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
+import { SqulWordmark } from "@/components/brand/SqulMark";
 import {
   BuyDomainPreview,
   ConnectDomainPreview,
@@ -40,12 +39,7 @@ const SHOTS: {
   live?: PreviewImage;
   buy?: PreviewImage;
   registry?: PreviewImage;
-} = {
-  // connect: { src: "/screenshots/custom-domain-connect.png", alt: "Connecting a custom domain in SQUL" },
-  // live: { src: "/screenshots/custom-domain-live.png", alt: "A live custom domain in SQUL" },
-  // buy: { src: "/screenshots/custom-domain-buy.png", alt: "Buying a domain with M-Pesa" },
-  // registry: { src: "/screenshots/custom-domain-registry.png", alt: "Super-admin domains registry" },
-};
+} = {};
 
 const STEPS = [
   {
@@ -126,6 +120,32 @@ const FAQ = [
   },
 ];
 
+function SectionIntro({
+  kicker,
+  title,
+  description,
+  tone = "dark",
+}: {
+  kicker: string;
+  title: React.ReactNode;
+  description: string;
+  tone?: "dark" | "light";
+}) {
+  return (
+    <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
+      <div className="lg:col-span-6">
+        <p className={`mk-eyebrow ${tone === "light" ? "mk-eyebrow--light" : ""}`}>
+          {kicker}
+        </p>
+        <h2 className="mk-h2 mt-6">{title}</h2>
+      </div>
+      <div className="flex items-end lg:col-span-5 lg:col-start-8">
+        <p className="mk-lede">{description}</p>
+      </div>
+    </div>
+  );
+}
+
 function StepCard({
   index,
   step,
@@ -135,98 +155,90 @@ function StepCard({
 }) {
   const Icon = step.icon;
   return (
-    <div className="relative flex h-full flex-col border border-[#1a4d42]/12 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1d5547] font-display text-sm font-semibold text-white">
-          {index + 1}
+    <div className="border-t border-[#14201b]/12 pt-6">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[0.625rem] tabular-nums text-[#14201b]/30">
+          {String(index + 1).padStart(2, "0")}
         </span>
-        <Icon className="h-5 w-5 text-[#246a59]" />
+        <Icon className="h-4 w-4 text-[#1c3d32]/45" strokeWidth={1.5} aria-hidden />
       </div>
-      <h3 className="font-display text-lg tracking-tight text-[#0a1f1a]">
+      <h3 className="mt-5 font-display text-[1.25rem] leading-tight tracking-[-0.01em] text-[#14201b]">
         {step.title}
       </h3>
-      <p className="mt-2 text-sm leading-relaxed text-[#1a4d42]/70">
-        {step.body}
-      </p>
+      <p className="mt-2.5 text-[0.8125rem] leading-[1.65] text-[#4d574f]">{step.body}</p>
     </div>
   );
 }
 
 export default function CustomDomainsPage() {
   return (
-    <div className="squl-marketing min-h-screen bg-[#f3f7f5] font-sans text-[#0a1f1a]">
-      {/* Hero */}
-      <div className="relative overflow-hidden bg-[#0a1f1a] text-white">
+    <div className="squl-marketing min-h-screen bg-[#f7f4ec] text-[#14201b]">
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-[#0d201a] text-white">
         <div
-          className="pointer-events-none absolute inset-0 opacity-40"
-          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              "radial-gradient(ellipse 80% 60% at 15% 20%, rgba(36,106,89,0.55), transparent 55%), radial-gradient(ellipse 50% 40% at 90% 10%, rgba(45,133,112,0.35), transparent 50%), linear-gradient(180deg, transparent 60%, #0a1f1a)",
+              "radial-gradient(ellipse 65% 60% at 18% 15%, rgba(44,87,74,0.55), transparent 62%), radial-gradient(ellipse 40% 40% at 92% 5%, rgba(169,138,85,0.12), transparent 60%)",
           }}
+          aria-hidden
         />
+        <div className="mk-grain mk-grain--light" aria-hidden />
         <Header variant="hero" />
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:grid-cols-[1fr_1.05fr] lg:px-8">
-          <div>
-            <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/90">
-              Custom domains
-            </p>
-            <h1 className="mt-3 font-display text-[clamp(2.4rem,6vw,3.75rem)] leading-[1.05] tracking-tight text-white">
+        <div className="relative mk-container grid items-center gap-14 pb-20 pt-32 lg:grid-cols-12 lg:gap-10 lg:pb-24 lg:pt-40">
+          <div className="lg:col-span-6">
+            <p className="mk-eyebrow mk-eyebrow--light">Custom domains</p>
+            <h1 className="mt-8 font-display text-[clamp(2.7rem,5vw,4.2rem)] leading-[1.0] tracking-[-0.025em] text-[#f7f4ec]">
               Your school.
-              <span className="block">Your name. Your domain.</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-              Put your school site on an address parents already trust —
-              <span className="whitespace-nowrap font-medium text-white">
-                {" "}
-                myschool.ac.ke
+              <span className="mt-1 block italic text-[#d8c9ab]">
+                Your name. Your domain.
               </span>
+            </h1>
+            <p className="mt-7 max-w-xl text-[1.0625rem] leading-[1.7] text-white/60">
+              Put your school site on an address parents already trust —
+              <span className="whitespace-nowrap text-white/85"> myschool.ac.ke</span>
               — with free, automatically renewed HTTPS. Connect a domain you own,
               or buy a new one and pay with M-Pesa.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/register">
-                <Button className="h-11 rounded-lg border-0 bg-emerald-500 px-6 font-semibold text-[#0a1f1a] hover:bg-emerald-400">
-                  Start free term
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+            <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+              <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+                Start your free term
+                <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
               </Link>
-              <Link href="#how-it-works">
-                <Button
-                  variant="outline"
-                  className="h-11 rounded-lg border-white/25 bg-white/5 px-6 font-semibold text-white hover:bg-white/10"
-                >
-                  See how it works
-                </Button>
-              </Link>
+              <a href="#how-it-works" className="mk-btn mk-btn--ghost-light w-full sm:w-auto">
+                See how it works
+              </a>
             </div>
           </div>
 
-          <div className="relative">
-            <LiveDomainPreview image={SHOTS.live} />
-            <div className="mt-4 sm:max-w-md">
-              <ConnectDomainPreview image={SHOTS.connect} />
+          <div className="lg:col-span-5 lg:col-start-8">
+            <div className="space-y-4">
+              <LiveDomainPreview image={SHOTS.live} />
+              <div className="sm:ml-8">
+                <ConnectDomainPreview image={SHOTS.connect} />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* How it works */}
-      <section id="how-it-works" className="border-b border-[#1a4d42]/10 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1d5547]">
-            How it works
-          </p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl tracking-tight text-[#0a1f1a] sm:text-4xl">
-            From a domain you own to a live, secure school site
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#1a4d42]/70">
-            Four steps, no developers. Everything happens inside your SQUL
-            dashboard.
-          </p>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── How it works ─────────────────────────────────────────────────── */}
+      <section id="how-it-works" className="mk-section scroll-mt-24">
+        <div className="mk-container">
+          <SectionIntro
+            kicker="How it works"
+            title={
+              <>
+                From a domain you own
+                <span className="block">
+                  <em>to a live, secure school site.</em>
+                </span>
+              </>
+            }
+            description="Four steps, no developers. Everything happens inside your SQUL dashboard."
+          />
+          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((step, i) => (
               <StepCard key={step.title} index={i} step={step} />
             ))}
@@ -234,21 +246,20 @@ export default function CustomDomainsPage() {
         </div>
       </section>
 
-      {/* Screenshots */}
-      <section className="border-b border-[#1a4d42]/10 bg-[#f3f7f5]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1d5547]">
-            In the product
-          </p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl tracking-tight text-[#0a1f1a] sm:text-4xl">
-            What you&apos;ll see
-          </h2>
+      {/* ── In the product ───────────────────────────────────────────────── */}
+      <section className="mk-section border-t border-[#14201b]/10 bg-[#f2ede0]">
+        <div className="mk-container">
+          <SectionIntro
+            kicker="In the product"
+            title="What you'll see."
+            description="No DNS jargon in the way — the dashboard tells you exactly which records to add, then verifies them for you."
+          />
 
-          <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          <div className="mt-14 grid gap-10 lg:grid-cols-2">
             <figure>
               <ConnectDomainPreview image={SHOTS.connect} />
-              <figcaption className="mt-3 text-sm text-[#1a4d42]/70">
-                <span className="font-semibold text-[#0a1f1a]">
+              <figcaption className="mt-3 text-[0.75rem] leading-relaxed text-[#4d574f]">
+                <span className="font-medium text-[#14201b]">
                   Connect and copy the records.
                 </span>{" "}
                 Paste the A/CNAME and the verification TXT at your registrar.
@@ -256,8 +267,8 @@ export default function CustomDomainsPage() {
             </figure>
             <figure>
               <LiveDomainPreview image={SHOTS.live} />
-              <figcaption className="mt-3 text-sm text-[#1a4d42]/70">
-                <span className="font-semibold text-[#0a1f1a]">
+              <figcaption className="mt-3 text-[0.75rem] leading-relaxed text-[#4d574f]">
+                <span className="font-medium text-[#14201b]">
                   Verified, secured, live.
                 </span>{" "}
                 We attach the hostname and issue the certificate.
@@ -267,41 +278,43 @@ export default function CustomDomainsPage() {
               <div className="mx-auto max-w-2xl">
                 <BuyDomainPreview image={SHOTS.buy} />
               </div>
-              <figcaption className="mt-3 text-center text-sm text-[#1a4d42]/70">
-                <span className="font-semibold text-[#0a1f1a]">
+              <figcaption className="mt-3 text-center text-[0.75rem] leading-relaxed text-[#4d574f]">
+                <span className="font-medium text-[#14201b]">
                   Don&apos;t own one yet?
                 </span>{" "}
-                Search, order, and pay with M-Pesa — we register it and set it
-                up.
+                Search, order, and pay with M-Pesa — we register it and set it up.
               </figcaption>
             </figure>
           </div>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="border-b border-[#1a4d42]/10 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1d5547]">
-            Why schools use it
-          </p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl tracking-tight text-[#0a1f1a] sm:text-4xl">
-            A professional address, handled for you
-          </h2>
+      {/* ── Benefits ─────────────────────────────────────────────────────── */}
+      <section className="mk-section">
+        <div className="mk-container">
+          <SectionIntro
+            kicker="Why schools use it"
+            title={
+              <>
+                A professional address,
+                <span className="block">
+                  <em>handled for you.</em>
+                </span>
+              </>
+            }
+            description="One small detail that quietly tells parents, auditors and new staff that the school is well run."
+          />
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
             {BENEFITS.map((b) => {
               const Icon = b.icon;
               return (
-                <div
-                  key={b.title}
-                  className="border border-[#1a4d42]/12 bg-[#f8fbfa] p-6"
-                >
-                  <Icon className="h-5 w-5 text-[#246a59]" />
-                  <h3 className="mt-4 font-semibold text-[#0a1f1a]">
+                <div key={b.title} className="border-t border-[#14201b]/12 pt-5">
+                  <Icon className="h-4 w-4 text-[#1c3d32]/55" strokeWidth={1.5} aria-hidden />
+                  <h3 className="mt-4 text-[0.8125rem] font-medium text-[#14201b]">
                     {b.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#1a4d42]/70">
+                  <p className="mt-2 text-[0.8125rem] leading-[1.65] text-[#4d574f]">
                     {b.body}
                   </p>
                 </div>
@@ -311,106 +324,141 @@ export default function CustomDomainsPage() {
         </div>
       </section>
 
-      {/* For platform operators */}
-      <section className="bg-[#0a1f1a] text-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1.1fr] lg:px-8">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300/90">
-              For platform owners
-            </p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight sm:text-4xl">
-              Every domain, one console
+      {/* ── For platform operators ───────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-[#0d201a] text-white">
+        <div className="mk-grain mk-grain--light" aria-hidden />
+        <div className="relative mk-container grid items-center gap-12 py-20 lg:grid-cols-12 lg:py-24">
+          <div className="lg:col-span-5">
+            <p className="mk-eyebrow mk-eyebrow--light">For platform owners</p>
+            <h2 className="mt-6 font-display text-[clamp(2rem,3.4vw,2.9rem)] leading-[1.05] tracking-[-0.02em]">
+              Every domain,
+              <span className="block italic text-[#d8c9ab]">one console.</span>
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/70">
-              Configure the hosting provider, connect targets, and policy from
-              the Super Admin — then keep an eye on every school&apos;s domains
-              in one registry. Force a re-check, approve a pending domain, or
-              suspend one without touching a database.
+            <p className="mt-5 max-w-xl text-[0.9375rem] leading-[1.7] text-white/55">
+              Configure the hosting provider, connect targets, and policy from the
+              Super Admin — then keep an eye on every school&apos;s domains in one
+              registry. Force a re-check, approve a pending domain, or suspend one
+              without touching a database.
             </p>
-            <ul className="mt-6 space-y-3 text-sm text-white/80">
+            <ul className="mt-7">
               {[
                 "Provider credentials & DNS targets in the database, not env files",
                 "Approve, suspend, or force-verify any domain",
                 "Connect / verify / purchase activity is audited",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                  <span>{item}</span>
+                <li
+                  key={item}
+                  className="flex items-baseline gap-3 border-t border-white/10 py-3 text-[0.8125rem] leading-relaxed text-white/65 last:border-b"
+                >
+                  <span className="h-[3px] w-[3px] shrink-0 translate-y-[-2px] rounded-full bg-[#d8c9ab]" />
+                  {item}
                 </li>
               ))}
             </ul>
           </div>
-          <OperatorRegistryPreview image={SHOTS.registry} />
+          <div className="lg:col-span-6 lg:col-start-7">
+            <OperatorRegistryPreview image={SHOTS.registry} />
+          </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1d5547]">
-            Questions, answered
-          </p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-[#0a1f1a] sm:text-4xl">
-            Before you connect a domain
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <section className="mk-section">
+        <div className="mk-container">
+          <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-4">
+              <p className="mk-eyebrow">Questions, answered</p>
+              <h2 className="mk-h2 mt-6">
+                Before you connect
+                <span className="block">
+                  <em>a domain.</em>
+                </span>
+              </h2>
+            </div>
+            <div className="lg:col-span-7 lg:col-start-6">
+              {FAQ.map((item, index) => (
+                <details key={item.q} className="group border-t border-[#14201b]/10 last:border-b">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5">
+                    <span className="flex items-baseline gap-5">
+                      <span className="font-mono text-[0.5625rem] tabular-nums text-[#14201b]/25">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="font-display text-[1.25rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
+                        {item.q}
+                      </span>
+                    </span>
+                    <span className="relative mt-2 flex h-3 w-3 shrink-0 items-center justify-center">
+                      <span className="absolute h-px w-3 bg-[#14201b]/45" aria-hidden />
+                      <span className="absolute h-3 w-px bg-[#14201b]/45 transition-transform duration-200 group-open:rotate-90 group-open:opacity-0" aria-hidden />
+                    </span>
+                  </summary>
+                  <p className="max-w-[58ch] pb-6 pl-[2.3rem] pr-10 text-[0.8125rem] leading-[1.7] text-[#4d574f]">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-[#0d201a]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(247,244,236,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,244,236,0.045) 1px, transparent 1px)",
+            backgroundSize: "88px 44px",
+          }}
+          aria-hidden
+        />
+        <div className="mk-grain mk-grain--light" aria-hidden />
+        <div className="relative mk-container py-20 text-center sm:py-24">
+          <p className="mk-eyebrow mk-eyebrow--light justify-center">Your address</p>
+          <h2 className="mx-auto mt-7 max-w-2xl font-display text-[clamp(2.3rem,4.6vw,3.8rem)] leading-[1.04] tracking-[-0.025em] text-[#f7f4ec]">
+            Ready to put your school
+            <span className="mt-1 block italic text-[#d8c9ab]">on its own domain?</span>
           </h2>
-
-          <div className="mt-8 divide-y divide-[#1a4d42]/10 border-y border-[#1a4d42]/10">
-            {FAQ.map((item) => (
-              <details key={item.q} className="group py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                  <span className="font-medium text-[#0a1f1a]">{item.q}</span>
-                  <span className="text-[#246a59] transition-transform group-open:rotate-45">
-                    +
-                  </span>
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-[#1a4d42]/70">
-                  {item.a}
-                </p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="border-t border-[#1a4d42]/12 bg-[#f3f7f5]">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-14 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <div>
-            <h2 className="font-display text-2xl tracking-tight text-[#0a1f1a] sm:text-3xl">
-              Ready to put your school on its own domain?
-            </h2>
-            <p className="mt-2 max-w-xl text-sm text-[#1a4d42]/70 sm:text-base">
-              Start a 90-day free term — then connect or buy your domain in a few
-              minutes.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/register">
-              <Button className="h-11 rounded-lg bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#246a59]">
-                Start free term
-              </Button>
+          <p className="mx-auto mt-6 max-w-lg text-[0.9375rem] leading-[1.7] text-white/50">
+            Start a 90-day free term — then connect or buy your domain in a few
+            minutes.
+          </p>
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+              Start your free term
+              <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
             </Link>
-            <Link href="/login">
-              <Button
-                variant="outline"
-                className="h-11 rounded-lg border-[#1a4d42]/25 px-6 font-semibold text-[#0a1f1a]"
-              >
-                Sign in
-              </Button>
+            <Link href="/login" className="mk-btn mk-btn--ghost-light w-full sm:w-auto">
+              Sign in
             </Link>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-emerald-900/25 bg-[#0a1f1a] py-10 text-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Globe className="h-5 w-5 text-emerald-300" />
-            <span className="font-display text-lg tracking-wide">SQUL</span>
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <footer className="bg-[#0d201a] text-[#f7f4ec]">
+        <div className="mk-container flex flex-col gap-6 border-t border-white/10 py-10 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/" aria-label="SQUL home" className="w-fit">
+            <SqulWordmark tone="light" markSize={28} />
           </Link>
-          <p className="text-sm text-white/55">
+          <p className="text-[0.6875rem] leading-relaxed text-white/35">
             School management built for Kenyan classrooms.
           </p>
+          <div className="flex gap-6 text-[0.6875rem] text-white/45">
+            <Link href="/schools" className="transition-colors hover:text-[#d8c9ab]">
+              Schools
+            </Link>
+            <Link href="/blog" className="transition-colors hover:text-[#d8c9ab]">
+              Guides
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-[#d8c9ab]">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-[#d8c9ab]">
+              Terms
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

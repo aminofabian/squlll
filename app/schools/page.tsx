@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Building2, GraduationCap } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Header } from '@/components/Header'
-import { Button } from '@/components/ui/button'
+import { SqulWordmark } from '@/components/brand/SqulMark'
 import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
 import { schoolPortalUrl } from '@/lib/auth/post-login-navigation'
 import { SchoolsDirectory } from './SchoolsDirectory'
@@ -82,94 +82,132 @@ export default async function SchoolsPage() {
   }
 
   return (
-    <div className="squl-marketing min-h-screen bg-[#f3f7f5] font-sans text-[#0a1f1a]">
+    <div className="squl-marketing min-h-screen bg-[#f7f4ec]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }}
       />
-      <div className="relative overflow-hidden bg-[#0a1f1a] text-white">
+
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[#0d201a]">
         <div
-          className="pointer-events-none absolute inset-0 opacity-40"
-          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              'radial-gradient(ellipse 80% 60% at 15% 20%, rgba(36,106,89,0.55), transparent 55%), radial-gradient(ellipse 50% 40% at 90% 10%, rgba(45,133,112,0.35), transparent 50%), linear-gradient(180deg, transparent 60%, #0a1f1a)',
+              'radial-gradient(ellipse 70% 60% at 20% 15%, rgba(44,87,74,0.5), transparent 60%), radial-gradient(ellipse 40% 40% at 88% 0%, rgba(169,138,85,0.12), transparent 60%)',
           }}
+          aria-hidden
         />
+        <div className="mk-grain mk-grain--light" aria-hidden />
         <Header variant="hero" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:px-8">
-          <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/90">
-            Schools on Squl
-          </p>
-          <h1 className="mt-3 max-w-3xl font-display text-[clamp(2.4rem,6vw,3.75rem)] leading-[1.05] tracking-tight text-white">
-            Campuses already running the day on Squl
+        <div className="relative mk-container pb-20 pt-32 lg:pb-24 lg:pt-40">
+          <p className="mk-eyebrow mk-eyebrow--light">The directory</p>
+          <h1 className="mt-8 max-w-4xl font-display text-[clamp(2.7rem,5.4vw,4.35rem)] leading-[1.0] tracking-[-0.025em] text-[#f7f4ec]">
+            Schools running their day
+            <span className="mt-1 block italic text-[#d8c9ab]">on SQUL, across Kenya.</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
-            From admissions desks to M-Pesa fee counters — these schools use Squl
-            for the work that used to live in ledgers, WhatsApp, and scattered
-            spreadsheets.
-          </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 border border-white/15 bg-white/5 px-3 py-2 text-sm text-white/80">
-              <Building2 className="h-4 w-4 text-emerald-300" />
-              <span className="tabular-nums font-semibold text-white">
-                {schools.length}
-              </span>
-              <span>{schools.length === 1 ? 'school' : 'schools'} listed</span>
-            </div>
-            <Link href="/register">
-              <Button className="h-10 rounded-lg border-0 bg-emerald-500 px-5 font-semibold text-[#0a1f1a] hover:bg-emerald-400">
+          <div className="mt-12 grid gap-8 lg:grid-cols-12">
+            <p className="max-w-xl text-[1rem] leading-[1.7] text-white/60 lg:col-span-5">
+              From admissions desks to M-Pesa fee counters — a growing directory of
+              campuses that publish their public site with us.
+            </p>
+            <div className="flex items-end justify-between gap-6 lg:col-span-4 lg:col-start-9">
+              {schools.length > 0 ? (
+                <div>
+                  <p className="font-display text-[2.6rem] leading-none tabular-nums text-[#f7f4ec]">
+                    {schools.length}
+                  </p>
+                  <p className="mt-2 text-[0.5625rem] uppercase tracking-[0.18em] text-white/35">
+                    {schools.length === 1 ? 'School listed' : 'Schools listed'}
+                  </p>
+                </div>
+              ) : (
+                <p className="max-w-[12rem] text-[0.5625rem] uppercase leading-relaxed tracking-[0.18em] text-[#d8c9ab]/70">
+                  Founding schools are joining now
+                </p>
+              )}
+              <Link href="/register" className="mk-link mk-link--light shrink-0 text-[0.8125rem]">
                 Add your school
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <main className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <SchoolsDirectory schools={schools} />
+      {/* Directory */}
+      <main className="mk-section">
+        <div className="mk-container">
+          <SchoolsDirectory schools={schools} />
+        </div>
       </main>
 
-      <section className="border-t border-[#1a4d42]/12 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-14 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <div>
-            <h2 className="font-display text-2xl tracking-tight text-[#0a1f1a] sm:text-3xl">
-              Ready to put your school on the map?
-            </h2>
-            <p className="mt-2 max-w-xl text-sm text-[#1a4d42]/70 sm:text-base">
-              Start a 90-day free term — fees, admissions, CBC marks, and parent
-              SMS without a credit card.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/register">
-              <Button className="h-11 rounded-lg bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#246a59]">
-                Start free term
-              </Button>
+      {/* Closing */}
+      <section className="relative overflow-hidden bg-[#0d201a]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, rgba(247,244,236,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,244,236,0.045) 1px, transparent 1px)',
+            backgroundSize: '88px 44px',
+          }}
+          aria-hidden
+        />
+        <div className="mk-grain mk-grain--light" aria-hidden />
+        <div className="relative mk-container py-20 text-center sm:py-24">
+          <p className="mk-eyebrow mk-eyebrow--light justify-center">Your school</p>
+          <h2 className="mx-auto mt-7 max-w-2xl font-display text-[clamp(2.3rem,4.6vw,3.8rem)] leading-[1.04] tracking-[-0.025em] text-[#f7f4ec]">
+            Open with your name
+            <span className="mt-1 block italic text-[#d8c9ab]">on the map.</span>
+          </h2>
+          <p className="mx-auto mt-6 max-w-lg text-[0.9375rem] leading-[1.7] text-white/50">
+            Start a 90-day free term — admissions, M-Pesa fees, CBC marks and parent
+            SMS. No credit card.
+          </p>
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+              Start your free term
+              <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
             </Link>
-            <Link href="/login">
-              <Button
-                variant="outline"
-                className="h-11 rounded-lg border-[#1a4d42]/25 px-6 font-semibold text-[#0a1f1a]"
-              >
-                Sign in
-              </Button>
+            <Link href="/login" className="mk-btn mk-btn--ghost-light w-full sm:w-auto">
+              Sign in
             </Link>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-emerald-900/25 bg-[#0a1f1a] py-10 text-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-emerald-300" />
-            <span className="font-display text-lg tracking-wide">SQUL</span>
+      {/* Footer */}
+      <footer className="bg-[#0d201a] text-[#f7f4ec]">
+        <div className="mk-container flex flex-col gap-6 border-t border-white/10 py-10 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/" aria-label="SQUL home" className="w-fit">
+            <SqulWordmark tone="light" markSize={28} />
           </Link>
-          <p className="text-sm text-white/55">
+          <p className="text-[0.6875rem] leading-relaxed text-white/35">
             School management built for Kenyan classrooms.
+          </p>
+          <div className="flex gap-6 text-[0.6875rem] text-white/45">
+            <Link href="/custom-domains" className="transition-colors hover:text-[#d8c9ab]">
+              Domains
+            </Link>
+            <Link href="/blog" className="transition-colors hover:text-[#d8c9ab]">
+              Guides
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-[#d8c9ab]">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-[#d8c9ab]">
+              Terms
+            </Link>
+          </div>
+        </div>
+        <div className="mk-container flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-5">
+          <p className="font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-white/25">
+            © {new Date().getFullYear()} SQUL · All rights reserved
+          </p>
+          <p className="font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-white/25">
+            Nairobi, Kenya
           </p>
         </div>
       </footer>

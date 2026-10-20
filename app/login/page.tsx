@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, ArrowLeft, Shield } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
+import { SqulWordmark } from "@/components/brand/SqulMark";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -61,188 +62,178 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6faf8] font-sans">
-      <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="onboarding-flow min-h-screen bg-[#f7f4ec] font-sans text-[#14201b]">
+      <div className="grid min-h-screen lg:grid-cols-[1.02fr_1fr]">
         {/* Brand panel */}
-        <div className="relative hidden overflow-hidden bg-[#0a1f1a] lg:flex lg:flex-col">
-          <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <aside className="relative hidden overflow-hidden bg-[#0d201a] lg:flex lg:flex-col">
+          <div className="absolute inset-0" aria-hidden>
             <img
               src="/schooll.png"
               alt=""
-              className="h-full w-full object-cover object-[50%_35%]"
+              className="h-full w-full object-cover object-[50%_35%] opacity-45 grayscale-[0.2]"
             />
-            <div className="absolute inset-0 bg-[#0a1f1a]/88" />
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0a1f1a]/70 via-[#1d5547]/35 to-[#0a1f1a]/90" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1f1a] via-transparent to-[#0a1f1a]/40" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0d201a] via-[#0d201a]/85 to-[#0d201a]/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d201a] via-transparent to-[#0d201a]/50" />
+            <div className="mk-grain mk-grain--light" />
           </div>
+
           <div className="relative z-10 flex flex-1 flex-col justify-between p-10 xl:p-14">
             <div>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
+                className="inline-flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.16em] text-white/40 transition-colors duration-200 hover:text-white"
               >
-                <ArrowLeft size={16} aria-hidden />
+                <ArrowLeft size={13} aria-hidden />
                 Back to home
               </Link>
-              <div className="mt-14 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
-                  <GraduationCap size={22} className="text-white" aria-hidden />
-                </div>
-                <span className="font-display text-3xl tracking-wide text-white">
-                  SQUL
-                </span>
+
+              <div className="mt-16">
+                <SqulWordmark tone="light" markSize={32} />
               </div>
-              <h1 className="mt-10 max-w-md font-display text-4xl leading-[1.12] tracking-tight text-white xl:text-[2.65rem]">
-                Sign in to your
-                <span className="block text-emerald-300/95">school workspace</span>
+
+              <h1 className="mt-12 max-w-md font-display text-[clamp(2.6rem,3.8vw,3.5rem)] leading-[1.0] tracking-[-0.025em] text-[#f7f4ec]">
+                Welcome back
+                <span className="mt-1 block italic text-[#d8c9ab]">to your school.</span>
               </h1>
-              <p className="mt-5 max-w-sm text-base leading-relaxed text-white/65">
-                Principals, bursars, and admins—pick up fees, admissions, and CBC marks where you left off.
+              <p className="mt-6 max-w-sm text-[0.9375rem] leading-[1.7] text-white/55">
+                Principals, bursars and admins — pick up fees, admissions and CBC
+                marks exactly where you left off.
               </p>
             </div>
 
-            <ul className="space-y-4 border-t border-white/10 pt-10 text-sm text-white/55">
-              <li className="flex items-start gap-3">
-                <Shield size={18} className="mt-0.5 shrink-0 text-emerald-300/80" aria-hidden />
-                <span>Role-based access—staff only see what their job needs.</span>
+            <ul className="border-t border-white/10 pt-5">
+              <li className="flex items-baseline gap-3 border-b border-white/8 py-3.5 text-[0.75rem] leading-relaxed text-white/45">
+                <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#a98a55]" aria-hidden />
+                Role-based access — staff only see what their job needs.
               </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/80" aria-hidden />
-                <span>M-Pesa reconciliation, learner files, and term reports in one place.</span>
+              <li className="flex items-baseline gap-3 py-3.5 text-[0.75rem] leading-relaxed text-white/45">
+                <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#a98a55]" aria-hidden />
+                M-Pesa reconciliation, learner files and term reports in one place.
               </li>
             </ul>
           </div>
-        </div>
+        </aside>
 
         {/* Form panel */}
-        <div className="flex flex-col justify-center px-4 py-10 sm:px-8 lg:px-12 xl:px-16">
-          <div className="mx-auto w-full max-w-md">
-            <div className="mb-8 lg:hidden">
-              <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#1d5547] hover:text-[#2d8570]">
-                <ArrowLeft size={16} aria-hidden />
-                Back to home
+        <main className="flex min-h-screen flex-col px-6 py-8 sm:px-10 lg:px-14">
+          <div className="flex items-center justify-between">
+            <div className="lg:hidden">
+              <SqulWordmark markSize={28} />
+            </div>
+            <Link
+              href="/"
+              className="ml-auto text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] transition-colors duration-200 hover:text-[#14201b]"
+            >
+              Back to home
+            </Link>
+          </div>
+
+          <div className="mx-auto flex w-full max-w-[26rem] flex-1 flex-col justify-center py-12">
+            <p className="mk-eyebrow">Sign in</p>
+            <h2 className="mt-6 font-display text-[2.4rem] leading-[1.03] tracking-[-0.02em] text-[#14201b]">
+              Sign in.
+            </h2>
+            <p className="mt-4 text-[0.8125rem] leading-[1.7] text-[#4d574f]">
+              Use the email and password for your school account. New school?{" "}
+              <Link
+                href="/register"
+                className="text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4 transition-colors hover:decoration-[#14201b]"
+              >
+                Start a free term
               </Link>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#1d5547]/25 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
-                  <GraduationCap size={20} className="text-white" aria-hidden />
-                </div>
-                <span className="font-display text-2xl text-[#1d5547]">SQUL</span>
-              </div>
-            </div>
+              .
+            </p>
 
-            <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-900/10 shadow-sm lg:hidden">
-              <img
-                src="/schooll.png"
-                alt="Kenyan school building"
-                className="h-44 w-full object-cover object-[50%_35%] sm:h-52"
-              />
-            </div>
-
-            <div className="mb-8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547]">
-                Sign in
-              </p>
-              <h2 className="mt-2 font-display text-3xl tracking-tight text-slate-900">
-                Welcome back
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Use the email and password for your school account. New school?{" "}
-                <Link href="/register" className="font-semibold text-[#1d5547] hover:text-[#2d8570]">
-                  Start a free term
-                </Link>
-                .
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm sm:p-8">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {error && (
-                  <div
-                    role="alert"
-                    className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                  >
-                    {error}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="font-ui text-sm font-medium text-slate-700">
-                    Work email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@schoolname.ac.ke"
-                    className="h-11 border-emerald-900/15 bg-[#f6faf8] focus-visible:ring-[#1d5547]/30"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="font-ui text-sm font-medium text-slate-700">
-                      Password
-                    </Label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs font-medium text-[#1d5547] hover:text-[#2d8570]"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Your password"
-                    className="h-11 border-emerald-900/15 bg-[#f6faf8] focus-visible:ring-[#1d5547]/30"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-emerald-900/20 text-[#1d5547] focus:ring-[#1d5547]/30"
-                  />
-                  <Label htmlFor="remember" className="text-sm font-normal text-slate-600">
-                    Keep me signed in on this device
-                  </Label>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="mt-2 h-11 w-full border-0 bg-[#1d5547] font-semibold text-white hover:bg-[#2d8570] disabled:bg-slate-200 disabled:text-slate-500"
+            <form onSubmit={handleSubmit} className="mt-10 space-y-5">
+              {error && (
+                <div
+                  role="alert"
+                  className="border-l-2 border-[#a04a3a] py-1 pl-4 text-[0.8125rem] leading-relaxed text-[#8a3a2c]"
                 >
-                  {isLoading ? "Signing in…" : "Sign in"}
-                </Button>
-              </form>
-            </div>
+                  {error}
+                </div>
+              )}
 
-            <p className="mt-8 text-center text-sm text-slate-500">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+                  Work email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@schoolname.ac.ke"
+                  className="h-12 rounded-[2px] border-[#14201b]/15 bg-[#fcfaf4] text-[0.875rem] shadow-none placeholder:text-[#14201b]/30 focus-visible:border-[#1c3d32] focus-visible:ring-2 focus-visible:ring-[#1c3d32]/10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+                    Password
+                  </Label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-[0.6875rem] font-medium text-[#1c3d32] underline decoration-[#1c3d32]/25 underline-offset-4 transition-colors hover:decoration-[#1c3d32]"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Your password"
+                  className="h-12 rounded-[2px] border-[#14201b]/15 bg-[#fcfaf4] text-[0.875rem] shadow-none placeholder:text-[#14201b]/30 focus-visible:border-[#1c3d32] focus-visible:ring-2 focus-visible:ring-[#1c3d32]/10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-1">
+                <input
+                  id="remember"
+                  type="checkbox"
+                  className="h-3.5 w-3.5 rounded-[2px] border-[#14201b]/25 text-[#1c3d32] focus:ring-[#1c3d32]/25"
+                />
+                <Label htmlFor="remember" className="text-[0.75rem] font-normal text-[#4d574f]">
+                  Keep me signed in on this device
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="mt-2 h-12 w-full rounded-[2px] bg-[#14201b] text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none transition-colors duration-200 hover:bg-[#1c3d32] disabled:bg-[#14201b]/20 disabled:text-[#14201b]/40"
+              >
+                {isLoading ? "Signing in…" : "Sign in"}
+              </Button>
+            </form>
+
+            <p className="mt-8 text-[0.8125rem] text-[#4d574f]">
               Don&apos;t have an account?{" "}
-              <Link href="/register" className="font-semibold text-[#1d5547] hover:text-[#2d8570]">
+              <Link
+                href="/register"
+                className="font-medium text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4 transition-colors hover:decoration-[#14201b]"
+              >
                 Create your school
               </Link>
             </p>
 
-            <p className="mt-6 text-center">
+            <p className="mt-6">
               <Link
                 href="/superadmin/login"
-                className="text-xs text-slate-400 transition-colors hover:text-slate-600"
+                className="text-[0.625rem] uppercase tracking-[0.14em] text-[#7c857d] transition-colors hover:text-[#14201b]"
               >
                 Platform super admin
               </Link>
             </p>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

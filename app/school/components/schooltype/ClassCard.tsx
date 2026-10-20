@@ -16,7 +16,7 @@ interface ClassCardProps {
 
 /** Shared style for the floating action buttons on an editable class chip. */
 const ACTION_BTN =
-  'flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border bg-white shadow-sm transition-all duration-150 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1'
+  'flex h-5 w-5 cursor-pointer items-center justify-center rounded-[2px] border bg-[#fcfaf4] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1'
 
 export const ClassCard: React.FC<ClassCardProps> = ({
   cls,
@@ -59,12 +59,12 @@ export const ClassCard: React.FC<ClassCardProps> = ({
   if (!editable) {
     return (
       <div className="relative overflow-hidden">
-        <div className="rounded-md border border-gray-200/60 bg-gray-50/60 p-1.5">
-          <div className="truncate text-[10px] font-medium leading-tight text-gray-700">
+        <div className="rounded-[2px] border border-[#14201b]/8 bg-[#f7f4ec] px-2 py-1.5">
+          <div className="truncate text-[0.625rem] font-medium leading-tight text-[#4d574f]">
             {cls.name}
           </div>
           {cls.age && (
-            <div className="mt-0.5 text-[9px] text-gray-500">Age {cls.age}</div>
+            <div className="mt-0.5 text-[0.5625rem] text-[#7c857d]">Age {cls.age}</div>
           )}
         </div>
       </div>

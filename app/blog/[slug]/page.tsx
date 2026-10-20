@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronRight, GraduationCap } from 'lucide-react'
+import { ArrowRight, ChevronRight } from 'lucide-react'
 import { Header } from '@/components/Header'
+import { SqulWordmark } from '@/components/brand/SqulMark'
 import { ArticleBody, ArticleCta, ArticleRelated } from '@/components/blog/article-body'
 import { getArticle, getArticleSlugs } from '@/lib/content/articles'
 
@@ -108,7 +109,7 @@ export default async function BlogArticlePage({
       : null
 
   return (
-    <div className="squl-marketing min-h-screen bg-[#f3f7f5] font-sans text-[#0a1f1a]">
+    <div className="squl-marketing min-h-screen bg-[#f7f4ec] font-sans text-[#14201b]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
@@ -124,19 +125,20 @@ export default async function BlogArticlePage({
         />
       ) : null}
 
-      <div className="relative overflow-hidden bg-[#0a1f1a] text-white">
+      <div className="relative overflow-hidden bg-[#0d201a] text-white">
         <div
-          className="pointer-events-none absolute inset-0 opacity-40"
+          className="pointer-events-none absolute inset-0 opacity-70"
           aria-hidden
           style={{
             backgroundImage:
-              'radial-gradient(ellipse 80% 60% at 15% 20%, rgba(36,106,89,0.55), transparent 55%), radial-gradient(ellipse 50% 40% at 90% 10%, rgba(45,133,112,0.35), transparent 50%), linear-gradient(180deg, transparent 60%, #0a1f1a)',
+              'radial-gradient(ellipse 65% 60% at 18% 15%, rgba(44,87,74,0.55), transparent 62%), radial-gradient(ellipse 40% 40% at 92% 5%, rgba(169,138,85,0.12), transparent 60%)',
           }}
         />
+        <div className="mk-grain mk-grain--light" aria-hidden />
         <Header variant="hero" />
 
-        <div className="relative mx-auto max-w-3xl px-4 pb-14 pt-28 sm:px-6 sm:pt-32 lg:px-8">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-white/55">
+        <div className="relative mx-auto max-w-3xl px-6 pb-16 pt-32 sm:px-8 sm:pt-36 lg:px-8">
+          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-[0.6875rem] text-white/40">
             <Link href="/" className="transition-colors hover:text-white">
               Home
             </Link>
@@ -148,14 +150,14 @@ export default async function BlogArticlePage({
             <span className="truncate text-white/80">{article.kicker}</span>
           </nav>
 
-          <p className="mt-4 font-ui text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/90">
+          <p className="mk-eyebrow mk-eyebrow--light mt-8">
             {article.kicker}
           </p>
-          <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3rem)] leading-[1.08] tracking-tight text-white">
+          <h1 className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.4rem)] leading-[1.05] tracking-[-0.025em] text-[#f7f4ec]">
             {article.h1}
           </h1>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/60">
+          <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.6875rem] uppercase tracking-[0.1em] text-white/40">
             <span>{article.author}</span>
             <span aria-hidden>·</span>
             <span>Updated {formatDate(article.updated)}</span>
@@ -164,7 +166,7 @@ export default async function BlogArticlePage({
             {article.kind === 'pillar' ? (
               <>
                 <span aria-hidden>·</span>
-                <span className="font-ui font-semibold uppercase tracking-wide text-emerald-300/90">
+                <span className="text-[#d8c9ab]">
                   Pillar guide
                 </span>
               </>
@@ -173,10 +175,10 @@ export default async function BlogArticlePage({
         </div>
       </div>
 
-      <main className="relative mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <main className="relative mx-auto max-w-3xl px-6 py-14 sm:px-8 sm:py-20 lg:px-8">
         <article>
           {article.image ? (
-            <div className="relative mb-10 aspect-[16/9] w-full overflow-hidden border border-[#1a4d42]/15 bg-[#eef4f1]">
+            <div className="relative mb-12 aspect-[16/9] w-full overflow-hidden border border-[#14201b]/10 bg-[#efeadd]">
               <Image
                 src={article.image}
                 alt={article.h1}
@@ -193,15 +195,26 @@ export default async function BlogArticlePage({
         </article>
       </main>
 
-      <footer className="border-t border-emerald-900/25 bg-[#0a1f1a] py-10 text-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-emerald-300" />
-            <span className="font-display text-lg tracking-wide">SQUL</span>
+      <footer className="bg-[#0d201a] text-[#f7f4ec]">
+        <div className="mk-container flex flex-col gap-6 border-t border-white/10 py-10 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/" aria-label="SQUL home" className="w-fit">
+            <SqulWordmark tone="light" markSize={28} />
           </Link>
-          <p className="text-sm text-white/55">
+          <p className="text-[0.6875rem] leading-relaxed text-white/35">
             School management built for Kenyan classrooms.
           </p>
+          <div className="flex gap-6 text-[0.6875rem] text-white/45">
+            <Link href="/blog" className="transition-colors hover:text-[#d8c9ab]">
+              All guides
+            </Link>
+            <Link href="/schools" className="transition-colors hover:text-[#d8c9ab]">
+              Schools
+            </Link>
+            <Link href="/register" className="inline-flex items-center gap-1.5 text-[#d8c9ab]">
+              Start free
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

@@ -1152,120 +1152,68 @@ export const SchoolTypeSetup = () => {
 
   const selectedSchoolType = schoolTypes.find(type => type.id === selectedType)
 
-  const styles = `
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    @keyframes slide-bounce {
-      0%, 100% {
-        transform: translateX(0) translateY(-50%);
-      }
-      50% {
-        transform: translateX(4px) translateY(-50%);
-      }
-    }
-    @keyframes slide-bounce-vertical {
-      0%, 100% {
-        transform: translateY(0) translateX(-50%);
-      }
-      50% {
-        transform: translateY(-4px) translateX(-50%);
-      }
-    }
-    .animate-slide-bounce {
-      animation: slide-bounce 1.5s ease-in-out infinite;
-    }
-    .animate-slide-bounce-vertical {
-      animation: slide-bounce-vertical 1.5s ease-in-out infinite;
-    }
-  `;
 
-  useEffect(() => {
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = styles;
-    document.head.appendChild(styleSheet);
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900 items-center justify-center">
+    <div className="onboarding-flow flex min-h-screen flex-col bg-[#f7f4ec]">
       <Toaster position="top-center" />
-      
-      {/* Header with responsive margins */}
-      <div className="w-full px-6 sm:px-12 md:px-16 lg:px-24 xl:px-32 2xl:px-40 pt-4 sm:pt-6">
-        <div className="w-full max-w-[1400px] mx-auto">
-          <Header subdomain={subdomain} currentStep={currentStep} totalSteps={setupSteps.length} />
-        </div>
-      </div>
-      
-      {/* Main content with responsive margins */}
-      <main className="flex-1 w-full px-6 sm:px-12 md:px-16 lg:px-24 xl:px-32 2xl:px-40 py-4 sm:py-6 flex items-center justify-center">
-        <div className="w-full max-w-[1400px] mx-auto">
-          {/* Progress Stepper */}
-          <div className="flex justify-center mb-6">
-            <ProgressStepper steps={setupSteps} currentStep={currentStep} />
+      <Header
+        subdomain={subdomain}
+        currentStep={currentStep}
+        totalSteps={setupSteps.length}
+      />
+
+      <main className="mx-auto w-full max-w-[84rem] flex-1 px-6 pb-36 pt-10 lg:px-10">
+        <ProgressStepper steps={setupSteps} currentStep={currentStep} />
+
+        <div className="mt-12 grid gap-10 md:grid-cols-12 lg:gap-14">
+          <div className="md:col-span-3">
+            <SchoolTypeSelector
+              schoolTypes={schoolTypes}
+              selectedType={selectedType}
+              handleTypeSelect={handleTypeSelect}
+              getSelectedLevelsCount={getSelectedLevelsCount}
+            />
           </div>
-          
-          {/* School Type and Levels Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 mt-4 sm:mt-6 w-full justify-center">
-            {/* School Type Selection - Left Column */}
-            <div className="md:col-span-3 w-full md:border-r md:pr-4 lg:pr-6 flex justify-center">
-              <div className="w-full max-w-full">
-                <SchoolTypeSelector
-                  schoolTypes={schoolTypes}
-                  selectedType={selectedType}
-                  handleTypeSelect={handleTypeSelect}
+
+          <div className="md:col-span-9">
+            {selectedSchoolType ? (
+              <>
+                <SelectedTypeHeader
+                  selectedSchoolType={selectedSchoolType}
                   getSelectedLevelsCount={getSelectedLevelsCount}
+                  selectedType={selectedType}
                 />
-              </div>
-            </div>
-            
-            {/* Selected Type Details - Right Column */}
-            {selectedSchoolType && (
-              <div className="md:col-span-9 w-full md:pl-4 lg:pl-6 flex justify-center">
-                <div className="w-full max-w-full">
-                  <SelectedTypeHeader
+                <div className="mt-8">
+                  <LevelGrid
                     selectedSchoolType={selectedSchoolType}
-                    getSelectedLevelsCount={getSelectedLevelsCount}
                     selectedType={selectedType}
+                    selectedLevels={selectedLevels}
+                    toggleLevel={toggleLevel}
+                    levelsSectionRef={levelsSectionRef}
+                    classOverrides={classOverrides}
+                    onRenameClass={renameClass}
+                    onRemoveClass={removeClass}
+                    onRestoreClass={restoreClass}
                   />
-                  
-                  {/* Level Selection Grid */}
-                  <div className="mt-4 sm:mt-6 relative">
-                    {/* Background decoration */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#246a59]/5 via-transparent to-transparent rounded-lg" />
-                    
-                    <LevelGrid
-                      selectedSchoolType={selectedSchoolType}
-                      selectedType={selectedType}
-                      selectedLevels={selectedLevels}
-                      toggleLevel={toggleLevel}
-                      levelsSectionRef={levelsSectionRef}
-                      classOverrides={classOverrides}
-                      onRenameClass={renameClass}
-                      onRemoveClass={removeClass}
-                      onRestoreClass={restoreClass}
-                    />
-                  </div>
                 </div>
+              </>
+            ) : (
+              <div className="border border-[#14201b]/10 bg-[#fcfaf4] px-8 py-12">
+                <p className="font-display text-[1.75rem] leading-tight tracking-[-0.015em]">
+                  Choose a school type to begin.
+                </p>
+                <p className="mt-3 max-w-md text-[0.8125rem] leading-relaxed text-[#4d574f]">
+                  Your grade levels and class streams follow from the curriculum you run.
+                </p>
               </div>
             )}
           </div>
-          
-          {/* Quick Tip */}
-          <div className="flex justify-center mt-6">
-            <QuickTip currentStep={currentStep} />
-          </div>
         </div>
+
+        <QuickTip currentStep={currentStep} />
       </main>
-      
-      {/* Footer */}
+
       <Footer
         canProceed={canProceed}
         isLoading={isLoading}

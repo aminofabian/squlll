@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, CheckCircle2, Lightbulb, TriangleAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { RichText } from '@/lib/content/rich-text'
 import type { ArticleWithMeta, Block, Section } from '@/lib/content/types'
 
@@ -9,16 +8,16 @@ const CALLOUT_STYLES: Record<
   NonNullable<Extract<Block, { type: 'callout' }>['variant']>,
   { box: string; icon: typeof Lightbulb; iconClass: string }
 > = {
-  note: { box: 'border-[#1a4d42]/20 bg-[#f2f6f4]', icon: CheckCircle2, iconClass: 'text-[#246a59]' },
-  tip: { box: 'border-emerald-200 bg-emerald-50', icon: Lightbulb, iconClass: 'text-emerald-700' },
-  warning: { box: 'border-amber-300 bg-amber-50', icon: TriangleAlert, iconClass: 'text-amber-700' },
+  note: { box: 'border-[#a98a55]/60 bg-[#efeadd]/60', icon: CheckCircle2, iconClass: 'text-[#1c3d32]' },
+  tip: { box: 'border-[#a98a55]/60 bg-[#efeadd]/60', icon: Lightbulb, iconClass: 'text-[#a98a55]' },
+  warning: { box: 'border-[#a98a55] bg-[#efeadd]/80', icon: TriangleAlert, iconClass: 'text-[#8a6a3a]' },
 }
 
 function BlockView({ block }: { block: Block }) {
   switch (block.type) {
     case 'paragraph':
       return (
-        <p className="mt-4 text-[1.02rem] leading-8 text-[#25443d] first:mt-0">
+        <p className="mt-5 text-[1.0625rem] leading-[1.75] text-[#3f4a43] first:mt-0">
           <RichText text={block.text} />
         </p>
       )
@@ -27,8 +26,8 @@ function BlockView({ block }: { block: Block }) {
       return block.ordered ? (
         <ol className="mt-4 space-y-3" role="list">
           {block.items.map((item, index) => (
-            <li key={index} className="flex gap-3 text-[1.02rem] leading-8 text-[#25443d]">
-              <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center bg-[#1d5547] text-xs font-semibold text-white">
+            <li key={index} className="flex gap-3 text-[1.0625rem] leading-[1.75] text-[#3f4a43]">
+              <span className="mt-1.5 w-5 shrink-0 font-mono text-[0.625rem] tabular-nums text-[#a98a55]">
                 {index + 1}
               </span>
               <span>
@@ -40,8 +39,8 @@ function BlockView({ block }: { block: Block }) {
       ) : (
         <ul className="mt-4 space-y-3" role="list">
           {block.items.map((item, index) => (
-            <li key={index} className="flex gap-3 text-[1.02rem] leading-8 text-[#25443d]">
-              <span className="mt-3.5 h-1.5 w-1.5 shrink-0 bg-emerald-600/70" />
+            <li key={index} className="flex gap-3 text-[1.0625rem] leading-[1.75] text-[#3f4a43]">
+              <span className="mt-[0.7rem] h-[3px] w-[3px] shrink-0 rounded-full bg-[#a98a55]" />
               <span>
                 <RichText text={item} />
               </span>
@@ -53,12 +52,12 @@ function BlockView({ block }: { block: Block }) {
     case 'table':
       return (
         <div className="mt-6">
-          <div className="overflow-x-auto border border-[#1a4d42]/15 bg-white shadow-sm">
-            <table className="w-full border-collapse text-left text-sm">
+          <div className="overflow-x-auto border-y border-[#14201b]/15 bg-[#fcfaf4]">
+            <table className="w-full border-collapse text-left text-[0.8125rem]">
               <thead>
-                <tr className="bg-[#0a1f1a] text-white">
+                <tr className="bg-[#efeadd] text-[#14201b]">
                   {block.headers.map((header, index) => (
-                    <th key={index} className="px-4 py-3 font-ui text-xs uppercase tracking-wide">
+                    <th key={index} className="px-4 py-3.5 text-[0.5625rem] font-medium uppercase tracking-[0.14em]">
                       {header}
                     </th>
                   ))}
@@ -68,12 +67,12 @@ function BlockView({ block }: { block: Block }) {
                 {block.rows.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className={rowIndex % 2 === 1 ? 'bg-[#f6faf8]' : 'bg-white'}
+                    className={rowIndex % 2 === 1 ? 'bg-[#f7f4ec]' : 'bg-[#fcfaf4]'}
                   >
                     {row.map((cell, cellIndex) => (
                       <td
                         key={cellIndex}
-                        className="border-t border-[#1a4d42]/10 px-4 py-3 align-top text-[#25443d]"
+                        className="border-t border-[#14201b]/8 px-4 py-3.5 align-top leading-relaxed text-[#3f4a43]"
                       >
                         <RichText text={cell} />
                       </td>
@@ -84,7 +83,7 @@ function BlockView({ block }: { block: Block }) {
             </table>
           </div>
           {block.caption ? (
-            <p className="mt-2 text-sm text-[#1a4d42]/70">
+            <p className="mt-2.5 text-[0.6875rem] leading-relaxed text-[#7c857d]">
               <RichText text={block.caption} />
             </p>
           ) : null}
@@ -96,14 +95,14 @@ function BlockView({ block }: { block: Block }) {
       const style = CALLOUT_STYLES[variant]
       const Icon = style.icon
       return (
-        <div className={`mt-6 border-l-4 ${style.box} px-5 py-4`}>
+        <div className={`mt-7 border-l-2 ${style.box} px-5 py-4`}>
           <div className="flex gap-3">
-            <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${style.iconClass}`} aria-hidden />
+            <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${style.iconClass}`} strokeWidth={1.5} aria-hidden />
             <div>
               {block.title ? (
-                <p className="font-ui text-sm font-semibold text-[#0a1f1a]">{block.title}</p>
+                <p className="text-[0.75rem] font-medium uppercase tracking-[0.1em] text-[#14201b]">{block.title}</p>
               ) : null}
-              <p className="mt-1 text-[0.97rem] leading-7 text-[#25443d]">
+              <p className="mt-2 text-[0.875rem] leading-[1.7] text-[#3f4a43]">
                 <RichText text={block.text} />
               </p>
             </div>
@@ -114,12 +113,12 @@ function BlockView({ block }: { block: Block }) {
 
     case 'quote':
       return (
-        <blockquote className="mt-6 border-l-4 border-[#1d5547]/40 pl-5 italic text-[#25443d]">
-          <p className="leading-8">
+        <blockquote className="mt-9 border-l-2 border-[#a98a55]/60 pl-6">
+          <p className="font-display text-[1.35rem] italic leading-[1.4] tracking-[-0.01em] text-[#14201b]">
             <RichText text={block.text} />
           </p>
           {block.cite ? (
-            <cite className="mt-2 block font-ui text-sm not-italic text-[#1a4d42]/70">
+            <cite className="mt-3 block text-[0.625rem] not-italic uppercase tracking-[0.14em] text-[#7c857d]">
               {block.cite}
             </cite>
           ) : null}
@@ -131,12 +130,12 @@ function BlockView({ block }: { block: Block }) {
         <ol className="mt-6 space-y-5" role="list">
           {block.items.map((item, index) => (
             <li key={index} className="flex gap-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#1d5547] font-ui text-sm font-semibold text-white">
+              <span className="w-7 shrink-0 pt-0.5 font-display text-[1.4rem] leading-none tabular-nums text-[#a98a55]">
                 {index + 1}
               </span>
               <div>
-                <p className="font-ui text-sm font-semibold text-[#0a1f1a]">{item.title}</p>
-                <p className="mt-1 text-[1.02rem] leading-8 text-[#25443d]">
+                <p className="text-[0.8125rem] font-medium text-[#14201b]">{item.title}</p>
+                <p className="mt-1.5 text-[1rem] leading-[1.7] text-[#3f4a43]">
                   <RichText text={item.text} />
                 </p>
               </div>
@@ -160,7 +159,7 @@ function SectionView({ section }: { section: Section }) {
   if (section.level === 3) {
     return (
       <div className="mt-10">
-        <h3 id={section.id} className="scroll-mt-24 text-xl text-[#0a1f1a] sm:text-2xl">
+        <h3 id={section.id} className="scroll-mt-24 font-display text-[1.45rem] leading-tight tracking-[-0.015em] text-[#14201b] sm:text-[1.6rem]">
           {section.heading}
         </h3>
         {section.blocks.map((block, index) => (
@@ -171,10 +170,10 @@ function SectionView({ section }: { section: Section }) {
   }
 
   return (
-    <section className="mt-12">
+    <section className="mt-14">
       <h2
         id={section.id}
-        className="scroll-mt-24 border-b border-[#1a4d42]/12 pb-3 text-2xl text-[#0a1f1a] sm:text-3xl"
+        className="scroll-mt-24 border-b border-[#14201b]/10 pb-3 font-display text-[1.8rem] leading-tight tracking-[-0.02em] text-[#14201b] sm:text-[2rem]"
       >
         {section.heading}
       </h2>
@@ -192,17 +191,17 @@ function TableOfContents({ sections }: { sections: Section[] }) {
   return (
     <nav
       aria-label="In this guide"
-      className="mt-8 border border-[#1a4d42]/15 bg-[#f6faf8] p-5 sm:p-6"
+      className="mt-9 border-y border-[#14201b]/10 py-5"
     >
-      <p className="font-ui text-xs font-semibold uppercase tracking-[0.18em] text-[#1d5547]">
+      <p className="text-[0.5625rem] font-medium uppercase tracking-[0.18em] text-[#7c857d]">
         In this guide
       </p>
-      <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+      <ol className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
         {topLevel.map((section, index) => (
           <li key={section.id}>
             <a
               href={`#${section.id}`}
-              className="text-sm text-[#25443d] underline decoration-[#1d5547]/25 underline-offset-2 transition-colors hover:text-[#1d5547] hover:decoration-[#1d5547]"
+              className="text-[0.8125rem] leading-snug text-[#3f4a43] underline decoration-[#14201b]/20 underline-offset-4 transition-colors duration-200 hover:text-[#14201b] hover:decoration-[#14201b]/60"
             >
               {index + 1}. {section.heading}
             </a>
@@ -217,8 +216,8 @@ export function ArticleBody({ article }: { article: ArticleWithMeta }) {
   return (
     <>
       {article.quickAnswer ? (
-        <div className="mt-8 border-l-4 border-[#246a59] bg-[#f2f6f4] px-5 py-4">
-          <p className="text-sm leading-7 text-[#25443d]">
+        <div className="mt-8 border-l-2 border-[#a98a55] pl-5">
+          <p className="text-[0.9375rem] leading-[1.75] text-[#3f4a43]">
             <RichText text={article.quickAnswer} />
           </p>
         </div>
@@ -228,7 +227,7 @@ export function ArticleBody({ article }: { article: ArticleWithMeta }) {
         {article.intro.map((paragraph, index) => (
           <p
             key={index}
-            className="text-[1.08rem] leading-8 text-[#25443d] sm:text-[1.12rem]"
+            className="text-[1.0925rem] leading-[1.75] text-[#2f3a34] sm:text-[1.125rem]"
           >
             <RichText text={paragraph} />
           </p>
@@ -249,11 +248,11 @@ export function ArticleBody({ article }: { article: ArticleWithMeta }) {
           >
             Frequently asked questions
           </h2>
-          <div className="mt-6 divide-y divide-[#1a4d42]/10 border border-[#1a4d42]/15 bg-white">
+          <div className="mt-6">
             {article.faqs.map((faq, index) => (
-              <div key={index} className="px-5 py-5 sm:px-6">
-                <h3 className="text-lg text-[#0a1f1a]">{faq.question}</h3>
-                <p className="mt-2 text-[0.98rem] leading-7 text-[#25443d]">{faq.answer}</p>
+              <div key={index} className="border-t border-[#14201b]/10 py-5 last:border-b">
+                <h3 className="font-display text-[1.2rem] leading-snug text-[#14201b]">{faq.question}</h3>
+                <p className="mt-2 text-[0.875rem] leading-[1.75] text-[#3f4a43]">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -265,16 +264,19 @@ export function ArticleBody({ article }: { article: ArticleWithMeta }) {
 
 export function ArticleCta({ cta }: { cta: ArticleWithMeta['cta'] }) {
   return (
-    <section className="mt-14 border border-[#1a4d42]/15 bg-[#0a1f1a] p-8 text-white sm:p-10">
-      <h2 className="text-2xl text-white sm:text-3xl">{cta.heading}</h2>
-      <p className="mt-3 max-w-2xl text-[1.02rem] leading-7 text-white/75">{cta.body}</p>
-      <div className="mt-6">
-        <Link href={cta.href ?? '/register'}>
-          <Button className="h-11 rounded-lg border-0 bg-emerald-500 px-6 font-semibold text-[#0a1f1a] hover:bg-emerald-400">
+    <section className="relative mt-16 overflow-hidden bg-[#0d201a] px-7 py-10 text-white sm:px-10">
+      <div className="mk-grain mk-grain--light" aria-hidden />
+      <div className="relative">
+        <h2 className="font-display text-[1.9rem] leading-[1.08] tracking-[-0.02em] text-[#f7f4ec]">
+          {cta.heading}
+        </h2>
+        <p className="mt-3 max-w-2xl text-[0.9375rem] leading-[1.7] text-white/55">{cta.body}</p>
+        <div className="mt-7">
+          <Link href={cta.href ?? '/register'} className="mk-btn mk-btn--paper h-11 px-5 text-[0.8125rem]">
             {cta.label}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
+            <ArrowRight className="mk-arrow h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
     </section>
   )
@@ -285,18 +287,18 @@ export function ArticleRelated({ article }: { article: ArticleWithMeta }) {
 
   return (
     <section className="mt-14">
-      <h2 className="text-2xl text-[#0a1f1a] sm:text-3xl">Keep reading</h2>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <h2 className="font-display text-[1.9rem] leading-tight tracking-[-0.02em] text-[#14201b]">Keep reading</h2>
+      <div className="mt-5 grid gap-x-8 gap-y-6 sm:grid-cols-2">
         {article.relatedArticles.map((related) => (
           <Link
             key={related.path}
             href={related.path}
-            className="group border border-[#1a4d42]/15 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#1d5547]/25 hover:shadow-md"
+            className="group border-t border-[#14201b]/12 pt-4"
           >
-            <span className="font-ui text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1d5547]/80">
+            <span className="text-[0.5625rem] uppercase tracking-[0.16em] text-[#7c857d]">
               {related.kicker}
             </span>
-            <p className="mt-2 text-[0.98rem] font-medium leading-6 text-[#0a1f1a] group-hover:text-[#1d5547]">
+            <p className="mt-2 text-[0.875rem] font-medium leading-snug text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
               <RichText text={related.title} />
             </p>
           </Link>
