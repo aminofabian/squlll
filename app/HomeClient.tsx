@@ -78,89 +78,43 @@ const LANDING_PLATFORM_MODULES: {
     icon: CreditCard,
     title: "M-Pesa & fee balances",
     description:
-      "Match Paybill and till payments to the right student—balances and receipts update before the parent leaves the gate.",
+      "Match Paybill and till payments to the right learner, with receipts sent before the parent leaves.",
     highlight: "Auto receipts",
   },
   {
     icon: ClipboardList,
     title: "Admissions & student files",
     description:
-      "Issue admission numbers, assign class, and link guardians in one flow—no duplicate registers in the bursar's office.",
+      "Issue admission numbers, assign classes and link guardians in one flow.",
     highlight: "ID in minutes",
   },
   {
     icon: NotebookPen,
     title: "CBC marks & reports",
     description:
-      "Enter rubrics and exam marks once—term reports ready for parents and auditors without retyping from exercise books.",
+      "Enter CBC rubrics and exam marks once; term reports print themselves.",
     highlight: "Term reports",
   },
   {
     icon: Smartphone,
     title: "Parent SMS alerts",
     description:
-      "Fee reminders, absence notices, and exam updates by SMS—not another WhatsApp group drowning your staff.",
+      "Fee reminders, absence alerts and exam notices by SMS — nothing lost in a group chat.",
     highlight: "Bulk SMS",
   },
   {
     icon: CalendarClock,
     title: "Timetables & duty rosters",
     description:
-      "Publish class timetables and teacher duty lists your team can trust—no more guessing who teaches Form 2 East on Friday.",
+      "Publish class timetables and teacher duty lists your team can trust.",
     highlight: "Live schedules",
   },
   {
     icon: UserCheck,
     title: "Daily attendance",
     description:
-      "Morning roll call on phone or desktop—parents get an SMS when their child is marked present or absent.",
+      "Morning roll call on phone or desktop, with an SMS to the parent.",
     highlight: "Same-day SMS",
-  },
-]
-
-const LANDING_WORKFLOW_BLOCKS: {
-  id: string
-  num: string
-  icon: LucideIcon
-  title: string
-  description: string
-  bullets: string[]
-}[] = [
-  {
-    id: "cbc",
-    num: "01",
-    icon: NotebookPen,
-    title: "CBC & exam records",
-    description:
-      "Capture rubrics, continuous assessments, and end-of-term exams once—reports parents and auditors actually use.",
-    bullets: ["CBC rubrics & strands", "Exam timetables", "Term report cards", "Per-subject gradebooks"],
-  },
-  {
-    id: "students",
-    num: "02",
-    icon: Users2,
-    title: "Student & guardian files",
-    description:
-      "Every learner has one profile—admission number, class, guardian contacts, and history without a second register.",
-    bullets: ["Admission profiles", "Guardian & emergency SMS", "Class & stream lists", "Notes & discipline"],
-  },
-  {
-    id: "fees",
-    num: "04",
-    icon: CreditCard,
-    title: "Fees & M-Pesa",
-    description:
-      "Reconcile Paybill and till payments, track arrears by term, and print bursar summaries your board expects.",
-    bullets: ["Paybill matching", "Term fee structures", "Balances & arrears", "Bursar PDF reports"],
-  },
-  {
-    id: "comms",
-    num: "05",
-    icon: Bell,
-    title: "Parent communication",
-    description:
-      "Send fee reminders, absence alerts, and exam notices by SMS—parents stay informed without another WhatsApp group.",
-    bullets: ["Fee reminder SMS", "Absence alerts", "Exam notifications", "Guardian contact lists"],
   },
 ]
 
@@ -268,35 +222,6 @@ const LANDING_FAQ_ITEMS: {
   answer: item.answer,
 }))
 
-const LANDING_FOOTER_PERIODS: { time: string; label: string; href: string }[] = [
-  { time: "07:30", label: "Admissions & records", href: "/register" },
-  { time: "09:10", label: "Fees & M-Pesa", href: "/register" },
-  { time: "11:00", label: "CBC & report cards", href: "/register" },
-  { time: "13:30", label: "Timetables & attendance", href: "/register" },
-  { time: "15:00", label: "Parent SMS", href: "/register" },
-  { time: "16:00", label: "Custom domains", href: "/custom-domains" },
-]
-
-function SchoolBell({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <path d="M12 3v1.8" />
-      <path d="M7.2 17h9.6l-1.6-2.8V9.7a3.2 3.2 0 0 0-6.4 0v4.5L7.2 17Z" />
-      <path d="M5.8 17h12.4" />
-      <path d="M9.8 19a2.2 2.2 0 0 0 4.4 0" />
-    </svg>
-  )
-}
-
 /**
  * Public download for the SQUL mobile app (Android APK).
  *
@@ -341,7 +266,7 @@ function Reveal({
           }
         })
       },
-      { threshold: 0.1, rootMargin: "0px 0px -6% 0px" },
+      { threshold: 0.08, rootMargin: "0px 0px -5% 0px" },
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -352,7 +277,7 @@ function Reveal({
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={`${className} transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-        visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
+        visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       }`}
     >
       {children}
@@ -360,183 +285,145 @@ function Reveal({
   )
 }
 
-/** Editorial section opener: kicker + display headline on the left, lede on the right. */
-function SectionIntro({
+/** Section opener: a numbered eyebrow, a large statement, an optional aside. */
+function SectionHead({
+  index,
   kicker,
   title,
-  description,
-  aside,
+  lede,
 }: {
+  index: string
   kicker: string
   title: ReactNode
-  description: ReactNode
-  aside?: ReactNode
+  lede?: ReactNode
 }) {
   return (
     <Reveal>
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+      <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-7">
-          <p className="mk-eyebrow">{kicker}</p>
-          <h2 className="mk-h2 mt-7">{title}</h2>
+          <p className="flex items-center gap-4 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+            <span className="text-[#1c3d32]">{index}</span>
+            <span className="h-px w-7 bg-[#14201b]/20" aria-hidden />
+            {kicker}
+          </p>
+          <h2 className="mt-7 max-w-[24ch] font-display text-[clamp(2.4rem,4.3vw,3.9rem)] leading-[0.98] tracking-[-0.03em] text-[#14201b]">
+            {title}
+          </h2>
         </div>
-        <div className="flex flex-col justify-end gap-8 pb-1 lg:col-span-4 lg:col-start-9">
-          <p className="mk-lede">{description}</p>
-          {aside}
-        </div>
+        {lede ? (
+          <div className="flex items-end lg:col-span-4 lg:col-start-9">
+            <p className="mk-lede">{lede}</p>
+          </div>
+        ) : null}
       </div>
     </Reveal>
   )
 }
 
-/**
- * The six modules, set as a ledger rather than a card grid.
- * A hairline between rows does the work six shadows used to.
- */
-function PlatformLedger() {
+/** The six modules, as a quiet two-column index rather than a card grid. */
+function ModulesIndex() {
   return (
-    <Reveal className="mt-14 sm:mt-16">
-      <div>
-        {LANDING_PLATFORM_MODULES.map((feature, index) => {
-          const Icon = feature.icon
-          return (
-            <div
-              key={feature.title}
-              className="mk-row group grid gap-x-8 gap-y-1.5 md:grid-cols-[2.5rem_15rem_1fr_8rem] md:items-baseline"
-            >
-              <span className="font-mono text-[0.6875rem] tabular-nums text-[#14201b]/25">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <h3 className="flex items-baseline gap-3 font-display text-[1.35rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
-                <Icon
-                  className="h-[15px] w-[15px] shrink-0 self-center text-[#1c3d32]/45"
-                  strokeWidth={1.5}
-                  aria-hidden
-                />
-                {feature.title}
-              </h3>
-              <p className="max-w-[46ch] text-[0.9375rem] leading-[1.65] text-[#4d574f]">
-                {feature.description}
-              </p>
-              <span className="hidden justify-self-end text-right text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] md:block">
-                {feature.highlight}
-              </span>
-              <span className="text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] md:hidden">
-                {feature.highlight}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-    </Reveal>
-  )
-}
-
-function WorkflowEntry({
-  num,
-  icon: Icon,
-  title,
-  description,
-  bullets,
-}: (typeof LANDING_WORKFLOW_BLOCKS)[number]) {
-  return (
-    <article className="group border-t border-[#14201b]/12 pt-7">
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[0.625rem] tabular-nums tracking-[0.1em] text-[#14201b]/30">
-          {num}
-        </span>
-        <Icon
-          className="h-4 w-4 text-[#1c3d32]/40 transition-colors duration-200 group-hover:text-[#1c3d32]/70"
-          strokeWidth={1.5}
-          aria-hidden
-        />
-      </div>
-      <h3 className="mk-h3 mt-6">{title}</h3>
-      <p className="mt-3 text-[0.9375rem] leading-[1.7] text-[#4d574f]">{description}</p>
-      <ul className="mt-6 grid gap-x-8 gap-y-2 sm:grid-cols-2">
-        {bullets.map((item) => (
-          <li key={item} className="flex items-baseline gap-2.5 text-[0.8125rem] text-[#4d574f]">
-            <span className="h-[3px] w-[3px] shrink-0 translate-y-[-3px] rounded-full bg-[#a98a55]" />
-            {item}
-          </li>
-        ))}
-      </ul>
-    </article>
-  )
-}
-
-/** A quiet brass stamp — a detail, not a badge. */
-function TermStamp() {
-  return (
-    <div
-      className="relative flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center rounded-full border border-[#1c3d32]/20"
-      role="img"
-      aria-label="Term ready for 2026"
-    >
-      <div className="absolute inset-[6px] rounded-full border border-[#1c3d32]/10" />
-      <div className="relative text-center">
-        <p className="text-[0.5rem] font-medium uppercase tracking-[0.26em] text-[#1c3d32]/55">
-          Term
-        </p>
-        <p className="font-display text-[1.55rem] leading-none tracking-[-0.02em] text-[#1c3d32]">
-          Ready
-        </p>
-        <span className="mx-auto mt-2 block h-px w-6 bg-[#a98a55]/50" />
-        <p className="mt-2 font-mono text-[0.5625rem] tabular-nums tracking-[0.1em] text-[#1c3d32]/45">
-          2026
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function BursarSnapshot({
-  activeStudents,
-  feeCollectionRate,
-  totalClasses,
-  totalSubjects,
-}: {
-  activeStudents: number
-  feeCollectionRate: number
-  totalClasses: number
-  totalSubjects: number
-}) {
-  const tiles = [
-    { label: "Learners on roll", value: activeStudents.toLocaleString() },
-    { label: "Fees collected", value: `${feeCollectionRate}%` },
-    { label: "Classes timetabled", value: totalClasses.toLocaleString() },
-    { label: "Subjects taught", value: totalSubjects.toLocaleString() },
-  ]
-
-  return (
-    <div className="mt-20 grid gap-10 border-y border-[#14201b]/10 py-12 lg:grid-cols-12 lg:gap-16">
-      <div className="lg:col-span-4">
-        <p className="mk-eyebrow">The morning view</p>
-        <h3 className="mt-5 font-display text-[1.75rem] leading-[1.1] tracking-[-0.015em]">
-          Bursar &amp; admin snapshot
-        </h3>
-        <p className="mt-4 max-w-sm text-[0.9375rem] leading-[1.7] text-[#4d574f]">
-          Enrolment, fee collection and class setup on one screen — the numbers your
-          principal asks for before staff meeting.
-        </p>
-      </div>
-      <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:col-span-8 lg:grid-cols-4">
-        {tiles.map((tile) => (
-          <div key={tile.label} className="border-l border-[#14201b]/12 pl-6">
-            <p className="font-display text-[2.4rem] leading-none tracking-[-0.02em] text-[#14201b]">
-              {tile.value}
-            </p>
-            <p className="mt-3 text-[0.625rem] uppercase leading-relaxed tracking-[0.15em] text-[#7c857d]">
-              {tile.label}
+    <div className="grid gap-x-14 sm:grid-cols-2">
+      {LANDING_PLATFORM_MODULES.map((feature, index) => {
+        return (
+          <div
+            key={feature.title}
+            className="group border-t border-[#14201b]/12 py-6 transition-colors duration-200"
+          >
+            <span className="font-mono text-[0.5625rem] tabular-nums text-[#7c857d]">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <h3 className="mt-4 font-display text-[1.35rem] leading-[1.1] tracking-[-0.015em] text-[#14201b]">
+              {feature.title}
+            </h3>
+            <p className="mt-2 max-w-[40ch] text-[0.8125rem] leading-[1.6] text-[#4d574f]">
+              {feature.description}
             </p>
           </div>
-        ))}
+        )
+      })}
+    </div>
+  )
+}
+
+const DAY_TO_DAY = [
+  {
+    n: "01",
+    title: "Admissions",
+    body: "Enquiry, interview, class placement and admission number in a single flow.",
+  },
+  {
+    n: "02",
+    title: "Fees & M-Pesa",
+    body: "Paybill and till payments matched to the right learner, receipt sent the same morning.",
+  },
+  {
+    n: "03",
+    title: "Academics",
+    body: "CBC strands, exam marks and term reports — entered once, printed once.",
+  },
+  {
+    n: "04",
+    title: "Families",
+    body: "Fee reminders, absence alerts and exam notices by SMS, not another WhatsApp group.",
+  },
+]
+
+function DayToDay() {
+  return (
+    <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
+      <Reveal className="lg:col-span-5">
+        <figure>
+          <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#e8e2d4]">
+            <Image
+              src="/students/sq.png"
+              alt="A teacher and learners during a lesson in a Kenyan classroom"
+              fill
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              className="mk-photo object-cover object-[55%_45%]"
+            />
+          </div>
+          <figcaption className="mt-3 flex items-center justify-between font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+            <span>A Kenyan classroom</span>
+            <span>Morning</span>
+          </figcaption>
+        </figure>
+      </Reveal>
+
+      <div className="lg:col-span-6 lg:col-start-7">
+        <p className="flex items-center gap-4 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+          <span className="text-[#1c3d32]">03</span>
+          <span className="h-px w-7 bg-[#14201b]/20" aria-hidden />
+          Day to day
+        </p>
+        <h2 className="mt-7 max-w-[15ch] font-display text-[clamp(2.3rem,3.9vw,3.5rem)] leading-[0.99] tracking-[-0.03em] text-[#14201b]">
+          The work that keeps a term moving.
+        </h2>
+
+        <div className="mt-9">
+          {DAY_TO_DAY.map((item) => (
+            <div
+              key={item.n}
+              className="grid grid-cols-[2.25rem_1fr] gap-4 border-t border-[#14201b]/12 py-5 last:border-b"
+            >
+              <span className="pt-1 font-mono text-[0.5625rem] tabular-nums text-[#a98a55]">
+                {item.n}
+              </span>
+              <div>
+                <h3 className="text-[0.9375rem] font-medium text-[#14201b]">{item.title}</h3>
+                <p className="mt-1 max-w-[44ch] text-[0.8125rem] leading-[1.6] text-[#4d574f]">
+                  {item.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-/** Product capture in a restrained browser frame — no fake widgets, no glare. */
-/** A term report, set like a document rather than a screenshot. */
+/** A term report, set like a printed document. */
 function ReportCardVisual() {
   const rows = [
     { subject: "Mathematics", score: "88", grade: "A" },
@@ -553,10 +440,10 @@ function ReportCardVisual() {
         <div className="px-6 py-7 sm:px-9 sm:py-9">
           <div className="flex items-start justify-between gap-6 border-b border-[#14201b]/12 pb-6">
             <div>
-              <p className="text-[0.5625rem] uppercase tracking-[0.2em] text-[#7c857d]">
+              <p className="font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[#7c857d]">
                 Term 2 · 2026 · CBC
               </p>
-              <p className="mt-2.5 font-display text-[1.75rem] leading-none tracking-[-0.015em]">
+              <p className="mt-2.5 font-display text-[1.9rem] leading-none tracking-[-0.02em]">
                 Grace Wanjiku
               </p>
               <p className="mt-2 text-[0.6875rem] text-[#7c857d]">
@@ -574,7 +461,7 @@ function ReportCardVisual() {
           </div>
 
           <div className="mt-1">
-            <div className="grid grid-cols-[1fr_3rem_2.5rem] gap-4 py-3 text-[0.5rem] uppercase tracking-[0.16em] text-[#7c857d]">
+            <div className="grid grid-cols-[1fr_3rem_2.5rem] gap-4 py-3 font-mono text-[0.5rem] uppercase tracking-[0.14em] text-[#7c857d]">
               <span>Subject</span>
               <span className="text-right">Score</span>
               <span className="text-right">Grade</span>
@@ -588,7 +475,7 @@ function ReportCardVisual() {
                 <span className="text-right font-mono text-[0.6875rem] tabular-nums text-[#7c857d]">
                   {row.score}
                 </span>
-                <span className="text-right font-display text-[1.05rem] leading-none text-[#14201b]">
+                <span className="text-right font-display text-[1.1rem] leading-none text-[#14201b]">
                   {row.grade}
                 </span>
               </div>
@@ -597,8 +484,10 @@ function ReportCardVisual() {
 
           <div className="mt-5 flex items-end justify-between border-t border-[#14201b]/12 pt-5">
             <div>
-              <p className="text-[0.5rem] uppercase tracking-[0.18em] text-[#7c857d]">Mean score</p>
-              <p className="mt-1.5 font-display text-[2.5rem] leading-none tracking-[-0.02em]">
+              <p className="font-mono text-[0.5rem] uppercase tracking-[0.16em] text-[#7c857d]">
+                Mean score
+              </p>
+              <p className="mt-1.5 font-display text-[2.6rem] leading-none tracking-[-0.02em]">
                 84.5
               </p>
             </div>
@@ -608,7 +497,7 @@ function ReportCardVisual() {
           </div>
         </div>
       </div>
-      <figcaption className="mt-3 flex items-center justify-between text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+      <figcaption className="mt-3 flex items-center justify-between font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[#7c857d]">
         <span>Term report · Form 2</span>
         <span>CBC</span>
       </figcaption>
@@ -631,10 +520,10 @@ function FeeLedgerVisual() {
         <div className="px-6 py-7 sm:px-8 sm:py-8">
           <div className="flex items-start justify-between gap-6">
             <div>
-              <p className="text-[0.5625rem] uppercase tracking-[0.2em] text-[#7c857d]">
+              <p className="font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-[#7c857d]">
                 Bursar · live
               </p>
-              <p className="mt-2 font-display text-[1.6rem] leading-none tracking-[-0.015em]">
+              <p className="mt-2 font-display text-[1.7rem] leading-none tracking-[-0.015em]">
                 M-Pesa, matched.
               </p>
             </div>
@@ -647,14 +536,14 @@ function FeeLedgerVisual() {
 
           <div className="mt-7 flex items-end justify-between border-y border-[#14201b]/10 py-4">
             <div>
-              <p className="text-[0.5rem] uppercase tracking-[0.16em] text-[#7c857d]">
+              <p className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-[#7c857d]">
                 Collected today
               </p>
-              <p className="mt-1.5 font-display text-[2rem] leading-none tabular-nums tracking-[-0.02em]">
+              <p className="mt-1.5 font-display text-[2.2rem] leading-none tabular-nums tracking-[-0.02em]">
                 KES 25,900
               </p>
             </div>
-            <p className="text-[0.625rem] text-[#a98a55]">+12% on last Tuesday</p>
+            <p className="font-mono text-[0.625rem] text-[#a98a55]">+12%</p>
           </div>
 
           <div className="mt-1">
@@ -673,7 +562,7 @@ function FeeLedgerVisual() {
                   {row.amount}
                 </p>
                 <p
-                  className={`flex items-center justify-end gap-1.5 text-[0.5rem] uppercase tracking-[0.1em] ${
+                  className={`flex items-center justify-end gap-1.5 font-mono text-[0.5rem] uppercase tracking-[0.08em] ${
                     row.status === "Matched" ? "text-[#1c3d32]" : "text-[#a98a55]"
                   }`}
                 >
@@ -695,7 +584,7 @@ function FeeLedgerVisual() {
           </div>
         </div>
       </div>
-      <figcaption className="mt-3 flex items-center justify-between text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+      <figcaption className="mt-3 flex items-center justify-between font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[#7c857d]">
         <span>Fee reconciliation · Morning</span>
         <span>M-Pesa</span>
       </figcaption>
@@ -703,71 +592,33 @@ function FeeLedgerVisual() {
   )
 }
 
-function PhotoFrame({ src, alt }: { src: string; alt: string }) {
-  return (
-    <figure>
-      <div className="mk-frame relative aspect-[5/4] w-full">
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes="(min-width: 1024px) 58vw, 100vw"
-          className="object-cover"
-        />
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0d201a]/30 via-transparent to-transparent"
-          aria-hidden
-        />
-      </div>
-      <figcaption className="mt-3 flex items-center justify-between text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
-        <span>From the schoolroom</span>
-        <span>Kenya</span>
-      </figcaption>
-    </figure>
-  )
-}
-
 function DeepDive({
   index,
-  icon: Icon,
   title,
   intro,
   items,
-  image,
-  imageAlt,
   imageRight,
-  imageKind,
-}: (typeof LANDING_DEEP_DIVES)[number] & { index: number }) {
-  const visual = (
-    <div
-      className={`lg:col-span-7 ${imageRight ? "lg:order-2" : "lg:order-1"}`}
-    >
-      {imageKind === "photo" ? (
-        <PhotoFrame src={image ?? "/students/sq.png"} alt={imageAlt ?? ""} />
-      ) : imageKind === "report" ? (
-        <ReportCardVisual />
-      ) : (
-        <FeeLedgerVisual />
-      )}
-    </div>
-  )
-
+  children,
+}: {
+  index: number
+  title: string
+  intro: string
+  items: { title: string; description: string }[]
+  imageRight: boolean
+  children: ReactNode
+}) {
   const copy = (
-    <div className={`lg:col-span-5 ${imageRight ? "lg:order-1" : "lg:order-2"}`}>
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[0.625rem] tabular-nums text-[#14201b]/30">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        <span className="h-px w-6 bg-[#14201b]/20" aria-hidden />
-        <Icon className="h-3.5 w-3.5 text-[#1c3d32]/45" strokeWidth={1.5} aria-hidden />
-      </div>
-      <h3 className="mt-5 font-display text-[clamp(2rem,3.4vw,2.9rem)] leading-[1.03] tracking-[-0.02em]">
+    <div className={`lg:col-span-5 ${imageRight ? "lg:order-1" : "lg:order-2 lg:col-start-8"}`}>
+      <p className="font-mono text-[0.5625rem] tabular-nums text-[#a98a55]">
+        {String(index + 1).padStart(2, "0")}
+      </p>
+      <h3 className="mt-4 max-w-[16ch] font-display text-[clamp(2rem,3.1vw,2.6rem)] leading-[1.02] tracking-[-0.025em] text-[#14201b]">
         {title}
       </h3>
-      <p className="mt-5 text-[1rem] leading-[1.7] text-[#4d574f]">{intro}</p>
+      <p className="mt-5 max-w-[38ch] text-[0.9375rem] leading-[1.65] text-[#4d574f]">{intro}</p>
       <dl className="mt-8">
         {items.map((item) => (
-          <div key={item.title} className="border-t border-[#14201b]/10 py-4">
+          <div key={item.title} className="border-t border-[#14201b]/12 py-4 last:border-b">
             <dt className="text-[0.8125rem] font-medium text-[#14201b]">{item.title}</dt>
             <dd className="mt-1.5 text-[0.8125rem] leading-[1.6] text-[#4d574f]">
               {item.description}
@@ -778,8 +629,16 @@ function DeepDive({
     </div>
   )
 
+  const visual = (
+    <div
+      className={`lg:col-span-6 ${imageRight ? "lg:order-2 lg:col-start-7" : "lg:order-1"}`}
+    >
+      {children}
+    </div>
+  )
+
   return (
-    <article className="grid items-center gap-10 lg:grid-cols-12 lg:gap-16">
+    <article className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
       {copy}
       {visual}
     </article>
@@ -795,18 +654,18 @@ function FaqAccordion() {
       {LANDING_FAQ_ITEMS.map((item, index) => {
         const isOpen = open === index
         return (
-          <div key={item.question} className="border-t border-[#14201b]/10 last:border-b">
+          <div key={item.question} className="border-t border-[#14201b]/12 last:border-b">
             <button
               type="button"
               onClick={() => setOpen(isOpen ? null : index)}
               aria-expanded={isOpen}
-              className="group flex w-full items-start justify-between gap-8 py-6 text-left"
+              className="group flex w-full items-start justify-between gap-8 py-5 text-left"
             >
               <span className="flex items-baseline gap-5">
-                <span className="font-mono text-[0.625rem] tabular-nums text-[#14201b]/25">
+                <span className="font-mono text-[0.5625rem] tabular-nums text-[#7c857d]">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className="font-display text-[1.3rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32] sm:text-[1.45rem]">
+                <span className="max-w-[30ch] font-display text-[1.3rem] leading-[1.15] tracking-[-0.015em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32] sm:max-w-none sm:text-[1.45rem]">
                   {item.question}
                 </span>
               </span>
@@ -826,7 +685,7 @@ function FaqAccordion() {
               }`}
             >
               <div className="overflow-hidden">
-                <p className="max-w-[58ch] pb-7 pl-[2.3rem] pr-10 text-[0.9375rem] leading-[1.7] text-[#4d574f]">
+                <p className="max-w-[62ch] pb-6 pl-[2.3rem] pr-10 text-[0.875rem] leading-[1.7] text-[#4d574f]">
                   {item.answer}
                 </p>
               </div>
@@ -837,59 +696,6 @@ function FaqAccordion() {
     </div>
   )
 }
-
-/** Trust numbers as a light breathing strip between the hero and the platform. */
-function TrustStrip() {
-  return (
-    <div className="border-b border-[#14201b]/10 bg-[#f7f4ec]">
-      <div className="mk-container py-10 sm:py-12">
-        <p className="mk-caption">Trusted across Kenya</p>
-        <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
-          {HERO_TRUST_STATS.map((stat, index) => (
-            <TrustStat
-              key={stat.label}
-              target={stat.target}
-              format={stat.format}
-              label={stat.label}
-              delay={index * 90}
-              decimals={"decimals" in stat ? stat.decimals : undefined}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TrustStat({
-  target,
-  format,
-  label,
-  delay = 0,
-  decimals,
-}: {
-  target: number
-  format: (v: number) => string
-  label: string
-  delay?: number
-  decimals?: number
-}) {
-  const { value } = useAnimatedNumber(target, {
-    delay: delay + 200,
-    decimals: decimals ?? (Number.isInteger(target) ? 0 : 1),
-  })
-  return (
-    <div>
-      <p className="font-display text-[2.1rem] leading-none tracking-[-0.02em] tabular-nums text-[#14201b] sm:text-[2.4rem]">
-        {format(value)}
-      </p>
-      <p className="mt-3 text-[0.625rem] uppercase leading-relaxed tracking-[0.15em] text-[#7c857d]">
-        {label}
-      </p>
-    </div>
-  )
-}
-
 
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3
@@ -1001,11 +807,11 @@ function HeroPhoneFrame({ children }: { children: ReactNode }) {
     <div className="hero-phone-frame relative mx-auto w-full max-w-[340px] sm:max-w-[360px]">
       <div className="relative overflow-hidden rounded-[2.15rem] bg-[#0b1210] p-[10px] shadow-[0_28px_80px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/15">
         {/* Side buttons */}
-        <div className="pointer-events-none absolute -left-[2px] top-28 h-8 w-[3px] rounded-l-sm bg-white/20" />
-        <div className="pointer-events-none absolute -left-[2px] top-40 h-12 w-[3px] rounded-l-sm bg-white/20" />
-        <div className="pointer-events-none absolute -right-[2px] top-36 h-14 w-[3px] rounded-r-sm bg-white/20" />
+        <div className="pointer-events-none absolute -left-[2px] top-28 h-8 w-[3px] rounded-l-sm bg-[#fcfaf4]/20" />
+        <div className="pointer-events-none absolute -left-[2px] top-40 h-12 w-[3px] rounded-l-sm bg-[#fcfaf4]/20" />
+        <div className="pointer-events-none absolute -right-[2px] top-36 h-14 w-[3px] rounded-r-sm bg-[#fcfaf4]/20" />
 
-        <div className="relative overflow-hidden rounded-[1.65rem] bg-white">
+        <div className="relative overflow-hidden rounded-[1.65rem] bg-[#fcfaf4]">
           {/* Dynamic Island */}
           <div className="pointer-events-none absolute left-1/2 top-2 z-30 h-[22px] w-[96px] -translate-x-1/2 rounded-full bg-black" />
           {children}
@@ -1017,36 +823,25 @@ function HeroPhoneFrame({ children }: { children: ReactNode }) {
 
 function HeroDesktopFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="hero-desktop-scene relative mx-auto w-full max-w-[820px] xl:max-w-[880px]">
-      <div
-        className="pointer-events-none absolute inset-x-[10%] -bottom-2 h-12 rounded-[100%] bg-black/35 blur-2xl"
-        aria-hidden
-      />
-
+    <div className="relative mx-auto w-full max-w-[1020px]">
       {/* Desktop app window */}
-      <div className="hero-desktop-window relative overflow-hidden rounded-2xl bg-[#e8ecea] shadow-[0_40px_90px_-24px_rgba(0,0,0,0.65)] ring-1 ring-white/20">
+      <div className="relative overflow-hidden rounded-[2px] bg-[#f7f4ec] shadow-[0_60px_140px_-40px_rgba(0,0,0,0.8)] ring-1 ring-white/15">
         {/* Title bar */}
-        <div className="flex h-9 items-center gap-3 border-b border-black/5 bg-gradient-to-b from-[#f4f6f5] to-[#e4e9e7] px-3">
-          <div className="flex items-center gap-1.5" aria-hidden>
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57] shadow-[inset_0_-0.5px_0_rgba(0,0,0,0.15)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e] shadow-[inset_0_-0.5px_0_rgba(0,0,0,0.15)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840] shadow-[inset_0_-0.5px_0_rgba(0,0,0,0.15)]" />
+        <div className="flex h-10 items-center justify-between gap-4 border-b border-[#14201b]/10 bg-[#efeadd] px-4">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#a98a55]" aria-hidden />
+            <span className="truncate font-mono text-[0.5rem] uppercase tracking-[0.14em] text-[#4d574f]">
+              SQUL · School Admin
+            </span>
           </div>
-          <div className="flex min-w-0 flex-1 items-center justify-center">
-            <div className="flex max-w-[240px] items-center gap-1.5 truncate rounded-md bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-600 shadow-sm ring-1 ring-black/5">
-              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm bg-emerald-600 text-[7px] font-bold text-white">
-                SQ
-              </span>
-              <span className="truncate">SQUL — School Admin</span>
-            </div>
-          </div>
-          <div className="w-[42px]" aria-hidden />
+          <span className="hidden font-mono text-[0.5rem] uppercase tracking-[0.12em] text-[#7c857d] sm:block">
+            app.squl.co.ke
+          </span>
         </div>
 
         {/* App content */}
-        <div className="overflow-hidden bg-white">{children}</div>
+        <div className="overflow-hidden bg-[#fcfaf4] ">{children}</div>
       </div>
-
     </div>
   )
 }
@@ -1118,12 +913,12 @@ function HeroDashboardPanel({
           aria-pressed={isActive}
           aria-label={item.label}
           className={`flex min-w-0 flex-1 flex-col items-center gap-1 py-2 transition-colors ${
-            isActive ? "text-emerald-600" : "text-slate-400"
+            isActive ? "text-[#1c3d32]" : "text-[#7c857d]"
           }`}
         >
           <span
-            className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
-              isActive ? "bg-emerald-50 text-emerald-600" : ""
+            className={`flex h-8 w-8 items-center justify-center rounded-[2px] transition-colors ${
+              isActive ? "bg-[#efeadd] text-[#1c3d32]" : ""
             }`}
           >
             <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.25 : 1.75} />
@@ -1149,17 +944,17 @@ function HeroDashboardPanel({
         className={`flex transition-colors ${
           compact
             ? `min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 ${
-                isActive ? "text-[#0073ea]" : "text-slate-500"
+                isActive ? "text-[#1c3d32]" : "text-[#4d574f]"
               }`
             : `w-full flex-col items-center gap-0.5 px-1 py-1.5 ${
-                isActive ? "text-[#0073ea]" : "text-slate-500 hover:text-slate-700"
+                isActive ? "text-[#1c3d32]" : "text-[#4d574f] hover:text-[#3f4a43]"
               }`
         }`}
       >
         <span
           className={`flex items-center justify-center ${
             compact ? "h-8 w-8" : "h-8 w-8 sm:h-9 sm:w-9"
-          } ${isActive || isLinked ? "bg-[#dcebfd]" : ""}`}
+          } ${isActive || isLinked ? "bg-[#e7ebe2]" : ""}`}
         >
           <Icon className="h-[17px] w-[17px]" strokeWidth={1.75} />
         </span>
@@ -1191,24 +986,24 @@ function HeroDashboardPanel({
       className={
         isPhone
           ? "flex h-[560px] w-full flex-col bg-[#f4f6f5] sm:h-[600px]"
-          : "flex h-[380px] w-full flex-col overflow-hidden bg-white sm:h-[400px] md:h-[420px] md:flex-row md:items-stretch lg:h-[440px] xl:h-[460px]"
+          : "flex h-[380px] w-full flex-col overflow-hidden bg-[#fcfaf4] sm:h-[420px] md:h-[500px] md:flex-row md:items-stretch lg:h-[540px]"
       }
     >
       {/* Desktop sidebar with labels */}
       {!isPhone && (
-        <aside className="flex w-[132px] shrink-0 flex-col border-r border-slate-200/80 bg-[#f7f9f8] py-3 sm:w-[148px]">
+        <aside className="flex w-[132px] shrink-0 flex-col border-r border-[#14201b]/10 bg-[#f7f9f8] py-3 sm:w-[148px]">
           <button
             type="button"
             onClick={() => onSelectModule(null)}
-            className="mx-3 mb-3 flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white"
+            className="mx-3 mb-3 flex items-center gap-2 rounded-[2px] px-2 py-1.5 text-left transition-colors hover:bg-[#fcfaf4]"
             aria-label="Home"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-[11px] font-bold text-white shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[2px] bg-[#1c3d32] text-[11px] font-bold text-white ">
               SQ
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-xs font-semibold text-slate-900">SQUL</span>
-              <span className="block truncate text-[10px] text-slate-400">Admin</span>
+              <span className="block truncate text-xs font-semibold text-[#14201b]">SQUL</span>
+              <span className="block truncate text-[10px] text-[#7c857d]">Admin</span>
             </span>
           </button>
           <nav className="flex flex-1 flex-col gap-0.5 px-2">
@@ -1225,14 +1020,14 @@ function HeroDashboardPanel({
                   onMouseEnter={() => item.module && onModuleHover(item.module)}
                   onMouseLeave={() => onModuleHover(null)}
                   aria-pressed={isActive}
-                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12px] transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-[2px] px-2.5 py-2 text-left text-[12px] transition-colors ${
                     isActive
-                      ? "bg-white font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
-                      : "font-medium text-slate-500 hover:bg-white/80 hover:text-slate-800"
+                      ? "bg-[#fcfaf4] font-semibold text-[#1c3d32]  ring-1 ring-[#e7ebe2]"
+                      : "font-medium text-[#4d574f] hover:bg-[#fcfaf4]/80 hover:text-[#14201b]"
                   }`}
                 >
                   <Icon
-                    className={`h-4 w-4 shrink-0 ${isActive ? "text-emerald-600" : "text-slate-400"}`}
+                    className={`h-4 w-4 shrink-0 ${isActive ? "text-[#1c3d32]" : "text-[#7c857d]"}`}
                     strokeWidth={isActive ? 2.25 : 1.75}
                   />
                   <span className="truncate">{item.label}</span>
@@ -1240,29 +1035,29 @@ function HeroDashboardPanel({
               )
             })}
           </nav>
-          <div className="mx-3 mt-2 border-t border-slate-200/80 pt-2">
-            <p className="truncate px-1 text-[10px] text-slate-400">Term 2 · 2026</p>
+          <div className="mx-3 mt-2 border-t border-[#14201b]/10 pt-2">
+            <p className="truncate px-1 text-[10px] text-[#7c857d]">Term 2 · 2026</p>
           </div>
         </aside>
       )}
 
       {/* Main canvas */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#fcfaf4]">
         {/* Phone status bar */}
         {isPhone && (
-          <div className="flex shrink-0 items-end justify-between px-6 pb-1 pt-3 text-[11px] font-semibold text-slate-900">
+          <div className="flex shrink-0 items-end justify-between px-6 pb-1 pt-3 text-[11px] font-semibold text-[#14201b]">
             <span className="tabular-nums">9:41</span>
-            <div className="flex items-center gap-1.5 text-slate-800">
+            <div className="flex items-center gap-1.5 text-[#14201b]">
               <span className="text-[9px] font-bold tracking-tight">5G</span>
               <span className="flex h-2.5 items-end gap-[2px]" aria-hidden>
-                <span className="h-1 w-[3px] rounded-sm bg-slate-900" />
-                <span className="h-1.5 w-[3px] rounded-sm bg-slate-900" />
-                <span className="h-2 w-[3px] rounded-sm bg-slate-900" />
-                <span className="h-2.5 w-[3px] rounded-sm bg-slate-900/35" />
+                <span className="h-1 w-[3px] rounded-sm bg-[#14201b]" />
+                <span className="h-1.5 w-[3px] rounded-sm bg-[#14201b]" />
+                <span className="h-2 w-[3px] rounded-sm bg-[#14201b]" />
+                <span className="h-2.5 w-[3px] rounded-sm bg-[#14201b]/35" />
               </span>
-              <span className="relative h-[11px] w-[22px] rounded-[3px] border border-slate-900/80">
-                <span className="absolute inset-[2px] right-[3px] rounded-[1px] bg-emerald-500" />
-                <span className="absolute -right-[3px] top-1/2 h-[5px] w-[1.5px] -translate-y-1/2 rounded-r-sm bg-slate-900/80" />
+              <span className="relative h-[11px] w-[22px] rounded-[3px] border border-[#14201b]/80">
+                <span className="absolute inset-[2px] right-[3px] rounded-[1px] bg-[#1c3d32]" />
+                <span className="absolute -right-[3px] top-1/2 h-[5px] w-[1.5px] -translate-y-1/2 rounded-r-sm bg-[#14201b]/80" />
               </span>
             </div>
           </div>
@@ -1270,7 +1065,7 @@ function HeroDashboardPanel({
 
         {/* App header */}
         <header
-          className={`flex shrink-0 items-center gap-2 border-b border-slate-200/60 ${
+          className={`flex shrink-0 items-center gap-2 border-b border-[#14201b]/8 ${
             isPhone ? "px-4 pb-3 pt-2" : "gap-3 px-4 py-3"
           }`}
         >
@@ -1278,7 +1073,7 @@ function HeroDashboardPanel({
             <button
               type="button"
               onClick={() => onSelectModule(null)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-[11px] font-bold text-white shadow-sm"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[2px] bg-[#1c3d32] text-[11px] font-bold text-white "
               aria-label="Home"
             >
               SQ
@@ -1286,14 +1081,14 @@ function HeroDashboardPanel({
           )}
           <div className="min-w-0 flex-1">
             <p
-              className={`truncate font-semibold text-slate-900 ${
+              className={`truncate font-semibold text-[#14201b] ${
                 isPhone ? "text-[15px]" : "text-sm"
               }`}
             >
               {linkedModule ?? "Dashboard"}
             </p>
             <p
-              className={`truncate text-slate-400 ${
+              className={`truncate text-[#7c857d] ${
                 isPhone ? "text-[11px]" : "text-xs"
               }`}
             >
@@ -1305,15 +1100,15 @@ function HeroDashboardPanel({
             </p>
           </div>
           <span
-            className={`flex shrink-0 items-center gap-1 bg-emerald-50 ring-1 ring-emerald-100 ${
+            className={`flex shrink-0 items-center gap-1 bg-[#efeadd] ring-1 ring-[#e7ebe2] ${
               isPhone ? "rounded-full px-2.5 py-1" : "rounded-md px-2.5 py-1"
             }`}
           >
             <Radio
-              className={`text-emerald-600 ${isPhone ? "h-3 w-3" : "h-3.5 w-3.5"}`}
+              className={`text-[#1c3d32] ${isPhone ? "h-3 w-3" : "h-3.5 w-3.5"}`}
             />
             <span
-              className={`font-bold uppercase tracking-wide text-emerald-700 ${
+              className={`font-bold uppercase tracking-wide text-[#1c3d32] ${
                 isPhone ? "text-[10px]" : "text-[10px]"
               }`}
             >
@@ -1329,20 +1124,20 @@ function HeroDashboardPanel({
               isPhone
                 ? `h-9 w-9 rounded-full ${
                     notificationsOpen
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-slate-100 text-slate-500"
+                      ? "bg-[#efeadd] text-[#1c3d32]"
+                      : "bg-[#efeadd] text-[#4d574f]"
                   }`
-                : `h-8 w-8 rounded-lg ${
+                : `h-8 w-8 rounded-[2px] ${
                     notificationsOpen
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "text-slate-400 hover:bg-slate-100"
+                      ? "bg-[#efeadd] text-[#1c3d32]"
+                      : "text-[#7c857d] hover:bg-[#efeadd]"
                   }`
             }`}
           >
             <Bell className={isPhone ? "h-4 w-4" : "h-4 w-4"} />
             {!notificationsOpen && (
               <span
-                className={`absolute bg-emerald-500 ${
+                className={`absolute bg-[#1c3d32] ${
                   isPhone ? "right-2 top-2 h-2 w-2 rounded-full" : "right-1.5 top-1.5 h-2 w-2 rounded-full"
                 }`}
               />
@@ -1351,8 +1146,8 @@ function HeroDashboardPanel({
           <button
             type="button"
             onClick={() => onSelectStudent(student.id)}
-            className={`shrink-0 overflow-hidden bg-emerald-100 ring-1 ring-emerald-200 transition-shadow hover:ring-emerald-400 ${
-              isPhone ? "h-9 w-9 rounded-full" : "h-8 w-8 rounded-lg"
+            className={`shrink-0 overflow-hidden bg-[#e7ebe2] ring-1 ring-[#cfd8cc] transition-shadow hover:ring-[#a98a55] ${
+              isPhone ? "h-9 w-9 rounded-full" : "h-8 w-8 rounded-[2px]"
             }`}
             aria-label={`Focus ${student.name}`}
           >
@@ -1369,14 +1164,14 @@ function HeroDashboardPanel({
 
         {notificationsOpen && (
           <div
-            className={`border-b border-emerald-100 bg-emerald-50/80 ${
+            className={`border-b border-[#e7ebe2] bg-[#efeadd]/80 ${
               isPhone ? "px-4 py-3" : "px-2.5 py-2 sm:px-3"
             }`}
           >
-            <p className={`font-semibold text-emerald-800 ${isPhone ? "text-xs" : "text-[10px]"}`}>
+            <p className={`font-semibold text-[#14201b] ${isPhone ? "text-xs" : "text-[10px]"}`}>
               3 new updates today
             </p>
-            <p className={`mt-0.5 text-emerald-700/80 ${isPhone ? "text-[11px]" : "text-[9px]"}`}>
+            <p className={`mt-0.5 text-[#1c3d32]/80 ${isPhone ? "text-[11px]" : "text-[9px]"}`}>
               M-Pesa matched · Admission #2043 · CBC reminder sent
             </p>
           </div>
@@ -1386,7 +1181,7 @@ function HeroDashboardPanel({
           className={`min-h-0 flex-1 space-y-2.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
             isPhone
               ? "bg-[#f4f6f5] px-3 py-3"
-              : "space-y-3 bg-slate-50 p-3.5 [scrollbar-width:thin]"
+              : "space-y-3 bg-[#f7f4ec] p-3.5 [scrollbar-width:thin]"
           }`}
         >
           {/* Stat bar */}
@@ -1414,27 +1209,27 @@ function HeroDashboardPanel({
                   }}
                   className={
                     isPhone
-                      ? `min-w-[88px] shrink-0 rounded-2xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] ${
+                      ? `min-w-[88px] shrink-0 rounded-[2px] border px-3 py-2.5 text-left transition-all active:scale-[0.98] ${
                           isActive
-                            ? "border-emerald-300 bg-white shadow-sm shadow-emerald-900/5"
-                            : "border-transparent bg-white/80"
+                            ? "border-[#b9c4b6] bg-[#fcfaf4]  shadow-[#14201b]/5"
+                            : "border-transparent bg-[#fcfaf4]/80"
                         }`
-                      : `rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                      : `rounded-[2px] border px-3 py-2.5 text-left transition-colors ${
                           isActive
-                            ? "border-emerald-200 bg-emerald-50/90 shadow-sm"
-                            : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50"
+                            ? "border-[#cfd8cc] bg-[#efeadd]/90 "
+                            : "border-[#14201b]/10 bg-[#fcfaf4] hover:border-[#14201b]/15 hover:bg-[#f7f4ec]"
                         }`
                   }
                 >
                   <p
-                    className={`font-medium uppercase tracking-wide text-slate-400 ${
+                    className={`font-medium uppercase tracking-wide text-[#7c857d] ${
                       isPhone ? "text-[9px]" : "text-[10px]"
                     }`}
                   >
                     {stat.label}
                   </p>
                   <p
-                    className={`mt-0.5 font-semibold tabular-nums text-slate-800 ${
+                    className={`mt-0.5 font-semibold tabular-nums text-[#14201b] ${
                       isPhone ? "text-base" : "text-lg"
                     }`}
                   >
@@ -1447,15 +1242,15 @@ function HeroDashboardPanel({
 
           {/* Student search */}
           <div
-            className={`relative bg-white shadow-sm ${
+            className={`relative bg-[#fcfaf4]  ${
               isPhone
-                ? "rounded-2xl border border-slate-200/70 p-3"
-                : "rounded-lg border border-slate-200/80 p-3"
+                ? "rounded-[2px] border border-[#14201b]/10 p-3"
+                : "rounded-[2px] border border-[#14201b]/10 p-3"
             }`}
           >
             <div className="flex items-center gap-2">
               <Search
-                className={`shrink-0 text-slate-400 ${isPhone ? "h-4 w-4" : "h-3.5 w-3.5"}`}
+                className={`shrink-0 text-[#7c857d] ${isPhone ? "h-4 w-4" : "h-3.5 w-3.5"}`}
               />
               <input
                 type="search"
@@ -1473,7 +1268,7 @@ function HeroDashboardPanel({
                 }}
                 placeholder="Search students…"
                 aria-label="Search students"
-                className={`min-w-0 flex-1 truncate bg-transparent font-medium text-slate-800 outline-none placeholder:text-slate-400 ${
+                className={`min-w-0 flex-1 truncate bg-transparent font-medium text-[#14201b] outline-none placeholder:text-[#7c857d] ${
                   isPhone ? "text-sm" : "text-[11px] sm:text-sm"
                 }`}
               />
@@ -1490,22 +1285,22 @@ function HeroDashboardPanel({
             </div>
             <p
               key={`${student.id}-detail`}
-              className={`hero-profile-in mt-1.5 flex items-center gap-1.5 text-slate-500 ${
+              className={`hero-profile-in mt-1.5 flex items-center gap-1.5 text-[#4d574f] ${
                 isPhone ? "text-xs" : "text-[9px] sm:text-[11px]"
               }`}
             >
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1c3d32]" />
               <span className="line-clamp-2 sm:truncate">{student.detail}</span>
             </p>
 
             {showSearchResults && (
               <div
-                className={`absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden border border-slate-200 bg-white shadow-lg ${
-                  isPhone ? "rounded-2xl" : ""
+                className={`absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden border border-[#14201b]/10 bg-[#fcfaf4] shadow-lg ${
+                  isPhone ? "rounded-[2px]" : ""
                 }`}
               >
                 {searchMatches.length === 0 ? (
-                  <p className="px-3 py-2.5 text-[11px] text-slate-500">
+                  <p className="px-3 py-2.5 text-[11px] text-[#4d574f]">
                     No students match “{searchQuery}”
                   </p>
                 ) : (
@@ -1519,12 +1314,12 @@ function HeroDashboardPanel({
                         onSearchChange("")
                         setSearchFocused(false)
                       }}
-                      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-emerald-50 ${
-                        match.id === student.id ? "bg-emerald-50/70" : ""
+                      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-[#efeadd] ${
+                        match.id === student.id ? "bg-[#efeadd]/70" : ""
                       }`}
                     >
                       <div
-                        className={`h-8 w-8 shrink-0 overflow-hidden bg-slate-100 ring-1 ring-slate-200 ${
+                        className={`h-8 w-8 shrink-0 overflow-hidden bg-[#efeadd] ring-1 ring-slate-200 ${
                           isPhone ? "rounded-full" : ""
                         }`}
                       >
@@ -1538,8 +1333,8 @@ function HeroDashboardPanel({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-800">{match.name}</p>
-                        <p className="truncate text-[11px] text-slate-500">
+                        <p className="truncate text-sm font-medium text-[#14201b]">{match.name}</p>
+                        <p className="truncate text-[11px] text-[#4d574f]">
                           {match.class} · {match.status}
                         </p>
                       </div>
@@ -1572,22 +1367,22 @@ function HeroDashboardPanel({
                   aria-pressed={mod.module === linkedModule}
                   className={
                     isPhone
-                      ? `flex items-center gap-2.5 rounded-2xl border px-3 py-3 text-left transition-all active:scale-[0.98] ${
+                      ? `flex items-center gap-2.5 rounded-[2px] border px-3 py-3 text-left transition-all active:scale-[0.98] ${
                           isLinked
-                            ? "border-emerald-300 bg-emerald-50 shadow-sm"
-                            : "border-transparent bg-white"
+                            ? "border-[#b9c4b6] bg-[#efeadd] "
+                            : "border-transparent bg-[#fcfaf4]"
                         }`
-                      : `flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                      : `flex items-center gap-3 rounded-[2px] border px-3 py-2.5 text-left transition-colors ${
                           isLinked
-                            ? "border-emerald-200 bg-emerald-50/90 shadow-sm"
-                            : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50"
+                            ? "border-[#cfd8cc] bg-[#efeadd]/90 "
+                            : "border-[#14201b]/10 bg-[#fcfaf4] hover:border-[#14201b]/15 hover:bg-[#f7f4ec]"
                         }`
                   }
                 >
                   <span
                     className={`flex shrink-0 items-center justify-center ${
-                      isPhone ? "h-10 w-10 rounded-2xl" : "h-9 w-9 rounded-lg"
-                    } ${isLinked ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"}`}
+                      isPhone ? "h-10 w-10 rounded-[2px]" : "h-9 w-9 rounded-[2px]"
+                    } ${isLinked ? "bg-[#1c3d32] text-white" : "bg-[#efeadd] text-[#7c857d]"}`}
                   >
                     <Icon className={isPhone ? "h-4 w-4" : "h-4 w-4"} strokeWidth={1.75} />
                   </span>
@@ -1595,14 +1390,14 @@ function HeroDashboardPanel({
                     <p
                       className={`truncate ${
                         isPhone ? "text-[13px]" : "text-[13px]"
-                      } ${isLinked ? "font-semibold text-slate-900" : "font-medium text-slate-600"}`}
+                      } ${isLinked ? "font-semibold text-[#14201b]" : "font-medium text-[#4d574f]"}`}
                     >
                       {mod.label}
                     </p>
                     <p
                       className={`truncate tabular-nums ${
                         isPhone ? "text-[11px]" : "text-xs"
-                      } ${isLinked ? "font-semibold text-emerald-700" : "text-slate-500"}`}
+                      } ${isLinked ? "font-semibold text-[#1c3d32]" : "text-[#4d574f]"}`}
                     >
                       {metric}
                     </p>
@@ -1614,25 +1409,25 @@ function HeroDashboardPanel({
 
           {/* Activity feed */}
           <div
-            className={`overflow-hidden bg-white ${
+            className={`overflow-hidden bg-[#fcfaf4] ${
               isPhone
-                ? "rounded-2xl border border-slate-200/70"
-                : "border border-slate-200/80"
+                ? "rounded-[2px] border border-[#14201b]/10"
+                : "border border-[#14201b]/10"
             }`}
           >
             <div
-              className={`flex items-center justify-between border-b border-slate-100 ${
+              className={`flex items-center justify-between border-b border-[#14201b]/8 ${
                 isPhone ? "px-3.5 py-2.5" : "px-2 py-1.5 sm:px-2.5 sm:py-2 md:px-3"
               }`}
             >
               <p
-                className={`font-semibold text-slate-700 ${
+                className={`font-semibold text-[#3f4a43] ${
                   isPhone ? "text-[13px]" : "text-[10px] sm:text-[11px]"
                 }`}
               >
                 Recent activity
               </p>
-              <p className={`text-slate-400 ${isPhone ? "text-[11px]" : "text-[9px]"}`}>Today</p>
+              <p className={`text-[#7c857d] ${isPhone ? "text-[11px]" : "text-[9px]"}`}>Today</p>
             </div>
             <div
               className={
@@ -1652,22 +1447,22 @@ function HeroDashboardPanel({
                     aria-pressed={isSelected}
                     className={`flex w-full items-center text-left transition-colors ${
                       isPhone
-                        ? `gap-3 px-3.5 py-3 active:bg-slate-50 ${
-                            isSelected ? "bg-emerald-50" : ""
+                        ? `gap-3 px-3.5 py-3 active:bg-[#f7f4ec] ${
+                            isSelected ? "bg-[#efeadd]" : ""
                           }`
                         : `gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2 md:px-3 md:py-2.5 ${
-                            isSelected ? "bg-emerald-50/60" : "hover:bg-slate-50"
+                            isSelected ? "bg-[#efeadd]/60" : "hover:bg-[#f7f4ec]"
                           }`
                     }`}
                   >
                     <div
-                      className={`shrink-0 overflow-hidden bg-slate-100 ring-1 ${
+                      className={`shrink-0 overflow-hidden bg-[#efeadd] ring-1 ${
                         isPhone
                           ? `h-10 w-10 rounded-full ${
-                              isSelected ? "ring-emerald-400" : "ring-slate-200"
+                              isSelected ? "ring-[#a98a55]" : "ring-slate-200"
                             }`
                           : `h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 ${
-                              isSelected ? "ring-emerald-300" : "ring-slate-200"
+                              isSelected ? "ring-[#b9c4b6]" : "ring-slate-200"
                             }`
                       }`}
                     >
@@ -1686,14 +1481,14 @@ function HeroDashboardPanel({
                           isPhone ? "text-[13px]" : "text-[9px] sm:text-[10px] md:text-[11px]"
                         } ${
                           isSelected
-                            ? "font-semibold text-slate-900"
-                            : "font-medium text-slate-700"
+                            ? "font-semibold text-[#14201b]"
+                            : "font-medium text-[#3f4a43]"
                         }`}
                       >
                         {row.title}
                       </p>
                       <p
-                        className={`truncate text-slate-500 ${
+                        className={`truncate text-[#4d574f] ${
                           isPhone ? "mt-0.5 text-[11px]" : "hidden text-[9px] sm:block sm:text-[10px]"
                         }`}
                       >
@@ -1701,7 +1496,7 @@ function HeroDashboardPanel({
                       </p>
                     </div>
                     <span
-                      className={`shrink-0 tabular-nums text-slate-400 ${
+                      className={`shrink-0 tabular-nums text-[#7c857d] ${
                         isPhone ? "text-[11px]" : "text-[8px] sm:text-[9px]"
                       }`}
                     >
@@ -1719,7 +1514,7 @@ function HeroDashboardPanel({
           <button
             type="button"
             onClick={() => onSelectStudent(student.id)}
-            className="flex shrink-0 items-center gap-1.5 border-t border-slate-200/60 bg-slate-50/80 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50/50 sm:gap-2 sm:px-3 sm:py-2 md:px-4"
+            className="flex shrink-0 items-center gap-1.5 border-t border-[#14201b]/8 bg-[#f7f4ec]/80 px-2.5 py-1.5 text-left transition-colors hover:bg-[#efeadd]/50 sm:gap-2 sm:px-3 sm:py-2 md:px-4"
           >
             <div
               key={student.id}
@@ -1736,10 +1531,10 @@ function HeroDashboardPanel({
             </div>
             <p
               key={`${student.id}-insight`}
-              className="hero-profile-in min-w-0 text-[9px] leading-snug text-slate-600 sm:text-[10px] md:text-[11px]"
+              className="hero-profile-in min-w-0 text-[9px] leading-snug text-[#4d574f] sm:text-[10px] md:text-[11px]"
             >
-              <span className="font-semibold text-slate-800">{student.shortName}</span>
-              <span className="text-slate-400"> — </span>
+              <span className="font-semibold text-[#14201b]">{student.shortName}</span>
+              <span className="text-[#7c857d]"> — </span>
               <span className="line-clamp-2 md:truncate">{student.insight}</span>
             </p>
           </button>
@@ -1750,11 +1545,11 @@ function HeroDashboardPanel({
           <button
             type="button"
             onClick={() => onSelectStudent(student.id)}
-            className="mx-3 mb-1 flex shrink-0 items-center gap-2.5 rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-left shadow-sm"
+            className="mx-3 mb-1 flex shrink-0 items-center gap-2.5 rounded-[2px] border border-[#e7ebe2] bg-[#fcfaf4] px-3 py-2.5 text-left "
           >
             <div
               key={student.id}
-              className="hero-profile-in h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-emerald-100"
+              className="hero-profile-in h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#e7ebe2]"
             >
               <Image
                 src={student.src}
@@ -1767,10 +1562,10 @@ function HeroDashboardPanel({
             </div>
             <p
               key={`${student.id}-insight`}
-              className="hero-profile-in min-w-0 text-xs leading-snug text-slate-600"
+              className="hero-profile-in min-w-0 text-xs leading-snug text-[#4d574f]"
             >
-              <span className="font-semibold text-slate-800">{student.shortName}</span>
-              <span className="text-slate-400"> · </span>
+              <span className="font-semibold text-[#14201b]">{student.shortName}</span>
+              <span className="text-[#7c857d]"> · </span>
               <span className="line-clamp-1">{student.insight}</span>
             </p>
           </button>
@@ -1778,14 +1573,14 @@ function HeroDashboardPanel({
 
         {/* Bottom nav — phone only */}
         {isPhone && (
-          <nav className="flex shrink-0 items-center border-t border-slate-200/70 bg-white px-1 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1">
+          <nav className="flex shrink-0 items-center border-t border-[#14201b]/10 bg-[#fcfaf4] px-1 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1">
             {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item, true))}
           </nav>
         )}
 
         {isPhone && (
-          <div className="flex shrink-0 justify-center bg-white pb-2 pt-0.5" aria-hidden>
-            <div className="h-1 w-28 rounded-full bg-slate-900/80" />
+          <div className="flex shrink-0 justify-center bg-[#fcfaf4] pb-2 pt-0.5" aria-hidden>
+            <div className="h-1 w-28 rounded-full bg-[#14201b]/80" />
           </div>
         )}
       </div>
@@ -1799,66 +1594,6 @@ function HeroDashboardPanel({
   return <HeroDesktopFrame>{panel}</HeroDesktopFrame>
 }
 
-
-function HeroLiveDemoStrip({
-  selectedStudent,
-  selectedStudentId,
-  onSelectStudent,
-}: {
-  selectedStudent: HeroStudent
-  selectedStudentId: string
-  onSelectStudent: (id: string) => void
-}) {
-  return (
-    <div className="mt-8 w-full border-t border-white/10 pt-5">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[0.5625rem] font-medium uppercase tracking-[0.2em] text-[#d8c9ab]/75">
-          See it update live
-        </p>
-        <p className="text-[0.5625rem] uppercase tracking-[0.16em] text-white/40">
-          Choose a learner
-        </p>
-      </div>
-      <div className="mt-4 flex items-center gap-4">
-        <div className="flex shrink-0 -space-x-2.5">
-          {HERO_STUDENTS.map((student, i) => {
-            const isSelected = student.id === selectedStudentId
-            return (
-              <button
-                key={student.id}
-                type="button"
-                onClick={() => onSelectStudent(student.id)}
-                className={`hero-stat-pop relative h-8 w-8 overflow-hidden rounded-full ring-1 transition-all duration-200 hover:z-10 hover:scale-105 sm:h-9 sm:w-9 ${
-                  isSelected
-                    ? "ring-[#d8c9ab] ring-offset-2 ring-offset-[#0b1a15]"
-                    : "ring-white/25 hover:ring-white/60"
-                }`}
-                style={{ animationDelay: `${500 + i * 70}ms` }}
-                aria-label={`${student.name}, ${student.status}`}
-                aria-pressed={isSelected}
-              >
-                <Image
-                  src={student.src}
-                  alt=""
-                  width={80}
-                  height={80}
-                  sizes="64px"
-                  className="h-full w-full scale-[1.55] object-cover object-[center_20%]"
-                />
-              </button>
-            )
-          })}
-        </div>
-        <p
-          key={selectedStudent.id}
-          className="hero-profile-in min-w-0 flex-1 text-left text-[0.8125rem] font-medium leading-snug text-white/75"
-        >
-          {selectedStudent.pitchLine}
-        </p>
-      </div>
-    </div>
-  )
-}
 
 type HeroStudent = {
   id: string
@@ -1880,10 +1615,10 @@ type HeroStudent = {
 }
 
 const HERO_STUDENT_STATUS_COLORS: Record<HeroStudent["statusType"], string> = {
-  fees: "bg-emerald-100 text-emerald-700",
-  attendance: "bg-sky-100 text-sky-700",
-  admission: "bg-amber-100 text-amber-700",
-  exams: "bg-violet-100 text-violet-700",
+  fees: "bg-[#e7ebe2] text-[#1c3d32]",
+  attendance: "bg-[#e7ebe2] text-[#4d574f]",
+  admission: "bg-[#f0e6d2] text-[#8a6a3a]",
+  exams: "bg-[#e9e2d8] text-[#6b5a43]",
 }
 
 const HERO_STUDENT_MODULE_MAP: Record<HeroStudent["statusType"], string> = {
@@ -1926,13 +1661,6 @@ const HERO_ACTIVITY_ROWS = [
   { id: "grace", time: "8:45 AM", title: "Admission #2043 created", meta: "Class assigned · ID issued" },
   { id: "brian", time: "8:02 AM", title: "Attendance marked present", meta: "Parent notified via SMS" },
   { id: "david", time: "7:30 AM", title: "CBC assessment scheduled", meta: "CBC assessment Fri 9 AM · parent notified" },
-] as const
-
-const HERO_TRUST_STATS = [
-  { target: 340, format: (v: number) => `${Math.round(v)}+`, label: "Schools across Kenya" },
-  { target: 50000, format: (v: number) => `${Math.round(v).toLocaleString()}+`, label: "Students managed" },
-  { target: 3500, format: (v: number) => `${Math.round(v).toLocaleString()}+`, label: "Parents updated daily" },
-  { target: 99.9, format: (v: number) => `${v.toFixed(1)}%`, label: "Uptime", decimals: 1 as const },
 ] as const
 
 const HERO_DEFAULT_STUDENT_ID = "grace"
@@ -2088,69 +1816,170 @@ export default function Home() {
     return () => window.clearInterval(timer)
   }, [demoPaused])
   
+  const cbcDive = LANDING_DEEP_DIVES.find((dive) => dive.id === "cbc") ?? LANDING_DEEP_DIVES[0]
+  const bursarDive = LANDING_DEEP_DIVES.find((dive) => dive.id === "bursar") ?? LANDING_DEEP_DIVES[2]
+
   return (
     <div className="squl-marketing font-sans">
+      <Header />
+
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0b1a15]">
-        <Header variant="hero" />
-
-        <div className="absolute inset-0" aria-hidden>
-          <Image
-            src="/students/sq.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-[70%_42%] opacity-90 saturate-[0.9] lg:object-[62%_45%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1a15] via-[#0b1a15]/95 to-[#0b1a15]/30 lg:via-[#0b1a15]/85 lg:to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0b1a15] via-transparent to-[#0b1a15]/55" />
-          <div className="mk-grain mk-grain--light" />
-        </div>
-
-        <div className="relative mk-container pb-16 pt-32 sm:pt-36 lg:pb-20 lg:pt-40">
-          <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
-            <div className="order-1 lg:col-span-6 xl:col-span-5">
-              <p className="mk-eyebrow mk-eyebrow--light">School operations, connected</p>
-
-              <h1 className="mt-8 font-display text-[clamp(2.6rem,4vw,3.55rem)] leading-[0.99] tracking-[-0.025em] text-[#f7f4ec]">
-                School management
-                <span className="mt-2 block italic text-[#d8c9ab]">built for Kenyan schools.</span>
-              </h1>
-
-              <p className="mt-7 max-w-[35rem] text-[1.0625rem] leading-[1.7] text-pretty text-white/65">
-                The software that holds admissions, M-Pesa fees, CBC marks and parent SMS
-                in one quiet system — so your office runs the way it should.
+      <section className="relative overflow-hidden bg-[#f7f4ec]">
+        <div className="mk-container pb-16 pt-10 sm:pt-14 lg:pb-20 lg:pt-16">
+          <div className="grid items-start gap-12 lg:grid-cols-12 lg:gap-10">
+            <div className="lg:col-span-6 lg:pt-8">
+              <p className="flex items-center gap-4 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+                <span className="h-px w-7 bg-[#14201b]/25" aria-hidden />
+                For Kenyan schools
               </p>
 
-              <HeroLiveDemoStrip
-                selectedStudent={selectedStudent}
-                selectedStudentId={selectedStudentId}
-                onSelectStudent={selectStudent}
-              />
+              <h1 className="mt-8 font-display text-[clamp(3rem,5.2vw,4.9rem)] leading-[0.93] tracking-[-0.035em] text-[#14201b]">
+                School management,
+                <span className="mt-1 block italic text-[#1c3d32]">without the paperwork.</span>
+              </h1>
 
-              <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+              <p className="mt-8 max-w-[33rem] text-[1.0625rem] leading-[1.62] text-[#3f4a43]">
+                Admissions, M-Pesa fees, CBC marks and parent SMS in one quiet
+                system — so your office runs the way it should.
+              </p>
+
+              <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+                <Link href="/register" className="mk-btn mk-btn--ink h-14 px-8 text-[0.9375rem]">
                   Start your free term
                   <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setDemoOpen(true)}
-                  className="mk-btn mk-btn--ghost-light w-full sm:w-auto"
+                  className="mk-link text-[0.875rem]"
                 >
-                  <Play className="h-3 w-3 fill-current" aria-hidden />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#14201b]/20">
+                    <Play className="ml-0.5 h-2.5 w-2.5 fill-current" aria-hidden />
+                  </span>
                   See SQUL in motion
                 </button>
               </div>
 
-              <p className="mt-6 text-[0.625rem] uppercase tracking-[0.17em] text-white/45">
-                90-day free term · No credit card · Full access
+              <p className="mt-6 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[#7c857d]">
+                90 days free · No card · Full access
               </p>
             </div>
 
-            <div className="order-2 lg:col-span-6 lg:col-start-7">
-              <div className="mb-5 flex justify-end">
+            <div className="lg:col-span-6 lg:col-start-7">
+              <figure className="relative">
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#e8e2d4]">
+                  <Image
+                    src="/schooll.png"
+                    alt="Students studying together in a light-filled school building"
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 46vw, 100vw"
+                    className="mk-photo object-cover object-[62%_55%]"
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0d201a]/35 via-transparent to-transparent"
+                    aria-hidden
+                  />
+                </div>
+
+                <div className="relative mt-4 border border-[#14201b]/10 bg-[#fcfaf4] p-4 sm:absolute sm:bottom-5 sm:left-5 sm:mt-0 sm:w-[18rem]">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-mono text-[0.5rem] uppercase tracking-[0.16em] text-[#1c3d32]">
+                      Fees · live
+                    </p>
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#a98a55]" aria-hidden />
+                  </div>
+                  <p className="mt-3 font-display text-[1.7rem] leading-none tracking-[-0.02em] text-[#14201b]">
+                    KES 12,400
+                  </p>
+                  <p className="mt-2 text-[0.6875rem] text-[#4d574f]">
+                    Amina Karanja · Form 2 East
+                  </p>
+                  <p className="mt-3 border-t border-[#14201b]/10 pt-2.5 text-[0.625rem] leading-relaxed text-[#7c857d]">
+                    Receipt sent to parent via SMS
+                  </p>
+                </div>
+
+                <figcaption className="mt-3 flex items-center justify-between font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+                  <span>A school morning</span>
+                  <span>08:45</span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust figures */}
+        <div className="border-y border-[#14201b]/10 bg-[#f2ede0]/60">
+          <div className="mk-container grid grid-cols-2 gap-y-8 py-9 sm:grid-cols-4 sm:divide-x sm:divide-[#14201b]/10">
+            {[
+              { value: "340+", label: "Schools across Kenya" },
+              { value: "50,000+", label: "Learners managed" },
+              { value: "3,500+", label: "Parents updated daily" },
+              { value: "99.9%", label: "Uptime" },
+            ].map((stat, index) => (
+              <div
+                key={stat.label}
+                className={index === 0 ? "sm:pr-8" : "sm:px-8"}
+              >
+                <p className="font-display text-[2.4rem] leading-none tracking-[-0.03em] text-[#14201b]">
+                  {stat.value}
+                </p>
+                <p className="mt-2.5 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[#7c857d]">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <main>
+        {/* ── Statement ─────────────────────────────────────────────────── */}
+        <section className="mk-section">
+          <div className="mk-container">
+            <Reveal>
+              <div className="mx-auto max-w-4xl text-center">
+                <span className="mx-auto block h-px w-10 bg-[#a98a55]/70" aria-hidden />
+                <p className="mk-statement mt-10 text-[#14201b]">
+                  A school runs on trust.
+                  <span className="block italic text-[#1c3d32]">
+                    The administration should feel the same.
+                  </span>
+                </p>
+                <p className="mx-auto mt-7 max-w-lg text-[0.875rem] leading-[1.7] text-[#4d574f]">
+                  SQUL is the school management system for Kenyan schools that
+                  would rather do less, better.
+                </p>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── Product ───────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden bg-[#0d201a] py-20 lg:py-24">
+          <div className="mk-grain mk-grain--light" aria-hidden />
+          <div className="relative mk-container">
+            <div className="flex flex-wrap items-end justify-between gap-8">
+              <div>
+                <p className="flex items-center gap-4 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+                  <span className="text-[#d8c9ab]">01</span>
+                  <span className="h-px w-7 bg-[#fcfaf4]/15" aria-hidden />
+                  The product
+                </p>
+                <h2 className="mt-7 max-w-2xl font-display text-[clamp(2.5rem,4.6vw,4rem)] leading-[0.98] tracking-[-0.03em] text-[#f7f4ec]">
+                  The whole term,
+                  <span className="block italic text-[#d8c9ab]">on one screen.</span>
+                </h2>
+              </div>
+              <p className="max-w-sm text-[0.875rem] leading-[1.65] text-white/45">
+                Match a payment, enter a mark, send a receipt — every number
+                updates where the next person will look.
+              </p>
+            </div>
+
+            <div className="mt-12">
+              <div className="mb-4 flex justify-end">
                 <HeroPreviewToggle
                   mode={previewMode}
                   onChange={(mode) => {
@@ -2162,7 +1991,7 @@ export default function Home() {
               <div
                 key={previewMode}
                 className={`hero-profile-in ${
-                  previewMode === "phone" ? "flex justify-center" : "overflow-visible pb-6"
+                  previewMode === "phone" ? "flex justify-center" : "overflow-visible"
                 }`}
               >
                 <HeroDashboardPanel
@@ -2190,125 +2019,115 @@ export default function Home() {
                 />
               </div>
             </div>
+
+            <div className="mt-9 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-white/30">
+              <span>Fees · M-Pesa</span>
+              <span>Academics · CBC</span>
+              <span>Families · SMS</span>
+              <span>One record</span>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <main>
-        <TrustStrip />
-
-        {/* ── Platform ──────────────────────────────────────────────────── */}
+        {/* ── Modules ───────────────────────────────────────────────────── */}
         <section id="platform" className="mk-section scroll-mt-24">
           <div className="mk-container">
-            <SectionIntro
+            <SectionHead
+              index="02"
               kicker="The platform"
               title={
                 <>
-                  Everything the office runs on,
-                  <span className="block">
-                    <em>under one roof.</em>
-                  </span>
+                  The whole office,
+                  <span className="block italic text-[#1c3d32]">quietly joined up.</span>
                 </>
               }
-              description="Six modules, one record. Enter an admission, a payment or a mark once — and it stays true in the bursar's office, the staff room and the parent's phone."
-              aside={<TermStamp />}
+              lede="Six modules, one record. Enter a detail once and it stays true in the bursar's office, the staff room and the parent's phone."
             />
 
-            <PlatformLedger />
-
-            <Reveal>
-              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#14201b]/10 pt-6">
-                <p className="text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
-                  All six modules included in every term
-                </p>
-                <Link href="/register" className="mk-link text-[0.8125rem]">
-                  Begin with your learner list
-                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              </div>
+            <Reveal className="mt-14">
+              <ModulesIndex />
             </Reveal>
+
+            <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#14201b]/10 pt-5">
+              <p className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[#7c857d]">
+                All six included in every term
+              </p>
+              <Link href="/register" className="mk-link text-[0.8125rem]">
+                Begin with your learner list
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* ── Day to day ────────────────────────────────────────────────── */}
-        <section className="mk-section border-t border-[#14201b]/10 bg-[#f2ede0]">
+        <section className="mk-section border-t border-[#14201b]/10 bg-[#f2ede0]/60">
           <div className="mk-container">
-            <SectionIntro
-              kicker="Day to day"
-              title={
-                <>
-                  Every job in your week,
-                  <span className="block">
-                    <em>joined end to end.</em>
-                  </span>
-                </>
-              }
-              description="From CBC marks in the staff room to M-Pesa in the bursar's office, SQUL follows the way your team already works — without a second register."
-            />
-
-            <div className="mt-16 grid gap-x-16 gap-y-14 md:grid-cols-2">
-              {LANDING_WORKFLOW_BLOCKS.map((block, index) => (
-                <Reveal key={block.id} delay={index * 60}>
-                  <WorkflowEntry {...block} />
-                </Reveal>
-              ))}
-            </div>
-
             <Reveal>
-              <BursarSnapshot
-                activeStudents={1284}
-                feeCollectionRate={94}
-                totalClasses={38}
-                totalSubjects={12}
-              />
+              <DayToDay />
             </Reveal>
           </div>
         </section>
 
-        {/* ── Testimonial ───────────────────────────────────────────────── */}
+        {/* ── Quote ─────────────────────────────────────────────────────── */}
         <section className="mk-section">
           <div className="mk-container">
             <Reveal>
-              <figure className="mx-auto max-w-4xl text-center">
-                <p className="mk-caption">What a bursar says</p>
-                <blockquote className="mt-10 text-balance font-display text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.2] tracking-[-0.015em] text-[#14201b]">
-                  “We stopped chasing parents for fees in the office. SQUL matches the
-                  M-Pesa payments and the SMS reminders do the chasing for us.”
+              <figure className="mx-auto max-w-3xl text-center">
+                <p className="font-mono text-[0.5625rem] uppercase tracking-[0.18em] text-[#7c857d]">
+                  A bursar, Nakuru
+                </p>
+                <blockquote className="mt-8 text-balance font-display text-[clamp(1.8rem,3.4vw,3rem)] leading-[1.16] tracking-[-0.025em] text-[#14201b]">
+                  “We stopped chasing parents for fees in the office. SQUL matches
+                  the M-Pesa payments and the SMS reminders do the chasing for us.”
                 </blockquote>
-                <figcaption className="mt-10 flex flex-col items-center">
-                  <span className="h-px w-8 bg-[#a98a55]/60" aria-hidden />
-                  <p className="mt-6 text-[0.8125rem] font-medium text-[#14201b]">Jane Njeri</p>
-                  <p className="mt-1.5 text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
-                    Bursar · Unity Secondary School, Nakuru
-                  </p>
+                <figcaption className="mt-8 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-[#7c857d]">
+                  Jane Njeri · Unity Secondary School
                 </figcaption>
               </figure>
             </Reveal>
           </div>
         </section>
 
-        {/* ── In the schoolroom ─────────────────────────────────────────── */}
+        {/* ── Two moments ───────────────────────────────────────────────── */}
         <section className="mk-section border-t border-[#14201b]/10">
           <div className="mk-container">
-            <SectionIntro
-              kicker="In the schoolroom"
+            <SectionHead
+              index="04"
+              kicker="In the work"
               title={
                 <>
-                  See SQUL in the work
-                  <span className="block">
-                    <em>your team already does.</em>
-                  </span>
+                  Two moments that decide
+                  <span className="block italic text-[#1c3d32]">the term.</span>
                 </>
               }
-              description="Kenyan classrooms, bursar counters and staff rooms — each view below is a job your administrators run every week."
+              lede="Not features — the two jobs your office is judged on every week: marks that are right, and fees that are reconciled."
             />
 
-            <div className="mt-20 space-y-24 lg:space-y-32">
-              {LANDING_DEEP_DIVES.map((dive, index) => (
-                <Reveal key={dive.id} delay={index * 60}>
-                  <DeepDive {...dive} index={index} />
-                </Reveal>
-              ))}
+            <div className="mt-16 space-y-24 lg:space-y-28">
+              <Reveal>
+                <DeepDive
+                  index={0}
+                  title="Marks entered once."
+                  intro="Teachers record CBC strands and exam marks in one place. Term reports print themselves."
+                  items={cbcDive.items.slice(0, 2)}
+                  imageRight
+                >
+                  <ReportCardVisual />
+                </DeepDive>
+              </Reveal>
+
+              <Reveal>
+                <DeepDive
+                  index={1}
+                  title="Fees matched before the parent leaves."
+                  intro="Paybill and till payments match to the right learner, and the receipt reaches the parent before they leave the gate."
+                  items={bursarDive.items.slice(0, 2)}
+                  imageRight={false}
+                >
+                  <FeeLedgerVisual />
+                </DeepDive>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -2316,23 +2135,22 @@ export default function Home() {
         {/* ── Domains ───────────────────────────────────────────────────── */}
         <section
           id="custom-domains"
-          className="mk-section scroll-mt-24 border-t border-[#14201b]/10 bg-[#f2ede0]"
+          className="mk-section scroll-mt-24 border-t border-[#14201b]/10 bg-[#f2ede0]/60"
         >
           <div className="mk-container">
-            <SectionIntro
-              kicker="Your own web address"
+            <SectionHead
+              index="05"
+              kicker="Your own address"
               title={
                 <>
                   A domain parents
-                  <span className="block">
-                    <em>already trust.</em>
-                  </span>
+                  <span className="block italic text-[#1c3d32]">already trust.</span>
                 </>
               }
-              description="Run your school site on myschool.ac.ke with free HTTPS — connect a domain you already own, or buy a new one and pay with M-Pesa from your dashboard."
+              lede="Run your school site on myschool.ac.ke with free HTTPS — connect a domain you own, or buy one and pay with M-Pesa."
             />
 
-            <div className="mt-16 grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
+            <div className="mt-14 grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
               <Reveal className="lg:col-span-7">
                 <div className="grid gap-5 sm:grid-cols-2">
                   <ConnectDomainPreview image={DOMAIN_HOME_SHOTS.connect} />
@@ -2343,34 +2161,21 @@ export default function Home() {
               <div className="lg:col-span-4 lg:col-start-9">
                 <ul>
                   {DOMAIN_HOME_HIGHLIGHTS.map((item) => (
-                    <li key={item.title} className="border-t border-[#14201b]/12 py-5 last:border-b">
-                      <div className="flex items-center gap-3">
-                        <item.icon
-                          className="h-3.5 w-3.5 shrink-0 text-[#1c3d32]/50"
-                          strokeWidth={1.5}
-                          aria-hidden
-                        />
-                        <p className="text-[0.8125rem] font-medium text-[#14201b]">{item.title}</p>
-                      </div>
-                      <p className="mt-2 pl-[1.6rem] text-[0.8125rem] leading-[1.65] text-[#4d574f]">
+                    <li key={item.title} className="border-t border-[#14201b]/12 py-4 last:border-b">
+                      <p className="text-[0.8125rem] font-medium text-[#14201b]">{item.title}</p>
+                      <p className="mt-1.5 text-[0.75rem] leading-[1.6] text-[#4d574f]">
                         {item.body}
                       </p>
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Link
-                    href="/custom-domains"
-                    className="mk-btn mk-btn--ink h-11 px-5 text-[0.8125rem]"
-                  >
+                <div className="mt-7 flex flex-wrap items-center gap-5">
+                  <Link href="/custom-domains" className="mk-btn mk-btn--ink h-11 px-5 text-[0.75rem]">
                     How domains work
                     <ArrowRight className="mk-arrow h-3.5 w-3.5" aria-hidden />
                   </Link>
-                  <Link
-                    href="/register"
-                    className="mk-btn mk-btn--outline h-11 px-5 text-[0.8125rem]"
-                  >
+                  <Link href="/register" className="mk-link text-[0.75rem]">
                     Start free term
                   </Link>
                 </div>
@@ -2380,19 +2185,21 @@ export default function Home() {
         </section>
 
         {/* ── FAQ ───────────────────────────────────────────────────────── */}
-        <section className="mk-section border-t border-[#14201b]/10">
+        <section id="faq" className="mk-section">
           <div className="mk-container">
             <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
               <div className="lg:col-span-4">
-                <p className="mk-eyebrow">Before you sign up</p>
-                <h2 className="mk-h2 mt-7">
-                  Questions,
-                  <span className="block">
-                    <em>answered plainly.</em>
-                  </span>
+                <p className="flex items-center gap-4 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d]">
+                  <span className="text-[#1c3d32]">06</span>
+                  <span className="h-px w-7 bg-[#14201b]/20" aria-hidden />
+                  Questions
+                </p>
+                <h2 className="mt-7 font-display text-[clamp(2.3rem,3.6vw,3.4rem)] leading-[0.99] tracking-[-0.03em] text-[#14201b]">
+                  Before you
+                  <span className="block italic text-[#1c3d32]">sign up.</span>
                 </h2>
-                <p className="mk-lede mt-6">
-                  Data, timelines, parents and phones — no enterprise jargon.
+                <p className="mt-6 max-w-xs text-[0.875rem] leading-[1.65] text-[#4d574f]">
+                  Data, timelines, parents and phones — answered plainly.
                 </p>
                 <a
                   href={`mailto:${LEGAL_META.contactEmail}`}
@@ -2412,42 +2219,45 @@ export default function Home() {
         {/* ── Closing ───────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden bg-[#0d201a]">
           <div
-            className="pointer-events-none absolute inset-0 opacity-60"
+            className="pointer-events-none absolute inset-0 opacity-50"
             style={{
               backgroundImage:
-                "linear-gradient(to right, rgba(247,244,236,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,244,236,0.045) 1px, transparent 1px)",
-              backgroundSize: "88px 44px",
+                "linear-gradient(to right, rgba(247,244,236,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(247,244,236,0.04) 1px, transparent 1px)",
+              backgroundSize: "96px 48px",
             }}
             aria-hidden
           />
           <div className="mk-grain mk-grain--light" aria-hidden />
-          <div className="relative mk-container py-24 text-center sm:py-32">
+          <div className="relative mk-container py-24 text-center sm:py-28">
             <Reveal>
-              <p className="mk-eyebrow mk-eyebrow--light justify-center">Next term</p>
-              <h2 className="mx-auto mt-8 max-w-3xl font-display text-[clamp(2.6rem,5.6vw,4.6rem)] leading-[1.02] tracking-[-0.025em] text-[#f7f4ec]">
-                Begin the term
-                <span className="mt-1 block italic text-[#d8c9ab]">with a calmer office.</span>
-              </h2>
-              <p className="mx-auto mt-7 max-w-xl text-[1rem] leading-[1.7] text-white/55">
-                Import your learner list, match your fee structure, and go live before
-                parents&apos; reporting day. No IT project, no consultants.
+              <p className="mx-auto flex w-fit items-center gap-4 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+                <span className="h-px w-7 bg-[#fcfaf4]/20" aria-hidden />
+                Next term
+                <span className="h-px w-7 bg-[#fcfaf4]/20" aria-hidden />
               </p>
-              <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link href="/register" className="mk-btn mk-btn--paper w-full sm:w-auto">
+              <h2 className="mx-auto mt-8 max-w-3xl font-display text-[clamp(2.8rem,5.6vw,5rem)] leading-[0.96] tracking-[-0.035em] text-[#f7f4ec]">
+                Begin the term
+                <span className="block italic text-[#d8c9ab]">with a calmer office.</span>
+              </h2>
+              <p className="mx-auto mt-7 max-w-lg text-[0.9375rem] leading-[1.65] text-white/45">
+                Import your learner list, match your fee structure, and go live
+                before parents&apos; reporting day.
+              </p>
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link href="/register" className="mk-btn mk-btn--paper h-14 px-8 text-[0.9375rem]">
                   Start your free term
                   <ArrowRight className="mk-arrow h-4 w-4" aria-hidden />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setDemoOpen(true)}
-                  className="mk-btn mk-btn--ghost-light w-full sm:w-auto"
+                  className="mk-btn mk-btn--ghost-light h-14 px-7 text-[0.875rem]"
                 >
-                  <Play className="h-3 w-3 fill-current" aria-hidden />
                   See SQUL in motion
                 </button>
               </div>
-              <p className="mt-7 text-[0.625rem] uppercase tracking-[0.18em] text-white/40">
-                90-day free term · No credit card · Cancel anytime
+              <p className="mt-7 font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-white/35">
+                90 days free · No card · Cancel anytime
               </p>
             </Reveal>
           </div>
@@ -2456,156 +2266,73 @@ export default function Home() {
         {/* ── Footer ────────────────────────────────────────────────────── */}
         <footer className="relative overflow-hidden bg-[#0d201a] text-[#f7f4ec]">
           <div className="mk-grain mk-grain--light" aria-hidden />
-          <div className="relative mk-container">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-5">
-              <div className="flex items-center gap-2.5 text-[0.625rem] font-medium uppercase tracking-[0.18em] text-[#d8c9ab]/70">
-                <SchoolBell className="h-3.5 w-3.5" />
-                End of day · 4:00 PM
-              </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-white/40">
-                <span>Nairobi · 1°17′S 36°49′E</span>
-                <span>Term 1 / 2026</span>
-              </div>
-            </div>
-
-            <div className="grid gap-14 py-16 lg:grid-cols-12 lg:gap-10 lg:py-24">
-              <div className="lg:col-span-6">
-                <p className="mk-eyebrow mk-eyebrow--light">The gate is open</p>
-                <h2 className="mt-6 font-display text-[clamp(2.75rem,6vw,5rem)] leading-[0.95] tracking-[-0.03em] text-[#f7f4ec]">
-                  School&apos;s out.
-                  <span className="mt-2 block text-balance italic text-[#d8c9ab]">
-                    The next term starts here.
-                  </span>
-                </h2>
-                <p className="mt-6 max-w-md text-sm leading-[1.7] text-white/50">
-                  One system for admissions, M-Pesa fees, CBC marks and parent SMS — built
-                  in Nairobi for Kenyan schools.
-                </p>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/register" className="mk-btn mk-btn--paper h-11 px-5 text-[0.8125rem]">
-                    Start your free term
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="mk-btn mk-btn--ghost-light h-11 px-5 text-[0.8125rem]"
-                  >
-                    Sign in
-                  </Link>
-                </div>
-                <p className="mt-5 text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
-                  90-day free trial · No credit card
-                </p>
-              </div>
-
-              <div className="lg:col-span-6 lg:pl-8">
-                <div className="bg-[#f7f4ec] p-6 text-[#14201b] sm:p-8">
-                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#14201b]/10 pb-5">
-                    <div>
-                      <p className="text-[0.5625rem] font-medium uppercase tracking-[0.2em] text-[#1c3d32]">
-                        The week, in links
-                      </p>
-                      <p className="mt-2 font-display text-2xl leading-tight tracking-[-0.015em]">
-                        Six periods. One system.
-                      </p>
-                    </div>
-                    <div className="text-right font-mono text-[0.5625rem] uppercase leading-relaxed tracking-[0.12em] text-[#14201b]/35">
-                      <p>Periods 01—06</p>
-                      <p>07:30 — 16:00</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    {LANDING_FOOTER_PERIODS.map((period, index) => (
-                      <Link
-                        key={period.label}
-                        href={period.href}
-                        className="group grid grid-cols-[3rem_1.1rem_1fr_auto] items-center gap-3 border-b border-[#14201b]/8 py-3.5 transition-colors duration-200 hover:bg-[#14201b]/[0.03]"
-                      >
-                        <span className="font-mono text-[0.5625rem] tabular-nums text-[#14201b]/35">
-                          {period.time}
-                        </span>
-                        <span className="font-mono text-[0.5625rem] tabular-nums text-[#14201b]/20">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <span className="font-display text-[1.1rem] leading-snug tracking-[-0.01em] text-[#14201b] transition-colors duration-200 group-hover:text-[#1c3d32]">
-                          {period.label}
-                        </span>
-                        <ArrowUpRight
-                          className="h-3.5 w-3.5 text-[#1c3d32]/30 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#1c3d32]"
-                          aria-hidden
-                        />
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.6875rem] font-medium text-[#14201b]/50">
-                    <Link href="/schools" className="transition-colors hover:text-[#1c3d32]">
-                      Schools on SQUL
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setWalkthroughOpen(true)}
-                      className="transition-colors hover:text-[#1c3d32]"
-                    >
-                      Book a walkthrough
-                    </button>
-                    <a
-                      href={LANDING_APP_DOWNLOAD_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="transition-colors hover:text-[#1c3d32]"
-                    >
-                      Download the app
-                    </a>
-                    <Link href="/login" className="transition-colors hover:text-[#1c3d32]">
-                      Sign in
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-8 border-t border-white/10 py-8 lg:grid-cols-12">
+          <div className="relative mk-container border-t border-white/10 py-14">
+            <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
               <div className="lg:col-span-5">
-                <Link href="/" className="inline-flex items-center" aria-label="SQUL home">
-                  <SqulWordmark tone="light" markSize={28} />
+                <Link href="/" aria-label="SQUL home" className="inline-flex">
+                  <SqulWordmark tone="light" />
                 </Link>
-                <p className="mt-4 max-w-xs text-xs leading-relaxed text-white/35">
-                  School operations, connected. Built in Nairobi for Kenyan classrooms.
+                <p className="mt-6 max-w-[18rem] text-[0.8125rem] leading-[1.7] text-white/35">
+                  School operations, connected. Built in Nairobi for Kenyan
+                  classrooms.
                 </p>
               </div>
-              <div className="lg:col-span-4">
-                <p className="text-[0.5625rem] font-medium uppercase tracking-[0.2em] text-[#d8c9ab]/60">
-                  Talk to us
-                </p>
-                <div className="mt-4 flex flex-col gap-1.5 text-xs text-white/40">
-                  <a
-                    href={`mailto:${LEGAL_META.contactEmail}`}
-                    className="transition-colors hover:text-[#d8c9ab]"
-                  >
-                    {LEGAL_META.contactEmail}
-                  </a>
-                  <a
-                    href={`tel:${LEGAL_META.contactPhoneHref}`}
-                    className="transition-colors hover:text-[#d8c9ab]"
-                  >
-                    {LEGAL_META.contactPhone}
-                  </a>
-                  <span>{LEGAL_META.postalAddress}</span>
+
+              <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-6 lg:col-start-7">
+                <div>
+                  <p className="font-mono text-[0.5rem] uppercase tracking-[0.18em] text-[#d8c9ab]/60">
+                    Platform
+                  </p>
+                  <ul className="mt-4 space-y-2.5 text-[0.75rem] text-white/45">
+                    <li><Link href="/#platform" className="hover:text-[#d8c9ab]">Overview</Link></li>
+                    <li><Link href="/schools" className="hover:text-[#d8c9ab]">Schools</Link></li>
+                    <li><Link href="/custom-domains" className="hover:text-[#d8c9ab]">Domains</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-mono text-[0.5rem] uppercase tracking-[0.18em] text-[#d8c9ab]/60">
+                    Resources
+                  </p>
+                  <ul className="mt-4 space-y-2.5 text-[0.75rem] text-white/45">
+                    <li><Link href="/blog" className="hover:text-[#d8c9ab]">Guides</Link></li>
+                    <li><Link href="/#faq" className="hover:text-[#d8c9ab]">FAQ</Link></li>
+                    <li><Link href="/register" className="hover:text-[#d8c9ab]">Start free</Link></li>
+                    <li>
+                      <a href={LANDING_APP_DOWNLOAD_URL} target="_blank" rel="noreferrer" className="hover:text-[#d8c9ab]">
+                        Download app
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-mono text-[0.5rem] uppercase tracking-[0.18em] text-[#d8c9ab]/60">
+                    Contact
+                  </p>
+                  <ul className="mt-4 space-y-2.5 text-[0.75rem] text-white/45">
+                    <li>
+                      <a href={`mailto:${LEGAL_META.contactEmail}`} className="hover:text-[#d8c9ab]">
+                        {LEGAL_META.contactEmail}
+                      </a>
+                    </li>
+                    <li>
+                      <a href={`tel:${LEGAL_META.contactPhoneHref}`} className="hover:text-[#d8c9ab]">
+                        {LEGAL_META.contactPhone}
+                      </a>
+                    </li>
+                    <li className="leading-relaxed">{LEGAL_META.postalAddress}</li>
+                  </ul>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 lg:col-span-3 lg:items-end">
-                <div className="flex gap-5 text-xs text-white/40">
-                  <Link href="/privacy" className="transition-colors hover:text-[#d8c9ab]">
-                    Privacy
-                  </Link>
-                  <Link href="/terms" className="transition-colors hover:text-[#d8c9ab]">
-                    Terms
-                  </Link>
-                </div>
-                <p className="font-mono text-[0.5625rem] uppercase tracking-[0.12em] text-white/35">
-                  © {new Date().getFullYear()} SQUL · All rights reserved
-                </p>
+            </div>
+
+            <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
+              <p className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-white/25">
+                © {new Date().getFullYear()} SQUL · All rights reserved
+              </p>
+              <div className="flex gap-6 font-mono text-[0.5rem] uppercase tracking-[0.14em] text-white/30">
+                <Link href="/privacy" className="hover:text-[#d8c9ab]">Privacy</Link>
+                <Link href="/terms" className="hover:text-[#d8c9ab]">Terms</Link>
+                <Link href="/login" className="hover:text-[#d8c9ab]">Sign in</Link>
               </div>
             </div>
           </div>

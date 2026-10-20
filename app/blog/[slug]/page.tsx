@@ -39,11 +39,13 @@ export async function generateMetadata({
       publishedTime: article.updated,
       modifiedTime: article.updated,
       authors: [article.author],
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: article.h1 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: article.title,
       description: article.description,
+      images: ['/og-image.png'],
     },
   }
 }

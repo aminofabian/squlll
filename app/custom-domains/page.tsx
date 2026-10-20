@@ -28,6 +28,15 @@ export const metadata: Metadata = {
   description:
     "Run your SQUL school site on a domain you own — like myschool.ac.ke — with free auto-renewed HTTPS. Or buy a new domain and pay with M-Pesa, all from your dashboard.",
   alternates: { canonical: "/custom-domains" },
+  openGraph: {
+    type: "website",
+    url: "/custom-domains",
+    siteName: "SQUL",
+    title: "Custom domains | Give your school its own web address",
+    description:
+      "Run your SQUL school site on a domain you own, with free auto-renewed HTTPS — or buy one and pay with M-Pesa.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "SQUL — custom school domains" }],
+  },
 };
 
 /**

@@ -51,23 +51,48 @@ type SqulWordmarkProps = {
   markSize?: number
 }
 
-/** Lockup: hairline monogram + tracked wordmark. */
+/**
+ * Wordmark lockup: serif SQUL closed with a brass full stop,
+ * set over a hairline and the category line.
+ */
 export function SqulWordmark({
   className,
   tone = "dark",
-  showMark = true,
+  showMark = false,
   markSize = 30,
 }: SqulWordmarkProps) {
+  const light = tone === "light"
   return (
-    <span className={cn("inline-flex items-center gap-3", className)}>
-      {showMark ? <SqulMark tone={tone} size={markSize} /> : null}
-      <span
-        className={cn(
-          "text-[0.8125rem] font-medium uppercase leading-none tracking-[0.34em]",
-          tone === "light" ? "text-[#f7f4ec]" : "text-[#14201b]",
-        )}
-      >
-        Squl
+    <span className={cn("inline-flex flex-col items-start", className)}>
+      <span className="flex items-baseline gap-3">
+        {showMark ? <SqulMark tone={tone} size={markSize} /> : null}
+        <span
+          className={cn(
+            "font-display uppercase leading-[0.78] tracking-[0.1em]",
+            light ? "text-[#f7f4ec]" : "text-[#14201b]",
+          )}
+          style={{
+            fontFamily: "var(--font-instrument-serif), Georgia, serif",
+            fontSize: "1.5rem",
+          }}
+        >
+          SQUL
+          <span className={light ? "text-[#d8c9ab]" : "text-[#a98a55]"}>.</span>
+        </span>
+      </span>
+      <span className="mt-2 flex items-center gap-2">
+        <span
+          className={cn("h-px w-3", light ? "bg-[#d8c9ab]/70" : "bg-[#a98a55]/70")}
+          aria-hidden
+        />
+        <span
+          className={cn(
+            "font-mono text-[0.45rem] uppercase tracking-[0.24em]",
+            light ? "text-white/40" : "text-[#4d574f]/70",
+          )}
+        >
+          School systems
+        </span>
       </span>
     </span>
   )

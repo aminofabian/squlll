@@ -22,12 +22,11 @@ export function Header({ variant = 'default' }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    if (!isHero) return
     const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [isHero])
+  }, [])
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -38,8 +37,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
     }
   }, [mobileOpen])
 
-  const solid = !isHero || scrolled
-  const opaque = solid || mobileOpen
+  const opaque = isHero ? scrolled || mobileOpen : true
 
   return (
     <>
@@ -47,13 +45,17 @@ export function Header({ variant = 'default' }: HeaderProps) {
       className={[
         'z-50 w-full transition-[background-color,border-color] duration-200',
         isHero ? 'fixed inset-x-0 top-0' : 'sticky top-0',
-        opaque
-          ? 'border-b border-[#14201b]/10 bg-[#f7f4ec]/95 backdrop-blur-xl'
-          : 'border-b border-white/10 bg-transparent',
+        isHero
+          ? scrolled || mobileOpen
+            ? 'border-b border-[#14201b]/10 bg-[#f7f4ec]'
+            : 'border-b border-white/10 bg-transparent'
+          : scrolled
+            ? 'border-b border-[#14201b]/10 bg-[#f7f4ec]'
+            : 'border-b border-transparent bg-[#f7f4ec]',
       ].join(' ')}
     >
       <div className="mk-container">
-        <div className="flex h-[4.5rem] items-center justify-between gap-8">
+        <div className="flex h-20 items-center justify-between gap-8">
           <Link
             href="/"
             onClick={() => setMobileOpen(false)}
@@ -70,7 +72,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 href={item.href}
                 className={[
                   'group relative py-2 text-[0.8125rem] font-medium tracking-[0.01em] transition-colors duration-200',
-                  solid
+                  opaque
                     ? 'text-[#4d574f] hover:text-[#14201b]'
                     : 'text-white/70 hover:text-white',
                 ].join(' ')}
@@ -79,7 +81,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 <span
                   className={[
                     'absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100',
-                    solid ? 'bg-[#14201b]/60' : 'bg-white/70',
+                    opaque ? 'bg-[#14201b]/60' : 'bg-white/70',
                   ].join(' ')}
                   aria-hidden
                 />
@@ -92,7 +94,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
               href="/login"
               className={[
                 'text-[0.8125rem] font-medium transition-colors duration-200',
-                solid ? 'text-[#4d574f] hover:text-[#14201b]' : 'text-white/70 hover:text-white',
+                opaque ? 'text-[#4d574f] hover:text-[#14201b]' : 'text-white/70 hover:text-white',
               ].join(' ')}
             >
               Sign in
@@ -101,7 +103,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
               href="/register"
               className={[
                 'group inline-flex items-center gap-2 border-b pb-1 text-[0.8125rem] font-medium transition-colors duration-200',
-                solid
+                opaque
                   ? 'border-[#14201b]/35 text-[#14201b] hover:border-[#14201b]'
                   : 'border-white/35 text-white hover:border-white',
               ].join(' ')}
@@ -122,7 +124,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             className={[
               'flex h-10 w-10 items-center justify-center transition-colors duration-200 md:hidden',
-              solid || mobileOpen ? 'text-[#14201b]' : 'text-white',
+              opaque || mobileOpen ? 'text-[#14201b]' : 'text-white',
             ].join(' ')}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -134,7 +136,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
       {mobileOpen && (
         <div
           id="mobile-nav"
-          className="fixed inset-x-0 bottom-0 top-[4.5rem] z-40 overflow-y-auto border-t border-[#14201b]/10 bg-[#f7f4ec] px-6 pb-12 pt-8 md:hidden"
+          className="fixed inset-x-0 bottom-0 top-20 z-40 overflow-y-auto border-t border-[#14201b]/10 bg-[#f7f4ec] px-6 pb-12 pt-8 md:hidden"
         >
           <nav className="flex flex-col" aria-label="Mobile">
             {NAV.map((item, index) => (

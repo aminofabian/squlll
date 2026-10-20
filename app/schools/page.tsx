@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     title: 'Schools on Squl | Kenya School Management',
     description:
       'Browse schools across Kenya running admissions, fees, CBC marks, and parent portals on Squl.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SQUL — schools across Kenya' }],
   },
 }
 

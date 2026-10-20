@@ -36,15 +36,12 @@ function BrowserFrame({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-[#1a4d42]/15 bg-white shadow-[0_24px_60px_-30px_rgba(10,31,26,0.45)] ${className}`}
+      className={`overflow-hidden rounded-[2px] border border-[#14201b]/15 bg-[#fcfaf4] shadow-[0_30px_80px_-40px_rgba(20,32,27,0.4)] ${className}`}
     >
-      <div className="flex items-center gap-2 border-b border-[#1a4d42]/10 bg-[#f3f7f5] px-3 py-2">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#e0736a]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#e6b95c]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#63b37a]" />
-        <div className="ml-3 flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-[#1a4d42]/10 bg-white px-2 py-1">
-          <Lock className="h-3 w-3 shrink-0 text-emerald-600" />
-          <span className="truncate font-mono text-[11px] text-[#1a4d42]/70">
+      <div className="flex items-center border-b border-[#14201b]/10 bg-[#efeadd] px-3 py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-[2px] border border-[#14201b]/10 bg-[#fcfaf4] px-2 py-1">
+          <Lock className="h-3 w-3 shrink-0 text-[#1c3d32]" />
+          <span className="truncate font-mono text-[11px] text-[#14201b]/70">
             {url}
           </span>
         </div>
@@ -58,7 +55,7 @@ function BrowserFrame({
           className="block w-full"
         />
       ) : (
-        <div className="bg-white p-3 sm:p-4">{children}</div>
+        <div className="bg-[#fcfaf4] p-3 sm:p-4">{children}</div>
       )}
     </div>
   );
@@ -72,13 +69,13 @@ function Chip({
   children: React.ReactNode;
 }) {
   const tones = {
-    pending: "border-[#1a4d42]/20 bg-[#f3f7f5] text-[#1a4d42]/70",
-    verifying: "border-amber-300 bg-amber-50 text-amber-700",
-    live: "border-emerald-600 bg-emerald-600 text-white",
+    pending: "border-[#14201b]/20 bg-[#efeadd] text-[#14201b]/70",
+    verifying: "border-[#d8c9ab] bg-[#f0e6d2] text-[#8a6a3a]",
+    live: "border-[#1c3d32] bg-[#1c3d32] text-white",
   } as const;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${tones[tone]}`}
+      className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${tones[tone]}`}
     >
       {children}
     </span>
@@ -95,17 +92,17 @@ function DnsRow({
   value: string;
 }) {
   return (
-    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-t border-[#1a4d42]/8 px-3 py-2 first:border-t-0">
-      <span className="rounded bg-[#eef4f1] px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#1d5547]">
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-t border-[#14201b]/8 px-3 py-2 first:border-t-0">
+      <span className="rounded bg-[#eef4f1] px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#1c3d32]">
         {type}
       </span>
       <div className="min-w-0">
-        <p className="font-mono text-[11px] text-[#0a1f1a]">{name}</p>
-        <p className="truncate font-mono text-[10px] text-[#1a4d42]/60">
+        <p className="font-mono text-[11px] text-[#14201b]">{name}</p>
+        <p className="truncate font-mono text-[10px] text-[#14201b]/60">
           {value}
         </p>
       </div>
-      <Copy className="h-3.5 w-3.5 text-[#1a4d42]/40" />
+      <Copy className="h-3.5 w-3.5 text-[#14201b]/40" />
     </div>
   );
 }
@@ -125,29 +122,29 @@ export function ConnectDomainPreview({
       className={className}
     >
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#eef4f1]">
-          <Globe className="h-4 w-4 text-[#246a59]" />
+        <span className="flex h-7 w-7 items-center justify-center rounded-[2px] bg-[#eef4f1]">
+          <Globe className="h-4 w-4 text-[#1c3d32]" />
         </span>
         <div>
-          <p className="text-sm font-semibold text-[#0a1f1a]">Custom domain</p>
-          <p className="text-[11px] text-[#1a4d42]/60">
+          <p className="text-sm font-semibold text-[#14201b]">Custom domain</p>
+          <p className="text-[11px] text-[#14201b]/60">
             Point a domain you own at your school site.
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="flex h-9 flex-1 items-center rounded-md border border-[#1a4d42]/20 px-3 font-mono text-xs text-[#1a4d42]/50">
+        <div className="flex h-9 flex-1 items-center rounded-[2px] border border-[#14201b]/20 px-3 font-mono text-xs text-[#14201b]/50">
           school.ac.ke
         </div>
-        <span className="inline-flex h-9 items-center rounded-md bg-[#246a59] px-3 text-xs font-semibold text-white">
+        <span className="inline-flex h-9 items-center rounded-[2px] bg-[#1c3d32] px-3 text-xs font-semibold text-white">
           Add domain
         </span>
       </div>
 
-      <div className="mt-3 rounded-lg border border-[#1a4d42]/12">
+      <div className="mt-3 rounded-[2px] border border-[#14201b]/12">
         <div className="flex items-center justify-between px-3 py-2">
-          <span className="font-mono text-xs font-medium text-[#0a1f1a]">
+          <span className="font-mono text-xs font-medium text-[#14201b]">
             mirema.ac.ke
           </span>
           <Chip tone="pending">Add DNS records</Chip>
@@ -162,11 +159,11 @@ export function ConnectDomainPreview({
       </div>
 
       <div className="mt-3 flex gap-2">
-        <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#246a59] px-3 text-xs font-semibold text-white">
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-[2px] bg-[#1c3d32] px-3 text-xs font-semibold text-white">
           <RefreshCw className="h-3.5 w-3.5" />
           Check connection
         </span>
-        <span className="inline-flex h-8 items-center rounded-md border border-[#1a4d42]/20 px-3 text-xs font-medium text-[#1a4d42]/70">
+        <span className="inline-flex h-8 items-center rounded-[2px] border border-[#14201b]/20 px-3 text-xs font-medium text-[#14201b]/70">
           Remove
         </span>
       </div>
@@ -185,13 +182,13 @@ export function LiveDomainPreview({
   const steps = ["DNS records added", "Certificate issued", "Live over HTTPS"];
   return (
     <BrowserFrame url="mirema.ac.ke" image={image} className={className}>
-      <div className="flex items-center justify-between rounded-lg border border-[#1a4d42]/12 px-3 py-2.5">
+      <div className="flex items-center justify-between rounded-[2px] border border-[#14201b]/12 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Globe className="h-4 w-4 text-[#246a59]" />
-          <span className="text-sm font-medium text-[#0a1f1a]">
+          <Globe className="h-4 w-4 text-[#1c3d32]" />
+          <span className="text-sm font-medium text-[#14201b]">
             mirema.ac.ke
           </span>
-          <span className="rounded-full border border-[#1a4d42]/15 px-2 py-0.5 text-[10px] font-semibold text-[#1a4d42]/70">
+          <span className="rounded-[2px] border border-[#14201b]/15 px-2 py-0.5 text-[10px] font-semibold text-[#14201b]/70">
             Primary
           </span>
         </div>
@@ -201,18 +198,18 @@ export function LiveDomainPreview({
         </Chip>
       </div>
 
-      <div className="mt-3 space-y-2 rounded-lg bg-[#f3f7f5] p-3">
+      <div className="mt-3 space-y-2 rounded-[2px] bg-[#efeadd] p-3">
         {steps.map((label) => (
           <div key={label} className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            <span className="text-xs text-[#0a1f1a]">{label}</span>
+            <CheckCircle2 className="h-4 w-4 text-[#1c3d32]" />
+            <span className="text-xs text-[#14201b]">{label}</span>
           </div>
         ))}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-600/25 bg-emerald-50 px-3 py-2">
-        <ShieldCheck className="h-4 w-4 text-emerald-700" />
-        <span className="text-xs text-emerald-800">
+      <div className="mt-3 flex items-center gap-2 rounded-[2px] border border-[#1c3d32]/25 bg-[#efeadd] px-3 py-2">
+        <ShieldCheck className="h-4 w-4 text-[#1c3d32]" />
+        <span className="text-xs text-[#14201b]">
           Secured with a free TLS certificate — renewed automatically.
         </span>
       </div>
@@ -235,38 +232,38 @@ export function BuyDomainPreview({
       className={className}
     >
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#eef4f1]">
-          <Globe className="h-4 w-4 text-[#246a59]" />
+        <span className="flex h-7 w-7 items-center justify-center rounded-[2px] bg-[#eef4f1]">
+          <Globe className="h-4 w-4 text-[#1c3d32]" />
         </span>
-        <p className="text-sm font-semibold text-[#0a1f1a]">Buy a domain</p>
+        <p className="text-sm font-semibold text-[#14201b]">Buy a domain</p>
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="flex h-9 flex-1 items-center gap-2 rounded-md border border-[#1a4d42]/20 px-3">
-          <Search className="h-3.5 w-3.5 text-[#1a4d42]/40" />
-          <span className="font-mono text-xs text-[#1a4d42]/70">
+        <div className="flex h-9 flex-1 items-center gap-2 rounded-[2px] border border-[#14201b]/20 px-3">
+          <Search className="h-3.5 w-3.5 text-[#14201b]/40" />
+          <span className="font-mono text-xs text-[#14201b]/70">
             myschool.co.ke
           </span>
         </div>
-        <span className="inline-flex h-9 items-center rounded-md bg-[#246a59] px-3 text-xs font-semibold text-white">
+        <span className="inline-flex h-9 items-center rounded-[2px] bg-[#1c3d32] px-3 text-xs font-semibold text-white">
           Search
         </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-lg border border-[#1a4d42]/12 px-3 py-2.5">
+      <div className="mt-3 flex items-center justify-between rounded-[2px] border border-[#14201b]/12 px-3 py-2.5">
         <div>
-          <p className="font-mono text-xs text-[#0a1f1a]">myschool.co.ke</p>
-          <p className="text-[11px] text-[#1a4d42]/60">KES 1,500 / year</p>
+          <p className="font-mono text-xs text-[#14201b]">myschool.co.ke</p>
+          <p className="text-[11px] text-[#14201b]/60">KES 1,500 / year</p>
         </div>
-        <span className="inline-flex h-8 items-center rounded-md bg-[#246a59] px-3 text-xs font-semibold text-white">
+        <span className="inline-flex h-8 items-center rounded-[2px] bg-[#1c3d32] px-3 text-xs font-semibold text-white">
           Order
         </span>
       </div>
 
-      <div className="mt-2 flex items-center justify-between rounded-lg border border-[#1a4d42]/12 px-3 py-2.5">
+      <div className="mt-2 flex items-center justify-between rounded-[2px] border border-[#14201b]/12 px-3 py-2.5">
         <div>
-          <p className="font-mono text-xs text-[#0a1f1a]">myschool.co.ke</p>
-          <p className="text-[11px] text-[#1a4d42]/60">Waiting for M-Pesa</p>
+          <p className="font-mono text-xs text-[#14201b]">myschool.co.ke</p>
+          <p className="text-[11px] text-[#14201b]/60">Waiting for M-Pesa</p>
         </div>
         <Chip tone="verifying">
           <Loader2 className="h-3 w-3" />
@@ -302,14 +299,14 @@ export function OperatorRegistryPreview({
       className={className}
     >
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-[#0a1f1a]">Domains</p>
-        <span className="inline-flex h-7 items-center rounded-md border border-[#1a4d42]/20 px-2.5 text-[11px] font-medium text-[#1a4d42]/70">
+        <p className="text-sm font-semibold text-[#14201b]">Domains</p>
+        <span className="inline-flex h-7 items-center rounded-[2px] border border-[#14201b]/20 px-2.5 text-[11px] font-medium text-[#14201b]/70">
           <Star className="mr-1 h-3 w-3" />
           Provider settings
         </span>
       </div>
-      <div className="overflow-hidden rounded-lg border border-[#1a4d42]/12">
-        <div className="grid grid-cols-[1.2fr_1fr_auto] gap-2 bg-[#f3f7f5] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/55">
+      <div className="overflow-hidden rounded-[2px] border border-[#14201b]/12">
+        <div className="grid grid-cols-[1.2fr_1fr_auto] gap-2 bg-[#efeadd] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[#14201b]/55">
           <span>Domain</span>
           <span>School</span>
           <span>Status</span>
@@ -317,12 +314,12 @@ export function OperatorRegistryPreview({
         {rows.map((r) => (
           <div
             key={r.host}
-            className="grid grid-cols-[1.2fr_1fr_auto] items-center gap-2 border-t border-[#1a4d42]/8 px-3 py-2"
+            className="grid grid-cols-[1.2fr_1fr_auto] items-center gap-2 border-t border-[#14201b]/8 px-3 py-2"
           >
-            <span className="font-mono text-[11px] text-[#0a1f1a]">
+            <span className="font-mono text-[11px] text-[#14201b]">
               {r.host}
             </span>
-            <span className="truncate text-[11px] text-[#1a4d42]/70">
+            <span className="truncate text-[11px] text-[#14201b]/70">
               {r.school}
             </span>
             <Chip tone={r.tone}>{r.status}</Chip>

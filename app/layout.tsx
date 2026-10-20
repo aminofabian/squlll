@@ -5,7 +5,7 @@ import { metadata as siteMetadata } from "./metadata";
 
 import "@/lib/polyfills/localStorage";
 
-import { Figtree, Instrument_Serif } from "next/font/google";
+import { Figtree, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { QueryClientWrapper } from "./QueryClientWrapper";
 import { ApolloWrapper } from "./ApolloWrapper";
@@ -21,6 +21,14 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+// Reserved for data: figures, dates, references, index numbers.
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
   display: "swap",
 });
 
@@ -42,7 +50,7 @@ export default function RootLayout({
           <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         )}
       </head>
-      <body className={`${figtree.variable} ${instrumentSerif.variable} font-sans antialiased`}>
+      <body className={`${figtree.variable} ${instrumentSerif.variable} ${plexMono.variable} font-sans antialiased`}>
         <QueryClientWrapper>
           <ApolloWrapper>
             <ErrorHandler />

@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     description:
       'Practical guides on school management, M-Pesa fees, WhatsApp messaging, CBC report cards, timetables and attendance for Kenyan schools.',
     siteName: 'SQUL',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SQUL — guides for Kenyan schools' }],
   },
 }
 
