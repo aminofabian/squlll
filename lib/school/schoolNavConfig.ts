@@ -61,7 +61,6 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
       { title: "Website", shortLabel: "Website", href: "/website", icon: Globe },
       { title: "Transport", shortLabel: "Transport", href: "/transport", icon: ICONS.transport },
       { title: "Custom domain", shortLabel: "Domain", href: "/domains", icon: Link2 },
-      { title: "Communications", shortLabel: "Comms", href: "/communications", icon: Megaphone },
       { title: "SMS messages", shortLabel: "SMS", href: "/sms-credits", icon: MessageSquareText },
       { title: "Settings", shortLabel: "Settings", href: "/settings", icon: Settings },
     ],
@@ -95,7 +94,6 @@ export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
   { title: "Analytics", href: "/analytics", icon: PieChart },
   { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
   { title: "Enrollment", href: "/enrollment", icon: Medal },
-  { title: "Communications", href: "/communications", icon: Megaphone },
   { title: "SMS messages", href: "/sms-credits", icon: MessageSquareText },
   { title: "Website", href: "/website", icon: Globe },
   { title: "Custom domain", href: "/domains", icon: Link2 },
@@ -182,7 +180,6 @@ export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
   { title: "Students", href: "/students", icon: Users2 },
   { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
-  { title: "Messages", href: "/communication", icon: ICONS.messages },
   { title: "Communications", href: "/communications", icon: Megaphone },
   { title: "Timetable", href: "/timetable", icon: ICONS.timetable },
 ];
@@ -190,6 +187,7 @@ export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
 /** Mobile bottom nav — overflow items shown in "More" sheet */
 export const SCHOOL_MORE_ITEMS: SchoolNavItem[] = [
   ...SCHOOL_SECONDARY_NAV,
+  { title: "Messages", href: "/communication", icon: ICONS.messages },
   { title: "Website", href: "/website", icon: Globe },
   { title: "Settings", href: "/settings", icon: Settings },
 ];

@@ -117,8 +117,8 @@ export function CampaignComposer({
   const [testTo, setTestTo] = useState("");
   const [testSending, setTestSending] = useState(false);
 
-  const canSend = permissions.includes("communications.campaigns.send");
-  const canSendTest = permissions.includes("communications.tests.send");
+  const canSend = permissions.includes("CAMPAIGNS_SEND");
+  const canSendTest = permissions.includes("TESTS_SEND");
   const isEdit = Boolean(initial?.id);
 
   const reset = useCallback(() => {

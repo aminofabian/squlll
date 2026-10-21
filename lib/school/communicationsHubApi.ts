@@ -8,18 +8,23 @@
 
 export type CommChannel = "EMAIL" | "SMS" | "WHATSAPP" | "IN_APP";
 
+/**
+ * GraphQL serializes permission enums by their enum name (VIEW, ...), not the
+ * internal dotted value used by the server guard. Keep this union aligned with
+ * the `CommunicationPermission` enum.
+ */
 export type CommPermissionKey =
-  | "communications.view"
-  | "communications.campaigns.create"
-  | "communications.campaigns.send"
-  | "communications.campaigns.manage"
-  | "communications.templates.manage"
-  | "communications.automations.manage"
-  | "communications.settings.manage"
-  | "communications.reports.view"
-  | "communications.credits.view"
-  | "communications.audit.view"
-  | "communications.tests.send";
+  | "VIEW"
+  | "CAMPAIGNS_CREATE"
+  | "CAMPAIGNS_SEND"
+  | "CAMPAIGNS_MANAGE"
+  | "TEMPLATES_MANAGE"
+  | "AUTOMATIONS_MANAGE"
+  | "SETTINGS_MANAGE"
+  | "REPORTS_VIEW"
+  | "CREDITS_VIEW"
+  | "AUDIT_VIEW"
+  | "TESTS_SEND";
 
 export type CommPermissionInfo = {
   key: CommPermissionKey;

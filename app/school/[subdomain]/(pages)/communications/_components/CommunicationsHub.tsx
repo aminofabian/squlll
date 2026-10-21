@@ -56,7 +56,7 @@ const TABS: Array<{
     id: "history",
     label: "History & delivery",
     icon: Send,
-    permission: "communications.reports.view",
+    permission: "REPORTS_VIEW",
   },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
@@ -124,7 +124,7 @@ export function CommunicationsHub() {
   }, [allowedTabs, tab]);
 
   const canCreate = permissions?.permissions.includes(
-    "communications.campaigns.create",
+    "CAMPAIGNS_CREATE",
   );
 
   const openComposer = (campaign?: CommCampaign | null) => {
@@ -144,7 +144,7 @@ export function CommunicationsHub() {
     );
   }
 
-  if (!permissions?.permissions.includes("communications.view")) {
+  if (!permissions?.permissions.includes("VIEW")) {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-16">
         <div className="rounded-xl border border-border bg-card p-8 text-center">
@@ -152,7 +152,7 @@ export function CommunicationsHub() {
           <h1 className="mt-4 text-lg font-semibold">Communications access</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Your school role does not include the communications workspace. Ask a
-            school administrator to grant `communications.view`.
+            school administrator to grant communications access.
           </p>
         </div>
       </div>

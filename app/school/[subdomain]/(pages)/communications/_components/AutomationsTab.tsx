@@ -12,6 +12,16 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -61,7 +71,7 @@ export function AutomationsTab({
   const [seeding, setSeeding] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<CommAutomation | null>(null);
 
-  const canManage = permissions.includes("communications.automations.manage");
+  const canManage = permissions.includes("AUTOMATIONS_MANAGE");
 
   const load = useCallback(async () => {
     try {
@@ -350,25 +360,29 @@ export function AutomationsTab({
         }}
       />
 
-      {confirmDelete ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-lg">
-            <h3 className="text-base font-semibold">Delete automation?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              “{confirmDelete.name}” will stop firing. Messages already queued are
+      <AlertDialog
+        open={Boolean(confirmDelete)}
+        onOpenChange={(next) => !next && setConfirmDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete automation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{confirmDelete?.name}” will stop firing. Messages already queued are
               unaffected.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
-                Keep
-              </Button>
-              <Button variant="destructive" onClick={() => void remove()}>
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              onClick={() => void remove()}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageSection>
   );
 }

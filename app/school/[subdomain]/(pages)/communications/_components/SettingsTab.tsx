@@ -55,8 +55,8 @@ export function SettingsTab({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canManage = permissions.includes("communications.settings.manage");
-  const canAudit = permissions.includes("communications.audit.view");
+  const canManage = permissions.includes("SETTINGS_MANAGE");
+  const canAudit = permissions.includes("AUDIT_VIEW");
 
   const load = useCallback(async () => {
     try {

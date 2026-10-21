@@ -69,7 +69,7 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const canManage = permissions.includes("communications.campaigns.manage");
+  const canManage = permissions.includes("CAMPAIGNS_MANAGE");
 
   const load = useCallback(async () => {
     try {
@@ -157,9 +157,9 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
           loading={loading}
         />
         <StatCard
-          label="Delivery rate"
+          label="Confirmed delivery"
           value={`${report?.deliveryRate ?? 0}%`}
-          hint={`${formatNumber(report?.delivered)} confirmed delivered`}
+          hint={`${formatNumber(report?.delivered)} provider-confirmed`}
           tone="positive"
           loading={loading}
         />

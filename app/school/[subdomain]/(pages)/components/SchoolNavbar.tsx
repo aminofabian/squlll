@@ -38,6 +38,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { getSchoolPageTitle } from '@/lib/school/schoolShell'
 import { useChatUnreadTotal } from '@/lib/chat/ChatProvider'
 import { SupportDialog } from '@/components/chat/SupportDialog'
+import { SmsCreditHeader } from '@/components/school/SmsCreditHeader'
 
 interface SchoolNavbarProps {
   userName: string
@@ -287,6 +288,7 @@ export function SchoolNavbar({
 
         {/* Right toolbar */}
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+          <SmsCreditHeader />
           <Link
             href="/communication"
             aria-label={

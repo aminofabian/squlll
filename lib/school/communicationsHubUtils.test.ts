@@ -16,9 +16,9 @@ import {
 
 describe("communications hub UI helpers", () => {
   it("checks permissions without widening access", () => {
-    expect(can(["communications.view"], "communications.view")).toBe(true);
-    expect(can(["communications.view"], "communications.campaigns.send")).toBe(false);
-    expect(can(undefined, "communications.view")).toBe(false);
+    expect(can(["VIEW"], "VIEW")).toBe(true);
+    expect(can(["VIEW"], "CAMPAIGNS_SEND")).toBe(false);
+    expect(can(undefined, "VIEW")).toBe(false);
   });
 
   it("labels audiences with the selected grade and student count", () => {

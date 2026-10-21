@@ -52,9 +52,9 @@ export function OverviewTab({
   onCompose: () => void;
   onTab: (tab: TabId) => void;
 }) {
-  const canCreate = permissions.includes("communications.campaigns.create");
-  const canReports = permissions.includes("communications.reports.view");
-  const canCredits = permissions.includes("communications.credits.view");
+  const canCreate = permissions.includes("CAMPAIGNS_CREATE");
+  const canReports = permissions.includes("REPORTS_VIEW");
+  const canCredits = permissions.includes("CREDITS_VIEW");
 
   return (
     <div className="space-y-6">
@@ -67,9 +67,9 @@ export function OverviewTab({
           loading={loading}
         />
         <StatCard
-          label="Delivery rate"
+          label="Confirmed delivery"
           value={`${overview?.deliveryRate ?? 0}%`}
-          hint={`${formatNumber(overview?.deliveredLast30Days)} confirmed delivered`}
+          hint={`${formatNumber(overview?.deliveredLast30Days)} provider-confirmed`}
           icon={CheckCircle2}
           tone="positive"
           loading={loading}
@@ -248,7 +248,7 @@ export function OverviewTab({
         >
           <div className="space-y-3 rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Delivery rate</span>
+              <span className="text-muted-foreground">Confirmed delivery</span>
               <span className={`font-semibold ${deliveryTone(overview?.deliveryRate ?? 0)}`}>
                 {overview?.deliveryRate ?? 0}%
               </span>

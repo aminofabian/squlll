@@ -89,9 +89,9 @@ export function CampaignsTab({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAction | null>(null);
 
-  const canCreate = permissions.includes("communications.campaigns.create");
-  const canSend = permissions.includes("communications.campaigns.send");
-  const canManage = permissions.includes("communications.campaigns.manage");
+  const canCreate = permissions.includes("CAMPAIGNS_CREATE");
+  const canSend = permissions.includes("CAMPAIGNS_SEND");
+  const canManage = permissions.includes("CAMPAIGNS_MANAGE");
 
   const load = useCallback(async () => {
     try {
@@ -350,7 +350,7 @@ export function CampaignsTab({
                   </div>
                   <div className="text-right text-xs text-muted-foreground">
                     <p>{formatNumber(campaign.recipientCount)} recipients</p>
-                    <p>{campaign.stats.deliveryRate}% delivered</p>
+                    <p>{campaign.stats.deliveryRate}% confirmed</p>
                   </div>
                 </div>
               </div>

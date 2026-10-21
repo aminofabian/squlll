@@ -85,7 +85,6 @@ export function CampaignReportDialog({
   const stats = campaign.stats;
   const failed = rows.filter((row) => row.status === "FAILED");
   const queued = rows.filter((row) => row.status === "PENDING");
-  const delivered = rows.filter((row) => row.deliveryStatus === "DELIVERED");
 
   const retry = async (ids: string[]) => {
     if (!ids.length) return;
@@ -140,8 +139,8 @@ export function CampaignReportDialog({
           <StatCard label="Recipients" value={campaign.recipientCount} icon={Send} />
           <StatCard
             label="Delivered"
-            value={delivered.length}
-            hint={`${stats.deliveryRate}% delivery rate`}
+            value={stats.delivered}
+            hint={`${stats.deliveryRate}% provider-confirmed`}
             tone="positive"
           />
           <StatCard label="Failed" value={stats.failed} tone={stats.failed ? "danger" : "default"} />
