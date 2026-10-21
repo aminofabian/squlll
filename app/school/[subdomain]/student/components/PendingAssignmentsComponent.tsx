@@ -142,6 +142,7 @@ export default function PendingAssignmentsComponent({ subdomain, onBack }: Pendi
   return (
     <div className="space-y-6">
       <PageHeader
+        eyebrow="Coursework"
         title="Assignments"
         subtitle={`${pendingCount} assignment${pendingCount === 1 ? "" : "s"} to complete`}
         onBack={onBack}
@@ -158,7 +159,7 @@ export default function PendingAssignmentsComponent({ subdomain, onBack }: Pendi
         <StatTile icon={CheckCircle} label="Submitted" value={completedCount} />
       </div>
 
-      <Section title="Assignments" icon={BookOpen}>
+      <Section title="Your work" icon={BookOpen}>
         {assignments.length === 0 ? (
           <EmptyState
             icon={FileText}

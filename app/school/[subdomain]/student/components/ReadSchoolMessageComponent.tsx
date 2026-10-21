@@ -76,7 +76,8 @@ export default function ReadSchoolMessageComponent({ onBack }: { onBack: () => v
   return (
     <div className="space-y-6">
       <PageHeader
-        title="School Messages"
+        eyebrow="Inbox"
+        title="School messages"
         subtitle="Read and send messages to your teachers, admin and staff"
         onBack={onBack}
         actions={<StatusPill tone="neutral">{totalMessages} messages</StatusPill>}

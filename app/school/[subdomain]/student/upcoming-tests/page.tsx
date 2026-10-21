@@ -77,7 +77,8 @@ export default function StudentUpcomingTestsPage() {
   return (
     <StudentPage>
       <PageHeader
-        title="Upcoming Tests"
+        eyebrow="Assessment"
+        title="Upcoming tests"
         subtitle="Tests scheduled in the next 7 days"
         onBack={() => router.push(`/school/${subdomain}/student`)}
       />

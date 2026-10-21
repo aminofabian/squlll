@@ -7,6 +7,7 @@ export default function StudentMessagesPage() {
   return (
     <StudentPage wide>
       <PageHeader
+        eyebrow="Inbox"
         title="Messages"
         subtitle="Chat with your teachers and school admin."
       />

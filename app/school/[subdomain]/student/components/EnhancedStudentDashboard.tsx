@@ -17,10 +17,8 @@ import {
   ClipboardList,
   Inbox,
   BarChart3,
-  UserCircle,
   Sparkles,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import PendingAssignmentsComponent from './PendingAssignmentsComponent';
 import StudentTimetableComponent from './StudentTimetableComponent';
 import StudentExamResultsComponent from './StudentExamResultsComponent';
@@ -251,38 +249,37 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
 
   const renderQuickActions = (mobile = false) => {
     const tiles = quickActions.map((action) => (
-      <Button
+      <button
         key={action.id}
         type="button"
-        variant="outline"
         onClick={action.onClick}
         className={cn(
-          'h-auto border-border bg-card font-normal hover:bg-primary/5',
+          'tp-focus group transition-colors',
           mobile
-            ? 'w-full flex-col gap-1.5 rounded-lg px-1 py-2.5 text-center'
-            : 'w-full justify-start gap-3 rounded-xl px-3 py-3 text-left',
+            ? 'flex w-full flex-col items-center gap-1.5 rounded-xl border border-border/80 bg-card px-1 py-2.5 text-center hover:border-primary/25 hover:bg-primary/[0.04]'
+            : 'flex w-full items-center gap-3 rounded-2xl border border-border/90 bg-card p-3 text-left hover:border-primary/25 hover:bg-primary/[0.04]',
         )}
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/45 text-primary transition-colors group-hover:border-primary/20 group-hover:bg-primary/[0.07]">
           {action.icon}
         </span>
         <span
           className={cn(
             'text-foreground',
             mobile
-              ? 'w-full whitespace-normal line-clamp-2 text-[11px] font-medium leading-tight'
-              : 'min-w-0 flex-1 truncate text-sm font-medium',
+              ? 'w-full whitespace-normal line-clamp-2 text-[10.5px] font-medium leading-tight'
+              : 'min-w-0 flex-1 truncate text-[13px] font-medium',
           )}
         >
           {mobile ? MOBILE_ACTION_LABELS[action.id] ?? action.title : action.title}
         </span>
-      </Button>
+      </button>
     ));
 
     if (mobile) {
       return (
         <div>
-          <p className="mb-2 px-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="mb-2 px-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
             Quick actions
           </p>
           <div className="grid grid-cols-4 gap-2">{tiles}</div>
@@ -415,8 +412,8 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
               <div
                 key={cell.key}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card px-2 py-3 text-center',
-                  cell.wide && 'col-span-3 flex-row items-center gap-3 px-3 py-3 text-left',
+                  'flex flex-col items-center justify-center gap-1 rounded-xl border border-border/80 bg-card px-2 py-3 text-center',
+                  cell.wide && 'col-span-3 flex-row items-center gap-3 px-3 py-3.5 text-left',
                 )}
               >
                 <Icon
@@ -428,20 +425,20 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                 <div className={cn('min-w-0', cell.wide && 'flex-1')}>
                   {cell.wide ? (
                     <>
-                      <p className="truncate text-sm font-semibold text-foreground">
+                      <p className="truncate font-display text-[1.05rem] leading-tight text-foreground">
                         {cell.value}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">
+                      <p className="truncate text-[10.5px] text-muted-foreground">
                         {'meta' in cell ? cell.meta : ''}
                         {cell.sub ? ` · ${cell.sub}` : ''}
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-semibold leading-none text-foreground">
+                      <p className="tp-num text-[13px] font-semibold leading-none text-foreground">
                         {cell.value}
                       </p>
-                      <p className="mt-0.5 text-xs leading-tight text-muted-foreground">
+                      <p className="mt-0.5 text-[9.5px] font-medium uppercase leading-tight tracking-[0.06em] text-muted-foreground/85">
                         {cell.label}
                       </p>
                     </>
@@ -526,10 +523,9 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
     );
   };
 
-  return (
+  return currentView === 'dashboard' ? (
     <StudentPage wide>
-      {currentView === 'dashboard' ? (
-        dashboardLoading ? (
+      {dashboardLoading ? (
           <>
             <StudentDashboardMobileSkeleton />
             <div className="hidden space-y-6 lg:block">
@@ -545,23 +541,19 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
           <>
             {/* Mobile — compact app home */}
             <div className="space-y-3 lg:hidden">
-              {displayName ? (
-                <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <UserCircle className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {displayName}
-                    </p>
-                    {studentStats.classLabel !== '—' ? (
-                      <p className="truncate text-xs text-muted-foreground">
-                        {studentStats.classLabel}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
+              <div className="tp-reveal pt-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">
+                  Student
+                </p>
+                <h1 className="mt-1.5 font-display text-[1.9rem] leading-[1.05] tracking-[-0.015em] text-foreground">
+                  {displayName ? `Hi, ${displayName.split(' ')[0]}.` : 'Hello.'}
+                </h1>
+                {studentStats.classLabel !== '—' ? (
+                  <p className="mt-1 text-[12.5px] text-muted-foreground">
+                    {studentStats.classLabel}
+                  </p>
+                ) : null}
+              </div>
               <StudentFeeSummaryCard
                 overview={feeOverview}
                 loading={feesLoading}
@@ -578,7 +570,8 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
             {/* Desktop */}
             <div className="hidden lg:block">
               <PageHeader
-                title={displayName ? `Welcome, ${displayName}` : 'Dashboard'}
+                eyebrow="Dashboard"
+                title={displayName ? `Welcome back, ${displayName.split(' ')[0]}.` : 'Welcome back.'}
                 subtitle={
                   studentStats.classLabel !== '—'
                     ? studentStats.classLabel
@@ -605,8 +598,9 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
               </div>
             </div>
           </>
-        )
-      ) : currentView === 'assignments' ? (
+        )}
+    </StudentPage>
+  ) : currentView === 'assignments' ? (
         <PendingAssignmentsComponent subdomain={subdomain} onBack={handleBackToDashboard} />
       ) : currentView === 'timetable' ? (
         <StudentTimetableComponent onBack={handleBackToDashboard} />
@@ -628,7 +622,5 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         />
       ) : currentView === 'attendance' ? (
         <StudentAttendanceSection subdomain={subdomain} onBack={handleBackToDashboard} />
-      ) : null}
-    </StudentPage>
-  );
+      ) : null;
 }

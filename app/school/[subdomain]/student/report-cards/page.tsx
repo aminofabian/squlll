@@ -29,7 +29,8 @@ export default function StudentReportCardsPage() {
   return (
     <StudentPage>
       <PageHeader
-        title="Report Card"
+        eyebrow="Reports"
+        title="Report card"
         subtitle={
           academicYear
             ? `Academic year ${academicYear}`

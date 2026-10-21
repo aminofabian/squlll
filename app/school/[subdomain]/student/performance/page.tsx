@@ -38,7 +38,8 @@ export default function StudentPerformancePage() {
   return (
     <StudentPage>
       <PageHeader
-        title="Track Performance"
+        eyebrow="Progress"
+        title="Performance"
         subtitle={subtitle}
         onBack={() => router.push(`/school/${subdomain}/student`)}
         actions={

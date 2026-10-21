@@ -73,7 +73,8 @@ export default function StudentExamResultsComponent({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Exam Results"
+        eyebrow="Assessment"
+        title="Exam results"
         subtitle={student?.name}
         onBack={onBack}
         actions={
@@ -112,7 +113,7 @@ export default function StudentExamResultsComponent({
         </Section>
       ) : (
         <Section
-          title="Exam Sessions"
+          title="Sessions"
           description={`${examSessions.length} session${examSessions.length === 1 ? "" : "s"}`}
           icon={Award}
         >

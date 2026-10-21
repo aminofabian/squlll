@@ -23,6 +23,7 @@ export default function StudentSettingsPage() {
   return (
     <StudentPage>
       <PageHeader
+        eyebrow="Account"
         title="Settings"
         subtitle="Manage your student account"
         onBack={() => router.push(`/school/${subdomain}/student`)}

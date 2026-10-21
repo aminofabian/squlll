@@ -118,7 +118,7 @@ export function SettingsTab({
         <LoadingPanel label="Loading settings…" />
       ) : settings ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+          <div className="space-y-4 rounded-2xl border border-border/90 bg-card p-5">
             <div>
               <h3 className="text-sm font-semibold">Channels</h3>
               <p className="text-xs text-muted-foreground">
@@ -154,7 +154,7 @@ export function SettingsTab({
             ))}
           </div>
 
-          <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+          <div className="space-y-4 rounded-2xl border border-border/90 bg-card p-5">
             <div>
               <h3 className="text-sm font-semibold">Quiet hours & limits</h3>
               <p className="text-xs text-muted-foreground">
@@ -245,7 +245,7 @@ export function SettingsTab({
             </div>
           </div>
 
-          <div className="space-y-3 rounded-xl border border-border bg-card p-5">
+          <div className="space-y-3 rounded-2xl border border-border/90 bg-card p-5">
             <div>
               <h3 className="text-sm font-semibold">Channel health</h3>
               <p className="text-xs text-muted-foreground">
@@ -279,7 +279,7 @@ export function SettingsTab({
             ))}
           </div>
 
-          <div className="space-y-3 rounded-xl border border-border bg-card p-5">
+          <div className="space-y-3 rounded-2xl border border-border/90 bg-card p-5">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-primary" />
               <h3 className="text-sm font-semibold">Your permissions</h3>
@@ -309,7 +309,7 @@ export function SettingsTab({
           </div>
 
           {canAudit ? (
-            <div className="space-y-3 rounded-xl border border-border bg-card p-5 lg:col-span-2">
+            <div className="space-y-3 rounded-2xl border border-border/90 bg-card p-5 lg:col-span-2">
               <div>
                 <h3 className="text-sm font-semibold">Recent audit trail</h3>
                 <p className="text-xs text-muted-foreground">

@@ -43,6 +43,7 @@ export default function StudentProfilePage() {
   return (
     <StudentPage>
       <PageHeader
+        eyebrow="Account"
         title="Profile"
         subtitle="Your student account details"
         onBack={() => router.push(`/school/${subdomain}/student`)}

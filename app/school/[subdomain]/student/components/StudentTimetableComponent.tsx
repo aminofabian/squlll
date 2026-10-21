@@ -8,7 +8,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useCurrentStudent } from "@/lib/hooks/useCurrentStudent";
 import { useStudentTimetable } from "@/lib/hooks/useStudentTimetable";
 import { useActiveTerm } from "@/lib/hooks/useActiveTerm";
@@ -41,33 +40,10 @@ interface StudentTimetableComponentProps {
   layout?: "embedded" | "page";
 }
 
-function PageShell({
-  layout,
-  children,
-}: {
-  layout: "embedded" | "page";
-  children: React.ReactNode;
-}) {
+function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "overflow-x-clip bg-[#eef0eb] dark:bg-[#0a110e]",
-        layout === "page"
-          ? cn(
-              "mb-0 w-full min-w-0 max-w-full",
-              "min-h-[calc(100dvh-4rem)]",
-            )
-          : "min-h-[60vh] w-full min-w-0 max-w-full",
-      )}
-    >
-      <div
-        className={cn(
-          "mx-auto w-full min-w-0 max-w-[1440px]",
-          layout === "page"
-            ? "max-lg:p-0 lg:px-5 lg:py-4"
-            : "px-4 py-4 lg:px-5",
-        )}
-      >
+    <div className="w-full min-w-0 max-w-full overflow-x-clip">
+      <div className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-4 sm:px-6 lg:px-0 lg:py-0">
         {children}
       </div>
     </div>
@@ -168,7 +144,7 @@ const StudentTimetableComponent = ({
 
   if (core.error) {
     return (
-      <PageShell layout={layout}>
+      <PageShell>
         {embeddedBackHeader}
         <Section padded={false}>
           <StateMessage
@@ -184,7 +160,7 @@ const StudentTimetableComponent = ({
 
   if (!student || !student.gradeId) {
     return (
-      <PageShell layout={layout}>
+      <PageShell>
         {embeddedBackHeader}
         <Section padded={false}>
           <EmptyState
@@ -245,7 +221,7 @@ const StudentTimetableComponent = ({
   );
 
   return (
-    <PageShell layout={layout}>
+    <PageShell>
       <StudentLessonDetailSheet
         selection={selectedLesson}
         timeSlots={core.sortedTimeSlots}

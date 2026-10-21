@@ -56,7 +56,8 @@ export default function StudentExamTimetablePage() {
   return (
     <StudentPage>
       <PageHeader
-        title="Exam Timetable"
+        eyebrow="Assessment"
+        title="Exam timetable"
         subtitle="Scheduled tests and exams for your grade"
         onBack={() => router.push(`/school/${subdomain}/student`)}
         actions={refreshButton}

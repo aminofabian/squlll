@@ -127,7 +127,8 @@ export function StudentFeesSection({
     <>
       {isPage ? (
         <PageHeader
-          title="My Fees"
+          eyebrow="Finance"
+          title="Fees"
           subtitle={
             canPay
               ? 'Pay with M-Pesa or review your statement'

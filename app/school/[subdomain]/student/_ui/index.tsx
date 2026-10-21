@@ -1,11 +1,11 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { ArrowLeft, RefreshCw, type LucideIcon } from "lucide-react"
+import { ArrowLeft, Loader2, RefreshCw, type LucideIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { tp } from "@/lib/portal-tokens"
 
 /**
  * Shared building blocks for the student portal. Every page composes these so
@@ -23,28 +23,28 @@ export function StudentPage({
   wide?: boolean
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/[0.04] via-background to-background">
-      <div
-        className={cn(
-          "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
-          wide ? "max-w-6xl" : "max-w-4xl",
-          className,
-        )}
-      >
-        {children}
-      </div>
+    <div
+      className={cn(
+        "mx-auto w-full px-5 pb-24 pt-6 sm:px-8 sm:pt-9 lg:px-0 lg:pb-14 lg:pt-0",
+        wide ? "max-w-[1180px]" : "max-w-4xl",
+        className,
+      )}
+    >
+      {children}
     </div>
   )
 }
 
 /** Page title block with optional back control and trailing actions. */
 export function PageHeader({
+  eyebrow,
   title,
   subtitle,
   onBack,
   backLabel = "Back",
   actions,
 }: {
+  eyebrow?: string
   title: string
   subtitle?: ReactNode
   onBack?: () => void
@@ -52,30 +52,29 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div className="flex min-w-0 items-start gap-3">
+    <header className="tp-reveal mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+      <div className="min-w-0 max-w-2xl">
         {onBack ? (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            type="button"
             onClick={onBack}
+            className={cn(tp.backLink, "mb-3")}
             aria-label={backLabel}
-            className="-ml-2 mt-0.5 gap-1.5 px-2 text-muted-foreground hover:text-primary"
           >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+            <ArrowLeft className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            {backLabel}
+          </button>
         ) : null}
-        <div className="min-w-0 space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {title}
-          </h1>
-          {subtitle ? (
-            <div className="text-sm text-muted-foreground">{subtitle}</div>
-          ) : null}
-        </div>
+        {eyebrow ? <p className={tp.eyebrow}>{eyebrow}</p> : null}
+        <h1 className={onBack ? tp.titleSm : tp.title}>{title}</h1>
+        {subtitle ? (
+          <div className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground text-pretty">
+            {subtitle}
+          </div>
+        ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
       ) : null}
     </header>
   )
@@ -102,23 +101,25 @@ export function Section({
   padded?: boolean
 }) {
   return (
-    <Card className={cn("gap-0 overflow-hidden py-0", className)}>
+    <section className={cn(tp.card, "tp-reveal overflow-hidden", className)}>
       {title || actions ? (
-        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             {Icon ? (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="h-[18px] w-[18px]" />
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/45 text-primary">
+                <Icon className="size-[17px]" strokeWidth={1.7} />
               </span>
             ) : null}
             <div className="min-w-0 space-y-0.5">
               {title ? (
-                <h2 className="truncate text-sm font-semibold text-foreground">
+                <h2 className="truncate text-[13.5px] font-semibold text-foreground">
                   {title}
                 </h2>
               ) : null}
               {description ? (
-                <p className="text-xs text-muted-foreground">{description}</p>
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  {description}
+                </p>
               ) : null}
             </div>
           </div>
@@ -127,8 +128,8 @@ export function Section({
           ) : null}
         </div>
       ) : null}
-      <div className={cn(padded && "p-5", bodyClassName)}>{children}</div>
-    </Card>
+      <div className={cn(padded && "p-5 sm:p-6", bodyClassName)}>{children}</div>
+    </section>
   )
 }
 
@@ -145,28 +146,31 @@ export function StatTile({
   icon?: LucideIcon
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-        <span className="text-xs font-medium uppercase tracking-wide">
+    <div className={cn(tp.card, "px-5 py-5 sm:px-6")}>
+      <div className="flex items-center gap-1.5 text-muted-foreground/80">
+        {Icon ? <Icon className="size-3.5" strokeWidth={1.7} /> : null}
+        <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em]">
           {label}
         </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+      <p className="mt-2 font-display text-[1.9rem] leading-none tracking-[-0.02em] text-foreground">
         {value}
       </p>
-      {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
+      {hint ? (
+        <p className="mt-1.5 truncate text-[11.5px] text-muted-foreground/85">{hint}</p>
+      ) : null}
     </div>
   )
 }
 
 const PILL_TONES = {
   neutral: "bg-muted text-muted-foreground",
-  success: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200",
-  warning: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200",
-  danger: "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-200",
-  info: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200",
-  accent: "bg-primary/10 text-primary",
+  success:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  warning: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  danger: "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  info: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+  accent: "bg-primary/[0.08] text-primary",
 } as const
 
 export type PillTone = keyof typeof PILL_TONES
@@ -184,7 +188,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-semibold",
         PILL_TONES[tone],
         className,
       )}
@@ -211,24 +215,24 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 px-6 py-12 text-center",
+        "flex flex-col items-center justify-center gap-3 px-6 py-12 text-center sm:py-16",
         className,
       )}
     >
       {Icon ? (
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="h-6 w-6" />
+        <span className="flex size-11 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-muted-foreground">
+          <Icon className="size-5" strokeWidth={1.6} />
         </span>
       ) : null}
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+      <div className="space-y-1.5">
+        <p className="text-[15px] font-semibold text-foreground">{title}</p>
         {description ? (
-          <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+          <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-muted-foreground text-pretty">
             {description}
           </p>
         ) : null}
       </div>
-      {action}
+      {action ? <div className="mt-2">{action}</div> : null}
     </div>
   )
 }
@@ -250,35 +254,41 @@ export function StateMessage({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 px-6 py-12 text-center",
+        "flex flex-col items-center justify-center gap-3 px-6 py-12 text-center sm:py-16",
         className,
       )}
     >
       <span
         className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-full",
+          "flex size-11 items-center justify-center rounded-full",
           variant === "error"
-            ? "bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-300"
-            : "bg-primary/10 text-primary",
+            ? "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300"
+            : "bg-primary/[0.08] text-primary",
         )}
       >
-        <RefreshCw
-          className={cn("h-6 w-6", variant === "loading" && "animate-spin")}
-        />
+        {variant === "error" ? (
+          <RefreshCw className="size-5" strokeWidth={1.7} />
+        ) : (
+          <Loader2 className="size-5 animate-spin" strokeWidth={1.7} />
+        )}
       </span>
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">
-          {title ??
-            (variant === "error" ? "Something went wrong" : "Loading…")}
+      <div className="space-y-1.5">
+        <p className="text-[15px] font-semibold text-foreground">
+          {title ?? (variant === "error" ? "Something went wrong" : "Loading…")}
         </p>
         {description ? (
-          <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+          <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-muted-foreground text-pretty">
             {description}
           </p>
         ) : null}
       </div>
       {variant === "error" && onRetry ? (
-        <Button variant="outline" size="sm" onClick={onRetry}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          className="mt-2 h-9 rounded-full border-border/80 px-4 text-[12.5px] font-semibold"
+        >
           Try again
         </Button>
       ) : null}

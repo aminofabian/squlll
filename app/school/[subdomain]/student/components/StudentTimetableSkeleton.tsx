@@ -16,7 +16,7 @@ export function StudentTimetableSkeleton({ onBack, layout = "embedded" }: Studen
 
   return (
     <div
-      className={cn("overflow-x-hidden bg-[#eef0eb] dark:bg-[#0a110e]", isPage ? "min-h-[calc(100dvh-4rem)] w-full" : "min-h-[60vh]")}
+      className={cn("overflow-x-hidden", isPage ? "w-full" : "min-h-[50vh]")}
       aria-busy
       aria-label="Loading timetable"
     >

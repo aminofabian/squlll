@@ -304,12 +304,15 @@ export function CampaignComposer({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-h-[92vh] max-w-6xl overflow-y-auto p-0">
-        <DialogHeader className="border-b border-border px-6 pb-4 pt-6">
-          <DialogTitle className="text-xl">
+      <DialogContent className="max-h-[92vh] max-w-6xl overflow-y-auto rounded-2xl p-0">
+        <DialogHeader className="border-b border-border/70 px-6 pb-5 pt-6">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-primary/75">
+            Campaign studio
+          </p>
+          <DialogTitle className="mt-1 font-display text-[1.6rem] leading-tight tracking-[-0.01em]">
             {isEdit ? "Edit campaign" : "New campaign"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-[12.5px] leading-relaxed">
             Compose once, personalize per recipient and send through the channels
             your school has enabled.
           </DialogDescription>
@@ -688,7 +691,7 @@ export function CampaignComposer({
           </div>
         )}
 
-        <DialogFooter className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-6 py-4">
+        <DialogFooter className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-card px-6 py-4">
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"

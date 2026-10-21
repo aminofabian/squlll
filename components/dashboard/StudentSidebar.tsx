@@ -34,44 +34,39 @@ function NavRow({
   disabled?: boolean
   danger?: boolean
 }) {
+  const classes = cn(
+    "tp-focus group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13.5px] transition-colors",
+    active
+      ? "bg-primary/[0.07] font-semibold text-primary"
+      : danger
+        ? "font-medium text-muted-foreground hover:bg-rose-50/70 hover:text-rose-700 dark:hover:bg-rose-950/20 dark:hover:text-rose-300"
+        : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+    disabled && "pointer-events-none opacity-50",
+  )
+
   const inner = (
     <>
-      <span
+      {active ? (
+        <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-primary" />
+      ) : null}
+      <Icon
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
-          active
-            ? "bg-primary text-white"
-            : danger
-              ? "bg-muted text-muted-foreground group-hover:bg-red-100 group-hover:text-red-600 dark:group-hover:bg-red-950/50"
-              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary",
-        )}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <span
-        className={cn(
-          "truncate text-sm font-medium",
+          "size-[17px] shrink-0 transition-colors",
           active
             ? "text-primary"
             : danger
-              ? "text-foreground group-hover:text-red-600"
-              : "text-foreground",
+              ? "text-muted-foreground/75 group-hover:text-current"
+              : "text-muted-foreground/75 group-hover:text-foreground/80",
         )}
-      >
-        {label}
-      </span>
+        strokeWidth={1.7}
+      />
+      <span className="truncate">{label}</span>
     </>
-  )
-
-  const classes = cn(
-    "group flex w-full items-center gap-3 rounded-lg border border-transparent px-2.5 py-2 text-left transition-colors",
-    active ? "bg-primary/10" : "hover:bg-muted/60",
-    disabled && "pointer-events-none opacity-50",
   )
 
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} className={classes} aria-current={active ? "page" : undefined}>
         {inner}
       </Link>
     )
@@ -95,19 +90,18 @@ export function StudentSidebar({ className }: SidebarProps) {
   const { signOut, isSigningOut } = useSignout()
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col border-r border-border bg-card",
-        className,
-      )}
-    >
-      {/* Brand */}
-      <div className="flex items-center justify-center border-b border-border px-5 py-5">
+    <div className={cn("flex h-full flex-col bg-card", className)}>
+      <div className="px-6 pb-5 pt-7">
         <DynamicLogo subdomain={subdomain} size="md" showText={true} />
+        <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+          Student workspace
+        </p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      <nav
+        className="tp-scroll flex-1 space-y-0.5 overflow-y-auto px-3 pb-4"
+        aria-label="Student sections"
+      >
         {STUDENT_SIDEBAR_ITEMS.map((item) => (
           <NavRow
             key={item.href}
@@ -119,13 +113,12 @@ export function StudentSidebar({ className }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Account */}
-      <div className="space-y-0.5 border-t border-border p-3">
+      <div className="space-y-0.5 border-t border-border/70 p-3">
         <NavRow href="/student/profile" icon={User} label="Profile" />
         <NavRow href="/student/settings" icon={Settings} label="Settings" />
         <NavRow
           icon={LogOut}
-          label={isSigningOut ? "Signing out…" : "Logout"}
+          label={isSigningOut ? "Signing out…" : "Sign out"}
           danger
           disabled={isSigningOut}
           onClick={signOut}

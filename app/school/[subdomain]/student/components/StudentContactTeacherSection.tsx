@@ -21,7 +21,8 @@ export function StudentContactTeacherSection({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Contact Class Teacher"
+        eyebrow="Support"
+        title="Class teacher"
         subtitle="Message your assigned class teacher"
         onBack={onBack}
       />

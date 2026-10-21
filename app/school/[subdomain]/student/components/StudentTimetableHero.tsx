@@ -32,16 +32,16 @@ export function StudentTimetableHero({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card shadow-sm",
-        compact ? "px-3 py-3" : "px-4 py-4 sm:px-5",
+        "rounded-2xl border border-border/90 bg-card shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]",
+        compact ? "px-4 py-3.5" : "px-5 py-5 sm:px-6",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3 sm:items-center sm:gap-4">
         <div className="min-w-0 flex-1">
           {!compact && (
             <div className="mb-2 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                <GraduationCap className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-primary/75">
+                <GraduationCap className="h-3.5 w-3.5" />
                 Student
               </span>
             </div>
@@ -49,7 +49,9 @@ export function StudentTimetableHero({
           <h1
             className={cn(
               "tracking-tight text-foreground",
-              compact ? "text-lg font-semibold" : "text-2xl font-semibold",
+              compact
+                ? "font-display text-[1.35rem] leading-tight"
+                : "font-display text-[1.9rem] leading-[1.05] tracking-[-0.015em]",
             )}
           >
             My Timetable

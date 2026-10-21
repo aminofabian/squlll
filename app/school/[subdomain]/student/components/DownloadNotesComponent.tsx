@@ -184,8 +184,9 @@ export default function DownloadNotesComponent({
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Download Notes"
-          subtitle="Access and download your course materials"
+          eyebrow="Resources"
+        title="Notes"
+          subtitle="Reading and revision material from your teachers."
           onBack={onBack}
         />
         <Section>
@@ -199,8 +200,8 @@ export default function DownloadNotesComponent({
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Download Notes"
-          subtitle="Access and download your course materials"
+          title="Notes"
+          subtitle="Reading and revision material from your teachers."
           onBack={onBack}
         />
         <Section>
@@ -334,8 +335,8 @@ export default function DownloadNotesComponent({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Download Notes"
-        subtitle="Access and download your course materials"
+        title="Notes"
+        subtitle="Reading and revision material from your teachers."
         onBack={onBack}
         actions={
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">

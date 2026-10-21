@@ -8,7 +8,7 @@
 'use client';
 
 import React from 'react';
-import { Clock, MapPin, Users, BookOpen, Radio, Coffee, CalendarOff } from 'lucide-react';
+import { Clock, MapPin, Users, Radio, Coffee, CalendarOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CurrentLessonStatus, TimetableLesson } from '@/lib/timetable/types';
 import { STATUS_COLORS, BREAK_TYPE_CONFIG } from '@/lib/timetable/constants';
@@ -41,13 +41,7 @@ export function CurrentLessonBanner({
   return (
     <div
       className={cn(
-        'relative overflow-hidden shadow-sm transition-all duration-500',
-        compact
-          ? 'rounded-lg border border-slate-200/80 dark:border-slate-700/80'
-          : cn('rounded-md border-l-2', colors.border, colors.bg),
-        !compact && colors.bg,
-        compact && 'bg-white dark:bg-slate-900',
-        isTeacher && !compact && 'border-slate-200/80 dark:border-slate-600/80',
+        'relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_1px_2px_rgba(20,32,28,0.04),0_18px_40px_-32px_rgba(20,32,28,0.3)] transition-all duration-500',
         className,
       )}
     >

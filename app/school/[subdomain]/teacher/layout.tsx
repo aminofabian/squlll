@@ -1,5 +1,5 @@
 'use client'
-import './teacher-portal.css'
+import '../../../portal.css'
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { Sidebar } from "@/components/dashboard/TeacherSidebar"
 import { TeacherMobileBottomNav } from "./components/TeacherMobileBottomNav"

@@ -47,8 +47,9 @@ export function StudentAttendanceSection({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Attendance"
-        subtitle="Your daily attendance record for this term"
+        eyebrow="Register"
+        title="Attendance"
+        subtitle="Your daily record for this term"
         onBack={onBack}
         actions={
           <Button

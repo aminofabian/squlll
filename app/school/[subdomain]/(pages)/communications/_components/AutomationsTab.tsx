@@ -227,7 +227,7 @@ export function AutomationsTab({
             return (
               <div
                 key={automation.id}
-                className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/25"
+                className="rounded-2xl border border-border/90 bg-card p-4 transition-colors hover:border-primary/25"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
