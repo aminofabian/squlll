@@ -1,9 +1,6 @@
 /**
  * Tenant SMS credits API. Mirrors the fetch pattern used by the school
  * dashboard hooks: same-origin `/api/graphql`, cookies + Bearer fallback.
- *
- * The message (SMS) is the unit everywhere — the platform price is never
- * surfaced to the tenant.
  */
 
 export type SmsCreditBalance = {
@@ -17,8 +14,10 @@ export type SmsCreditBalance = {
   isPayingTenant: boolean;
   minPurchaseCredits: number;
   maxPurchaseCredits: number;
-  /** Message-count packages offered for one-tap selection (no prices). */
+  /** Message-count packages offered for one-tap selection. */
   presetCredits: number[];
+  /** Selling price per SMS in KES — used to quote the M-Pesa total. */
+  unitPriceKes: number;
 };
 
 export type SmsCreditLedgerKind =
@@ -71,6 +70,7 @@ const BALANCE_FIELDS = `
   minPurchaseCredits
   maxPurchaseCredits
   presetCredits
+  unitPriceKes
 `;
 
 const LEDGER_FIELDS = `
@@ -141,6 +141,7 @@ export async function purchaseSmsCredits(input: {
       purchaseSmsCredits(input: $input) {
         id
         credits
+        amountKes
         status
         phoneNumber
         message
