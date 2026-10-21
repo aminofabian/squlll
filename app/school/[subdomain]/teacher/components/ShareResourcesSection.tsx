@@ -307,7 +307,7 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
   const renderResourceSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Select Resources to Share</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Select Resources to Share</h2>
         <p className="text-muted-foreground">Choose the resources you'd like to share</p>
       </div>
 
@@ -481,7 +481,7 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
   const renderRecipientSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Select Recipients</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Select Recipients</h2>
         <p className="text-muted-foreground">Choose who you'd like to share resources with</p>
       </div>
 
@@ -653,7 +653,7 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
   const renderPreview = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Preview Share</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Preview Share</h2>
         <p className="text-muted-foreground">Review your resource share before sending</p>
       </div>
 
@@ -752,7 +752,7 @@ export default function ShareResourcesSection({ subdomain, onBack }: ShareResour
           <CheckCircle2 className="w-8 h-8 text-green-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Resources Shared Successfully!</h2>
+          <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Resources Shared Successfully!</h2>
           <p className="text-muted-foreground">
             Your {selectedResources.length} resource{selectedResources.length !== 1 ? 's' : ''} have been shared with {selectedRecipients.length} recipient{selectedRecipients.length !== 1 ? 's' : ''}.
           </p>

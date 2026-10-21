@@ -54,21 +54,21 @@ export function TeacherMobileBottomNav() {
         <button
           type="button"
           aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          className="fixed inset-0 z-40 bg-foreground/25 backdrop-blur-[2px] lg:hidden"
           onClick={() => setMoreOpen(false)}
         />
       ) : null}
 
       {moreOpen ? (
-        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 mx-3 mb-2 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 lg:hidden">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 mx-3 mb-2 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_20px_50px_-24px_rgba(20,32,28,0.45)] dark:border-slate-800 lg:hidden">
+          <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               More
             </p>
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+              className="tp-focus flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -83,10 +83,10 @@ export function TeacherMobileBottomNav() {
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-lg px-2 py-3 text-center transition-colors",
+                    "tp-focus flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-colors",
                     active
-                      ? "bg-primary/10 text-primary"
-                      : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800",
+                      ? "bg-primary/[0.08] text-primary"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -190,13 +190,13 @@ function TabLink({
       >
         <span
           className={cn(
-            "flex h-14 w-14 items-center justify-center rounded-full border shadow-md transition-transform active:scale-95",
+            "flex h-12 w-12 items-center justify-center rounded-2xl border shadow-[0_10px_24px_-14px_rgba(20,32,28,0.35)] transition-all duration-200 active:scale-95",
             active
-              ? "border-primary bg-primary text-white shadow-primary/25"
-              : "border-slate-200/80 bg-white text-primary dark:border-slate-700 dark:bg-slate-900",
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border/90 bg-card text-primary",
           )}
         >
-          <Icon className="h-6 w-6" />
+          <Icon className="h-[22px] w-[22px]" strokeWidth={1.8} />
         </span>
         <span
           className={cn(

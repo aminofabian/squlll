@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { graphqlClient } from "@/lib/graphql-client";
 import { DynamicLogo } from "../../../parent/components/DynamicLogo";
+import { tp } from "../../styles/portal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -332,10 +333,11 @@ export default function AssignmentDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-muted-foreground">Loading assignment details...</p>
+      <div className={tp.page}>
+        <div className="mx-auto max-w-3xl space-y-4">
+          <div className="tp-skeleton h-8 w-56 rounded-lg" />
+          <div className="tp-skeleton h-40 w-full rounded-2xl" />
+          <div className="tp-skeleton h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -343,11 +345,11 @@ export default function AssignmentDetailPage() {
 
   if (error || !assignment) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 flex items-center justify-center">
-        <Card className="w-full max-w-md">
+      <div className={tp.page}>
+        <Card className="mx-auto w-full max-w-md border-border/90">
           <CardContent className="p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-red-600" />
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/30">
+              <FileText className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
               Error Loading Assignment
@@ -373,38 +375,36 @@ export default function AssignmentDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-card/95 via-white/90 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
-        <div className="px-6 py-6 lg:px-10 lg:py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className="hover:bg-primary/10"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Assignments
-              </Button>
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <BookOpen className="w-6 h-6 text-primary-foreground text-white" />
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                  {assignment.title}
-                </h1>
-                <p className="text-sm text-muted-foreground/90 font-medium">
-                  Assignment Details & Questions
-                </p>
-              </div>
+    <div className={tp.page}>
+      <div className={tp.stack}>
+        <header className="tp-reveal flex flex-col gap-5">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="tp-focus inline-flex w-fit items-center gap-1.5 rounded-full text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            Assignments
+          </button>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+            <div className="min-w-0">
+              <p className={tp.eyebrow}>Assignment</p>
+              <h1 className="mt-2 font-display text-[1.95rem] leading-[1.08] tracking-[-0.015em] text-foreground text-balance sm:text-[2.3rem]">
+                {assignment.title}
+              </h1>
+              <p className="mt-2 text-[13px] text-muted-foreground">
+                {assignment.subject.subject.name}
+                {assignment.gradeLevels.length > 0
+                  ? ` · ${assignment.gradeLevels.map((g) => g.gradeLevel.name).join(", ")}`
+                  : ""}
+                {" · "}
+                {formatDate(assignment.date)}
+              </p>
             </div>
-
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="outline"
-                className="border-gray-300 hover:bg-gray-50"
+                className="h-10 rounded-full border-border/80 px-4 text-[12.5px] font-semibold"
                 onClick={() => setShowA4Preview(true)}
               >
                 <FileText className="w-4 h-4 mr-2" />
@@ -412,7 +412,7 @@ export default function AssignmentDetailPage() {
               </Button>
               <Button
                 variant="outline"
-                className="border-red-200 hover:bg-red-50 hover:text-red-600"
+                className="h-10 rounded-full border-border/80 px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-rose-200 hover:bg-rose-50/60 hover:text-rose-600"
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={deleting}
               >
@@ -421,21 +421,13 @@ export default function AssignmentDetailPage() {
               </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Main Content */}
-      <div className="px-4 py-6 lg:px-8 lg:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="w-full flex justify-center py-6 mb-8">
-            <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Assignment Overview */}
-              <Card className="border-primary/20 shadow-sm">
+              <Card className="border-border/90 shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-bold text-foreground">
@@ -562,7 +554,7 @@ export default function AssignmentDetailPage() {
               </Card>
 
               {/* Questions */}
-              <Card className="border-primary/20 shadow-sm">
+              <Card className="border-border/90 shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-foreground">
                     Questions ({assignment.questions.length})
@@ -574,7 +566,7 @@ export default function AssignmentDetailPage() {
                     .map((question, index) => (
                       <div
                         key={question.id}
-                        className="border border-primary/10 p-4 space-y-4"
+                        className="rounded-xl border border-border/70 p-4 space-y-4"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3 flex-1">
@@ -684,7 +676,7 @@ export default function AssignmentDetailPage() {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Teacher Info */}
-              <Card className="border-primary/20 shadow-sm">
+              <Card className="border-border/90 shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold text-foreground">
                     Teacher
@@ -710,7 +702,7 @@ export default function AssignmentDetailPage() {
 
               {/* Reference Materials */}
               {assignment.referenceMaterials.length > 0 && (
-                <Card className="border-primary/20 shadow-sm">
+                <Card className="border-border/90 shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold text-foreground">
                       Reference Materials (
@@ -751,7 +743,7 @@ export default function AssignmentDetailPage() {
               )}
 
               {/* Assignment Metadata */}
-              <Card className="border-primary/20 shadow-sm">
+              <Card className="border-border/90 shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold text-foreground">
                     Details
@@ -780,7 +772,6 @@ export default function AssignmentDetailPage() {
               </Card>
             </div>
           </div>
-        </div>
       </div>
 
       {/* Delete Confirmation Dialog */}

@@ -8,7 +8,6 @@ import {
   Search,
   BookOpen,
   CalendarDays,
-  GraduationCap,
   FileText,
   ArrowRight,
   Upload,
@@ -19,7 +18,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -43,6 +41,11 @@ import {
   type MarkSubmissionRecord,
 } from "@/lib/exams/examSessions";
 import { enterStudentMarks } from "@/lib/teacher/teacherMarks";
+import { PageHeader } from "./ui/PageHeader";
+import { Panel } from "./ui/Panel";
+import { EmptyState, ListSkeleton } from "./ui/States";
+import { tp } from "../styles/portal";
+import { cn } from "@/lib/utils";
 
 interface PaperWithSession extends ExamPaperRecord {
   sessionId: string;
@@ -163,135 +166,143 @@ export default function TeacherExamsDashboard() {
 
   const isLoading = assignmentsQuery.isLoading || sessionsQuery.isLoading || submissionsLoading;
 
+  const paperStats = useMemo(() => {
+    let submitted = 0;
+    let approved = 0;
+    for (const paper of papers) {
+      const submission = submissionsByPaperId.get(paper.id);
+      if (!submission) continue;
+      if (["SUBMITTED", "UNDER_REVIEW", "APPROVED", "LOCKED"].includes(submission.status)) {
+        submitted += 1;
+      }
+      if (submission.status === "APPROVED" || submission.status === "LOCKED") {
+        approved += 1;
+      }
+    }
+    return { total: papers.length, submitted, approved };
+  }, [papers, submissionsByPaperId]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 py-8 px-2 md:px-8 transition-colors">
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-primary drop-shadow-sm">
-              My Exams
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Enter marks for papers you are assigned to.
-            </p>
+    <div className={tp.page}>
+      <div className={tp.stack}>
+        <PageHeader
+          eyebrow="Assessment"
+          title="Exams"
+          description="The papers you've been assigned. Enter marks, send them to your HOD, and follow what's been reviewed."
+        />
+
+        <Panel padded={false} delay={1}>
+          <div className="flex flex-col gap-4 border-b border-border/70 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+              <Summary label="Papers" value={paperStats.total} />
+              <Summary label="Submitted" value={paperStats.submitted} />
+              <Summary label="Approved" value={paperStats.approved} />
+            </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search subject, class or session"
+                className={cn(tp.inputSoft, "pl-9")}
+              />
+            </div>
           </div>
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search subject, class or session..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+
+          {isLoading ? (
+            <div className="space-y-3 p-5 sm:p-6">
+              <ListSkeleton rows={4} />
+            </div>
+          ) : papers.length === 0 ? (
+            <EmptyState
+              icon={BookOpen}
+              title="No exam papers assigned"
+              description="Papers show up here once your school admin opens an exam session and assigns you to the subject and class."
             />
-          </div>
-        </div>
-
-        {/* Loading */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-3 text-muted-foreground">Loading your exams...</span>
-          </div>
-        )}
-
-        {/* Empty states */}
-        {!isLoading && papers.length === 0 && (
-          <Card className="rounded-2xl shadow-lg border border-border">
-            <CardContent className="py-16 text-center">
-              <BookOpen className="w-12 h-12 mx-auto text-primary/40 mb-4" />
-              <p className="text-lg font-medium text-foreground">No exam papers assigned</p>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Papers will appear here once your school admin creates an exam session and assigns
-                you to the corresponding subject and class.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Grouped list */}
-        {!isLoading &&
-          groupedBySession.map(({ session, papers }) => (
-            <Card key={session.id} className="rounded-2xl shadow-lg border border-border overflow-hidden">
-              <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      {session.name}
-                    </CardTitle>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1">
-                        <CalendarDays className="w-4 h-4" />
-                        Term {session.term}, {session.academicYear}
-                      </span>
-                      <Badge variant="outline">{session.status.replace(/_/g, " ")}</Badge>
+          ) : groupedBySession.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title="No matches"
+              description="Nothing matches that search. Try the subject, class or session name."
+            />
+          ) : (
+            <div className="divide-y divide-border/70">
+              {groupedBySession.map(({ session, papers: sessionPapers }) => (
+                <section key={session.id}>
+                  <div className="flex flex-col gap-2 bg-muted/25 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-[14px] font-semibold text-foreground">
+                        {session.name}
+                      </h2>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays className="size-3.5" strokeWidth={1.8} />
+                          Term {session.term} · {session.academicYear}
+                        </span>
+                        <span aria-hidden>·</span>
+                        <span className="capitalize">{session.status.replace(/_/g, " ")}</span>
+                      </p>
                     </div>
+                    <span className="shrink-0 text-[11.5px] text-muted-foreground">
+                      {sessionPapers.length} {sessionPapers.length === 1 ? "paper" : "papers"}
+                    </span>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="text-muted-foreground bg-muted/30">
-                        <th className="text-left font-semibold px-6 py-3">Subject</th>
-                        <th className="text-left font-semibold px-6 py-3">Class</th>
-                        <th className="text-left font-semibold px-6 py-3">Schedule</th>
-                        <th className="text-left font-semibold px-6 py-3">Max Score</th>
-                        <th className="text-left font-semibold px-6 py-3">Progress</th>
-                        <th className="px-6 py-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {papers.map((paper) => {
-                        const slot = paper.timetableSlots?.[0];
-                        return (
-                          <tr
-                            key={paper.id}
-                            className="border-b last:border-b-0 border-border hover:bg-primary/5 transition"
-                          >
-                            <td className="px-6 py-4 font-medium text-foreground">
-                              {paper.tenantSubject?.subject?.name ?? "Unknown Subject"}
-                              {paper.paperLabel && (
-                                <span className="ml-2 text-xs text-muted-foreground">
+
+                  <ul className="divide-y divide-border/60">
+                    {sessionPapers.map((paper) => {
+                      const slot = paper.timetableSlots?.[0];
+                      return (
+                        <li
+                          key={paper.id}
+                          className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
+                        >
+                          <span className="hidden size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/40 text-muted-foreground sm:flex">
+                            <FileText className="size-4" strokeWidth={1.7} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13.5px] font-semibold text-foreground">
+                              {paper.tenantSubject?.subject?.name ?? "Unknown subject"}
+                              {paper.paperLabel ? (
+                                <span className="ml-2 font-normal text-muted-foreground">
                                   {paper.paperLabel}
                                 </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-foreground">
-                              {paper.tenantGradeLevel?.gradeLevel?.name ?? "Unknown Class"}
-                            </td>
-                            <td className="px-6 py-4 text-muted-foreground">
-                              {slot
-                                ? `${new Date(slot.date).toLocaleDateString()} · ${slot.startTime}`
-                                : "—"}
-                            </td>
-                            <td className="px-6 py-4 text-muted-foreground">
-                              {paper.maxScore ?? session.defaultMaxScore ?? "—"}
-                            </td>
-                            <td className="px-6 py-4">
-                              <PaperStatusBadge submission={submissionsByPaperId.get(paper.id)} />
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <Button
-                                size="sm"
-                                onClick={() => setSelectedPaper(paper)}
-                              >
-                                Enter Marks
-                                <ArrowRight className="w-4 h-4 ml-1" />
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                              ) : null}
+                            </p>
+                            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-muted-foreground">
+                              <span>{paper.tenantGradeLevel?.gradeLevel?.name ?? "Unknown class"}</span>
+                              <span aria-hidden>·</span>
+                              <span>
+                                {slot
+                                  ? `${new Date(slot.date).toLocaleDateString("en-GB", {
+                                      day: "numeric",
+                                      month: "short",
+                                    })} · ${slot.startTime}`
+                                  : "Not scheduled"}
+                              </span>
+                              <span aria-hidden>·</span>
+                              <span>Max {paper.maxScore ?? session.defaultMaxScore ?? "—"}</span>
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 sm:justify-end">
+                            <PaperStatusBadge submission={submissionsByPaperId.get(paper.id)} />
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPaper(paper)}
+                              className="tp-focus inline-flex h-9 items-center gap-1.5 rounded-full border border-border/80 px-4 text-[12.5px] font-semibold text-foreground transition-colors hover:border-primary/30 hover:bg-primary/[0.06] hover:text-primary"
+                            >
+                              {submissionsByPaperId.get(paper.id) ? "Open marks" : "Enter marks"}
+                              <ArrowRight className="size-3.5" />
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </Panel>
       </div>
 
       {selectedPaper && (
@@ -305,27 +316,38 @@ export default function TeacherExamsDashboard() {
   );
 }
 
+function Summary({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="inline-flex items-baseline gap-2">
+      <span className="font-display text-[1.35rem] leading-none text-foreground">{value}</span>
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+        {label}
+      </span>
+    </span>
+  );
+}
+
 function PaperStatusBadge({ submission }: { submission?: MarkSubmissionRecord }) {
   if (!submission) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-        Draft
+      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[10.5px] font-semibold text-muted-foreground">
+        Not started
       </span>
     );
   }
 
   const variants: Record<string, string> = {
-    DRAFT: "bg-gray-100 text-gray-700",
-    RETURNED: "bg-red-100 text-red-700",
-    SUBMITTED: "bg-blue-100 text-blue-700",
-    UNDER_REVIEW: "bg-purple-100 text-purple-700",
-    APPROVED: "bg-green-100 text-green-700",
-    LOCKED: "bg-slate-100 text-slate-700",
+    DRAFT: "bg-muted text-muted-foreground",
+    RETURNED: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
+    SUBMITTED: "bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300",
+    UNDER_REVIEW: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
+    APPROVED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
+    LOCKED: "bg-muted text-muted-foreground",
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${variants[submission.status] ?? variants.DRAFT}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-semibold ${variants[submission.status] ?? variants.DRAFT}`}
     >
       {MARK_SUBMISSION_STATUS_LABELS[submission.status]}
     </span>
@@ -518,21 +540,19 @@ function TeacherExamMarkEntrySheet({
 
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full md:w-3/4 max-w-4xl p-0 flex flex-col">
-        <SheetHeader className="p-6 border-b bg-primary/5">
-          <div className="flex items-start justify-between">
+      <SheetContent side="right" className="flex w-full max-w-4xl flex-col bg-card p-0 md:w-3/4">
+        <SheetHeader className="border-b border-border/70 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <SheetTitle className="text-xl font-bold text-primary flex items-center gap-2">
-                <GraduationCap className="w-5 h-5" />
-                Mark Entry
-              </SheetTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {entryQuery.data?.subjectName ?? paper.tenantSubject?.subject?.name} ·{" "}
-                {entryQuery.data?.gradeName ?? paper.tenantGradeLevel?.gradeLevel?.name} ·{" "}
-                Max {maxScore}
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-primary/75">
+                Mark entry
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Session: {paper.sessionName}
+              <SheetTitle className="mt-1 font-display text-[1.55rem] leading-tight tracking-[-0.01em] text-foreground">
+                {entryQuery.data?.subjectName ?? paper.tenantSubject?.subject?.name}
+              </SheetTitle>
+              <p className="mt-1 text-[12.5px] text-muted-foreground">
+                {entryQuery.data?.gradeName ?? paper.tenantGradeLevel?.gradeLevel?.name} · Max{" "}
+                {maxScore} · {paper.sessionName}
               </p>
               {submission && (
                 <p className="text-xs mt-1">
@@ -559,16 +579,16 @@ function TeacherExamMarkEntrySheet({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mb-4 flex flex-col md:flex-row md:items-center gap-3">
+        <div className="tp-scroll flex-1 overflow-auto p-5 sm:p-6">
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative w-full md:w-1/2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 type="text"
-                placeholder="Search student by name or admission number..."
+                placeholder="Find a learner or admission number"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className={cn(tp.inputSoft, "pl-9")}
               />
             </div>
             <div className="flex items-center gap-2 ml-auto">
@@ -603,7 +623,7 @@ function TeacherExamMarkEntrySheet({
           </div>
 
           {isReadOnly && (
-            <div className="mb-4 p-3 rounded-lg bg-blue-50 text-blue-700 text-sm">
+            <div className="mb-4 rounded-xl border border-border/70 bg-muted/40 px-3.5 py-2.5 text-[12.5px] text-muted-foreground">
               This paper is {MARK_SUBMISSION_STATUS_LABELS[submission!.status].toLowerCase()}.
               Marks are read-only.
             </div>
@@ -616,46 +636,50 @@ function TeacherExamMarkEntrySheet({
             </div>
           ) : (
             <>
-              <table className="min-w-full text-sm border-separate border-spacing-y-1">
-                <thead>
-                  <tr className="text-muted-foreground text-left">
-                    <th className="font-semibold px-2 py-2">#</th>
-                    <th className="font-semibold px-2 py-2">Student Name</th>
-                    <th className="font-semibold px-2 py-2">Adm. No.</th>
-                    <th className="font-semibold px-2 py-2">Marks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStudents.map((student, idx) => (
-                    <tr
-                      key={student.id}
-                      className="bg-primary/5 hover:bg-primary/10 rounded-lg transition"
-                    >
-                      <td className="px-2 py-2 font-medium text-muted-foreground w-8 rounded-l-lg">
-                        {idx + 1}
-                      </td>
-                      <td className="px-2 py-2 font-semibold text-foreground">
-                        {student.name}
-                      </td>
-                      <td className="px-2 py-2 text-muted-foreground">
-                        {student.admissionNumber}
-                      </td>
-                      <td className="px-2 py-2 rounded-r-lg">
-                        <Input
-                          type="number"
-                          min={0}
-                          max={maxScore}
-                          className="w-24 text-center"
-                          value={marks[student.id] ?? ""}
-                          onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                          placeholder="—"
-                          disabled={isReadOnly}
-                        />
-                      </td>
+              <div className="overflow-hidden rounded-xl border border-border/70">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/70 bg-muted/30 text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                      <th className="px-3 py-2.5 sm:px-4">#</th>
+                      <th className="px-3 py-2.5 sm:px-4">Learner</th>
+                      <th className="hidden px-3 py-2.5 sm:table-cell sm:px-4">Adm. no.</th>
+                      <th className="px-3 py-2.5 text-right sm:px-4">Marks</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {filteredStudents.map((student, idx) => (
+                      <tr key={student.id} className="transition-colors hover:bg-muted/25">
+                        <td className="tp-num w-8 px-3 py-2.5 text-[11.5px] text-muted-foreground sm:px-4">
+                          {idx + 1}
+                        </td>
+                        <td className="px-3 py-2.5 sm:px-4">
+                          <span className="block text-[13px] font-medium text-foreground">
+                            {student.name}
+                          </span>
+                          <span className="mt-0.5 block text-[11px] text-muted-foreground sm:hidden">
+                            {student.admissionNumber}
+                          </span>
+                        </td>
+                        <td className="tp-num hidden px-3 py-2.5 text-[12px] text-muted-foreground sm:table-cell sm:px-4">
+                          {student.admissionNumber}
+                        </td>
+                        <td className="px-3 py-2.5 text-right sm:px-4">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={maxScore}
+                            className="ml-auto h-9 w-20 rounded-lg border-border/80 text-center text-[13px]"
+                            value={marks[student.id] ?? ""}
+                            onChange={(e) => handleMarkChange(student.id, e.target.value)}
+                            placeholder="—"
+                            disabled={isReadOnly}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               {filteredStudents.length === 0 && !entryQuery.isLoading && (
                 <div className="text-center py-8 text-muted-foreground">
                   No students found.
@@ -666,7 +690,7 @@ function TeacherExamMarkEntrySheet({
           )}
         </div>
 
-        <div className="p-4 border-t bg-primary/5 flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 border-t border-border/70 bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div className="text-sm text-muted-foreground">
             {saveMutation.isPending
               ? "Saving..."

@@ -1,21 +1,21 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
-import { 
-  BookOpen, 
-  Users, 
-  Calendar, 
-  Plus,
-  Eye,
+import React, { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
+  CalendarDays,
   CheckSquare,
   ClipboardList,
-  Send,
-  Inbox,
-  Upload,
-  Award,
-  TrendingUp,
-  Search,
-  RefreshCw
+  FileText,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Share2,
+  Sparkles,
+  Users,
 } from "lucide-react";
 import CreateTestSection from "./CreateTestSection";
 import MarkRegisterSection from "./MarkRegisterSection";
@@ -24,392 +24,517 @@ import IndividualSearchSection from "./IndividualSearchSection";
 import ShareResourcesSection from "./ShareResourcesSection";
 import AssignHomeworkSection from "./AssignHomeworkSection";
 import EnterMarksSection from "./EnterMarksSection";
-import { DynamicLogo } from '../../parent/components/DynamicLogo';
+import { PageHeader, SectionHeading } from "./ui/PageHeader";
+import { Panel } from "./ui/Panel";
+import { EmptyState, ListSkeleton } from "./ui/States";
+import { useTeacherData } from "@/lib/hooks/useTeacherData";
+import { useTeacherAssignments } from "@/lib/teacher/useTeacherAssignments";
+import { cn } from "@/lib/utils";
+import { tp } from "../styles/portal";
+import type { TeacherAssignment } from "@/lib/teacher/teacherAssignments";
 
-// Mock data for demonstration
-const mockData = {
-  assignments: [
-    { id: 1, title: "Math Homework", subject: "Mathematics", dueDate: "2024-01-15", submissions: 18, total: 25 },
-    { id: 2, title: "Science Project", subject: "Science", dueDate: "2024-01-20", submissions: 22, total: 25 }
-  ],
-  assessments: [
-    { id: 1, title: "Mid-term Exam", subject: "Mathematics", date: "2024-01-18", status: "completed" },
-    { id: 2, title: "Science Quiz", subject: "Science", date: "2024-01-22", status: "pending" }
-  ],
-  attendance: {
-    today: { present: 22, absent: 3, total: 25 },
-    thisWeek: { present: 108, absent: 12, total: 120 }
-  },
-  lessonPlans: [
-    { id: 1, title: "Algebra Basics", subject: "Mathematics", status: "approved", date: "2024-01-15" },
-    { id: 2, title: "Chemical Reactions", subject: "Science", status: "pending", date: "2024-01-16" }
-  ],
-  messages: [
-    { id: 1, from: "Parent - John Smith", subject: "Student Progress", unread: true, time: "2 hours ago" },
-    { id: 2, from: "Admin", subject: "Staff Meeting", unread: false, time: "1 day ago" }
-  ]
-};
-
-interface MenuItem {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  subtext: string;
-  actions: Action[];
-}
+type SectionId =
+  | "create-test"
+  | "mark-register"
+  | "send-message"
+  | "search-individuals"
+  | "share-resources"
+  | "assign-homework"
+  | "enter-marks";
 
 interface Action {
-  id: string;
+  id: SectionId;
   title: string;
+  hint: string;
   icon: React.ReactNode;
   onClick: () => void;
-  bgClass: string; // Added bgClass to the interface
 }
 
-interface EnhancedTeacherDashboardProps {
-  subdomain: string;
-}
+export default function EnhancedTeacherDashboard({ subdomain }: { subdomain: string }) {
+  const router = useRouter();
+  const { teacher, loading: teacherLoading, getClassTeacherClasses } = useTeacherData();
+  const { assignments, loading: assignmentsLoading } = useTeacherAssignments();
 
-export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherDashboardProps) {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
-  const [showCreateTest, setShowCreateTest] = useState(false);
-  const [showMarkRegister, setShowMarkRegister] = useState(false);
-  const [showSendMessage, setShowSendMessage] = useState(false);
-  const [showIndividualSearch, setShowIndividualSearch] = useState(false);
-  const [showShareResources, setShowShareResources] = useState(false);
-  const [showAssignHomework, setShowAssignHomework] = useState(false);
-  const [showEnterMarks, setShowEnterMarks] = useState(false);
-  const [newlyCreatedTest, setNewlyCreatedTest] = useState<{
-    title: string;
-    subject: string;
-    grade: string;
-    date: string;
-    startTime: string;
-    duration: string;
-  } | undefined>(undefined);
-  const [currentDate, setCurrentDate] = useState<string>('');
-  
-  // Teacher information from cookies
-  const [teacherName, setTeacherName] = useState<string>('');
-  const [teacherEmail, setTeacherEmail] = useState<string>('');
-  const [teacherRole, setTeacherRole] = useState<string>('');
-
-  // Set current date only on client side to avoid hydration issues
-  useEffect(() => {
-    setCurrentDate(new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    }));
-  }, []);
-
-  // Fetch teacher information from cookies when component mounts
-  useEffect(() => {
-    // Check if window is defined (we're in the browser)
-    if (typeof window !== 'undefined') {
-      try {
-        // Function to get cookie value by name
-        const getCookie = (name: string): string | null => {
-          const cookieValue = `; ${document.cookie}`;
-          const parts = cookieValue.split(`; ${name}=`);
-          if (parts.length === 2) {
-            return parts.pop()?.split(';').shift() || null;
-          }
-          return null;
-        };
-        
-        const userNameFromCookie = getCookie('userName');
-        const userEmailFromCookie = getCookie('email');
-        const userRoleFromCookie = getCookie('userRole');
-        
-        if (userNameFromCookie) {
-          setTeacherName(decodeURIComponent(userNameFromCookie));
-        }
-        if (userEmailFromCookie) {
-          setTeacherEmail(decodeURIComponent(userEmailFromCookie));
-        }
-        if (userRoleFromCookie) {
-          setTeacherRole(decodeURIComponent(userRoleFromCookie));
-        }
-      } catch (error) {
-        console.error('Error fetching teacher information from cookies:', error);
+  const [section, setSection] = useState<SectionId | null>(null);
+  const [newlyCreatedTest, setNewlyCreatedTest] = useState<
+    | {
+        title: string;
+        subject: string;
+        grade: string;
+        date: string;
+        startTime: string;
+        duration: string;
       }
-    }
+    | undefined
+  >(undefined);
+
+  const [teacherName, setTeacherName] = useState("");
+  const [today, setToday] = useState("");
+  const [greeting, setGreeting] = useState("Welcome back");
+
+  // Read the display name from the cookie our auth flow already sets. Kept in an
+  // effect so the server and first client render agree.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const readCookie = (name: string) => {
+      const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+      return match ? decodeURIComponent(match[1]) : "";
+    };
+    setTeacherName(readCookie("userName"));
+
+    const now = new Date();
+    const hour = now.getHours();
+    setGreeting(
+      hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening",
+    );
+    setToday(
+      new Intl.DateTimeFormat("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(now),
+    );
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const handleActionClick = (actionId: string, menuId: string) => {
-    console.log(`Action ${actionId} clicked for menu ${menuId}`);
-    // Here you would implement the actual functionality
-    // For now, we'll just log the action
-  };
+  const displayName = (teacher?.fullName || teacherName || "").split(" ")[0];
+  const classes = getClassTeacherClasses();
 
-  // Helper function to get initials from teacher name
-  const getInitials = (name: string) => {
-    if (!name) return 'T';
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const dueSoon = useMemo(() => {
+    if (!assignments.length) return 0;
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return assignments.filter((assignment) => {
+      const due = new Date(assignment.date);
+      return assignment.status !== "completed" && due >= start && due <= end;
+    }).length;
+  }, [assignments]);
 
-  // Uniform quick actions with fixed size, centered content, and consistent icon backgrounds
-  const quickActions: Action[] = [
+  const recentAssignments = useMemo(
+    () =>
+      [...assignments]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3),
+    [assignments],
+  );
+
+  const actions: Action[] = [
     {
-      id: 'create-test',
-      title: 'Create Test',
-      icon: <Plus className="w-6 h-6" />,
-      onClick: () => setShowCreateTest(true),
-      bgClass: 'bg-primary',
+      id: "create-test",
+      title: "New test",
+      hint: "Build or reuse questions",
+      icon: <Plus className="size-[18px]" strokeWidth={1.8} />,
+      onClick: () => setSection("create-test"),
     },
     {
-      id: 'mark-register',
-      title: 'Mark Register',
-      icon: <ClipboardList className="w-6 h-6" />,
-      onClick: () => setShowMarkRegister(true),
-      bgClass: 'bg-primary',
+      id: "assign-homework",
+      title: "Assign homework",
+      hint: "Send work to a class",
+      icon: <BookOpen className="size-[18px]" strokeWidth={1.8} />,
+      onClick: () => setSection("assign-homework"),
     },
     {
-      id: 'send-message',
-      title: 'Send Message',
-      icon: <Send className="w-6 h-6" />,
-      onClick: () => setShowSendMessage(true),
-      bgClass: 'bg-primary',
+      id: "enter-marks",
+      title: "Enter marks",
+      hint: "Record exam scores",
+      icon: <CheckSquare className="size-[18px]" strokeWidth={1.8} />,
+      onClick: () => setSection("enter-marks"),
     },
     {
-      id: 'upload-lesson-plan',
-      title: 'Upload Lesson Plan',
-      icon: <Upload className="w-6 h-6" />,
-      onClick: () => handleActionClick('upload-lesson-plan', 'quick-actions'),
-      bgClass: 'bg-primary/80',
+      id: "mark-register",
+      title: "Mark register",
+      hint: "Take today's attendance",
+      icon: <ClipboardList className="size-[18px]" strokeWidth={1.8} />,
+      onClick: () => setSection("mark-register"),
     },
     {
-      id: 'enter-marks',
-      title: 'Enter Marks',
-      icon: <CheckSquare className="w-6 h-6" />,
-      onClick: () => setShowEnterMarks(true),
-      bgClass: 'bg-primary',
+      id: "send-message",
+      title: "Send a message",
+      hint: "Reach parents or staff",
+      icon: <MessageSquare className="size-[18px]" strokeWidth={1.8} />,
+      onClick: () => setSection("send-message"),
     },
     {
-      id: 'view-timetable',
-      title: 'View Timetable',
-      icon: <Calendar className="w-6 h-6" />,
-      onClick: () => handleActionClick('view-timetable', 'quick-actions'),
-      bgClass: 'bg-primary/80',
-    },
-    {
-      id: 'assign-homework',
-      title: 'Assign Homework',
-      icon: <BookOpen className="w-6 h-6" />,
-      onClick: () => setShowAssignHomework(true),
-      bgClass: 'bg-primary',
-    },
-    {
-      id: 'review-submissions',
-      title: 'Review Submissions',
-      icon: <Eye className="w-6 h-6" />,
-      onClick: () => handleActionClick('review-submissions', 'quick-actions'),
-      bgClass: 'bg-primary/80',
-    },
-    {
-      id: 'search-individuals',
-      title: 'Search Individuals',
-      icon: <Search className="w-6 h-6" />,
-      onClick: () => setShowIndividualSearch(true),
-      bgClass: 'bg-primary',
-    },
-    {
-      id: 'track-student-progress',
-      title: 'Track Student Progress',
-      icon: <TrendingUp className="w-6 h-6" />,
-      onClick: () => handleActionClick('track-student-progress', 'quick-actions'),
-      bgClass: 'bg-primary',
-    },
-    {
-      id: 'share-resources',
-      title: 'Share Resources',
-      icon: <Upload className="w-6 h-6" />,
-      onClick: () => setShowShareResources(true),
-      bgClass: 'bg-primary/80',
+      id: "share-resources",
+      title: "Share resources",
+      hint: "Notes and reading",
+      icon: <Share2 className="size-[18px]" strokeWidth={1.8} />,
+      onClick: () => setSection("share-resources"),
     },
   ];
 
-  const renderQuickActions = () => (
-    <div className="mb-6">
-     
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
-        {quickActions.map((action) => (
-          <button
-            key={action.id}
-            onClick={action.onClick}
-            className="group flex flex-col items-center justify-center p-3 sm:p-4 aspect-square bg-card border border-primary/20 shadow-sm hover:shadow-md transition-all duration-150 hover:bg-primary/5 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 rounded-lg"
-          >
-            <span className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mb-2 ${action.bgClass} text-white shadow-md rounded-lg transition-all duration-200 group-hover:scale-110`}>
-              {action.icon}
-            </span>
-            <span className="text-[10px] sm:text-xs font-semibold text-foreground text-center leading-tight">
-              {action.title}
-            </span>
-          </button>
-        ))}
+  const goTo = (href: string) => router.push(href);
+
+  const content = (() => {
+    if (section === "create-test") {
+      return (
+        <CreateTestSection
+          subdomain={subdomain}
+          onBack={() => setSection(null)}
+          onAssignHomework={(testData) => {
+            setNewlyCreatedTest(testData);
+            setSection("assign-homework");
+          }}
+        />
+      );
+    }
+    if (section === "mark-register") {
+      return <MarkRegisterSection subdomain={subdomain} onBack={() => setSection(null)} />;
+    }
+    if (section === "send-message") {
+      return <SchoolBroadcastSection subdomain={subdomain} onBack={() => setSection(null)} />;
+    }
+    if (section === "search-individuals") {
+      return <IndividualSearchSection subdomain={subdomain} onBack={() => setSection(null)} />;
+    }
+    if (section === "share-resources") {
+      return <ShareResourcesSection subdomain={subdomain} onBack={() => setSection(null)} />;
+    }
+    if (section === "assign-homework") {
+      return (
+        <AssignHomeworkSection
+          subdomain={subdomain}
+          onBack={() => {
+            setSection(null);
+            setNewlyCreatedTest(undefined);
+          }}
+          onCreateTest={() => setSection("create-test")}
+          newlyCreatedTest={newlyCreatedTest}
+        />
+      );
+    }
+    if (section === "enter-marks") {
+      return <EnterMarksSection subdomain={subdomain} onBack={() => setSection(null)} />;
+    }
+
+    return (
+      <div className={tp.stack}>
+        <PageHeader
+          eyebrow={today || "Teacher"}
+          title={
+            displayName ? `${greeting}, ${displayName}.` : `${greeting}.`
+          }
+          description="Here's your day at a glance. Pick up where you left off, or start something new."
+          actions={
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="tp-focus tp-press inline-flex h-10 items-center gap-2 rounded-full border border-border/80 bg-card px-4 text-[13px] font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+            >
+              <RefreshCw className="size-3.5" strokeWidth={2} />
+              Refresh
+            </button>
+          }
+        />
+
+        <div className="tp-reveal" style={{ ["--tp-delay" as string]: 1 } as CSSProperties}>
+          <Panel padded={false} className="grid grid-cols-2 gap-px bg-border/60 sm:grid-cols-4">
+            <Stat
+              label="My classes"
+              value={teacherLoading ? null : classes.length}
+              hint={
+                classes.length > 0
+                  ? classes[0].streamName
+                    ? `${classes[0].name} · ${classes[0].streamName}`
+                    : classes[0].name
+                  : "Not a class teacher yet"
+              }
+            />
+            <Stat
+              label="Subjects"
+              value={teacherLoading ? null : (teacher?.tenantSubjects?.length ?? 0)}
+              hint="Assigned to you"
+            />
+            <Stat
+              label="Assignments"
+              value={assignmentsLoading ? null : assignments.length}
+              hint={`${assignments.filter((a) => a.status === "draft").length} in draft`}
+            />
+            <Stat
+              label="Due this week"
+              value={assignmentsLoading ? null : dueSoon}
+              hint={dueSoon > 0 ? "Needs attention" : "Nothing pending"}
+              accent={dueSoon > 0}
+            />
+          </Panel>
+        </div>
+
+        <section className="space-y-4">
+          <SectionHeading hint="Pick one">Start here</SectionHeading>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {actions.map((action, index) => (
+              <button
+                key={action.id}
+                type="button"
+                onClick={action.onClick}
+                className={cn(
+                  "tp-reveal tp-lift group flex items-center gap-4 rounded-2xl border border-border/90 bg-card p-4 text-left shadow-[0_1px_2px_rgba(20,32,28,0.03)]",
+                  "hover:border-primary/30 hover:shadow-[0_18px_36px_-28px_rgba(20,32,28,0.45)]",
+                )}
+                style={{ ["--tp-delay" as string]: index + 1 } as CSSProperties}
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/45 text-primary transition-colors group-hover:border-primary/20 group-hover:bg-primary/[0.07]">
+                  {action.icon}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold text-foreground">
+                    {action.title}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                    {action.hint}
+                  </span>
+                </span>
+                <ArrowUpRight
+                  className="size-4 shrink-0 text-muted-foreground/40 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
+                  strokeWidth={1.8}
+                />
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
+            {[
+              { label: "Timetable", href: "/teacher/timetable" },
+              { label: "Lesson plans", href: "/teacher/lesson-plans" },
+              { label: "Exams", href: "/teacher/exams" },
+              { label: "Find a learner", href: undefined, onClick: () => setSection("search-individuals") },
+            ].map((link) => (
+              <button
+                key={link.label}
+                type="button"
+                onClick={() => (link.onClick ? link.onClick() : goTo(link.href!))}
+                className="tp-focus group inline-flex items-center gap-1.5 rounded-full text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                {link.label}
+                <ArrowRight className="size-3.5 opacity-50 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+          <section className="space-y-4">
+            <SectionHeading hint={`${assignments.length} total`}>
+              Recent assignments
+            </SectionHeading>
+            <Panel padded={false} className="divide-y divide-border/70">
+              {assignmentsLoading ? (
+                <div className="p-5">
+                  <ListSkeleton rows={3} />
+                </div>
+              ) : recentAssignments.length === 0 ? (
+                <EmptyState
+                  icon={FileText}
+                  title="No assignments yet"
+                  description="Create your first test or homework and it will show up here."
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => setSection("create-test")}
+                      className="tp-focus inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-[12.5px] font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
+                    >
+                      <Plus className="size-3.5" />
+                      Create assignment
+                    </button>
+                  }
+                  compact
+                />
+              ) : (
+                <>
+                  {recentAssignments.map((assignment) => (
+                    <AssignmentRow
+                      key={assignment.id}
+                      assignment={assignment}
+                      onOpen={() => goTo(`/teacher/assignments/${assignment.id}`)}
+                    />
+                  ))}
+                  <div className="px-5 py-3">
+                    <button
+                      type="button"
+                      onClick={() => goTo("/teacher/assignments")}
+                      className="tp-focus inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary"
+                    >
+                      View all assignments
+                      <ArrowRight className="size-3.5" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </Panel>
+          </section>
+
+          <section className="space-y-4">
+            <SectionHeading hint="Class teacher">Your class</SectionHeading>
+            <Panel className="space-y-4">
+              {classes.length === 0 ? (
+                <div className="space-y-2">
+                  <span className="flex size-10 items-center justify-center rounded-xl border border-border/70 bg-muted/45 text-primary">
+                    <Users className="size-[18px]" strokeWidth={1.8} />
+                  </span>
+                  <p className="text-[14px] font-semibold text-foreground">
+                    No class assigned
+                  </p>
+                  <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+                    Only a class teacher can take a register. Ask an administrator to
+                    assign you a class.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[15px] font-semibold text-foreground">
+                        {classes[0].name}
+                        {classes[0].streamName ? ` · ${classes[0].streamName}` : ""}
+                      </p>
+                      <p className="mt-1 text-[12.5px] text-muted-foreground">
+                        Today&apos;s register is usually taken in the morning.
+                      </p>
+                    </div>
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/[0.07] text-primary">
+                      <CalendarDays className="size-[18px]" strokeWidth={1.8} />
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSection("mark-register")}
+                      className="tp-focus inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-[12.5px] font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
+                    >
+                      <ClipboardList className="size-3.5" />
+                      Take register
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => goTo("/teacher/attendance")}
+                      className="tp-focus inline-flex h-9 items-center gap-2 rounded-full border border-border/80 px-4 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Register history
+                    </button>
+                  </div>
+                </>
+              )}
+            </Panel>
+
+            <Panel className="space-y-3">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="size-4" strokeWidth={1.8} />
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em]">
+                  Shortcuts
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Exams", href: "/teacher/exams", icon: FileText },
+                  { label: "Timetable", href: "/teacher/timetable", icon: CalendarDays },
+                  { label: "Lesson plans", href: "/teacher/lesson-plans", icon: BookOpen },
+                  { label: "Messages", href: "/teacher/messages", icon: MessageSquare },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.href}
+                      type="button"
+                      onClick={() => goTo(item.href)}
+                      className="tp-focus flex items-center gap-2 rounded-xl border border-transparent px-2.5 py-2 text-left text-[12.5px] font-medium text-muted-foreground transition-colors hover:border-border/70 hover:bg-muted/40 hover:text-foreground"
+                    >
+                      <Icon className="size-4 text-muted-foreground/70" strokeWidth={1.7} />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Panel>
+          </section>
+        </div>
+
+        <p className="pb-2 text-[11px] text-muted-foreground/60">
+          Signed in as {teacher?.email || teacherName || "teacher"}.
+        </p>
       </div>
+    );
+  })();
+
+  return <div className={tp.page}>{content}</div>;
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+  accent = false,
+}: {
+  label: string;
+  value: number | null;
+  hint: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="bg-card px-5 py-5 sm:px-6">
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-2 font-display text-[1.9rem] leading-none tracking-[-0.02em]",
+          accent ? "text-primary" : "text-foreground",
+        )}
+      >
+        {value === null ? <span className="tp-skeleton inline-block h-7 w-10 rounded-md" /> : value}
+      </p>
+      <p className="mt-1.5 truncate text-[11.5px] text-muted-foreground/85">{hint}</p>
     </div>
   );
+}
 
-  // Mock data for new teacher stats
-  const teacherStats = {
-    nextLesson: {
-      subject: 'Mathematics',
-      class: 'Grade 7',
-      time: '10:30 AM',
-      countdown: 'in 18 min',
-    },
-    activeAssignments: 2,
-    pendingTasks: 4,
-    unreadMessages: 1,
-    studentsPresent: 22,
-    studentsTotal: 25,
-    onDuty: true,
-    dutyText: 'On Duty: This Week',
-  };
-
-  const renderTeacherStats = () => (
-    <div className="mb-6">
-      <h2 className="text-base sm:text-lg font-bold text-foreground mb-3 px-1">
-        Stats Overview
-      </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-        {/* Next Lesson */}
-        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
-          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
-          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Next Lesson</span>
-          <div className="text-[11px] sm:text-sm font-bold text-foreground text-center mt-0.5">{teacherStats.nextLesson.subject}</div>
-          <div className="text-[9px] sm:text-xs text-muted-foreground">{teacherStats.nextLesson.time}</div>
-        </div>
-        {/* Active Assignments */}
-        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
-          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
-          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Assignments</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.activeAssignments}</span>
-        </div>
-        {/* Pending Tasks */}
-        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
-          <ClipboardList className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
-          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Tasks</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.pendingTasks}</span>
-        </div>
-        {/* Unread Messages */}
-        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
-          <Inbox className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
-          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Messages</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.unreadMessages}</span>
-        </div>
-        {/* Students Present Today */}
-        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
-          <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
-          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Present</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.studentsPresent}/{teacherStats.studentsTotal}</span>
-        </div>
-        {/* Upcoming Duty */}
-        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
-          <Award className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
-          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Duty</span>
-          <span className="text-[10px] sm:text-sm font-bold text-foreground text-center">{teacherStats.onDuty ? 'This Week' : 'None'}</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Replace renderDashboardOverview with renderTeacherStats
-
+function AssignmentRow({
+  assignment,
+  onOpen,
+}: {
+  assignment: TeacherAssignment;
+  onOpen: () => void;
+}) {
+  const classes = assignment.gradeLevels.map((grade) => grade.gradeLevel.name).join(", ");
+  const due = new Date(assignment.date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+  const statusTone =
+    assignment.status === "completed"
+      ? "bg-muted text-muted-foreground"
+      : assignment.status === "draft"
+        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+        : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      {/* Compact Mobile-First Header */}
-      <div className="bg-card/95 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
-        <div className="px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            {/* Teacher Name */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <DynamicLogo subdomain={subdomain} size="sm" showText={false} />
-              <h1 className="text-sm sm:text-base font-bold text-foreground truncate">
-                {teacherName || 'Teacher Dashboard'}
-              </h1>
-            </div>
-            
-            {/* Next Lesson + Refresh Button */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-white/50 rounded-full border border-primary/10 min-w-0">
-                <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[10px] sm:text-xs font-semibold text-foreground truncate">
-                    {teacherStats.nextLesson.subject}
-                  </span>
-                  <span className="text-[9px] sm:text-xs text-muted-foreground truncate">
-                    {teacherStats.nextLesson.time}
-                  </span>
-                </div>
-              </div>
-              
-              <button
-                onClick={() => window.location.reload()}
-                className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/50 hover:bg-white/80 rounded-full border border-primary/10 hover:border-primary/30 transition-all duration-200 hover:scale-105 active:scale-95"
-                title="Refresh page"
-                aria-label="Refresh page"
-              >
-                <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-        <div className="max-w-7xl mx-auto">
-          {showCreateTest ? (
-            <CreateTestSection 
-              subdomain={subdomain} 
-              onBack={() => setShowCreateTest(false)}
-              onAssignHomework={(testData) => {
-                setNewlyCreatedTest(testData);
-                setShowCreateTest(false);
-                setShowAssignHomework(true);
-              }}
-            />
-          ) : showMarkRegister ? (
-            <MarkRegisterSection subdomain={subdomain} onBack={() => setShowMarkRegister(false)} />
-          ) : showSendMessage ? (
-            <SchoolBroadcastSection subdomain={subdomain} onBack={() => setShowSendMessage(false)} />
-          ) : showIndividualSearch ? (
-            <IndividualSearchSection subdomain={subdomain} onBack={() => setShowIndividualSearch(false)} />
-          ) : showShareResources ? (
-            <ShareResourcesSection subdomain={subdomain} onBack={() => setShowShareResources(false)} />
-          ) : showAssignHomework ? (
-            <AssignHomeworkSection 
-              subdomain={subdomain} 
-              onBack={() => {
-                setShowAssignHomework(false);
-                setNewlyCreatedTest(undefined);
-              }}
-              onCreateTest={() => setShowCreateTest(true)}
-              newlyCreatedTest={newlyCreatedTest}
-            />
-          ) : showEnterMarks ? (
-            <EnterMarksSection 
-              subdomain={subdomain} 
-              onBack={() => setShowEnterMarks(false)}
-            />
-          ) : (
-            <>
-              {renderQuickActions()}
-              {renderTeacherStats()}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="tp-focus group flex w-full items-center gap-3.5 px-5 py-3.5 text-left transition-colors hover:bg-muted/35"
+    >
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-muted/40 text-muted-foreground transition-colors group-hover:border-primary/25 group-hover:text-primary">
+        <FileText className="size-4" strokeWidth={1.7} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13.5px] font-semibold text-foreground">
+          {assignment.title}
+        </span>
+        <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground">
+          {assignment.subject.subject.name} · {classes || "No class"}
+        </span>
+      </span>
+      <span className="hidden text-right text-[11.5px] text-muted-foreground sm:block">
+        Due {due}
+      </span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-semibold capitalize",
+          statusTone,
+        )}
+      >
+        {assignment.status}
+      </span>
+    </button>
   );
-} 
+}

@@ -681,7 +681,7 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
 
       {/* Search Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Search Individuals</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Search Individuals</h2>
         <p className="text-muted-foreground">Search for teachers and students by name</p>
       </div>
 

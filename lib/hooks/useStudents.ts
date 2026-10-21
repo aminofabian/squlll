@@ -12,6 +12,7 @@ const GET_STUDENTS = gql`
       admissionNumber
       studentName
       email
+      phone
       gradeLevelName
       gradeLevelId
       streamName
@@ -38,6 +39,7 @@ interface StudentSummaryData {
   admissionNumber: string;
   studentName: string;
   email: string;
+  phone?: string | null;
   gradeLevelName: string;
   gradeLevelId: string;
   streamName?: string | null;
@@ -65,7 +67,7 @@ const fetchStudents = async (): Promise<StudentsResponse> => {
     updatedAt: '',
     streamId: student.streamId ?? null,
     streamName: student.streamName ?? null,
-    phone: '',
+    phone: student.phone ?? '',
     grade: {
       id: student.gradeLevelId,
       gradeLevel: {

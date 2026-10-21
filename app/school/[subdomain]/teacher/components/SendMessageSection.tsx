@@ -153,7 +153,7 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
   const renderRecipientSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Select Recipients</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Select Recipients</h2>
         <p className="text-muted-foreground">Choose who you'd like to send a message to</p>
       </div>
 
@@ -283,7 +283,7 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
   const renderComposeMessage = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Compose Message</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Compose Message</h2>
         <p className="text-muted-foreground">Write your message to {selectedRecipients.length} recipient{selectedRecipients.length !== 1 ? 's' : ''}</p>
       </div>
 
@@ -397,7 +397,7 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
   const renderPreview = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Preview Message</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Preview Message</h2>
         <p className="text-muted-foreground">Review your message before sending</p>
       </div>
 
@@ -459,7 +459,7 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
           <CheckCircle2 className="w-8 h-8 text-green-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Message Sent Successfully!</h2>
+          <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Message Sent Successfully!</h2>
           <p className="text-muted-foreground">Your message has been delivered to {selectedRecipients.length} recipient{selectedRecipients.length !== 1 ? 's' : ''}.</p>
         </div>
       </div>

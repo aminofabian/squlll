@@ -5,8 +5,8 @@ import { WeekMobileSkeleton } from "@/components/timetable/week/WeekMobileSkelet
 
 export function TeacherTimetableSkeleton() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#eef0eb] dark:bg-[#0a110e]" aria-busy aria-label="Loading timetable">
-      <div className="mx-auto w-full max-w-[1440px] lg:px-6 lg:py-5">
+    <div className="min-h-[60vh] overflow-x-hidden" aria-busy aria-label="Loading timetable">
+      <div className="mx-auto w-full max-w-[1440px]">
         <div className="lg:hidden">
           <WeekMobileSkeleton />
         </div>

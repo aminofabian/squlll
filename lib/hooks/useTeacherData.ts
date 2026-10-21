@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
+import {
+  classTeacherClasses,
+  mergeTeacherGradeLevels,
+  type TeacherClassScope,
+} from '@/lib/utils/teacher-classes';
 
 interface TeacherSubject {
   id: string;
@@ -32,6 +37,14 @@ interface TeacherStream {
   isActive: boolean;
 }
 
+interface TeacherGradeRef {
+  id: string;
+  gradeLevel?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 interface ClassTeacherAssignment {
   id: string;
   active: boolean;
@@ -41,14 +54,9 @@ interface ClassTeacherAssignment {
       id: string;
       name: string;
     };
-  };
-  gradeLevel?: {
-    id: string;
-    gradeLevel: {
-      id: string;
-      name: string;
-    };
-  };
+    tenantGradeLevel?: TeacherGradeRef | null;
+  } | null;
+  gradeLevel?: TeacherGradeRef | null;
 }
 
 interface Teacher {
@@ -93,6 +101,10 @@ const GET_TEACHER_QUERY = `
         stream {
           id
           stream { id name }
+          tenantGradeLevel {
+            id
+            gradeLevel { id name }
+          }
         }
         gradeLevel {
           id
@@ -194,6 +206,13 @@ export function useTeacherData() {
     fetchTeacher();
   }, []);
 
+  /**
+   * Classes the teacher owns as class teacher (grade-level or stream-level
+   * assignment). Only these classes may have their attendance register taken.
+   */
+  const getClassTeacherClasses = (): TeacherClassScope[] =>
+    classTeacherClasses(teacher?.classTeacherAssignments);
+
   return {
     teacher,
     loading,
@@ -210,13 +229,12 @@ export function useTeacherData() {
     },
     getFormattedGradeLevels: () => {
       if (!teacher) return [];
-      return teacher.tenantGradeLevels.map(tgl => ({
-        id: tgl.id, // Use tenant grade level ID instead of base grade level ID
-        name: tgl.gradeLevel.name,
-        shortName: tgl.shortName,
-        baseLevelId: tgl.gradeLevel.id // Keep base ID for reference if needed
-      }));
+      return mergeTeacherGradeLevels(
+        teacher.tenantGradeLevels,
+        getClassTeacherClasses(),
+      );
     },
+    getClassTeacherClasses,
     refetch: () => {
       setLoading(true);
       setError(null);
@@ -291,4 +309,4 @@ export function useTeacherData() {
   };
 }
 
-export type { Teacher, TeacherSubject, TeacherGradeLevel, TeacherStream, ClassTeacherAssignment };
+export type { Teacher, TeacherSubject, TeacherGradeLevel, TeacherStream, ClassTeacherAssignment, TeacherClassScope };

@@ -30,6 +30,12 @@ interface AssignSubjectTeacherSheetProps {
   onOpenChange: (open: boolean) => void;
   /** All tenant-subject row ids for this curriculum line (deduped duplicates). */
   tenantSubjectIds: string[];
+  /**
+   * Grade level(s) this subject is being assigned in. Accepts the school
+   * config GradeLevel id — the API resolves it to the tenant grade level.
+   * Passing it keeps the teacher's portal in sync ("No Assigned Grades" bug).
+   */
+  gradeLevelIds?: string[];
   subjectName: string;
   onAssigned?: () => void;
 }
@@ -38,6 +44,7 @@ export function AssignSubjectTeacherSheet({
   open,
   onOpenChange,
   tenantSubjectIds,
+  gradeLevelIds,
   subjectName,
   onAssigned,
 }: AssignSubjectTeacherSheetProps) {
@@ -56,9 +63,17 @@ export function AssignSubjectTeacherSheet({
   });
 
   const assignToTeacher = async (teacher: (typeof teachers)[0]) => {
-    const existingIds = (teacher.tenantSubjects || []).map((s) => s.id);
-    const missingIds = tenantSubjectIds.filter((id) => !existingIds.includes(id));
-    if (missingIds.length === 0) {
+    const existingSubjectIds = (teacher.tenantSubjects || []).map((s) => s.id);
+    const missingSubjectIds = tenantSubjectIds.filter(
+      (id) => !existingSubjectIds.includes(id),
+    );
+
+    const existingGradeIds = (teacher.tenantGradeLevels || []).map((g) => g.id);
+    const missingGradeIds = (gradeLevelIds ?? []).filter(
+      (id) => !existingGradeIds.includes(id),
+    );
+
+    if (missingSubjectIds.length === 0 && missingGradeIds.length === 0) {
       toast.info(`${resolveTeacherDisplayName(teacher)} already teaches this subject`);
       onOpenChange(false);
       return;
@@ -75,11 +90,13 @@ export function AssignSubjectTeacherSheet({
           variables: {
             input: {
               teacherId: teacher.id,
-              tenantSubjectIds: [...existingIds, ...missingIds],
-              tenantGradeLevelIds: (teacher.tenantGradeLevels || []).map(
-                (g) => g.id,
+              tenantSubjectIds: [...existingSubjectIds, ...missingSubjectIds],
+              // Assigning a subject inside a class also makes the teacher a
+              // teacher of that class, so the portal has grades to work with.
+              tenantGradeLevelIds: [...existingGradeIds, ...missingGradeIds],
+              tenantStreamIds: (teacher.tenantStreams || []).map(
+                (s) => s.id,
               ),
-              tenantStreamIds: (teacher.tenantStreams || []).map((s) => s.id),
             },
           },
         }),
@@ -116,8 +133,8 @@ export function AssignSubjectTeacherSheet({
           <SheetTitle>Assign subject teacher</SheetTitle>
           <SheetDescription>
             Who teaches <span className="font-medium text-[#0a1f1a]">{subjectName}</span>?
-            This updates the teacher&apos;s subject assignments (not the class/stream
-            teacher role).
+            The teacher is also assigned to this class in their portal (not the
+            class/stream teacher role).
           </SheetDescription>
         </SheetHeader>
 

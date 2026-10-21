@@ -15,6 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useTeacherData } from '@/lib/hooks/useTeacherData';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Panel } from '../components/ui/Panel';
+import { EmptyState } from '../components/ui/States';
+import { tp } from '../styles/portal';
 import {
   fetchAttendanceByDate,
   fetchStudentsByGrade,
@@ -118,16 +122,17 @@ export default function TeacherAttendancePage() {
     teacher,
     loading: teacherLoading,
     error: teacherError,
-    getFormattedGradeLevels,
+    getClassTeacherClasses,
   } = useTeacherData();
 
-  const grades = useMemo(
-    () => getFormattedGradeLevels(),
+  // Only a class teacher keeps the register, so only their classes are listed.
+  const classes = useMemo(
+    () => getClassTeacherClasses(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [teacher],
   );
 
-  const [gradeId, setGradeId] = useState('');
+  const [classId, setClassId] = useState('');
   const [date, setDate] = useState(todayYmd());
   const [students, setStudents] = useState<AttendanceStudent[]>([]);
   const [marks, setMarks] = useState<Record<string, AttendanceStatus>>({});
@@ -139,12 +144,16 @@ export default function TeacherAttendancePage() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [query, setQuery] = useState('');
 
+  const selectedClass = classes.find((item) => item.id === classId);
+  const gradeId = selectedClass?.id ?? '';
+  const streamId = selectedClass?.streamId;
+
   useEffect(() => {
-    if (!gradeId && grades.length > 0) {
+    if (!classId && classes.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGradeId(grades[0].id);
+      setClassId(classes[0].id);
     }
-  }, [grades, gradeId]);
+  }, [classes, classId]);
 
   const loadRegister = useCallback(async () => {
     if (!subdomain || !gradeId) return;
@@ -153,8 +162,8 @@ export default function TeacherAttendancePage() {
     setSavedAt(null);
     try {
       const [roster, existing] = await Promise.all([
-        fetchStudentsByGrade(subdomain, gradeId),
-        fetchAttendanceByDate(subdomain, date, gradeId),
+        fetchStudentsByGrade(subdomain, gradeId, streamId),
+        fetchAttendanceByDate(subdomain, date, gradeId, streamId),
       ]);
       setStudents(roster);
       setExistingCount(existing.length);
@@ -179,7 +188,7 @@ export default function TeacherAttendancePage() {
     } finally {
       setLoadingRoster(false);
     }
-  }, [subdomain, gradeId, date]);
+  }, [subdomain, gradeId, streamId, date]);
 
   useEffect(() => {
     if (!gradeId) return;
@@ -232,12 +241,13 @@ export default function TeacherAttendancePage() {
       await markAttendance(subdomain, {
         date,
         gradeId,
+        streamId,
         attendanceRecords: students.map((student) => ({
           studentId: student.id,
           status: marks[student.id] ?? 'PRESENT',
         })),
       });
-      const saved = await fetchAttendanceByDate(subdomain, date, gradeId);
+      const saved = await fetchAttendanceByDate(subdomain, date, gradeId, streamId);
       setExistingCount(saved.length);
       setSavedAt(
         new Date().toLocaleTimeString(undefined, {
@@ -264,77 +274,89 @@ export default function TeacherAttendancePage() {
 
   if (teacherError && !teacher) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <div className="rounded-2xl border border-border bg-card p-6 text-center">
-          <AlertCircle className="mx-auto size-5 text-rose-500" />
-          <h1 className="mt-2 text-base font-semibold">Attendance unavailable</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{teacherError}</p>
-        </div>
+      <div className={tp.page}>
+        <Panel className="mx-auto max-w-xl">
+          <EmptyState
+            icon={AlertCircle}
+            title="Attendance is unavailable"
+            description={teacherError}
+            compact
+          />
+        </Panel>
       </div>
     );
   }
 
-  if (grades.length === 0) {
+  if (classes.length === 0) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center">
-          <Users className="mx-auto size-6 text-muted-foreground" />
-          <h1 className="mt-3 text-base font-semibold">No classes assigned</h1>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-            You can mark attendance once an administrator assigns you to a class.
-          </p>
+      <div className={tp.page}>
+        <div className={tp.stack}>
+          <PageHeader
+            eyebrow="Register"
+            title="Attendance"
+            description="Take the register for the class you look after."
+          />
+          <Panel>
+            <EmptyState
+              icon={Users}
+              title="You're not a class teacher yet"
+              description="Only the class teacher of a class can take its register. Ask an administrator to assign you a class."
+            />
+          </Panel>
         </div>
       </div>
     );
   }
-
-  const selectedGrade = grades.find((grade) => grade.id === gradeId);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-5 lg:px-0 lg:py-0">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Attendance
-          </p>
-          <h1 className="mt-0.5 text-xl font-semibold tracking-tight">
-            {selectedGrade?.name ?? 'Register'}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{formatLongDate(date)}</p>
-        </div>
-        <Button
-          size="sm"
-          onClick={() => void handleSave()}
-          disabled={saving || loadingRoster || students.length === 0}
-        >
-          {saving ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <ClipboardCheck className="size-3.5" />
-          )}
-          Save register
-        </Button>
-      </header>
+    <div className={tp.page}>
+      <div className={tp.stack}>
+        <PageHeader
+          eyebrow="Register"
+          title={
+            selectedClass
+              ? selectedClass.streamName
+                ? `${selectedClass.name} · ${selectedClass.streamName}`
+                : selectedClass.name
+              : 'Attendance'
+          }
+          description={`${formatLongDate(date)} · Only the class teacher can take this register.`}
+          actions={
+            <Button
+              size="sm"
+              onClick={() => void handleSave()}
+              disabled={saving || loadingRoster || students.length === 0}
+              className="h-10 gap-2 rounded-full px-5 text-[13px] font-semibold shadow-sm shadow-primary/20"
+            >
+              {saving ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ClipboardCheck className="size-3.5" />
+              )}
+              Save register
+            </Button>
+          }
+        />
 
-      <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+      <div className={cn(tp.card, 'grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end sm:p-5')}>
         <div className="space-y-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
             Class
           </label>
           <select
-            className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
-            value={gradeId}
-            onChange={(event) => setGradeId(event.target.value)}
+            className="h-10 w-full rounded-xl border border-border/80 bg-card px-3 text-[13px] text-foreground"
+            value={classId}
+            onChange={(event) => setClassId(event.target.value)}
           >
-            {grades.map((grade) => (
-              <option key={grade.id} value={grade.id}>
-                {grade.name}
+            {classes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.streamName ? `${item.name} · ${item.streamName}` : item.name}
               </option>
             ))}
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
             Date
           </label>
           <Input
@@ -342,6 +364,7 @@ export default function TeacherAttendancePage() {
             value={date}
             max={todayYmd()}
             onChange={(event) => setDate(event.target.value || todayYmd())}
+            className="h-10 rounded-xl border-border/80 text-[13px]"
           />
         </div>
         <Button
@@ -356,13 +379,13 @@ export default function TeacherAttendancePage() {
       </div>
 
       {existingCount > 0 && !savedAt && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <div className="rounded-xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2.5 text-[12px] text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
           A register already exists for this class and date. Saving will replace it.
         </div>
       )}
 
       {savedAt && (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-2.5 text-[12px] text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
           <CheckCircle2 className="size-3.5 shrink-0" />
           Register saved at {savedAt}. Parents and guardians can see the update.
         </div>
@@ -384,8 +407,8 @@ export default function TeacherAttendancePage() {
         </span>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-2 border-b border-border px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className={cn(tp.card, 'overflow-hidden')}>
+        <div className="flex flex-col gap-2 border-b border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <div className="relative sm:w-64">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -479,10 +502,10 @@ export default function TeacherAttendancePage() {
         )}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground">
-          Attendance saves for the whole class. Saving again replaces the same
-          date&apos;s register.
+      <div className={cn(tp.card, 'flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5')}>
+        <p className="text-[12px] leading-relaxed text-muted-foreground">
+          Saving again replaces {selectedClass?.streamName ? 'this stream' : 'this class'}&apos;s
+          register for the same date. Parents can see the update straight away.
         </p>
         <Button
           onClick={() => void handleSave()}
@@ -495,6 +518,7 @@ export default function TeacherAttendancePage() {
           )}
           Save register
         </Button>
+      </div>
       </div>
     </div>
   );

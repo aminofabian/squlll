@@ -10,7 +10,7 @@ import { getTeacherPageTitle } from "@/lib/teacher/teacherNavConfig";
 import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
 
 const menuButtonClassName =
-  "h-9 w-9 shrink-0 p-0 text-slate-600 dark:text-slate-300";
+  "h-9 w-9 shrink-0 rounded-full p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground";
 
 function MenuButton() {
   return (
@@ -28,11 +28,12 @@ export function TeacherMobileHeader() {
   const [sheetReady, setSheetReady] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSheetReady(true);
   }, []);
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 lg:hidden">
+    <div className="flex items-center gap-2.5 px-4 py-3 lg:hidden">
       {sheetReady ? (
         <Sheet>
           <SheetTrigger asChild>
@@ -47,7 +48,10 @@ export function TeacherMobileHeader() {
       )}
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">
+          Teacher
+        </p>
+        <h1 className="truncate font-display text-[1.35rem] leading-tight tracking-[-0.01em] text-foreground">
           {title}
         </h1>
       </div>

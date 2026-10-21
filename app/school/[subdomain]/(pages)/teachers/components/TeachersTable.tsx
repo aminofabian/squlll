@@ -18,6 +18,7 @@ import { User, Trash, AlertTriangle, ChevronRight, CalendarDays } from "lucide-r
 import { cn } from "@/lib/utils";
 import { teachersPanel, teachersTh } from "./teachers-ui";
 import { TeacherAvatar } from "./TeacherAvatar";
+import { ContactActionsMenu } from "@/components/people/ContactActionsMenu";
 import {
   isTeacherProfileIncomplete,
   type TeachersListItem,
@@ -176,7 +177,9 @@ export function TeachersTable({
                   <th className={cn(teachersTh, "hidden px-2 py-1.5 xl:table-cell")}>
                     Sched
                   </th>
-                  <th className={cn(teachersTh, "w-12 px-1 py-1.5")} />
+                  <th className={cn(teachersTh, "w-24 px-1 py-1.5")}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1a4d42]/08 dark:divide-white/10">
@@ -254,6 +257,18 @@ export function TeachersTable({
                       </td>
                       <td className="px-1 py-1.5">
                         <div className="flex items-center justify-end gap-0.5">
+                          <ContactActionsMenu
+                            kind="teacher"
+                            person={{
+                              id: teacher.id,
+                              name: teacher.name,
+                              email: teacher.contacts.email,
+                              phone: teacher.contacts.phone,
+                            }}
+                            canSendLogin
+                            showLabel
+                            className="h-7 rounded-lg border-[#1a4d42]/15 px-2 text-[#1a4d42]/60 hover:text-[#246a59]"
+                          />
                           {onTeacherDelete && (
                             <Button
                               variant="ghost"

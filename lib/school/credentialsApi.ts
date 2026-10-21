@@ -53,3 +53,50 @@ export async function sendStudentLoginDetails(
   });
   return data.sendStudentLoginDetails;
 }
+
+export async function sendParentLoginDetails(
+  parentId: string,
+  channel: CredentialChannel,
+): Promise<boolean> {
+  const data = await gqlRequest<{ sendParentLoginDetails: boolean }>({
+    query: `mutation ($parentId: String!, $channel: CommunicationChannel!) {
+      sendParentLoginDetails(parentId: $parentId, channel: $channel)
+    }`,
+    variables: { parentId, channel },
+  });
+  return data.sendParentLoginDetails;
+}
+
+export async function sendStaffLoginDetails(
+  staffId: string,
+  channel: CredentialChannel,
+): Promise<boolean> {
+  const data = await gqlRequest<{ sendStaffLoginDetails: boolean }>({
+    query: `mutation ($staffId: ID!, $channel: CommunicationChannel!) {
+      sendStaffLoginDetails(staffId: $staffId, channel: $channel)
+    }`,
+    variables: { staffId, channel },
+  });
+  return data.sendStaffLoginDetails;
+}
+
+export type ContactKind = "teacher" | "student" | "parent" | "staff";
+
+/** Sends a person's login details on the chosen channel. */
+export async function sendLoginDetails(
+  kind: ContactKind,
+  id: string,
+  channel: CredentialChannel,
+): Promise<boolean> {
+  switch (kind) {
+    case "teacher":
+      return sendTeacherLoginDetails(id, channel);
+    case "student":
+      return sendStudentLoginDetails(id, channel);
+    case "parent":
+      return sendParentLoginDetails(id, channel);
+    case "staff":
+      return sendStaffLoginDetails(id, channel);
+  }
+}
+

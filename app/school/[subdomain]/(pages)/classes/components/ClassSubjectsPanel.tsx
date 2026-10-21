@@ -293,6 +293,7 @@ export function ClassSubjectsPanel({
             if (!open) setAssignSubject(null);
           }}
           tenantSubjectIds={assignSubject.tenantSubjectIds}
+          gradeLevelIds={[selectedGradeId]}
           subjectName={assignSubject.name}
           onAssigned={() => void refetchSubjectTeachers()}
         />

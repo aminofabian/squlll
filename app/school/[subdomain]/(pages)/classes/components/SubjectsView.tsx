@@ -143,6 +143,7 @@ export function SubjectsView({
   const [isDeleting, setIsDeleting] = useState(false);
   const [assignSubject, setAssignSubject] = useState<{
     tenantSubjectIds: string[];
+    gradeLevelIds: string[];
     name: string;
   } | null>(null);
 
@@ -303,6 +304,19 @@ export function SubjectsView({
 
   const allCollapsed =
     groups.length > 0 && groups.every((group) => collapsed.has(group.key));
+
+  /**
+   * School-config GradeLevel ids for the classes a subject row applies to.
+   * The API turns these into tenant grade levels so the teacher's portal shows
+   * the class they were staffed into.
+   */
+  const gradeLevelIdsForRow = (levelId: string): string[] => {
+    if (scopedLevel) {
+      return selectedGradeId ? [selectedGradeId] : [];
+    }
+    const level = config?.selectedLevels.find((item) => item.id === levelId);
+    return (level?.gradeLevels ?? []).map((grade) => grade.id);
+  };
 
   const toggleGroup = (key: string) => {
     setCollapsed((prev) => {
@@ -640,6 +654,7 @@ export function SubjectsView({
                           onAssign={() =>
                             setAssignSubject({
                               tenantSubjectIds: row.tenantSubjectIds,
+                              gradeLevelIds: gradeLevelIdsForRow(row.levelId),
                               name: row.name,
                             })
                           }
@@ -663,6 +678,7 @@ export function SubjectsView({
             if (!open) setAssignSubject(null);
           }}
           tenantSubjectIds={assignSubject.tenantSubjectIds}
+          gradeLevelIds={assignSubject.gradeLevelIds}
           subjectName={assignSubject.name}
           onAssigned={() => {
             void refetchSubjectTeachers();

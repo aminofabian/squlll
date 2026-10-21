@@ -1,10 +1,11 @@
 'use client'
-import {metadata} from './metadata'
+import './teacher-portal.css'
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { Sidebar } from "@/components/dashboard/TeacherSidebar"
 import { TeacherMobileBottomNav } from "./components/TeacherMobileBottomNav"
 import { TeacherMobileHeader } from "./components/TeacherMobileHeader"
 import { TermProvider } from '../(pages)/contexts/TermContext'
+import { ScrollToTop } from './components/ui/ScrollToTop'
 
 export default function TeacherLayout({
   children,
@@ -19,11 +20,12 @@ export default function TeacherLayout({
           mobileNav={<TeacherMobileBottomNav />}
           mobileHeader={<TeacherMobileHeader />}
           hideMobileSidebarTrigger
-          shellClassName="bg-[#f2f2f7] dark:bg-slate-950 lg:bg-background"
-          mainClassName="p-0 pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:p-6 lg:pb-6"
-          bottomNavClassName="border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/95"
+          shellClassName="bg-background dark:bg-slate-950"
+          mainClassName="p-0 pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:p-8 lg:pb-10"
+          bottomNavClassName="border-border/80 bg-card/95 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95"
         >
           {children}
+          <ScrollToTop />
         </DashboardLayout>
       </div>
     </TermProvider>

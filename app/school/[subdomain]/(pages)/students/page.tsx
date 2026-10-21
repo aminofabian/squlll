@@ -111,6 +111,7 @@ function mapGraphQLStudent(
     name,
     admissionNumber: student.admission_number,
     email: student.user?.email,
+    phone: student.phone,
     grade: formatGradeDisplayName(gradeName),
     gradeId,
     stream: missingStream ? "Not assigned" : resolvedStream,

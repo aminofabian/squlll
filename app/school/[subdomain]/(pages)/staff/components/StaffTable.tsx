@@ -16,6 +16,7 @@ import {
   staffDisplayName,
 } from "../utils/staff-utils";
 import { staffAddLinkLg, staffPanel, staffTh } from "./staff-ui";
+import { ContactActionsMenu } from "@/components/people/ContactActionsMenu";
 
 interface StaffTableProps {
   staff: Staff[];
@@ -118,7 +119,9 @@ export function StaffTable({
                     Employee ID
                   </th>
                   <th className={staffTh}>Status</th>
-                  <th className={cn(staffTh, "w-10")} />
+                  <th className={cn(staffTh, "w-24")}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -181,7 +184,21 @@ export function StaffTable({
                       </Badge>
                     </td>
                     <td className="px-2 py-3">
-                      <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
+                      <div className="flex items-center justify-end gap-1">
+                        <ContactActionsMenu
+                          kind="staff"
+                          person={{
+                            id: member.id,
+                            name: staffDisplayName(member),
+                            email: member.email,
+                            phone: member.phoneNumber,
+                          }}
+                          canSendLogin={Boolean(member.userId)}
+                          showLabel
+                          className="h-7 px-2 text-slate-500 hover:text-[#246a59]"
+                        />
+                        <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
+                      </div>
                     </td>
                   </tr>
                 ))}

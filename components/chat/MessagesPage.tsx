@@ -121,7 +121,7 @@ export function MessagesPage({
 
       {error ? <ChatErrorBanner message={error} /> : null}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-border/90 bg-card shadow-[0_1px_2px_rgba(20,32,28,0.04),0_20px_44px_-34px_rgba(20,32,28,0.35)]">
         <ConversationsPane
           className={detailOpen ? 'hidden md:flex' : 'flex'}
           conversations={conversations}

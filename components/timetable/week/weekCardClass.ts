@@ -1,2 +1,2 @@
 export const WEEK_CARD_CLASS =
-  "rounded-xl border border-[#e3e7e1] bg-white dark:border-white/10 dark:bg-[#0f1714]";
+  "rounded-2xl border border-border/80 bg-card";

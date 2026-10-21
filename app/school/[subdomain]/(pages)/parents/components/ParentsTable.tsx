@@ -12,6 +12,7 @@ import {
 import type { ParentsListItem } from "../utils/mapGraphqlParent";
 import { isParentProfileIncomplete } from "../utils/mapGraphqlParent";
 import { AlertTriangle, ChevronRight, User } from "lucide-react";
+import { ContactActionsMenu } from "@/components/people/ContactActionsMenu";
 
 interface ParentsTableProps {
   parents: ParentsListItem[];
@@ -90,7 +91,9 @@ export function ParentsTable({
                   <th className={cn(parentsTh, "hidden px-2 py-1.5 lg:table-cell")}>
                     Grades
                   </th>
-                  <th className={cn(parentsTh, "w-8 px-1 py-1.5")} />
+                  <th className={cn(parentsTh, "w-24 px-1 py-1.5")}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1a4d42]/08 dark:divide-white/10">
@@ -181,7 +184,21 @@ export function ParentsTable({
                         </p>
                       </td>
                       <td className="px-1 py-1.5">
-                        <ChevronRight className="h-3.5 w-3.5 text-[#1a4d42]/25 transition-transform group-hover:translate-x-0.5 group-hover:text-[#246a59]" />
+                        <div className="flex items-center justify-end gap-0.5">
+                          <ContactActionsMenu
+                            kind="parent"
+                            person={{
+                              id: parent.id,
+                              name: parent.name,
+                              email: parent.email,
+                              phone: parent.phone,
+                            }}
+                            canSendLogin={Boolean(parent.userId)}
+                            showLabel
+                            className="h-7 rounded-lg border-[#1a4d42]/15 px-2 text-[#1a4d42]/60 hover:text-[#246a59]"
+                          />
+                          <ChevronRight className="h-3.5 w-3.5 text-[#1a4d42]/25 transition-transform group-hover:translate-x-0.5 group-hover:text-[#246a59]" />
+                        </div>
                       </td>
                     </tr>
                   );

@@ -18,8 +18,8 @@ export interface AttendanceRecord {
 }
 
 const GET_STUDENTS_BY_GRADE = `
-  query GetStudentsByGrade($gradeId: String!) {
-    getStudentsByGrade(gradeId: $gradeId) {
+  query GetStudentsByGrade($gradeId: String!, $streamId: String) {
+    getStudentsByGrade(gradeId: $gradeId, streamId: $streamId) {
       id
       admission_number
       isActive
@@ -30,8 +30,8 @@ const GET_STUDENTS_BY_GRADE = `
 `
 
 const GET_ATTENDANCE_BY_DATE = `
-  query GetAttendanceByDate($date: String!, $gradeId: String!) {
-    getAttendanceByDate(date: $date, gradeId: $gradeId) {
+  query GetAttendanceByDate($date: String!, $gradeId: String!, $streamId: String) {
+    getAttendanceByDate(date: $date, gradeId: $gradeId, streamId: $streamId) {
       id
       studentId
       status
@@ -53,10 +53,15 @@ const MARK_ATTENDANCE = `
 export async function fetchStudentsByGrade(
   subdomain: string,
   gradeId: string,
+  streamId?: string,
 ): Promise<AttendanceStudent[]> {
   const result = await graphqlFetch<{
     getStudentsByGrade: AttendanceStudent[]
-  }>(GET_STUDENTS_BY_GRADE, { gradeId }, subdomain)
+  }>(
+    GET_STUDENTS_BY_GRADE,
+    { gradeId, streamId: streamId ?? null },
+    subdomain,
+  )
   return result.getStudentsByGrade ?? []
 }
 
@@ -64,10 +69,15 @@ export async function fetchAttendanceByDate(
   subdomain: string,
   date: string,
   gradeId: string,
+  streamId?: string,
 ): Promise<AttendanceRecord[]> {
   const result = await graphqlFetch<{
     getAttendanceByDate: AttendanceRecord[]
-  }>(GET_ATTENDANCE_BY_DATE, { date, gradeId }, subdomain)
+  }>(
+    GET_ATTENDANCE_BY_DATE,
+    { date, gradeId, streamId: streamId ?? null },
+    subdomain,
+  )
   return result.getAttendanceByDate ?? []
 }
 
@@ -76,11 +86,22 @@ export async function markAttendance(
   input: {
     date: string
     gradeId: string
+    /** Set when the class teacher owns a single stream of the class. */
+    streamId?: string
     attendanceRecords: Array<{ studentId: string; status: AttendanceStatus }>
   },
 ): Promise<AttendanceRecord[]> {
   const result = await graphqlFetch<{
     markAttendance: Array<AttendanceRecord & { createdAt?: string }>
-  }>(MARK_ATTENDANCE, { markAttendanceInput: input }, subdomain)
+  }>(
+    MARK_ATTENDANCE,
+    {
+      markAttendanceInput: {
+        ...input,
+        ...(input.streamId ? { streamId: input.streamId } : {}),
+      },
+    },
+    subdomain,
+  )
   return result.markAttendance ?? []
 }

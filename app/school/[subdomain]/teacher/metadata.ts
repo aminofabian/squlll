@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Dashboard - MyApp",
-  description: "Manage your account and data",
+  title: "Teacher portal — SQUL",
+  description:
+    "Your classes, assignments, exams and lesson plans in one quiet place.",
 }

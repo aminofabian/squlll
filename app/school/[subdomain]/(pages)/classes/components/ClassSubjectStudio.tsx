@@ -539,6 +539,7 @@ export function ClassSubjectStudio({
             if (!open) setAssignSubject(null);
           }}
           tenantSubjectIds={assignSubject.tenantSubjectIds}
+          gradeLevelIds={[gradeId]}
           subjectName={assignSubject.name}
           onAssigned={() => {
             void refetch();

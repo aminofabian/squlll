@@ -1,31 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  BookOpen,
-  Calendar,
-  Clock,
-  FileText,
-  Filter,
-  Eye,
-  Search,
-  ArrowUpDown,
-  Plus,
   CheckCircle2,
+  ChevronRight,
+  FileText,
+  Plus,
+  Search,
 } from "lucide-react";
-import { DynamicLogo } from "../../parent/components/DynamicLogo";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -36,6 +19,37 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useTeacherAssignments } from "@/lib/teacher/useTeacherAssignments";
 import { CreateAssignmentDialog } from "./components/CreateAssignmentDialog";
+import { PageHeader } from "../components/ui/PageHeader";
+import { Panel } from "../components/ui/Panel";
+import { EmptyState, ListSkeleton } from "../components/ui/States";
+import { tp } from "../styles/portal";
+import { cn } from "@/lib/utils";
+
+type SortKey = "date" | "title" | "subject" | "grade";
+type StatusKey = "all" | "draft" | "published" | "completed";
+
+const STATUS_CHIPS: Array<{ id: StatusKey; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "draft", label: "Drafts" },
+  { id: "published", label: "Published" },
+  { id: "completed", label: "Completed" },
+];
+
+const STATUS_TONE: Record<string, string> = {
+  draft:
+    "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
+  published:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
+  completed: "bg-muted text-muted-foreground",
+};
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function AssignmentsPage() {
   const params = useParams();
@@ -47,39 +61,52 @@ export default function AssignmentsPage() {
         ? params.subdomain[0]
         : "";
 
-  // State management
   const { assignments, loading, error, refetch } = useTeacherAssignments();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState<string>("all");
-  const [selectedSubject, setSelectedSubject] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"date" | "title" | "subject" | "grade">(
-    "date",
-  );
+  const [selectedGrade, setSelectedGrade] = useState("all");
+  const [selectedSubject, setSelectedSubject] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState<StatusKey>("all");
+  const [sortBy, setSortBy] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [createOpen, setCreateOpen] = useState(false);
   const [createdNotice, setCreatedNotice] = useState<string | null>(null);
 
-  // Get unique values for filters
-  const uniqueGrades = Array.from(
-    new Set(
-      assignments.flatMap((assignment) =>
-        assignment.gradeLevels.map((gradeLevel) => gradeLevel.gradeLevel.name),
-      ),
-    ),
-  ).sort();
+  const uniqueGrades = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          assignments.flatMap((assignment) =>
+            assignment.gradeLevels.map((gradeLevel) => gradeLevel.gradeLevel.name),
+          ),
+        ),
+      ).sort(),
+    [assignments],
+  );
 
-  const uniqueSubjects = Array.from(
-    new Set(assignments.map((assignment) => assignment.subject.subject.name)),
-  ).sort();
+  const uniqueSubjects = useMemo(
+    () =>
+      Array.from(
+        new Set(assignments.map((assignment) => assignment.subject.subject.name)),
+      ).sort(),
+    [assignments],
+  );
 
-  // Filter assignments based on search and filters
+  const counts = useMemo(
+    () => ({
+      all: assignments.length,
+      draft: assignments.filter((a) => a.status === "draft").length,
+      published: assignments.filter((a) => a.status === "published").length,
+      completed: assignments.filter((a) => a.status === "completed").length,
+    }),
+    [assignments],
+  );
+
   const filteredAssignments = assignments.filter((assignment) => {
+    const needle = searchTerm.trim().toLowerCase();
     const matchesSearch =
-      assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      assignment.subject.subject.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      !needle ||
+      assignment.title.toLowerCase().includes(needle) ||
+      assignment.subject.subject.name.toLowerCase().includes(needle);
 
     const matchesGrade =
       selectedGrade === "all" ||
@@ -97,7 +124,6 @@ export default function AssignmentsPage() {
     return matchesSearch && matchesGrade && matchesSubject && matchesStatus;
   });
 
-  // Sort assignments
   const sortedAssignments = [...filteredAssignments].sort((a, b) => {
     let aValue: string | number;
     let bValue: string | number;
@@ -135,145 +161,71 @@ export default function AssignmentsPage() {
     return 0;
   });
 
-  const handleSort = (newSortBy: typeof sortBy) => {
-    if (sortBy === newSortBy) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(newSortBy);
-      setSortOrder("asc");
-    }
+  const hasFilters =
+    Boolean(searchTerm) ||
+    selectedGrade !== "all" ||
+    selectedSubject !== "all" ||
+    selectedStatus !== "all";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedGrade("all");
+    setSelectedSubject("all");
+    setSelectedStatus("all");
   };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "published":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "draft":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "completed":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-muted-foreground">Loading assignments...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Error Loading Assignments
-            </h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => void refetch()} variant="outline">
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-card/95 via-white/90 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
-        <div className="px-6 py-6 lg:px-10 lg:py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <BookOpen className="w-6 h-6 text-primary-foreground text-white" />
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                  Assignments & Tests
-                </h1>
-                <p className="text-sm text-muted-foreground/90 font-medium">
-                  Manage and review your assignments and tests
-                </p>
-              </div>
-            </div>
-
-            <Button
+    <div className={tp.page}>
+      <div className={tp.stack}>
+        <PageHeader
+          eyebrow="Coursework"
+          title="Assignments"
+          description="Tests and homework you've set, how far learners have got, and what still needs marking."
+          actions={
+            <button
+              type="button"
               onClick={() => setCreateOpen(true)}
-              className="shrink-0 bg-primary hover:bg-primary/90"
+              className="tp-focus tp-press inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-sm shadow-primary/25 transition-colors hover:bg-primary-dark"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="size-4" strokeWidth={2.2} />
               New assignment
-            </Button>
+            </button>
+          }
+        />
+
+        {createdNotice ? (
+          <div className="tp-fade flex items-start gap-2.5 rounded-xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3 text-[13px] text-emerald-900 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
+            <span className="flex-1 text-pretty">{createdNotice}</span>
+            <button
+              type="button"
+              className="tp-focus rounded-full px-1 text-[11px] font-semibold uppercase tracking-wide opacity-70 transition-opacity hover:opacity-100"
+              onClick={() => setCreatedNotice(null)}
+            >
+              Dismiss
+            </button>
           </div>
-        </div>
-      </div>
+        ) : null}
 
-      {/* Main Content */}
-      <div className="px-4 py-6 lg:px-8 lg:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="w-full flex justify-center py-6 mb-8">
-            <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
-          </div>
-
-          {createdNotice && (
-            <div className="mb-6 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-              <span className="flex-1">{createdNotice}</span>
-              <button
-                type="button"
-                className="text-xs font-medium underline"
-                onClick={() => setCreatedNotice(null)}
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          {/* Filters and Search */}
-          <Card className="mb-6 border-primary/20 shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Filter className="w-5 h-5 text-primary" />
-                Filter & Search
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search assignments..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 border-primary/20 focus:border-primary"
-                  />
-                </div>
+        <Panel padded={false} delay={1}>
+          <div className="flex flex-col gap-3 border-b border-border/70 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                <Input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search by title or subject"
+                  className={cn(tp.inputSoft, "pl-9")}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto">
                 <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                  <SelectTrigger className="border-primary/20 focus:border-primary">
-                    <SelectValue placeholder="All Grades" />
+                  <SelectTrigger className="h-10 w-full rounded-xl border-border/80 bg-card text-[13px]">
+                    <SelectValue placeholder="All classes" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Grades</SelectItem>
+                    <SelectItem value="all">All classes</SelectItem>
                     {uniqueGrades.map((grade) => (
                       <SelectItem key={grade} value={grade}>
                         {grade}
@@ -281,15 +233,12 @@ export default function AssignmentsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select
-                  value={selectedSubject}
-                  onValueChange={setSelectedSubject}
-                >
-                  <SelectTrigger className="border-primary/20 focus:border-primary">
-                    <SelectValue placeholder="All Subjects" />
+                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                  <SelectTrigger className="h-10 w-full rounded-xl border-border/80 bg-card text-[13px]">
+                    <SelectValue placeholder="All subjects" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Subjects</SelectItem>
+                    <SelectItem value="all">All subjects</SelectItem>
                     {uniqueSubjects.map((subject) => (
                       <SelectItem key={subject} value={subject}>
                         {subject}
@@ -298,246 +247,169 @@ export default function AssignmentsPage() {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={selectedStatus}
-                  onValueChange={setSelectedStatus}
+                  value={`${sortBy}:${sortOrder}`}
+                  onValueChange={(value) => {
+                    const [key, order] = value.split(":");
+                    setSortBy(key as SortKey);
+                    setSortOrder(order as "asc" | "desc");
+                  }}
                 >
-                  <SelectTrigger className="border-primary/20 focus:border-primary">
-                    <SelectValue placeholder="All Status" />
+                  <SelectTrigger className="col-span-2 h-10 w-full rounded-xl border-border/80 bg-card text-[13px] sm:col-span-1">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="date:desc">Newest first</SelectItem>
+                    <SelectItem value="date:asc">Oldest first</SelectItem>
+                    <SelectItem value="title:asc">Title A–Z</SelectItem>
+                    <SelectItem value="subject:asc">Subject</SelectItem>
+                    <SelectItem value="grade:asc">Class</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setSelectedGrade("all");
-                      setSelectedSubject("all");
-                      setSelectedStatus("all");
-                    }}
-                    className="border-primary/20 hover:bg-primary/5"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Assignments Table */}
-          <Card className="border-primary/20 shadow-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-foreground">
-                  Assignments ({sortedAssignments.length})
-                </CardTitle>
-                <div className="text-sm text-muted-foreground">
-                  Sorted by {sortBy} (
-                  {sortOrder === "asc" ? "ascending" : "descending"})
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-primary/20 hover:bg-primary/5">
-                      <TableHead
-                        className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort("title")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Title
-                          <ArrowUpDown className="w-4 h-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort("subject")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Subject
-                          <ArrowUpDown className="w-4 h-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort("grade")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Grades
-                          <ArrowUpDown className="w-4 h-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort("date")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Date
-                          <ArrowUpDown className="w-4 h-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Total Marks</TableHead>
-                      <TableHead>Submissions</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Questions</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedAssignments.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8">
-                          <div className="flex flex-col items-center gap-2">
-                            <FileText className="w-12 h-12 text-muted-foreground/50" />
-                            <p className="text-muted-foreground">
-                              No assignments found
-                            </p>
-                            <p className="text-sm text-muted-foreground/70">
-                              {assignments.length === 0
-                                ? "Create your first assignment to get started"
-                                : "Try adjusting your filters"}
-                            </p>
-                            {assignments.length === 0 && (
-                              <Button
-                                size="sm"
-                                className="mt-2 bg-primary hover:bg-primary/90"
-                                onClick={() => setCreateOpen(true)}
-                              >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create assignment
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      sortedAssignments.map((assignment) => (
-                        <TableRow
-                          key={assignment.id}
-                          className="border-primary/10 hover:bg-primary/5 transition-colors"
-                        >
-                          <TableCell className="font-medium">
-                            <div className="space-y-1">
-                              <button
-                                onClick={() =>
-                                  router.push(`assignments/${assignment.id}`)
-                                }
-                                className="font-semibold text-foreground hover:text-primary transition-colors text-left"
-                              >
-                                {assignment.title}
-                              </button>
-                              <div className="text-xs text-muted-foreground">
-                                {assignment.questions.length} questions •{" "}
-                                {assignment.totalMarks} marks
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="secondary"
-                              className="bg-primary/10 text-primary border-primary/20"
-                            >
-                              {assignment.subject.subject.name}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {assignment.gradeLevels.map((gradeLevel) => (
-                                <Badge
-                                  key={gradeLevel.id}
-                                  variant="outline"
-                                  className="text-xs border-primary/30 text-primary"
-                                >
-                                  {gradeLevel.gradeLevel.name}
-                                </Badge>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Calendar className="w-4 h-4 text-muted-foreground" />
-                              {formatDate(assignment.date)}
-                              {assignment.startTime && (
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="w-3 h-3" />
-                                  {assignment.startTime}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Clock className="w-4 h-4 text-muted-foreground" />
-                              {assignment.duration} min
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm font-medium">
-                              {assignment.totalMarks} pts
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <span className="font-medium text-foreground">
-                                {assignment.submissionCount}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {' '}
-                                submitted
-                              </span>
-                              {assignment.submissionCount > 0 ? (
-                                <div className="text-xs text-muted-foreground">
-                                  {assignment.gradedCount} graded
-                                </div>
-                              ) : null}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`${getStatusBadgeColor(assignment.status)} border`}
-                            >
-                              {assignment.status.charAt(0).toUpperCase() +
-                                assignment.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-muted-foreground">
-                              {assignment.questions.length} questions
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hover:bg-primary/10"
-                                onClick={() => {
-                                  router.push(`assignments/${assignment.id}`);
-                                }}
-                                title="View Assignment"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
+            <div className="flex flex-wrap items-center gap-1.5">
+              {STATUS_CHIPS.map((chip) => {
+                const active = selectedStatus === chip.id;
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => setSelectedStatus(chip.id)}
+                    aria-pressed={active}
+                    className={cn(
+                      "tp-focus inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors",
+                      active
+                        ? "bg-primary/[0.08] text-primary"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  >
+                    {chip.label}
+                    <span className="tp-num text-[11px] opacity-70">
+                      {counts[chip.id]}
+                    </span>
+                  </button>
+                );
+              })}
+              {hasFilters ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="tp-focus ml-auto rounded-full px-2 py-1 text-[11.5px] font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="p-5 sm:p-6">
+              <ListSkeleton rows={4} />
+            </div>
+          ) : error ? (
+            <EmptyState
+              icon={FileText}
+              title="Assignments didn't load"
+              description={error}
+              action={
+                <button
+                  type="button"
+                  onClick={() => void refetch()}
+                  className="tp-focus inline-flex h-9 items-center rounded-full border border-border/80 px-4 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-muted/50"
+                >
+                  Try again
+                </button>
+              }
+            />
+          ) : sortedAssignments.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title={assignments.length === 0 ? "Nothing set yet" : "No matches"}
+              description={
+                assignments.length === 0
+                  ? "Create your first assignment and it will appear here with learner progress."
+                  : "Try a different search, or clear the filters to see everything."
+              }
+              action={
+                assignments.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setCreateOpen(true)}
+                    className="tp-focus inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-[12.5px] font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
+                  >
+                    <Plus className="size-3.5" />
+                    Create assignment
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="tp-focus inline-flex h-9 items-center rounded-full border border-border/80 px-4 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-muted/50"
+                  >
+                    Clear filters
+                  </button>
+                )
+              }
+            />
+          ) : (
+            <ul className="divide-y divide-border/70">
+              {sortedAssignments.map((assignment) => {
+                const classNames = assignment.gradeLevels
+                  .map((gradeLevel) => gradeLevel.gradeLevel.name)
+                  .join(", ");
+                return (
+                  <li key={assignment.id}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`assignments/${assignment.id}`)}
+                      className="tp-focus group flex w-full items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-muted/30 sm:px-5"
+                    >
+                      <span className="hidden size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-muted/40 text-muted-foreground transition-colors group-hover:border-primary/25 group-hover:text-primary sm:flex">
+                        <FileText className="size-4" strokeWidth={1.7} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[14px] font-semibold text-foreground">
+                          {assignment.title}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                          {assignment.subject.subject.name}
+                          {classNames ? ` · ${classNames}` : ""} ·{" "}
+                          {assignment.questions.length} questions ·{" "}
+                          {assignment.totalMarks} marks
+                        </span>
+                      </span>
+                      <span className="hidden shrink-0 text-right md:block">
+                        <span className="block text-[12.5px] font-medium text-foreground">
+                          {formatDate(assignment.date)}
+                        </span>
+                        <span className="tp-num mt-0.5 block text-[11px] text-muted-foreground">
+                          {assignment.submissionCount} submitted
+                          {assignment.gradedCount > 0
+                            ? ` · ${assignment.gradedCount} graded`
+                            : ""}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-semibold capitalize",
+                          STATUS_TONE[assignment.status] ?? "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {assignment.status}
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground/40 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
+
+        <p className="text-[11.5px] text-muted-foreground/70">
+          Showing {sortedAssignments.length} of {assignments.length} assignments.
+        </p>
       </div>
 
       <CreateAssignmentDialog
@@ -546,10 +418,9 @@ export default function AssignmentsPage() {
         subdomain={subdomain}
         onCreated={(created) => {
           setCreatedNotice(
-            created.title +
-              " was created and published to " +
-              created.classCount +
-              (created.classCount === 1 ? " class." : " classes."),
+            `${created.title} is live in ${created.classCount} ${
+              created.classCount === 1 ? "class" : "classes"
+            }.`,
           );
           void refetch();
         }}

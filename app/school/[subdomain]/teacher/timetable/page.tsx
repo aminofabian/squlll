@@ -296,22 +296,26 @@ const TeacherTimetable = () => {
   if (core.error) {
     const isNoTermError = core.error === "No term selected";
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-            {isNoTermError ? "No Term Selected" : "Error Loading Timetable"}
+      <div className="mx-auto flex min-h-[60vh] max-w-xl items-center justify-center px-5">
+        <div className="tp-reveal w-full rounded-2xl border border-border/90 bg-card px-6 py-12 text-center shadow-[0_1px_2px_rgba(20,32,28,0.04)]">
+          <span className="mx-auto flex size-11 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-muted-foreground">
+            <BookOpen className="size-5" strokeWidth={1.6} />
+          </span>
+          <h2 className="mt-4 font-display text-[1.5rem] leading-tight text-foreground">
+            {isNoTermError ? "No term selected" : "Timetable didn't load"}
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">
+          <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
             {isNoTermError
-              ? "Please select a term from the dropdown to view your timetable."
+              ? "Pick a term from the selector to see your teaching week."
               : core.error}
           </p>
           {!isNoTermError && (
             <button
+              type="button"
               onClick={() => refetch()}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              className="tp-focus mt-5 inline-flex h-9 items-center rounded-full border border-border/80 px-4 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-muted/50"
             >
-              Try Again
+              Try again
             </button>
           )}
         </div>
@@ -320,16 +324,16 @@ const TeacherTimetable = () => {
   }
 
   const emptyLessons = (
-    <div className="rounded-xl border border-[#e3e7e1] bg-white px-6 py-10 text-center dark:border-white/10 dark:bg-white/[0.03]">
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-[#111a17] text-white">
-        <BookOpen className="h-5 w-5" />
+    <div className="rounded-2xl border border-border/80 bg-card px-6 py-12 text-center">
+      <div className="mx-auto flex size-11 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-muted-foreground">
+        <BookOpen className="size-5" strokeWidth={1.6} />
       </div>
-      <p className="mt-4 text-[18px] font-bold text-[#111a16] dark:text-white">
+      <p className="mt-4 font-display text-[1.45rem] leading-tight text-foreground">
         No lessons for {selectedTerm?.name || "this term"}
       </p>
-      <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[#4a5751] dark:text-white/65">
-        Ask your administrator to add you to the school timetable, or check that
-        the correct term is selected.
+      <p className="mx-auto mt-2 max-w-md text-[12.5px] leading-relaxed text-muted-foreground">
+        Ask your administrator to add you to the school timetable, or check that the
+        correct term is selected.
       </p>
     </div>
   );
@@ -376,11 +380,8 @@ const TeacherTimetable = () => {
         }}
         onCreated={() => void refetch()}
       />
-      <div
-        className="min-h-screen overflow-x-hidden bg-[#eef0eb] dark:bg-[#0a110e]"
-        data-timetable-no-print
-      >
-      <div className="mx-auto w-full max-w-[1440px] lg:px-6 lg:py-5">
+      <div className="overflow-x-hidden" data-timetable-no-print>
+      <div className="mx-auto w-full max-w-[1440px]">
         <div className="lg:hidden">
           <WeekMobileView
             viewType="teacher"

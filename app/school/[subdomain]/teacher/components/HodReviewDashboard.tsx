@@ -9,7 +9,6 @@ import {
   CheckCircle,
   XCircle,
   ClipboardCheck,
-  ArrowRight,
   CalendarDays,
   History,
 } from "lucide-react";
@@ -18,7 +17,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Panel } from "./ui/Panel";
+import { EmptyState, ListSkeleton } from "./ui/States";
+import { tp } from "../styles/portal";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -162,86 +164,79 @@ export default function HodReviewDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 py-8 px-2 md:px-8 transition-colors">
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className={tp.page}>
+      <div className={tp.stack}>
+        <header className="tp-reveal flex flex-col gap-5">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-primary drop-shadow-sm">
-              HOD Review
+            <p className={tp.eyebrow}>Department</p>
+            <h1 className="mt-2 font-display text-[2.1rem] leading-[1.04] tracking-[-0.015em] text-foreground sm:text-[2.55rem]">
+              HOD review
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Review and approve marks for papers in your department.
+            <p className={tp.lede}>
+              Read the marks your department sent up, then approve or send them back with a note.
             </p>
           </div>
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               type="text"
-              placeholder="Search subject, class or session..."
+              placeholder="Search subject, class or session"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className={cn(tp.inputSoft, 'pl-9')}
             />
           </div>
-        </div>
+        </header>
 
         {/* Loading */}
         {isLoading && (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-3 text-muted-foreground">Loading submissions...</span>
-          </div>
+          <Panel className="space-y-3">
+            <ListSkeleton rows={4} />
+          </Panel>
         )}
 
         {/* Not HOD */}
         {!isLoading && !isHod && (
-          <Card className="rounded-2xl shadow-lg border border-border">
-            <CardContent className="py-16 text-center">
-              <ClipboardCheck className="w-12 h-12 mx-auto text-primary/40 mb-4" />
-              <p className="text-lg font-medium text-foreground">Not assigned as HOD</p>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                You are not listed as Head of Department for any subject. Contact your school admin
-                to update your HOD assignments.
-              </p>
-            </CardContent>
-          </Card>
+          <Panel>
+            <EmptyState
+              icon={ClipboardCheck}
+              title="Not assigned as HOD"
+              description="You're not listed as Head of Department for any subject. Ask your school admin to update your HOD subjects."
+            />
+          </Panel>
         )}
 
         {/* Empty */}
         {!isLoading && isHod && submissions.length === 0 && (
-          <Card className="rounded-2xl shadow-lg border border-border">
-            <CardContent className="py-16 text-center">
-              <CheckCircle className="w-12 h-12 mx-auto text-green-500/60 mb-4" />
-              <p className="text-lg font-medium text-foreground">No papers pending review</p>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Teachers have not submitted any marks for your department yet.
-              </p>
-            </CardContent>
-          </Card>
+          <Panel>
+            <EmptyState
+              icon={CheckCircle}
+              title="Nothing waiting on you"
+              description="No marks have been submitted by your department yet. You'll see them here as soon as they are."
+            />
+          </Panel>
         )}
 
         {/* Submissions table */}
         {!isLoading && isHod && submissions.length > 0 && (
-          <Card className="rounded-2xl shadow-lg border border-border overflow-hidden">
-            <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4">
-              <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
-                <ClipboardCheck className="w-5 h-5" />
-                Pending Submissions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+          <Panel padded={false}>
+            <div className="flex items-center justify-between border-b border-border/70 px-5 py-4">
+              <h2 className="text-[13px] font-semibold text-foreground">Pending submissions</h2>
+              <span className="text-[11.5px] text-muted-foreground">
+                {filteredSubmissions.length} to review
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-muted-foreground bg-muted/30">
-                      <th className="text-left font-semibold px-6 py-3">Subject</th>
-                      <th className="text-left font-semibold px-6 py-3">Class</th>
-                      <th className="text-left font-semibold px-6 py-3">Session</th>
-                      <th className="text-left font-semibold px-6 py-3">Submitted</th>
-                      <th className="text-left font-semibold px-6 py-3">Status</th>
-                      <th className="text-left font-semibold px-6 py-3">Notes</th>
-                      <th className="px-6 py-3"></th>
+                    <tr className="border-b border-border/70 bg-muted/25 text-left text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground">
+                      <th className="px-5 py-2.5 font-semibold sm:px-6">Subject</th>
+                      <th className="px-5 py-2.5 font-semibold sm:px-6">Class</th>
+                      <th className="px-5 py-2.5 font-semibold sm:px-6">Session</th>
+                      <th className="px-5 py-2.5 font-semibold sm:px-6">Submitted</th>
+                      <th className="px-5 py-2.5 font-semibold sm:px-6">Status</th>
+                      <th className="px-5 py-2.5 font-semibold sm:px-6">Notes</th>
+                      <th className="px-5 py-2.5 sm:px-6"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -299,8 +294,7 @@ export default function HodReviewDashboard() {
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+          </Panel>
         )}
       </div>
 

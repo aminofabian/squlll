@@ -117,13 +117,13 @@ export default function ExamsMarksComponent(_props: ExamsMarksComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5 py-8 px-2 md:px-8 transition-colors">
-      <div className="max-w-5xl mx-auto flex flex-col gap-8">
+    <div>
+      <div className="mx-auto flex max-w-5xl flex-col gap-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-          <h1 className="text-3xl font-extrabold tracking-tight text-primary drop-shadow-sm">
-            Assigned Exams
-          </h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Assigned exams
+          </h2>
         </div>
 
         {/* Loading */}
@@ -136,8 +136,10 @@ export default function ExamsMarksComponent(_props: ExamsMarksComponentProps) {
 
         {/* Exams List */}
         {!isLoadingAssessments && (
-          <div className="bg-card rounded-2xl shadow-lg p-8 border border-border">
-            <h2 className="text-xl font-bold mb-6 text-primary">Current Term Exams</h2>
+          <div className="rounded-2xl border border-border/90 bg-card p-6 sm:p-8">
+            <h3 className="mb-6 font-display text-[1.35rem] leading-tight text-foreground">
+              Current term exams
+            </h3>
             {assessments.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p className="text-lg font-medium">No assessments found</p>

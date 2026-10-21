@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTeacherData } from '@/lib/hooks/useTeacherData';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Panel } from '../components/ui/Panel';
+import { EmptyState } from '../components/ui/States';
+import { tp } from '../styles/portal';
+import { cn } from '@/lib/utils';
 
 function Initials({ name }: { name: string }) {
   const initials = name
@@ -15,7 +20,7 @@ function Initials({ name }: { name: string }) {
     .map((part) => part[0]?.toUpperCase())
     .join('');
   return (
-    <span className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+    <span className="flex size-14 items-center justify-center rounded-full border border-primary/15 bg-primary/[0.07] font-display text-[1.35rem] text-primary">
       {initials || '?'}
     </span>
   );
@@ -31,14 +36,14 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card shadow-sm">
-      <header className="border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">{title}</h2>
+    <section className={tp.card}>
+      <header className="border-b border-border/70 px-5 py-4">
+        <h2 className="text-[13px] font-semibold text-foreground">{title}</h2>
         {description && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{description}</p>
         )}
       </header>
-      <div className="px-4 py-4">{children}</div>
+      <div className="px-5 py-5">{children}</div>
     </section>
   );
 }
@@ -111,50 +116,57 @@ export default function TeacherProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      <div className={tp.page}>
+        <div className="tp-reveal mx-auto max-w-3xl space-y-4">
+          <div className="tp-skeleton h-8 w-40 rounded-lg" />
+          <div className="tp-skeleton h-28 w-full rounded-2xl" />
+          <div className="tp-skeleton h-44 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   if (!teacher) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <div className="rounded-2xl border border-border bg-card p-6 text-center">
-          <AlertCircle className="mx-auto size-5 text-rose-500" />
-          <h1 className="mt-2 text-base font-semibold">Profile unavailable</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {error ?? 'Your teacher profile could not be loaded.'}
-          </p>
-        </div>
+      <div className={tp.page}>
+        <Panel className="mx-auto max-w-xl">
+          <EmptyState
+            icon={AlertCircle}
+            title="Profile unavailable"
+            description={error ?? 'Your teacher profile could not be loaded.'}
+            compact
+          />
+        </Panel>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-5 lg:px-0 lg:py-0">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Profile
-        </p>
-        <h1 className="mt-0.5 text-xl font-semibold tracking-tight">
-          {teacher.fullName}
-        </h1>
-      </header>
+    <div className={tp.page}>
+      <div className={tp.stack}>
+        <PageHeader
+          eyebrow="Profile"
+          title={teacher.fullName}
+          description="Your account, what you teach, and the classes you look after."
+        />
 
-      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center">
+      <section className={cn(tp.card, 'flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-7')}>
         <Initials name={teacher.fullName} />
-        <div className="min-w-0">
-          <p className="text-base font-semibold">{teacher.fullName}</p>
-          <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-[1.4rem] leading-tight tracking-[-0.01em] text-foreground">
+            {teacher.fullName}
+          </p>
+          <p className="mt-1 flex items-center gap-1.5 text-[13px] text-muted-foreground">
             <Mail className="size-3.5" />
             {teacher.email}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Ask your school administrator to change your name, email or class
-            assignments.
+          <p className="mt-2 max-w-md text-[12px] leading-relaxed text-muted-foreground/85">
+            Ask your school administrator to change your name, email, or class assignments.
           </p>
         </div>
+        <span className="hidden rounded-full border border-border/70 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:inline">
+          Teacher
+        </span>
       </section>
 
       <Card
@@ -170,11 +182,11 @@ export default function TeacherProfilePage() {
             {subjects.length === 0 ? (
               <p className="mt-1 text-sm text-muted-foreground">None assigned</p>
             ) : (
-              <ul className="mt-1.5 flex flex-wrap gap-1.5">
+              <ul className="mt-2 flex flex-wrap gap-1.5">
                 {subjects.map((subject) => (
                   <li
                     key={subject.id}
-                    className="rounded-full border border-border px-2.5 py-0.5 text-xs"
+                    className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[11.5px] text-foreground"
                   >
                     {subject.name}
                   </li>
@@ -190,11 +202,11 @@ export default function TeacherProfilePage() {
             {grades.length === 0 ? (
               <p className="mt-1 text-sm text-muted-foreground">None assigned</p>
             ) : (
-              <ul className="mt-1.5 flex flex-wrap gap-1.5">
+              <ul className="mt-2 flex flex-wrap gap-1.5">
                 {grades.map((grade) => (
                   <li
                     key={grade.id}
-                    className="rounded-full border border-border px-2.5 py-0.5 text-xs"
+                    className="rounded-full border border-primary/15 bg-primary/[0.06] px-2.5 py-1 text-[11.5px] text-primary"
                   >
                     {grade.name}
                   </li>
@@ -209,12 +221,15 @@ export default function TeacherProfilePage() {
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Class teacher
             </p>
-            <ul className="mt-1.5 space-y-1 text-sm">
+            <ul className="mt-2 flex flex-wrap gap-1.5">
               {classAssignments.map((assignment) => (
-                <li key={assignment.id}>
+                <li
+                  key={assignment.id}
+                  className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[11.5px] text-foreground"
+                >
                   {assignment.gradeLevel?.gradeLevel?.name ?? 'Class'}
                   {assignment.stream?.stream?.name
-                    ? ` ${assignment.stream.stream.name}`
+                    ? ` · ${assignment.stream.stream.name}`
                     : ''}
                 </li>
               ))}
@@ -279,12 +294,18 @@ export default function TeacherProfilePage() {
             </p>
           )}
 
-          <Button type="submit" size="sm" disabled={saving}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={saving}
+            className="h-10 rounded-full px-5 text-[13px] font-semibold"
+          >
             {saving && <Loader2 className="mr-2 size-3.5 animate-spin" />}
             Change password
           </Button>
         </form>
       </Card>
+      </div>
     </div>
   );
 }

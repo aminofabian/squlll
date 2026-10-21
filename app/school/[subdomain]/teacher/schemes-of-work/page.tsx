@@ -2,8 +2,12 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { AlertCircle, BookMarked, Loader2, Plus } from 'lucide-react'
+import { AlertCircle, BookMarked, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '../components/ui/PageHeader'
+import { Panel } from '../components/ui/Panel'
+import { tp } from '../styles/portal'
+import { cn } from '@/lib/utils'
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm'
 import {
   fetchMyLessonWeek,
@@ -71,57 +75,56 @@ export default function SchemesOfWorkPage() {
   )
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-5 lg:px-0 lg:py-0">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {selectedTerm?.name ?? 'Term'}
-          </p>
-          <h1 className="mt-0.5 text-xl font-semibold tracking-tight">
-            Schemes of work
-          </h1>
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            The term roadmap for each class and learning area. Topics here feed
-            straight into lesson plans.
-          </p>
-        </div>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
-          <Plus className="size-4" />
-          New scheme
-        </Button>
-      </header>
+    <div className={tp.page}>
+      <div className={tp.stack}>
+      <PageHeader
+        eyebrow={selectedTerm?.name ?? 'Term'}
+        title="Schemes of work"
+        description="The term roadmap for each class and learning area. Topics here feed straight into lesson plans."
+        actions={
+          <Button
+            size="sm"
+            onClick={() => setDialogOpen(true)}
+            className="h-10 gap-2 rounded-full px-5 text-[13px] font-semibold shadow-sm shadow-primary/20"
+          >
+            <Plus className="size-4" />
+            New scheme
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Schemes
-          </p>
-          <p className="mt-1 text-2xl font-semibold">{schemes.length}</p>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Planned lessons
-          </p>
-          <p className="mt-1 text-2xl font-semibold">{totals.planned}</p>
-        </div>
-        <div className="col-span-2 rounded-2xl border border-border bg-card p-4 sm:col-span-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Delivered
-          </p>
-          <p className="mt-1 text-2xl font-semibold">{totals.delivered}</p>
-        </div>
-      </div>
+      <Panel padded={false} delay={1} className="grid grid-cols-3 divide-x divide-border/70">
+        {[
+          { label: 'Schemes', value: schemes.length },
+          { label: 'Planned', value: totals.planned },
+          { label: 'Delivered', value: totals.delivered },
+        ].map((stat) => (
+          <div key={stat.label} className="px-5 py-5 sm:px-6">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
+              {stat.label}
+            </p>
+            <p className="mt-2 font-display text-[1.9rem] leading-none tracking-[-0.02em] text-foreground">
+              {stat.value}
+            </p>
+            <p className="mt-1.5 text-[11.5px] text-muted-foreground/85">
+              {stat.label === 'Schemes' ? 'This term' : stat.label === 'Planned' ? 'Lessons mapped' : 'Marked done'}
+            </p>
+          </div>
+        ))}
+      </Panel>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+        <div className="flex items-start gap-2 rounded-xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-[13px] text-rose-700 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-300">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-border bg-card py-16">
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        <div className={cn(tp.card, 'space-y-3 p-5')}>
+          <div className="tp-skeleton h-4 w-1/3 rounded-full" />
+          <div className="tp-skeleton h-16 w-full rounded-xl" />
+          <div className="tp-skeleton h-16 w-full rounded-xl" />
         </div>
       ) : (
         <SchemesPanel
@@ -132,10 +135,12 @@ export default function SchemesOfWorkPage() {
         />
       )}
 
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-4 text-xs text-muted-foreground">
-        <BookMarked className="size-4" />
-        A scheme is the term roadmap; a lesson plan is one lesson; a lesson record
-        is what actually happened. They stay linked but separate.
+      <div className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/25 p-4 text-[12px] leading-relaxed text-muted-foreground">
+        <BookMarked className="mt-0.5 size-4 shrink-0 text-primary/70" />
+        <p>
+          A scheme is the term roadmap. A lesson plan is one lesson. A lesson record is
+          what actually happened. They stay linked but separate.
+        </p>
       </div>
 
       {termId && (
@@ -147,6 +152,7 @@ export default function SchemesOfWorkPage() {
           periods={periods}
         />
       )}
+      </div>
     </div>
   )
 }

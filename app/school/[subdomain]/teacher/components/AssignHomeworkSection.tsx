@@ -522,13 +522,13 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
   const renderAssignmentSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Assign Homework</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Assign Homework</h2>
         <p className="text-muted-foreground">Select existing assignments or create new ones</p>
       </div>
 
       {/* Newly Created Test Highlight */}
       {newlyCreatedTest && (
-        <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-4 mb-6">
+        <div className="mb-6 rounded-xl border border-border/70 bg-muted/35 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
@@ -579,7 +579,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <button
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-primary to-primary/90 text-white rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="flex items-center justify-center gap-3 rounded-full bg-primary px-6 py-3.5 text-[13px] font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-colors hover:bg-primary-dark"
         >
           <Upload className="w-5 h-5" />
           <span className="font-semibold">Upload Assignment</span>
@@ -587,7 +587,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
         
         <button
           onClick={onCreateTest}
-          className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="flex items-center justify-center gap-3 rounded-full border border-border/80 bg-card px-6 py-3.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted/50"
         >
           <Plus className="w-5 h-5" />
           <span className="font-semibold">Create New Assignment</span>
@@ -995,7 +995,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
   const renderRecipientSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Select Recipients</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Select Recipients</h2>
         <p className="text-muted-foreground">Choose who to assign the homework to</p>
       </div>
 
@@ -1167,7 +1167,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
   const renderPreview = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Preview Assignment</h2>
+        <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Preview Assignment</h2>
         <p className="text-muted-foreground">Review your homework assignment before sending</p>
       </div>
 
@@ -1274,7 +1274,7 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
           <CheckCircle2 className="w-8 h-8 text-green-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Homework Assigned Successfully!</h2>
+          <h2 className="mb-2 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">Homework Assigned Successfully!</h2>
           <p className="text-muted-foreground">
             Your {selectedAssignments.length} assignment{selectedAssignments.length !== 1 ? 's' : ''} have been assigned to {selectedRecipients.length} recipient{selectedRecipients.length !== 1 ? 's' : ''}.
           </p>

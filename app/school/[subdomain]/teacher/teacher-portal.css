@@ -1,0 +1,133 @@
+/* Teacher portal — restrained motion, paper surfaces, quiet details. */
+
+@keyframes tp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tp-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.tp-reveal {
+  animation: tp-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--tp-delay, 0) * 45ms);
+}
+
+.tp-fade {
+  animation: tp-fade 0.4s ease-out both;
+  animation-delay: calc(var(--tp-delay, 0) * 45ms);
+}
+
+.tp-lift {
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.tp-lift:hover {
+  transform: translateY(-2px);
+}
+
+.tp-lift:active {
+  transform: translateY(0);
+}
+
+.tp-press:active {
+  transform: scale(0.985);
+}
+
+.tp-focus {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tp-focus:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--primary) 65%, white);
+  outline-offset: 2px;
+}
+
+.tp-skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted) 92%, white) 25%,
+    color-mix(in oklab, var(--muted) 60%, white) 37%,
+    color-mix(in oklab, var(--muted) 92%, white) 63%
+  );
+  background-size: 200% 100%;
+  animation: tp-shimmer 1.7s ease-in-out infinite;
+}
+
+.tp-rule {
+  border-color: color-mix(in oklab, var(--primary) 12%, transparent);
+}
+
+.tp-num {
+  font-family: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.tp-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--primary) 22%, transparent) transparent;
+}
+
+.tp-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tp-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 20%, transparent);
+}
+
+.tp-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tp-grid-lines {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--primary) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--primary) 4%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-reveal,
+  .tp-fade,
+  .tp-skeleton {
+    animation: none;
+  }
+
+  .tp-lift,
+  .tp-lift:hover,
+  .tp-lift:active,
+  .tp-press:active {
+    transform: none;
+    transition: none;
+  }
+}

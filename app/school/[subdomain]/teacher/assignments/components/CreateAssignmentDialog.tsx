@@ -38,7 +38,8 @@ export function CreateAssignmentDialog({
   subdomain: string
   onCreated: (created: { id: string; title: string; classCount: number }) => void
 }) {
-  const { teacher, loading: teacherLoading } = useTeacherData()
+  const { teacher, loading: teacherLoading, getFormattedGradeLevels } =
+    useTeacherData()
 
   const subjects = useMemo(
     () =>
@@ -52,10 +53,11 @@ export function CreateAssignmentDialog({
 
   const grades = useMemo(
     () =>
-      (teacher?.tenantGradeLevels ?? []).map((item) => ({
+      getFormattedGradeLevels().map((item) => ({
         id: item.id,
-        name: item.gradeLevel?.name || item.shortName || 'Class',
+        name: item.name || item.shortName || 'Class',
       })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [teacher],
   )
 
@@ -161,24 +163,28 @@ export function CreateAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>New assignment</DialogTitle>
-          <DialogDescription>
-            Published to the classes you pick. Learners see it in their portal
-            straight away.
+      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-2xl sm:max-w-lg">
+        <DialogHeader className="space-y-1.5">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-primary/75">
+            Coursework
+          </p>
+          <DialogTitle className="font-display text-[1.55rem] leading-tight tracking-[-0.01em]">
+            New assignment
+          </DialogTitle>
+          <DialogDescription className="text-[12.5px] leading-relaxed">
+            Published to the classes you pick. Learners see it in their portal straight away.
           </DialogDescription>
         </DialogHeader>
 
         {noAssignments ? (
-          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-4 text-[12.5px] leading-relaxed text-muted-foreground">
             You have no learning areas or classes assigned yet. Ask an
             administrator to assign them before creating assignments.
           </p>
         ) : (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="assignment-title" className="text-xs">
+              <Label htmlFor="assignment-title" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 Title
               </Label>
               <Input
@@ -186,13 +192,14 @@ export function CreateAssignmentDialog({
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="e.g. Fractions practice — exercise 4"
+                className="h-10 rounded-xl border-border/80 text-[13px]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Learning area</Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Learning area</Label>
               <select
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                className="h-10 w-full rounded-xl border border-border/80 bg-card px-3 text-[13px] text-foreground"
                 value={subjectId}
                 onChange={(event) => setSubjectId(event.target.value)}
               >
@@ -206,8 +213,8 @@ export function CreateAssignmentDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">
-                Classes <span className="text-muted-foreground">({gradeIds.length} selected)</span>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                Classes <span className="normal-case tracking-normal text-muted-foreground/70">({gradeIds.length} selected)</span>
               </Label>
               {grades.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No classes assigned.</p>
@@ -249,7 +256,7 @@ export function CreateAssignmentDialog({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="assignment-date" className="text-xs">
+                <Label htmlFor="assignment-date" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Due date
                 </Label>
                 <Input
@@ -257,10 +264,11 @@ export function CreateAssignmentDialog({
                   type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.target.value)}
+                  className="h-10 rounded-xl border-border/80 text-[13px]"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="assignment-time" className="text-xs">
+                <Label htmlFor="assignment-time" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Time
                 </Label>
                 <Input
@@ -268,10 +276,11 @@ export function CreateAssignmentDialog({
                   type="time"
                   value={startTime}
                   onChange={(event) => setStartTime(event.target.value)}
+                  className="h-10 rounded-xl border-border/80 text-[13px]"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="assignment-duration" className="text-xs">
+                <Label htmlFor="assignment-duration" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Duration (minutes)
                 </Label>
                 <Input
@@ -281,10 +290,11 @@ export function CreateAssignmentDialog({
                   max={480}
                   value={duration}
                   onChange={(event) => setDuration(event.target.value)}
+                  className="h-10 rounded-xl border-border/80 text-[13px]"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="assignment-marks" className="text-xs">
+                <Label htmlFor="assignment-marks" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Total marks
                 </Label>
                 <Input
@@ -294,12 +304,13 @@ export function CreateAssignmentDialog({
                   max={1000}
                   value={totalMarks}
                   onChange={(event) => setTotalMarks(event.target.value)}
+                  className="h-10 rounded-xl border-border/80 text-[13px]"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="assignment-instructions" className="text-xs">
+              <Label htmlFor="assignment-instructions" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 Instructions
               </Label>
               <Textarea
@@ -308,6 +319,7 @@ export function CreateAssignmentDialog({
                 value={instructions}
                 onChange={(event) => setInstructions(event.target.value)}
                 placeholder="What learners should do, page numbers, submission notes…"
+                className="rounded-xl border-border/80 text-[13px]"
               />
             </div>
 
@@ -320,13 +332,18 @@ export function CreateAssignmentDialog({
           </div>
         )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2 border-t border-border/70 pt-4 sm:justify-end">
+          <Button
+            variant="ghost"
+            className="h-10 rounded-full px-4 text-[13px] font-semibold text-muted-foreground"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleCreate}
             disabled={saving || noAssignments || teacherLoading}
+            className="h-10 rounded-full px-5 text-[13px] font-semibold shadow-sm shadow-primary/20"
           >
             {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
             Create assignment

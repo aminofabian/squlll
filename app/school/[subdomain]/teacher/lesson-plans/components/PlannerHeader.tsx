@@ -16,14 +16,16 @@ export function PlannerHeader({
   onToday: () => void
 }) {
   return (
-    <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <header className="tp-reveal flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p suppressHydrationWarning className="text-xs text-muted-foreground">
+        <p suppressHydrationWarning className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/75">
           {getGreeting(new Date())}
           {termName ? ` · ${termName}` : ''}
         </p>
-        <h1 className="text-xl font-semibold tracking-tight">Lesson plans</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+        <h1 className="mt-2 font-display text-[2.1rem] leading-[1.04] tracking-[-0.015em] text-foreground sm:text-[2.55rem]">
+          Lesson plans
+        </h1>
+        <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
           Prepare from your timetable, teach from the plan, then record what actually happened.
         </p>
       </div>

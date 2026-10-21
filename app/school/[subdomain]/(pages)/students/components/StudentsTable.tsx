@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ChevronLeft, ChevronRight, GraduationCap, Pencil, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ContactActionsMenu } from "@/components/people/ContactActionsMenu";
 import { studentsEnrollLinkLg, studentsPanel, studentsTh } from "./students-ui";
 
 export interface StudentRow {
@@ -13,6 +14,7 @@ export interface StudentRow {
   name: string;
   admissionNumber: string;
   email?: string | null;
+  phone?: string | null;
   grade: string;
   gradeId?: string;
   stream: string;
@@ -140,7 +142,9 @@ export function StudentsTable({
                   {onAssignClass ? (
                     <th className={studentsTh}>Class</th>
                   ) : null}
-                  <th className={cn(studentsTh, "w-10")} />
+                  <th className={cn(studentsTh, "w-24")}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -216,6 +220,19 @@ export function StudentsTable({
                     ) : null}
                     <td className="px-2 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        <ContactActionsMenu
+                          kind="student"
+                          person={{
+                            id: student.id,
+                            name: student.name,
+                            email: student.email,
+                            phone: student.phone,
+                            defaultPassword: student.admissionNumber,
+                          }}
+                          canSendLogin={Boolean(student.email || student.phone)}
+                          showLabel
+                          className="h-7 px-2 text-slate-500 hover:text-[#246a59]"
+                        />
                         {onEditIdentity ? (
                           <Button
                             type="button"

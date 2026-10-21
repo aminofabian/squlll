@@ -140,8 +140,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   // Show loading state if teacher data is loading
   if (teacherLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
-        <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-8 text-center">
+      <div className="flex min-h-[60vh] items-center justify-center px-2 py-6">
+        <div className="w-full max-w-xl rounded-2xl border border-border/90 bg-card p-8 text-center shadow-[0_1px_2px_rgba(20,32,28,0.04)]">
           <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
           <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Teacher Data</h3>
           <p className="text-gray-600">Fetching your assigned grades and subjects...</p>
@@ -153,8 +153,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   // Show loading state if no data is available yet
   if (finalGradeLevels.length === 0) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
-        <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-8 text-center">
+      <div className="flex min-h-[60vh] items-center justify-center px-2 py-6">
+        <div className="w-full max-w-xl rounded-2xl border border-border/90 bg-card p-8 text-center shadow-[0_1px_2px_rgba(20,32,28,0.04)]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">
             {teacher ? 'No Assigned Grades' : 'Loading School Configuration'}
@@ -374,51 +374,70 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const steps = ["Test Details", "Questions", "Review & Save"];
 
   return (
-                <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
-      <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-0 flex flex-col relative overflow-hidden">
-        {/* Header with gradient and Return to Main Menu button */}
-        <div className="bg-gradient-to-r from-[#246a59] via-[#2d8570] to-[#1a4c40] text-white p-8">
-          <div className="flex items-center justify-between">
+                <div className="mx-auto w-full max-w-4xl">
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-border/90 bg-card shadow-[0_1px_2px_rgba(20,32,28,0.04),0_24px_60px_-40px_rgba(20,32,28,0.4)]">
+        {/* Header */}
+        <div className="border-b border-border/70 p-6 sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 flex items-center justify-center">
-                <FileText className="w-6 h-6" />
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+                <FileText className="size-5" strokeWidth={1.8} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Create New Test</h1>
-                <p className="text-green-100 text-sm">Design comprehensive assessments for your students</p>
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-primary/75">
+                  New test
+                </p>
+                <h1 className="mt-1 font-display text-[1.6rem] leading-tight tracking-[-0.01em] text-foreground">
+                  Create a test
+                </h1>
+                <p className="mt-1 text-[12.5px] text-muted-foreground">
+                  Design an assessment, add questions, then assign it to a class.
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold transition-all duration-300 rounded-lg border border-white/30 hover:border-white/50"
+                className="tp-focus inline-flex h-9 items-center gap-1.5 rounded-full border border-border/80 px-4 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Home className="w-4 h-4" />
-                Return to Main Menu
+                <Home className="size-3.5" />
+                Home
               </button>
-              <DynamicLogo subdomain={subdomain || ''} size="md" showText={false} />
+              <DynamicLogo subdomain={subdomain || ''} size="sm" showText={false} />
             </div>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="bg-gray-50 border-b border-gray-200 px-8 py-3">
+        {/* Progress */}
+        <div className="border-b border-border/70 bg-muted/20 px-6 py-4 sm:px-8">
           <div className="flex items-center justify-between">
             {steps.map((label, idx) => (
-              <div key={label} className="flex-1 flex flex-col items-center relative">
-                <div className={`w-10 h-10 flex items-center justify-center font-bold text-lg transition-all duration-300 border-2
-                  ${step === idx + 1 
-                    ? 'bg-[#246a59] text-white border-[#246a59] shadow-lg' 
-                    : step > idx + 1 
-                      ? 'bg-[#059669] text-white border-[#059669]' 
-                      : 'bg-white text-gray-400 border-gray-300'}`}>
-                  {step > idx + 1 ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
+              <div key={label} className="relative flex flex-1 flex-col items-center">
+                <div
+                  className={`flex size-9 items-center justify-center rounded-full border text-[13px] font-semibold transition-all duration-300
+                  ${
+                    step === idx + 1
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : step > idx + 1
+                        ? 'border-primary/20 bg-primary/[0.08] text-primary'
+                        : 'border-border/80 bg-card text-muted-foreground'
+                  }`}
+                >
+                  {step > idx + 1 ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
                 </div>
-                <span className={`text-xs mt-2 font-medium ${step === idx + 1 ? 'text-[#246a59]' : step > idx + 1 ? 'text-[#059669]' : 'text-gray-500'}`}>
+                <span
+                  className={`mt-2 text-[11px] font-medium ${
+                    step >= idx + 1 ? 'text-foreground' : 'text-muted-foreground'
+                  }`}
+                >
                   {label}
                 </span>
                 {idx < steps.length - 1 && (
-                  <div className={`absolute top-5 left-full w-full h-0.5 transform -translate-y-1/2 ${step > idx + 1 ? 'bg-[#059669]' : 'bg-gray-300'}`}></div>
+                  <div
+                    className={`absolute left-full top-[18px] h-px w-full -translate-y-1/2 ${
+                      step > idx + 1 ? 'bg-primary/30' : 'bg-border/80'
+                    }`}
+                  />
                 )}
               </div>
             ))}
@@ -426,14 +445,18 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         </div>
 
         {/* Step Content */}
-        <div className="p-8 bg-white">
+        <div className="bg-card p-6 sm:p-8">
           {success ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-r from-[#059669] to-[#10b981] text-white flex items-center justify-center mb-6 shadow-lg">
-                <CheckCircle2 className="w-10 h-10" />
+              <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
+                <CheckCircle2 className="size-8" strokeWidth={1.6} />
               </div>
-              <div className="text-2xl font-bold text-gray-800 mb-3">Test Created Successfully!</div>
-              <div className="text-gray-600 text-center mb-8 max-w-md">Your test has been saved and is ready to be assigned to students.</div>
+              <div className="mb-2 font-display text-[1.7rem] leading-tight text-foreground">
+                Test created
+              </div>
+              <div className="mb-8 max-w-md text-center text-[13px] leading-relaxed text-muted-foreground">
+                Saved and ready to assign to a class.
+              </div>
               
               <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
                 <button

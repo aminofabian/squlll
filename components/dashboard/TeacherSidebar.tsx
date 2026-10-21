@@ -1,16 +1,13 @@
 "use client"
 
-import React, { useMemo } from "react";
+import React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { motion } from "framer-motion"
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  BookOpen, 
+import {
+  LayoutDashboard,
+  CalendarDays,
+  BookOpen,
   ClipboardList,
   BookMarked,
   MessageSquare,
@@ -18,10 +15,9 @@ import {
   ClipboardCheck,
   Layers,
   User,
-  LogOut
+  LogOut,
 } from "lucide-react"
 import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
-import { useParams } from 'next/navigation';
 import { useSignout } from "@/lib/hooks/useSignout";
 import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
 import { useTeacherExamAssignments } from "@/lib/hooks/useTeacherExamAssignments";
@@ -32,46 +28,14 @@ interface SidebarProps {
 }
 
 const navigation = [
-  {
-    title: "Dashboard",
-    href: "/teacher",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Timetable",
-    href: "/teacher/timetable",
-    icon: CalendarDays,
-  },
-  {
-    title: "Assignments",
-    href: "/teacher/assignments",
-    icon: BookOpen,
-  },
-  {
-    title: "Exams",
-    href: "/teacher/exams",
-    icon: FileText,
-  },
-  {
-    title: "Attendance",
-    href: "/teacher/attendance",
-    icon: ClipboardList,
-  },
-  {
-    title: "Lesson Plans",
-    href: "/teacher/lesson-plans",
-    icon: BookMarked,
-  },
-  {
-    title: "Schemes of Work",
-    href: "/teacher/schemes-of-work",
-    icon: Layers,
-  },
-  {
-    title: "Messages",
-    href: "/teacher/messages",
-    icon: MessageSquare,
-  },
+  { title: "Home", href: "/teacher", icon: LayoutDashboard },
+  { title: "Timetable", href: "/teacher/timetable", icon: CalendarDays },
+  { title: "Assignments", href: "/teacher/assignments", icon: BookOpen },
+  { title: "Exams", href: "/teacher/exams", icon: FileText },
+  { title: "Attendance", href: "/teacher/attendance", icon: ClipboardList },
+  { title: "Lesson Plans", href: "/teacher/lesson-plans", icon: BookMarked },
+  { title: "Schemes of Work", href: "/teacher/schemes-of-work", icon: Layers },
+  { title: "Messages", href: "/teacher/messages", icon: MessageSquare },
 ]
 
 export function Sidebar({ className, logoInstance }: SidebarProps) {
@@ -83,7 +47,7 @@ export function Sidebar({ className, logoInstance }: SidebarProps) {
   const { data: assignments } = useTeacherExamAssignments();
   const isHod = assignments && assignments.hodSubjectIds.length > 0;
 
-  const navItems = useMemo(() => {
+  const navItems = React.useMemo(() => {
     const items = [...navigation];
     if (isHod) {
       const examsIndex = items.findIndex((item) => item.href === "/teacher/exams");
@@ -97,138 +61,88 @@ export function Sidebar({ className, logoInstance }: SidebarProps) {
   }, [isHod]);
 
   return (
-    <div className={cn(
-      "flex flex-col h-full bg-white dark:bg-slate-900 shadow-xl",
-      className
-    )}>
-      {/* Header */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700 shadow-sm flex flex-col items-center">
+    <div className={cn("flex h-full flex-col bg-card", className)}>
+      <div className="px-6 pb-5 pt-7">
         <DynamicLogo
           subdomain={subdomain}
           size="md"
           showText={true}
           logoInstance={logoInstance}
         />
+        <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+          Teacher workspace
+        </p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
-        {navItems.map((item, index) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || 
-            (item.href !== "/teacher/dashboard" && pathname.startsWith(item.href))
-          const badgeCount =
-            item.href === '/teacher/messages' && unreadTotal > 0
-              ? String(unreadTotal > 99 ? '99+' : unreadTotal)
-              : undefined
-          
-          return (
-            <motion.div 
-              key={item.href}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <Link href={item.href}>
-                <Button
-                  variant={isActive ? "default" : "outline"}
+      <nav className="tp-scroll flex-1 overflow-y-auto px-3 pb-4" aria-label="Teacher sections">
+        <ul className="space-y-0.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/teacher" && pathname.startsWith(item.href));
+            const badgeCount =
+              item.href === '/teacher/messages' && unreadTotal > 0
+                ? unreadTotal > 99
+                  ? '99+'
+                  : String(unreadTotal)
+                : undefined;
+
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300",
-                    isActive 
-                      ? "bg-primary text-white hover:text-white shadow-sm" 
-                      : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                    "tp-focus group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] transition-colors",
+                    isActive
+                      ? "bg-primary/[0.07] font-semibold text-primary"
+                      : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className={cn(
-                      "flex items-center justify-center h-6 w-6 rounded-full transition-colors",
-                      isActive 
-                        ? "bg-white/20" 
-                        : "bg-muted group-hover:bg-primary/10"
-                    )}>
-                      <Icon className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        isActive 
-                          ? "text-white" 
-                          : "text-muted-foreground group-hover:text-primary"
-                      )} />
-                    </div>
-                    <span className="font-medium">{item.title}</span>
-                  </div>
-                  
-                  {badgeCount && (
-                    <Badge 
-                      variant={isActive ? "outline" : "secondary"}
-                      className={cn(
-                        "ml-auto text-[10px] h-5 px-1.5 transition-all duration-300",
-                        isActive
-                          ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
-                          : "border-dashed hover:border-primary/50"
-                      )}
-                    >
+                  {isActive ? (
+                    <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-primary" />
+                  ) : null}
+                  <Icon
+                    className={cn(
+                      "size-[17px] shrink-0 transition-colors",
+                      isActive
+                        ? "text-primary"
+                        : "text-muted-foreground/75 group-hover:text-foreground/80",
+                    )}
+                    strokeWidth={1.7}
+                  />
+                  <span className="truncate">{item.title}</span>
+                  {badgeCount ? (
+                    <span className="tp-num ml-auto rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                       {badgeCount}
-                    </Badge>
-                  )}
-                  
-                  {isActive && (
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute bottom-0 left-0 h-0.5 bg-primary/30" 
-                    />
-                  )}
-                </Button>
-              </Link>
-            </motion.div>
-          )
-        })}
+                    </span>
+                  ) : null}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 space-y-3 shadow-sm">
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+      <div className="border-t border-border/70 p-3">
+        <Link
+          href="/teacher/profile"
+          className="tp-focus group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
         >
-          <Link href="/teacher/profile">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
-                  <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
-                </div>
-                <span className="font-medium">Profile</span>
-              </div>
-            </Button>
-          </Link>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.1 }}
+          <User className="size-[17px] text-muted-foreground/75 group-hover:text-foreground/80" strokeWidth={1.7} />
+          Profile
+        </Link>
+        <button
+          type="button"
+          onClick={signOut}
+          disabled={isSigningOut}
+          className="tp-focus group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13.5px] font-medium text-muted-foreground transition-colors hover:bg-rose-50/70 hover:text-rose-700 disabled:opacity-60 dark:hover:bg-rose-950/20 dark:hover:text-rose-300"
         >
-          <Button 
-            variant="outline" 
-            onClick={signOut}
-            disabled={isSigningOut}
-            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50/50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10 disabled:text-slate-400"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-red-100/30 transition-colors">
-                <LogOut className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-red-500" />
-              </div>
-              <span className="font-medium group-hover:text-red-600">
-                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-              </span>
-            </div>
-          </Button>
-        </motion.div>
+          <LogOut className="size-[17px] text-muted-foreground/75 group-hover:text-current" strokeWidth={1.7} />
+          {isSigningOut ? 'Signing out…' : 'Sign out'}
+        </button>
       </div>
     </div>
   )
-} 
+}

@@ -11,25 +11,33 @@ import { PlannerTabs } from './components/PlannerTabs'
 import { RecordLessonDialog } from './components/RecordLessonDialog'
 import { CreateSchemeDialog } from './components/SchemesPanel'
 import { useLessonPlansPage } from './hooks/useLessonPlansPage'
+import { tp } from '../styles/portal'
 
 export default function TeacherLessonPlansPage() {
   const page = useLessonPlansPage()
 
   if (!page.termsLoading && !page.termId) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <PlannerEmptyState icon={CalendarRange} title="No active term yet" description="Lesson planning starts once your school sets up an academic term." />
+      <div className={tp.page}>
+        <div className="mx-auto max-w-3xl">
+          <PlannerEmptyState
+            icon={CalendarRange}
+            title="No active term yet"
+            description="Lesson planning starts once your school sets up an academic term."
+          />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-5 lg:px-0 lg:py-0">
+    <div className={tp.page}>
+      <div className={tp.stack}>
       <PlannerHeader termName={page.selectedTerm?.name} week={page.week} onPrevious={page.previousWeek} onNext={page.nextWeek} onToday={page.thisWeek} />
       <PlannerStats week={page.week} />
       <PlannerTabs tab={page.tab} onChange={page.setTab} onNewScheme={() => page.setSchemeDialogOpen(true)} />
       {page.error && (
-        <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+        <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-[13px] text-rose-700 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-300">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{page.error}</span>
         </div>
@@ -48,6 +56,7 @@ export default function TeacherLessonPlansPage() {
           onSaved={page.handleRecordSaved}
         />
       )}
+      </div>
     </div>
   )
 }
