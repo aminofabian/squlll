@@ -22,9 +22,12 @@ import {
 } from "@/lib/superadmin/smsApi";
 import { Loader2, MessageSquareText, Send } from "lucide-react";
 
+const PING_DEFAULT_BASE_URL = "https://bulk.ping.africa/api";
+
 /**
- * Super-admin SMS gateway control panel (TextSMS / Africa's Talking). The API
- * key is write-only — it is never returned, only `hasApiKey`.
+ * Super-admin SMS gateway control panel (TextSMS / Africa's Talking /
+ * Ping Africa). The API key is write-only — it is never returned, only
+ * `hasApiKey`.
  */
 export function SmsGatewayPanel() {
   const { toast } = useToast();
@@ -44,6 +47,7 @@ export function SmsGatewayPanel() {
   const [partnerId, setPartnerId] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [senderId, setSenderId] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
   const [notifyFeePayment, setNotifyFeePayment] = useState(true);
   const [notifyTransportEmergency, setNotifyTransportEmergency] = useState(true);
   const [notifyTransportNoShow, setNotifyTransportNoShow] = useState(true);
@@ -58,6 +62,7 @@ export function SmsGatewayPanel() {
     setUsername(record.username ?? "");
     setPartnerId(record.partnerId ?? "");
     setSenderId(record.senderId ?? "");
+    setBaseUrl(record.baseUrl ?? "");
     setNotifyFeePayment(record.notifyFeePayment);
     setNotifyTransportEmergency(record.notifyTransportEmergency);
     setNotifyTransportNoShow(record.notifyTransportNoShow);
@@ -94,6 +99,7 @@ export function SmsGatewayPanel() {
         username,
         partnerId,
         senderId,
+        baseUrl,
         notifyFeePayment,
         notifyTransportEmergency,
         notifyTransportNoShow,
@@ -146,6 +152,14 @@ export function SmsGatewayPanel() {
       setTesting(false);
     }
   };
+
+  const apiKeyPlaceholder = settings?.hasApiKey
+    ? "••••••••"
+    : provider === "TEXTSMS"
+      ? "TextSMS API key"
+      : provider === "PING_AFRICA"
+        ? "Ping Africa API token"
+        : "Africa's Talking API key";
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800/60 dark:bg-slate-900/80">
@@ -231,7 +245,15 @@ export function SmsGatewayPanel() {
 
               <div className="space-y-2">
                 <Label>Provider</Label>
-                <Select value={provider} onValueChange={setProvider}>
+                <Select
+                  value={provider}
+                  onValueChange={(next) => {
+                    setProvider(next);
+                    if (next === "PING_AFRICA" && !baseUrl.trim()) {
+                      setBaseUrl(PING_DEFAULT_BASE_URL);
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -240,6 +262,7 @@ export function SmsGatewayPanel() {
                     <SelectItem value="AFRICASTALKING">
                       Africa&apos;s Talking
                     </SelectItem>
+                    <SelectItem value="PING_AFRICA">Ping Africa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -253,7 +276,9 @@ export function SmsGatewayPanel() {
                     placeholder="e.g. 12345"
                   />
                 </div>
-              ) : (
+              ) : null}
+
+              {provider === "AFRICASTALKING" ? (
                 <div className="space-y-2">
                   <Label>Username (app name)</Label>
                   <Input
@@ -262,24 +287,33 @@ export function SmsGatewayPanel() {
                     placeholder="e.g. squl"
                   />
                 </div>
-              )}
+              ) : null}
+
+              {provider === "PING_AFRICA" ? (
+                <div className="space-y-2">
+                  <Label>Base URL</Label>
+                  <Input
+                    value={baseUrl}
+                    onChange={(e) => setBaseUrl(e.target.value)}
+                    placeholder={PING_DEFAULT_BASE_URL}
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    API root from Ping Africa (no trailing slash). Default:{" "}
+                    {PING_DEFAULT_BASE_URL}
+                  </p>
+                </div>
+              ) : null}
 
               <div className="space-y-2">
                 <Label>
-                  API key
+                  {provider === "PING_AFRICA" ? "API token" : "API key"}
                   {settings.hasApiKey ? " (saved · leave blank to keep)" : ""}
                 </Label>
                 <Input
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    settings.hasApiKey
-                      ? "••••••••"
-                      : provider === "TEXTSMS"
-                        ? "TextSMS API key"
-                        : "Africa's Talking API key"
-                  }
+                  placeholder={apiKeyPlaceholder}
                   autoComplete="off"
                 />
               </div>
@@ -292,7 +326,9 @@ export function SmsGatewayPanel() {
                 <Input
                   value={senderId}
                   onChange={(e) => setSenderId(e.target.value)}
-                  placeholder="e.g. SQUL"
+                  placeholder={
+                    provider === "PING_AFRICA" ? "e.g. PING-AFRICA" : "e.g. SQUL"
+                  }
                 />
                 <p className="text-[11px] text-slate-500">
                   Alphanumeric sender IDs must be pre-approved by the provider.

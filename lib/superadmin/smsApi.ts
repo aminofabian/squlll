@@ -6,6 +6,7 @@ export type PlatformSmsSettingsRecord = {
   username: string | null;
   partnerId: string | null;
   senderId: string | null;
+  baseUrl: string | null;
   hasApiKey: boolean;
   notifyFeePayment: boolean;
   notifyTransportEmergency: boolean;
@@ -24,6 +25,7 @@ export type UpdatePlatformSmsSettingsInput = {
   apiKey?: string;
   clearApiKey?: boolean;
   senderId?: string;
+  baseUrl?: string;
   notifyFeePayment?: boolean;
   notifyTransportEmergency?: boolean;
   notifyTransportNoShow?: boolean;
@@ -44,6 +46,7 @@ const SETTINGS_FIELDS = `
   username
   partnerId
   senderId
+  baseUrl
   hasApiKey
   notifyFeePayment
   notifyTransportEmergency
