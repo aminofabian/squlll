@@ -40,6 +40,14 @@ export type SmsTestResult = {
   message: string;
 };
 
+export type PingAfricaCreditBalanceResult = {
+  ok: boolean;
+  configured: boolean;
+  missing: string[];
+  balance: number | null;
+  message: string;
+};
+
 const SETTINGS_FIELDS = `
   enabled
   provider
@@ -106,4 +114,23 @@ export async function testPlatformSms(
     testPlatformSms: SmsTestResult;
   }>(TEST_SMS, { to, message: message ?? null });
   return data.testPlatformSms;
+}
+
+const PING_BALANCE_QUERY = `
+  query PlatformPingAfricaCreditBalance {
+    platformPingAfricaCreditBalance {
+      ok
+      configured
+      missing
+      balance
+      message
+    }
+  }
+`;
+
+export async function fetchPingAfricaCreditBalance(): Promise<PingAfricaCreditBalanceResult> {
+  const data = await superAdminGraphqlRequest<{
+    platformPingAfricaCreditBalance: PingAfricaCreditBalanceResult;
+  }>(PING_BALANCE_QUERY);
+  return data.platformPingAfricaCreditBalance;
 }

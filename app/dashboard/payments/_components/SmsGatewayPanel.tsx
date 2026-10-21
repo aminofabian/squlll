@@ -15,12 +15,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import {
+  fetchPingAfricaCreditBalance,
   fetchPlatformSmsSettings,
   testPlatformSms,
   updatePlatformSmsSettings,
   type PlatformSmsSettingsRecord,
 } from "@/lib/superadmin/smsApi";
-import { Loader2, MessageSquareText, Send } from "lucide-react";
+import { Loader2, MessageSquareText, RefreshCw, Send } from "lucide-react";
 
 const PING_DEFAULT_BASE_URL = "https://bulk.ping.africa/api";
 
@@ -54,6 +55,13 @@ export function SmsGatewayPanel() {
 
   const [testTo, setTestTo] = useState("");
   const [testMessage, setTestMessage] = useState("");
+
+  const [pingBalance, setPingBalance] = useState<number | null>(null);
+  const [pingBalanceMessage, setPingBalanceMessage] = useState<string | null>(
+    null,
+  );
+  const [pingBalanceOk, setPingBalanceOk] = useState<boolean | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
 
   const apply = useCallback((record: PlatformSmsSettingsRecord) => {
     setSettings(record);
@@ -152,6 +160,51 @@ export function SmsGatewayPanel() {
       setTesting(false);
     }
   };
+
+  const handleRefreshBalance = useCallback(async () => {
+    try {
+      setLoadingBalance(true);
+      const result = await fetchPingAfricaCreditBalance();
+      setPingBalanceOk(result.ok);
+      setPingBalance(result.balance);
+      setPingBalanceMessage(result.message);
+      if (!result.ok) {
+        toast({
+          title: "Balance check failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      setPingBalanceOk(false);
+      setPingBalance(null);
+      setPingBalanceMessage(
+        err instanceof Error ? err.message : "Could not fetch balance",
+      );
+      toast({
+        title: "Balance check failed",
+        description: err instanceof Error ? err.message : "Could not fetch",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBalance(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (
+      !loading &&
+      settings?.configured &&
+      settings.provider === "PING_AFRICA"
+    ) {
+      void handleRefreshBalance();
+    }
+  }, [
+    loading,
+    settings?.configured,
+    settings?.provider,
+    handleRefreshBalance,
+  ]);
 
   const apiKeyPlaceholder = settings?.hasApiKey
     ? "••••••••"
@@ -412,6 +465,52 @@ export function SmsGatewayPanel() {
                   </span>
                 )}
               </p>
+
+              {provider === "PING_AFRICA" ? (
+                <div className="space-y-2 border-t border-slate-200/70 pt-4 dark:border-slate-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <Label>Ping Africa credits</Label>
+                      <p className="text-[11px] text-slate-500">
+                        Live org balance from Ping (needs View Credits on the
+                        token).
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleRefreshBalance()}
+                      disabled={loadingBalance || !settings.configured}
+                    >
+                      {loadingBalance ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                  {pingBalanceOk === true && pingBalance != null ? (
+                    <p className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+                      {pingBalance.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      <span className="text-xs font-normal text-slate-500">
+                        credits
+                      </span>
+                    </p>
+                  ) : pingBalanceMessage ? (
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      {pingBalanceMessage}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      {settings.configured
+                        ? "Save credentials, then refresh."
+                        : "Configure base URL + API token first."}
+                    </p>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         )}
