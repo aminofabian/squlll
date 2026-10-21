@@ -18,7 +18,7 @@ export type CalendarEventType =
   | "CUSTOM";
 
 export type CalendarEventSource = "MANUAL" | "SYSTEM";
-export type CommunicationChannelType = "SMS" | "EMAIL" | "IN_APP";
+export type CommunicationChannelType = "SMS" | "EMAIL" | "WHATSAPP" | "IN_APP";
 export type ReminderSource = "CALENDAR" | "FEE_DUE";
 export type ScheduledMessageStatus =
   | "PENDING"

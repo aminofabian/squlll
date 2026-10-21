@@ -19,6 +19,7 @@ export const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
 export const CHANNEL_LABELS: Record<CommunicationChannelType, string> = {
   SMS: "SMS",
   EMAIL: "Email",
+  WHATSAPP: "WhatsApp",
   IN_APP: "In-app",
 };
 
