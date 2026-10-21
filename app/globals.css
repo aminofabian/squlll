@@ -655,7 +655,7 @@ html {
   html { scroll-behavior: auto; }
 }
 
-/* Onboarding: keep the flow flat and square, matching the editorial system. */
+/* Onboarding: calm, tactile surfaces that match the warm paper system. */
 .onboarding-flow .shadow-sm,
 .onboarding-flow .shadow-md,
 .onboarding-flow .shadow-lg {
@@ -664,7 +664,7 @@ html {
 .onboarding-flow input,
 .onboarding-flow textarea,
 .onboarding-flow select {
-  border-radius: 2px;
+  border-radius: 0.5rem;
 }
 .onboarding-flow .rdp-root {
   --rdp-accent-color: #1c3d32;

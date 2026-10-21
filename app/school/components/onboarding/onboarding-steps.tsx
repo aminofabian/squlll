@@ -246,7 +246,17 @@ export function AcademicYearStepContent({
         )}
 
         <p className="text-xs leading-relaxed text-[#7c857d]">
-          Press <strong className="font-medium text-[#4d574f]">Create academic year</strong> below to save this calendar.
+          {preview ? (
+            <>
+              Press{" "}
+              <strong className="font-medium text-[#4d574f]">
+                Create academic year
+              </strong>{" "}
+              below to save this calendar.
+            </>
+          ) : (
+            "Add a name, start date, and end date to continue."
+          )}
         </p>
       </StepBody>
     </>
@@ -407,7 +417,7 @@ export function TermsStepContent({
                 onClick={() => onSuggestedTermCountChange(n)}
                 aria-pressed={suggestedTermCount === n}
                 className={cn(
-                  "flex h-10 w-12 items-center justify-center rounded-full text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
+                  "flex h-11 w-12 items-center justify-center rounded-full text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
                   suggestedTermCount === n
                     ? "bg-[#14201b] text-white"
                     : "text-[#4d574f] hover:bg-[#14201b]/[0.05] hover:text-[#14201b]",
@@ -541,7 +551,7 @@ export function TermsStepContent({
                         title="Mark the term your school is currently in"
                         aria-pressed={isActive}
                         className={cn(
-                          "inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full border px-3 text-[0.6875rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
+                          "inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full border px-3 text-[0.6875rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
                           isActive
                             ? "border-[#1c3d32] bg-[#1c3d32] text-white"
                             : "border-[#1c3d32]/20 bg-white/70 text-[#4d574f] hover:border-[#1c3d32]/40 hover:text-[#14201b]",
@@ -564,7 +574,7 @@ export function TermsStepContent({
                       }
                       aria-label={`Remove ${term.name || "term"}`}
                       title="Remove this term"
-                      className="-mr-1 -mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#1c3d32]/35 transition-colors hover:bg-red-50 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                      className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#1c3d32]/35 transition-colors hover:bg-red-50 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                     >
                       <Trash2 className="h-4 w-4" aria-hidden />
                     </button>
@@ -949,7 +959,7 @@ export function StreamsStepContent({
                         onClick={() =>
                           removeGradeDraft(grade.gradeId, draft.id)
                         }
-                        className="mr-1 flex h-9 w-9 items-center justify-center rounded-full text-[#1c3d32]/35 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                        className="mr-1 flex h-10 w-10 items-center justify-center rounded-full text-[#1c3d32]/35 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                         aria-label={`Remove stream ${draft.name || ""} from ${grade.gradeName}`}
                         title="Remove stream"
                       >
@@ -961,7 +971,7 @@ export function StreamsStepContent({
                   <button
                     type="button"
                     onClick={() => addStreamToGrade(grade.gradeId, grade)}
-                    className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-dashed border-[#1c3d32]/25 px-3 text-xs font-semibold text-[#1c3d32]/70 transition-colors hover:border-[#1c3d32]/50 hover:bg-[#1c3d32]/[0.04] hover:text-[#1c3d32] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/20"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-dashed border-[#1c3d32]/25 px-3 text-xs font-semibold text-[#1c3d32]/70 transition-colors hover:border-[#1c3d32]/50 hover:bg-[#1c3d32]/[0.04] hover:text-[#1c3d32] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/20"
                   >
                     <Plus className="h-3.5 w-3.5" aria-hidden />
                     Add stream

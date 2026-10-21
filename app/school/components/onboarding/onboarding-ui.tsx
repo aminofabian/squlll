@@ -76,7 +76,11 @@ export function OnboardingShell({
       {/* Warm paper wash — keeps the canvas from feeling flat. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(72rem_46rem_at_88%_-12%,rgba(216,201,171,0.22),transparent_62%)]"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            'radial-gradient(72rem 46rem at 88% -12%, rgba(216,201,171,0.22), transparent 62%)',
+        }}
       />
 
       <div className="relative z-10 flex flex-1 flex-col lg:flex-row">
@@ -248,7 +252,7 @@ export function OnboardingShell({
 
           {/* ── Footer: one primary action only ────────────────────── */}
           <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-[#14201b]/10 bg-[#f7f4ec]/95 backdrop-blur-md lg:left-[21rem] xl:left-[23rem]">
-            <div className="mx-auto flex w-full max-w-[44rem] items-center gap-2 px-4 py-3 sm:px-6 lg:px-12">
+            <div className="mx-auto flex w-full max-w-[44rem] items-center gap-2 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 lg:px-12">
               <Button
                 type="button"
                 variant="ghost"
@@ -642,7 +646,7 @@ export function DateField({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-9 rounded-lg px-3 text-xs text-[#4d574f] hover:bg-transparent hover:text-[#14201b]"
+              className="h-10 rounded-lg px-3 text-xs text-[#4d574f] hover:bg-transparent hover:text-[#14201b}"
               onClick={() => {
                 onChange('')
                 setOpen(false)
@@ -654,7 +658,7 @@ export function DateField({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-9 rounded-lg px-3 text-xs text-[#1c3d32] hover:bg-[#1c3d32]/8 hover:text-[#14201b]"
+              className="h-10 rounded-lg px-3 text-xs text-[#1c3d32] hover:bg-[#1c3d32]/8 hover:text-[#14201b]"
               onClick={() => {
                 const today = new Date()
                 today.setHours(12, 0, 0, 0)

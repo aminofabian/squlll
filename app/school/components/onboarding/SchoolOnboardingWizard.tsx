@@ -757,7 +757,9 @@ export function SchoolOnboardingWizard() {
   // Only optional steps get an escape hatch. The footer keeps a single
   // primary CTA; skipping is a quiet secondary link in the step header.
   const canSkipStep =
-    currentStep === 3 || currentStep === 4 || currentStep === 5;
+    (currentStep === 3 && plannedStreamCreates > 0) ||
+    currentStep === 4 ||
+    currentStep === 5;
 
   // Terms already stored for this year are excluded from the save count, so an
   // already-configured school sees "Continue" instead of "Save 3 terms" and a
