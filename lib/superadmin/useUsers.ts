@@ -61,6 +61,8 @@ export function useUsers() {
       setError(null);
       try {
         await deleteUser(userId, "DELETE");
+        // Drop immediately so the row disappears even before refresh completes.
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
         await refresh();
       } catch (err) {
         const message =
