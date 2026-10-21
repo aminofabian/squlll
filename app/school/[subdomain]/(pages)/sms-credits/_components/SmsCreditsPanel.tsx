@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { SmsTopUpDialog } from "@/components/school/SmsTopUpDialog";
 import {
   fetchSmsCreditBalance,
   fetchSmsCreditLedger,
@@ -73,6 +74,7 @@ export function SmsCreditsPanel() {
   const [custom, setCustom] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -103,6 +105,7 @@ export function SmsCreditsPanel() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch owns the loading state
     void refresh();
     return stopPolling;
   }, [refresh, stopPolling]);
@@ -116,6 +119,7 @@ export function SmsCreditsPanel() {
         ? balance.presetCredits
         : PRESETS;
       const preset = list.find((p) => p >= minMessages && p <= maxMessages);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- choose a valid default package
       setSelected(preset ?? minMessages);
     }
   }, [balance, selected, minMessages, maxMessages]);
@@ -226,12 +230,31 @@ export function SmsCreditsPanel() {
         </div>
       ) : null}
 
+      <SmsTopUpDialog
+        open={topUpOpen}
+        onOpenChange={setTopUpOpen}
+        initialBalance={balance}
+        onSuccess={(next) => {
+          if (next) setBalance(next);
+          void refresh();
+        }}
+      />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <MessageSquareText className="size-4" aria-hidden />
-              Messages
+            <CardTitle className="flex items-center justify-between gap-2 text-base">
+              <span className="flex items-center gap-2">
+                <MessageSquareText className="size-4" aria-hidden />
+                Messages
+              </span>
+              <Button
+                size="sm"
+                className="h-8"
+                onClick={() => setTopUpOpen(true)}
+              >
+                Top up
+              </Button>
             </CardTitle>
             <CardDescription>
               One message is one SMS. Included messages reset each month; bought

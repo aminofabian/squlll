@@ -32,6 +32,7 @@ import {
   cancelCommMessages,
   fetchCommDeliveryReport,
   fetchCommMessages,
+  resendCommMessages,
   retryCommMessages,
   type CommChannel,
   type CommDeliveryReport,
@@ -112,12 +113,21 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
     () => rows.filter((row) => selected.includes(row.id) && row.status === "PENDING"),
     [rows, selected],
   );
+  const resendableSelected = useMemo(
+    () =>
+      rows.filter(
+        (row) =>
+          selected.includes(row.id) &&
+          ["SENT", "FAILED", "SKIPPED", "CANCELLED"].includes(row.status),
+      ),
+    [rows, selected],
+  );
 
   const toggleAll = (checked: boolean) => {
     setSelected(checked ? rows.map((row) => row.id) : []);
   };
 
-  const run = async (action: "retry" | "cancel", ids: string[]) => {
+  const run = async (action: "retry" | "cancel" | "resend", ids: string[]) => {
     if (!ids.length) {
       toast.error("Select messages first.");
       return;
@@ -127,9 +137,13 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
       const count =
         action === "retry"
           ? await retryCommMessages(ids)
-          : await cancelCommMessages(ids);
+          : action === "resend"
+            ? await resendCommMessages(ids)
+            : await cancelCommMessages(ids);
       toast.success(
-        `${count} message${count === 1 ? "" : "s"} ${action === "retry" ? "re-queued" : "cancelled"}.`,
+        `${count} message${count === 1 ? "" : "s"} ${
+          action === "retry" ? "re-queued" : action === "resend" ? "queued to resend" : "cancelled"
+        }.`,
       );
       await load();
     } catch (err) {
@@ -265,6 +279,19 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => void run("resend", resendableSelected.map((row) => row.id))}
+              disabled={!resendableSelected.length || busy !== null}
+            >
+              {busy === "resend" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Resend selected
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => void run("cancel", queuedSelected.map((row) => row.id))}
               disabled={!queuedSelected.length || busy !== null}
             >
@@ -327,6 +354,7 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
                     )
                   }
                   onRetry={() => void run("retry", [row.id])}
+                  onResend={() => void run("resend", [row.id])}
                   onCancel={() => void run("cancel", [row.id])}
                   busy={busy !== null}
                 />
@@ -370,6 +398,7 @@ function MessageRow({
   selected,
   onToggle,
   onRetry,
+  onResend,
   onCancel,
   busy,
 }: {
@@ -378,6 +407,7 @@ function MessageRow({
   selected: boolean;
   onToggle: () => void;
   onRetry: () => void;
+  onResend: () => void;
   onCancel: () => void;
   busy: boolean;
 }) {
@@ -440,17 +470,23 @@ function MessageRow({
         ) : null}
       </TableCell>
       <TableCell className="text-right">
-        {row.status === "FAILED" ? (
-          <Button size="sm" variant="ghost" onClick={onRetry} disabled={busy}>
-            Retry
-          </Button>
-        ) : row.status === "PENDING" ? (
-          <Button size="sm" variant="ghost" onClick={onCancel} disabled={busy}>
-            Cancel
-          </Button>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+        <div className="flex justify-end gap-0.5">
+          {row.status === "FAILED" ? (
+            <Button size="sm" variant="ghost" onClick={onRetry} disabled={busy}>
+              Retry
+            </Button>
+          ) : null}
+          {["SENT", "FAILED", "SKIPPED", "CANCELLED"].includes(row.status) ? (
+            <Button size="sm" variant="ghost" onClick={onResend} disabled={busy}>
+              Resend
+            </Button>
+          ) : null}
+          {row.status === "PENDING" ? (
+            <Button size="sm" variant="ghost" onClick={onCancel} disabled={busy}>
+              Cancel
+            </Button>
+          ) : null}
+        </div>
       </TableCell>
     </TableRow>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { resendTeacherInvitationByEmail } from "../utils/invitationActions";
 
 interface InvitationSuccessModalProps {
   isOpen: boolean;
@@ -70,6 +70,8 @@ export function InvitationSuccessModal({
 }: InvitationSuccessModalProps) {
   const [copied, setCopied] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
+  const [resendingInvite, setResendingInvite] = useState(false);
+  const [inviteResent, setInviteResent] = useState(false);
   const emailFailed = invitationData.emailSent === false;
   const initialPassword = invitationData.initialPassword;
   const accountReady = Boolean(initialPassword);
@@ -299,15 +301,8 @@ export function InvitationSuccessModal({
                 <>
                   <li className="flex items-start gap-2">
                     <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                    Open{" "}
-                    <Link
-                      href="/teachers"
-                      className="font-medium text-[#246a59] hover:underline"
-                      onClick={onClose}
-                    >
-                      Pending invitations
-                    </Link>{" "}
-                    on the Teachers page and tap Resend.
+                    Tap <span className="font-medium">Resend invitation</span> below
+                    to try again.
                   </li>
                   <li className="flex items-start gap-2">
                     <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
@@ -337,18 +332,52 @@ export function InvitationSuccessModal({
             <div className="flex items-start gap-2.5 rounded-lg border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200/90">
-                Email delivery failed — often a mail config issue in dev. Resend from Pending invitations when ready.
+                Email delivery failed — often a mail config issue in dev. Use
+                Resend invitation below, or from Pending invitations later.
               </p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-[#1a4d42]/12 bg-white px-5 py-4 dark:border-white/10 dark:bg-[#0c1a17]">
+        <div className="flex gap-2 border-t border-[#1a4d42]/12 bg-white px-5 py-4 dark:border-white/10 dark:bg-[#0c1a17]">
+          {emailFailed && !inviteResent ? (
+            <Button
+              variant="outline"
+              disabled={resendingInvite}
+              onClick={async () => {
+                try {
+                  setResendingInvite(true);
+                  await resendTeacherInvitationByEmail(invitationData.email);
+                  setInviteResent(true);
+                  toast.success("Invitation resent", {
+                    description: `A fresh invitation has been sent to ${invitationData.email}.`,
+                  });
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not resend the invitation",
+                  );
+                } finally {
+                  setResendingInvite(false);
+                }
+              }}
+              className="h-11 flex-1 rounded-lg border-[#1a4d42]/20 text-[#0a1f1a] dark:text-white"
+            >
+              {resendingInvite ? "Resending…" : "Resend invitation"}
+            </Button>
+          ) : null}
           <Button
             onClick={onClose}
-            className="h-11 w-full rounded-lg bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
+            className="h-11 flex-1 rounded-lg bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
           >
-            {accountReady ? "Done — password saved" : emailFailed ? "Got it — I'll resend later" : "Done"}
+            {inviteResent
+              ? "Done — invitation resent"
+              : accountReady
+                ? "Done — password saved"
+                : emailFailed
+                  ? "Close"
+                  : "Done"}
           </Button>
         </div>
       </DialogContent>

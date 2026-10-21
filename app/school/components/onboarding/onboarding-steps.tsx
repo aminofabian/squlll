@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import {
   CalendarRange,
   CheckCircle2,
+  ChevronRight,
   Landmark,
   Loader2,
   Plus,
@@ -13,7 +14,6 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,17 +38,13 @@ export function DoneBanner({
   detail: string;
 }) {
   return (
-    <div className="flex items-start gap-3 border border-[#1c3d32]/20 bg-[#efeadd] p-5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#1c3d32]/20 bg-[#f7f4ec]">
-        <CheckCircle2 className="h-5 w-5 text-[#1c3d32]" />
+    <div className="flex items-start gap-4 rounded-xl border border-[#1c3d32]/15 bg-[#1c3d32]/[0.045] p-4 sm:p-5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1c3d32] text-[#f7f4ec]">
+        <CheckCircle2 className="h-5 w-5" strokeWidth={1.75} />
       </div>
-      <div>
-        <p className="text-sm font-semibold text-[#14201b]">
-          {label}
-        </p>
-        <p className="text-sm text-[#4d574f] mt-1">
-          {detail}
-        </p>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-[#14201b]">{label}</p>
+        <p className="mt-1 text-sm leading-relaxed text-[#4d574f]">{detail}</p>
       </div>
     </div>
   );
@@ -79,8 +75,6 @@ type AcademicYearStepProps = {
   onSuggestMoe: () => void;
   suggestedYearLabel: string;
   moeYear: number;
-  isCreating: boolean;
-  onCreate: () => void;
 };
 
 type YearPreset = "standard" | "moe" | "custom";
@@ -95,8 +89,6 @@ export function AcademicYearStepContent({
   onSuggestMoe,
   suggestedYearLabel,
   moeYear,
-  isCreating,
-  onCreate,
 }: AcademicYearStepProps) {
   const [activePreset, setActivePreset] = useState<YearPreset | null>(
     "standard",
@@ -121,12 +113,6 @@ export function AcademicYearStepContent({
     };
   }, [form.startDate, form.endDate]);
 
-  const isValid =
-    form.name.trim() &&
-    form.startDate &&
-    form.endDate &&
-    new Date(form.startDate) < new Date(form.endDate);
-
   if (hasAcademicYear && activeYearLabel && activeYearRange) {
     return (
       <>
@@ -135,11 +121,15 @@ export function AcademicYearStepContent({
           title="Academic year"
           description="Your school calendar is ready for terms and classes."
         />
-        <StepBody>
+        <StepBody className="space-y-5">
           <DoneBanner
             label={`${activeYearLabel} is ready`}
             detail={activeYearRange}
           />
+          <p className="text-sm leading-relaxed text-[#4d574f]">
+            Terms and classes will follow this calendar. You can edit the
+            academic year later in <strong className="font-medium text-[#14201b]">Dashboard → School years</strong>.
+          </p>
         </StepBody>
       </>
     );
@@ -160,14 +150,14 @@ export function AcademicYearStepContent({
       <StepIntro
         icon={CalendarRange}
         title="Academic year"
-        description="Choose a quick template or enter your own dates. You can edit everything before saving."
+        description="Pick the calendar your school runs on. You can fine-tune every date."
       />
       <StepBody className="space-y-7">
         <section>
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-3">
-            Quick fill
+          <p className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-[#4d574f]">
+            Start with a template
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <PresetOption
               selected={activePreset === "standard"}
               onClick={selectStandard}
@@ -181,18 +171,18 @@ export function AcademicYearStepContent({
               onClick={selectMoe}
               icon={Sparkles}
               title={`Kenya MoE ${moeYear}`}
-              subtitle="Official ministry term calendar dates"
+              subtitle="Official ministry term calendar"
             />
           </div>
         </section>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center" aria-hidden>
-            <div className="w-full border-t border-[#1c3d32]/12 dark:border-white/10" />
+            <div className="w-full border-t border-[#14201b]/10" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white dark:bg-[#0c1a17] px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1c3d32]/45">
-              or customize
+            <span className="bg-[#fffdf7] px-3 text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-[#7c857d]">
+              or set your own dates
             </span>
           </div>
         </div>
@@ -242,33 +232,22 @@ export function AcademicYearStepContent({
         </section>
 
         {preview && (
-          <div className="border border-[#1c3d32]/25 bg-[#1c3d32]/[0.06] px-4 py-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-[#14201b] dark:text-white">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-[#1c3d32]/15 bg-[#1c3d32]/[0.045] px-4 py-3.5">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[#14201b]">
                 {form.name || "Untitled year"}
               </p>
-              <p className="text-xs text-[#1c3d32]/65 mt-0.5">{preview.range}</p>
+              <p className="mt-0.5 text-xs text-[#4d574f]">{preview.range}</p>
             </div>
-            <span className="text-xs font-semibold tabular-nums text-[#1c3d32] bg-white dark:bg-[#14201b] px-2.5 py-1 border border-[#1c3d32]/20">
+            <span className="shrink-0 rounded-full border border-[#1c3d32]/20 bg-white/70 px-2.5 py-1 text-[0.6875rem] font-semibold tabular-nums text-[#1c3d32]">
               {preview.days} days
             </span>
           </div>
         )}
 
-        <Button
-          onClick={onCreate}
-          disabled={isCreating || !isValid}
-          className="w-full h-12 rounded-[2px] text-base font-medium bg-[#14201b] hover:bg-[#1c3d32] shadow-sm"
-        >
-          {isCreating ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Creating…
-            </>
-          ) : (
-            "Create academic year"
-          )}
-        </Button>
+        <p className="text-xs leading-relaxed text-[#7c857d]">
+          Press <strong className="font-medium text-[#4d574f]">Create academic year</strong> below to save this calendar.
+        </p>
       </StepBody>
     </>
   );
@@ -279,6 +258,8 @@ type TermsStepProps = {
   hasTerms: boolean;
   academicYearName?: string;
   existingTermNames?: string;
+  /** Drafts that still need saving (names already stored are filtered out). */
+  pendingTermCount?: number;
   termDrafts: TermDraft[];
   onTermDraftsChange: (drafts: TermDraft[]) => void;
   termMode: "suggested" | "moe" | "custom";
@@ -298,6 +279,7 @@ export function TermsStepContent({
   hasTerms,
   academicYearName,
   existingTermNames,
+  pendingTermCount,
   termDrafts,
   onTermDraftsChange,
   termMode,
@@ -330,7 +312,14 @@ export function TermsStepContent({
     );
   }
 
-  if (hasTerms && existingTermNames) {
+  const shownPendingCount =
+    pendingTermCount ??
+    termDrafts.filter((t) => t.included !== false).length;
+
+  // Fully configured year: nothing left to save. If some drafts still need
+  // saving (e.g. a previous run saved Term 1 only), keep the form visible so
+  // they can be completed instead of being silently dropped.
+  if (hasTerms && existingTermNames && shownPendingCount === 0) {
     return <DoneBanner label="Terms are set up" detail={existingTermNames} />;
   }
 
@@ -352,100 +341,99 @@ export function TermsStepContent({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm leading-relaxed text-[#1c3d32]/75 dark:text-white/60">
+      {hasTerms && existingTermNames ? (
+        <DoneBanner
+          label="Terms already saved"
+          detail={`${existingTermNames} — ${shownPendingCount} more still to add`}
+        />
+      ) : null}
+      <p className="text-sm leading-relaxed text-[#4d574f]">
         A school year is usually split into teaching terms. Choose how you&apos;d
         like to set up{" "}
-        <strong className="text-[#14201b] dark:text-white">
+        <strong className="font-semibold text-[#14201b]">
           {academicYearName}
         </strong>{" "}
         — you can fine-tune every date afterwards.
       </p>
 
+      {!hasTerms ? (
+        <>
       {/* How do you want to set up your terms? */}
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-3">
         <PresetOption
           selected={termMode === "suggested"}
-          onClick={() => onTermModeChange("suggested")}
-          title="Split it for me"
-          subtitle="We space the terms evenly across the year"
+          onClick={() => {
+            onTermModeChange("suggested");
+            onApplySuggested();
+          }}
+          icon={Sparkles}
+          title="Split it evenly"
+          subtitle="Terms spread across the year"
         />
         <PresetOption
           selected={termMode === "moe"}
-          onClick={() => onTermModeChange("moe")}
-          title={`Kenya MoE ${moeYear}`}
-          subtitle="Use the Ministry's official term dates"
+          onClick={() => {
+            onTermModeChange("moe");
+            onApplyMoe();
+          }}
+          icon={CalendarRange}
+          title={`MoE ${moeYear}`}
+          subtitle="Official ministry dates"
         />
         <PresetOption
           selected={termMode === "custom"}
           onClick={() => onTermModeChange("custom")}
-          title="I'll enter my own"
-          subtitle="Type the name and dates for each term"
+          icon={Plus}
+          title="My own dates"
+          subtitle="Type each term yourself"
         />
       </div>
 
       {termMode === "suggested" && (
-        <div className="space-y-4 border border-[#1c3d32]/12 bg-[#f7f4ec] p-4 dark:border-white/10 dark:bg-white/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-[#14201b] dark:text-white">
-                How many terms?
-              </p>
-              <p className="mt-0.5 text-xs text-[#1c3d32]/60 dark:text-white/50">
-                Most Kenyan schools use three.
-              </p>
-            </div>
-            <div className="flex items-center border border-[#1c3d32]/15 bg-white p-0.5 dark:border-white/15 dark:bg-[#14201b]">
-              {[2, 3, 4].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => onSuggestedTermCountChange(n)}
-                  aria-pressed={suggestedTermCount === n}
-                  className={cn(
-                    "h-9 w-11 text-sm font-semibold transition-colors",
-                    suggestedTermCount === n
-                      ? "bg-[#14201b] text-white dark:bg-emerald-400 dark:text-[#14201b]"
-                      : "text-[#1c3d32]/60 hover:text-[#14201b] dark:text-white/50 dark:hover:text-white",
-                  )}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#1c3d32]/12 bg-[#f7f4ec]/80 px-4 py-3.5">
+          <div>
+            <p className="text-sm font-semibold text-[#14201b]">
+              How many teaching terms?
+            </p>
+            <p className="mt-0.5 text-xs text-[#4d574f]">
+              Most Kenyan schools use three.
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={onApplySuggested}
-            className="inline-flex w-full items-center justify-center gap-2 border border-[#1c3d32]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#1c3d32] transition-colors hover:bg-[#1c3d32]/[0.06] dark:bg-[#14201b] sm:w-auto"
-          >
-            <Sparkles className="h-4 w-4" />
-            Fill in the dates
-          </button>
-          <p className="text-xs text-[#1c3d32]/55 dark:text-white/45">
-            We&apos;ll spread the dates evenly — tweak any of them below.
-          </p>
+          <div className="flex items-center gap-1 rounded-full border border-[#14201b]/10 bg-white/80 p-1">
+            {[2, 3, 4].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onSuggestedTermCountChange(n)}
+                aria-pressed={suggestedTermCount === n}
+                className={cn(
+                  "flex h-10 w-12 items-center justify-center rounded-full text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
+                  suggestedTermCount === n
+                    ? "bg-[#14201b] text-white"
+                    : "text-[#4d574f] hover:bg-[#14201b]/[0.05] hover:text-[#14201b]",
+                )}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {termMode === "moe" && (
-        <div className="space-y-4 border border-[#1c3d32]/12 bg-[#f7f4ec] p-4 dark:border-white/10 dark:bg-white/5">
-          <p className="text-sm leading-relaxed text-[#1c3d32]/75 dark:text-white/60">
-            For Kenyan public schools — we&apos;ll fill in the Ministry of
-            Education&apos;s official term names and dates for {moeYear}.
+        <div className="rounded-xl border border-[#1c3d32]/12 bg-[#f7f4ec]/80 px-4 py-3.5">
+          <p className="text-sm leading-relaxed text-[#4d574f]">
+            We loaded the Ministry of Education&apos;s official term names and
+            dates for {moeYear}. Tweak any date below.
           </p>
-          <button
-            type="button"
-            onClick={onApplyMoe}
-            className="inline-flex w-full items-center justify-center gap-2 border border-[#1c3d32]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#1c3d32] transition-colors hover:bg-[#1c3d32]/[0.06] dark:bg-[#14201b] sm:w-auto"
-          >
-            <Sparkles className="h-4 w-4" />
-            Use official MoE dates
-          </button>
         </div>
       )}
 
       {termMode === "custom" && (
-        <div className="space-y-4 border border-[#1c3d32]/12 bg-[#f7f4ec] p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-[#1c3d32]/12 bg-[#f7f4ec]/80 p-4">
+          <p className="mb-3 text-sm font-semibold text-[#14201b]">
+            Add a term
+          </p>
           <div className="grid gap-3 sm:grid-cols-3">
             <FieldGroup label="Term name">
               <Input
@@ -482,25 +470,27 @@ export function TermsStepContent({
           <button
             type="button"
             onClick={onAddCustomTerm}
-            className="inline-flex w-full items-center justify-center gap-2 border border-[#1c3d32]/40 bg-white px-4 py-2.5 text-sm font-semibold text-[#1c3d32] transition-colors hover:bg-[#1c3d32]/[0.06] dark:bg-[#14201b] sm:w-auto"
+            className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#1c3d32]/25 bg-white/80 px-4 text-sm font-semibold text-[#1c3d32] transition-colors hover:border-[#1c3d32]/45 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden />
             Add this term
           </button>
         </div>
       )}
+        </>
+      ) : null}
 
       {termDrafts.length > 0 ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32]/50 dark:text-white/40">
-              {includedCount} term{includedCount === 1 ? "" : "s"} ready to save
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-[#4d574f]">
+              {includedCount} term{includedCount === 1 ? "" : "s"} ready
             </p>
-            <p className="text-xs text-[#1c3d32]/45 dark:text-white/35">
-              Mark the term you&apos;re in right now
+            <p className="text-xs text-[#7c857d]">
+              Mark the term your school is in right now
             </p>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {termDrafts.map((term, i) => {
               const included = term.included !== false;
               const isActive = activeTerm === i;
@@ -508,52 +498,63 @@ export function TermsStepContent({
                 <li
                   key={`${term.name}-${i}`}
                   className={cn(
-                    "border p-3 transition-colors",
+                    "rounded-xl border transition-colors",
                     included
-                      ? "border-[#1c3d32]/15 bg-white dark:border-white/10 dark:bg-[#0c1a17]"
-                      : "border-dashed border-[#1c3d32]/20 bg-[#f7f4ec] dark:bg-white/5",
+                      ? "border-[#14201b]/10 bg-white/85"
+                      : "border-dashed border-[#14201b]/15 bg-[#f7f4ec]/70",
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3 p-4">
                     <Checkbox
                       id={`include-term-${i}`}
                       checked={included}
                       onCheckedChange={(checked) =>
                         updateDraft(i, "included", checked === true)
                       }
+                      className="mt-0.5 h-5 w-5"
                     />
                     <div className="min-w-0 flex-1">
-                      <Label
-                        htmlFor={`include-term-${i}`}
-                        className={cn(
-                          "cursor-pointer text-sm font-semibold",
-                          included
-                            ? "text-[#14201b] dark:text-white"
-                            : "text-[#1c3d32]/45 line-through",
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <Label
+                          htmlFor={`include-term-${i}`}
+                          className={cn(
+                            "cursor-pointer text-[0.9375rem] font-semibold",
+                            included
+                              ? "text-[#14201b]"
+                              : "text-[#7c857d] line-through",
+                          )}
+                        >
+                          {term.name || "Unnamed term"}
+                        </Label>
+                        {included && (
+                          <p className="text-xs text-[#7c857d]">
+                            {formatDisplayDate(term.startDate)} →{" "}
+                            {formatDisplayDate(term.endDate)}
+                          </p>
                         )}
-                      >
-                        {term.name || "Unnamed term"}
-                      </Label>
-                      {included && (
-                        <p className="mt-0.5 text-xs text-[#1c3d32]/50 dark:text-white/40">
-                          {formatDisplayDate(term.startDate)} →{" "}
-                          {formatDisplayDate(term.endDate)}
-                        </p>
-                      )}
+                      </div>
                     </div>
                     {included && (
                       <button
                         type="button"
                         onClick={() => setActiveTerm(isActive ? -1 : i)}
                         title="Mark the term your school is currently in"
+                        aria-pressed={isActive}
                         className={cn(
-                          "shrink-0 border px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                          "inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full border px-3 text-[0.6875rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
                           isActive
-                            ? "border-[#1c3d32]/30 bg-[#efeadd] text-[#1c3d32] dark:border-emerald-700 dark:bg-[#1c3d32]/20 dark:text-[#d8c9ab]"
-                            : "border-[#1c3d32]/15 bg-[#efeadd] text-[#1c3d32]/60 hover:border-[#1c3d32]/30 hover:text-[#1c3d32] dark:border-white/15 dark:bg-white/5 dark:text-white/50",
+                            ? "border-[#1c3d32] bg-[#1c3d32] text-white"
+                            : "border-[#1c3d32]/20 bg-white/70 text-[#4d574f] hover:border-[#1c3d32]/40 hover:text-[#14201b]",
                         )}
                       >
-                        {isActive ? "Current term" : "Set as current"}
+                        {isActive ? (
+                          <>
+                            <CheckCircle2 className="h-3 w-3" aria-hidden />
+                            Current
+                          </>
+                        ) : (
+                          "Set current"
+                        )}
                       </button>
                     )}
                     <button
@@ -563,13 +564,13 @@ export function TermsStepContent({
                       }
                       aria-label={`Remove ${term.name || "term"}`}
                       title="Remove this term"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-transparent text-[#1c3d32]/40 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
+                      className="-mr-1 -mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#1c3d32]/35 transition-colors hover:bg-red-50 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden />
                     </button>
                   </div>
                   {included && (
-                    <div className="mt-3 grid gap-3 pl-7 sm:grid-cols-2">
+                    <div className="grid gap-3 px-4 pb-4 pl-12 sm:grid-cols-2">
                       <FieldGroup label="Starts">
                         <DateField
                           compact
@@ -597,9 +598,10 @@ export function TermsStepContent({
           </ul>
         </div>
       ) : (
-        <div className="border border-dashed border-[#1c3d32]/20 bg-[#f7f4ec] p-6 text-center dark:border-white/10 dark:bg-white/5">
-          <p className="text-sm text-[#1c3d32]/60 dark:text-white/50">
-            No terms yet — pick an option above and we&apos;ll add them here.
+        <div className="rounded-xl border border-dashed border-[#14201b]/15 bg-[#f7f4ec]/70 px-6 py-8 text-center">
+          <p className="text-sm font-medium text-[#14201b]">No terms yet</p>
+          <p className="mt-1 text-xs text-[#7c857d]">
+            Pick an option above and we&apos;ll add them here.
           </p>
         </div>
       )}
@@ -754,39 +756,39 @@ export function StreamsStepContent({
   const sampleGrade = gradeRows[0]?.gradeName ?? "Grade 4";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* What is a stream? */}
-      <div className="border border-[#1c3d32]/12 bg-[#f7f4ec] dark:bg-white/[0.03] dark:border-white/10 p-3 sm:p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32] mb-2">
-          What&apos;s a stream?
-        </p>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-[#14201b] dark:text-white">
-          <span className="font-medium">{sampleGrade}</span>
-          <span className="text-[#1c3d32]/35" aria-hidden>
+      <div className="rounded-xl border border-[#1c3d32]/12 bg-[#f7f4ec]/80 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-[#14201b]">
+            {sampleGrade}
+          </span>
+          <span className="text-[#7c857d]" aria-hidden>
             →
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="border border-[#1c3d32]/30 bg-[#1c3d32]/10 px-2 py-0.5 text-xs font-semibold text-[#1c3d32]">
-              {sampleGrade}A
-            </span>
-            <span className="border border-[#1c3d32]/30 bg-[#1c3d32]/10 px-2 py-0.5 text-xs font-semibold text-[#1c3d32]">
-              {sampleGrade}B
-            </span>
+          <span className="rounded-full border border-[#1c3d32]/20 bg-[#1c3d32]/[0.07] px-2.5 py-1 text-xs font-semibold text-[#1c3d32]">
+            {sampleGrade}A
+          </span>
+          <span className="rounded-full border border-[#1c3d32]/20 bg-[#1c3d32]/[0.07] px-2.5 py-1 text-xs font-semibold text-[#1c3d32]">
+            {sampleGrade}B
           </span>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-[#1c3d32]/60 dark:text-white/45">
+        <p className="mt-2 text-xs leading-relaxed text-[#4d574f]">
           A stream is a class section students join — like 4A or 4B. Most schools
-          keep one to three per grade. We&apos;ll set the same pattern for every
-          grade, and you can adjust any grade below.
+          keep one to three per grade. Pick a pattern for every grade, then
+          adjust any grade below.
         </p>
       </div>
 
       {/* Bulk apply */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32]/45 mb-2">
-          Quick start — all {gradeRows.length} grades
-        </p>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="mb-2.5 flex items-baseline justify-between gap-2">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-[#4d574f]">
+            Quick start · all {gradeRows.length} grades
+          </p>
+          <p className="text-xs text-[#7c857d]">Tap to apply</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
           {BULK_PRESETS.map((preset) => {
             const active =
               gradeRows.length > 0 &&
@@ -808,24 +810,43 @@ export function StreamsStepContent({
                 type="button"
                 onClick={() => applyBulkToAll(preset.names)}
                 title={preset.hint}
-                className={`border px-2 py-2.5 text-center transition-colors ${
+                aria-pressed={active}
+                className={cn(
+                  "flex min-h-[5.5rem] flex-col items-start justify-between rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/25",
                   active
                     ? "border-[#1c3d32] bg-[#1c3d32] text-white"
-                    : "border-[#1c3d32]/12 bg-white hover:border-[#1c3d32]/40 dark:bg-[#0c1a17] dark:border-white/10"
-                }`}
+                    : "border-[#14201b]/12 bg-white/70 hover:border-[#14201b]/25 hover:bg-white",
+                )}
               >
-                <span className="block text-xs font-semibold">{preset.label}</span>
+                <span className="flex w-full items-start justify-between gap-2">
+                  <span className="text-xs font-semibold leading-tight">
+                    {preset.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                      active
+                        ? "border-white/60 bg-white text-[#1c3d32]"
+                        : "border-[#14201b]/20",
+                    )}
+                    aria-hidden
+                  >
+                    {active ? <CheckCircle2 className="h-2.5 w-2.5" /> : null}
+                  </span>
+                </span>
                 <span
-                  className={`block text-[10px] mt-0.5 tabular-nums font-medium ${
-                    active ? "text-white/80" : "text-[#1c3d32]/75"
-                  }`}
+                  className={cn(
+                    "mt-2 block text-[0.625rem] font-medium tabular-nums",
+                    active ? "text-white/75" : "text-[#7c857d]",
+                  )}
                 >
                   {preset.names.join(" · ")}
                 </span>
                 <span
-                  className={`hidden sm:block text-[10px] mt-0.5 leading-snug ${
-                    active ? "text-white/60" : "text-[#1c3d32]/45"
-                  }`}
+                  className={cn(
+                    "mt-0.5 hidden text-[0.625rem] leading-snug sm:block",
+                    active ? "text-white/50" : "text-[#7c857d]/80",
+                  )}
                 >
                   {preset.hint}
                 </span>
@@ -837,16 +858,14 @@ export function StreamsStepContent({
 
       {/* Compact grade roster */}
       <div>
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1c3d32]/45">
+        <div className="mb-2.5 flex items-center justify-between gap-2">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-[#4d574f]">
             Per grade
           </p>
-          <p className="text-[10px] text-[#1c3d32]/40">
-            Seats = max learners · edit anytime
-          </p>
+          <p className="text-xs text-[#7c857d]">Seats = max learners</p>
         </div>
 
-        <ul className="border border-[#1c3d32]/12 dark:border-white/10 divide-y divide-[#1c3d32]/10 max-h-[min(22rem,50vh)] overflow-y-auto">
+        <ul className="max-h-[min(22rem,46vh)] space-y-2 overflow-y-auto pr-1">
           {gradeRows.map((grade) => {
             const drafts = gradeStreamPlans[grade.gradeId] || [];
             const pending = gradePendingNames(grade, drafts);
@@ -854,38 +873,38 @@ export function StreamsStepContent({
             return (
               <li
                 key={grade.gradeId}
-                className="bg-white dark:bg-[#0c1a17] px-3 py-2.5"
+                className="rounded-xl border border-[#14201b]/10 bg-white/80 p-3.5"
               >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="min-w-0 flex items-baseline gap-2">
-                    <p className="text-sm font-semibold text-[#14201b] dark:text-white truncate">
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#14201b]">
                       {grade.gradeName}
                     </p>
-                    <p className="text-[10px] text-[#1c3d32]/45 truncate hidden sm:block">
+                    <p className="truncate text-[0.625rem] uppercase tracking-[0.08em] text-[#7c857d]">
                       {grade.levelName}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     {grade.existingStreams.length > 0 && (
-                      <span className="text-[10px] text-[#1c3d32] bg-[#efeadd] px-1.5 py-0.5">
-                        has {grade.existingStreams.join(", ")}
+                      <span className="rounded-full bg-[#efeadd] px-2 py-0.5 text-[0.625rem] font-medium text-[#4d574f]">
+                        Has {grade.existingStreams.join(", ")}
                       </span>
                     )}
                     {pending.length > 0 && (
-                      <span className="text-[10px] font-semibold tabular-nums text-[#1c3d32] bg-[#1c3d32]/10 px-1.5 py-0.5">
-                        +{pending.length} new
+                      <span className="rounded-full bg-[#1c3d32]/10 px-2 py-0.5 text-[0.625rem] font-semibold tabular-nums text-[#1c3d32]">
+                        +{pending.length}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
                   {drafts.map((draft) => (
                     <div
                       key={draft.id}
-                      className="inline-flex items-center border border-[#1c3d32]/25 bg-[#efeadd] transition-all duration-150 hover:border-[#1c3d32]/45 hover:shadow-sm dark:bg-[#071411] dark:border-[#1c3d32]/35"
+                      className="inline-flex items-center rounded-lg border border-[#1c3d32]/20 bg-[#f7f4ec] transition-colors hover:border-[#1c3d32]/35"
                     >
-                      <span className="pl-2 pr-1 text-[10px] font-semibold uppercase tracking-wide text-[#1c3d32]/70">
+                      <span className="pl-2.5 pr-1 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#7c857d]">
                         Stream
                       </span>
                       <Input
@@ -899,12 +918,12 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} stream name`}
-                        className="h-8 w-10 rounded-[2px] border-0 bg-transparent px-0 text-center text-sm font-bold text-[#14201b] shadow-none focus-visible:ring-0 focus:bg-[#1c3d32]/[0.06] dark:text-white"
+                        className="h-10 w-12 rounded-lg border-0 bg-transparent px-0 text-center text-sm font-bold text-[#14201b] shadow-none focus-visible:bg-[#1c3d32]/[0.06] focus-visible:ring-0"
                         placeholder="?"
                       />
-                      <span className="h-5 w-px bg-[#1c3d32]/15" aria-hidden />
+                      <span className="h-6 w-px bg-[#14201b]/10" aria-hidden />
                       <span
-                        className="pl-1.5 pr-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1c3d32]/45"
+                        className="px-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#7c857d]"
                         title="Max learners per stream"
                       >
                         Seats
@@ -922,7 +941,7 @@ export function StreamsStepContent({
                           )
                         }
                         aria-label={`${grade.gradeName} ${draft.name || "stream"} seats (max learners)`}
-                        className="h-8 w-11 rounded-[2px] border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1c3d32]/70 shadow-none focus-visible:ring-0 focus:bg-[#1c3d32]/[0.06]"
+                        className="h-10 w-14 rounded-lg border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#4d574f] shadow-none focus-visible:bg-[#1c3d32]/[0.06] focus-visible:ring-0"
                         title="Seats (max learners)"
                       />
                       <button
@@ -930,11 +949,11 @@ export function StreamsStepContent({
                         onClick={() =>
                           removeGradeDraft(grade.gradeId, draft.id)
                         }
-                        className="mr-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-[#1c3d32]/35 transition-all duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
+                        className="mr-1 flex h-9 w-9 items-center justify-center rounded-full text-[#1c3d32]/35 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                         aria-label={`Remove stream ${draft.name || ""} from ${grade.gradeName}`}
                         title="Remove stream"
                       >
-                        <X className="h-3 w-3" strokeWidth={2.5} />
+                        <X className="h-3.5 w-3.5" strokeWidth={2.5} />
                       </button>
                     </div>
                   ))}
@@ -942,10 +961,10 @@ export function StreamsStepContent({
                   <button
                     type="button"
                     onClick={() => addStreamToGrade(grade.gradeId, grade)}
-                    className="inline-flex h-8 items-center gap-1 border border-dashed border-[#1c3d32]/25 px-2 text-[11px] font-medium text-[#1c3d32]/55 transition-colors hover:border-[#1c3d32]/50 hover:bg-[#1c3d32]/[0.04] hover:text-[#1c3d32]"
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-dashed border-[#1c3d32]/25 px-3 text-xs font-semibold text-[#1c3d32]/70 transition-colors hover:border-[#1c3d32]/50 hover:bg-[#1c3d32]/[0.04] hover:text-[#1c3d32] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/20"
                   >
-                    <Plus className="h-3 w-3" />
-                    Add
+                    <Plus className="h-3.5 w-3.5" aria-hidden />
+                    Add stream
                   </button>
                 </div>
               </li>
@@ -954,52 +973,23 @@ export function StreamsStepContent({
         </ul>
       </div>
 
-      {/* Creation ticket */}
-      <div
-        className={`border px-3 py-2.5 ${
-          plannedCreates > 0
-            ? "border-[#14201b] bg-[#14201b] text-white"
-            : "border-[#1c3d32]/12 bg-[#efeadd] dark:bg-white/[0.03]"
-        }`}
-      >
-        {plannedCreates > 0 ? (
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d8c9ab]/90">
-                Creating on Continue
-              </p>
-              <p className="mt-1 text-sm font-medium leading-snug">
-                <span className="tabular-nums">{plannedCreates}</span> stream
-                {plannedCreates === 1 ? "" : "s"} across{" "}
-                <span className="tabular-nums">{gradesWithPlans}</span> grade
-                {gradesWithPlans === 1 ? "" : "s"}
-              </p>
-              <p className="mt-1 text-[11px] text-white/55 truncate">
-                {gradeRows
-                  .map((g) => {
-                    const names = gradePendingNames(
-                      g,
-                      gradeStreamPlans[g.gradeId] || [],
-                    );
-                    if (names.length === 0) return null;
-                    return `${g.gradeName} ${names.join("/")}`;
-                  })
-                  .filter(Boolean)
-                  .slice(0, 6)
-                  .join(" · ")}
-                {gradesWithPlans > 6 ? "…" : ""}
-              </p>
-            </div>
-            <span className="shrink-0 font-display text-2xl tabular-nums text-[#d8c9ab]">
-              {String(plannedCreates).padStart(2, "0")}
-            </span>
-          </div>
-        ) : (
-          <p className="text-sm text-[#1c3d32]/65 dark:text-white/50 leading-snug">
-            Pick a quick start above to create streams, or continue and add them
-            later from Classes.
+      {/* Summary — informational, not an action */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-[#1c3d32]/12 bg-[#efeadd]/60 px-4 py-3.5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-[#14201b]">
+            {plannedCreates > 0
+              ? `${plannedCreates} stream${plannedCreates === 1 ? "" : "s"} will be created`
+              : "No new streams planned"}
           </p>
-        )}
+          <p className="mt-0.5 truncate text-xs text-[#4d574f]">
+            {plannedCreates > 0
+              ? `${gradesWithPlans} grade${gradesWithPlans === 1 ? "" : "s"} · you can rename or remove them later`
+              : "Continue and add them later from Classes."}
+          </p>
+        </div>
+        <span className="shrink-0 font-display text-xl tabular-nums text-[#1c3d32]">
+          {String(plannedCreates).padStart(2, "0")}
+        </span>
       </div>
     </div>
   );
@@ -1029,21 +1019,21 @@ export function PaymentsStepContent({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-[#1c3d32]/70 dark:text-white/55">
-        Configure M-Pesa Express (till) and at least one bank paybill. Skip if
-        you want to finish this from the dashboard later.
+      <p className="text-sm leading-relaxed text-[#4d574f]">
+        Add how parents pay. You can finish this later from the dashboard — it
+        never blocks day-to-day use.
       </p>
 
-      <div>
+      <div className="space-y-2.5">
         <PaymentSetupCard
           icon={Smartphone}
           title="M-Pesa Express"
           description="Buy Goods till or HO paybill — parents get a PIN prompt; money lands on your till."
           ready={tillReady}
           loading={mpesaLoading}
-          readyLabel={custodyLine ?? 'Till saved'}
+          readyLabel={custodyLine ?? "Till saved"}
           waitingLabel="Till not set yet"
-          actionLabel={tillReady ? 'Edit till' : 'Set till / paybill'}
+          actionLabel={tillReady ? "Edit" : "Set up"}
           onAction={onConfigureMpesa}
         />
         <PaymentSetupCard
@@ -1054,15 +1044,18 @@ export function PaymentsStepContent({
           loading={bankLoading}
           readyLabel={`${details.paymentModes.bankAccounts.filter((b) => b.bankName.trim()).length} bank(s) saved`}
           waitingLabel="No bank details yet"
-          actionLabel={banksReady ? 'Edit banks' : 'Add bank account'}
+          actionLabel={banksReady ? "Edit" : "Add"}
           onAction={onConfigureBank}
         />
       </div>
 
-      <p className="text-xs leading-relaxed text-[#1c3d32]/55 dark:text-white/45">
-        Tip: till setup only works after SQUL ops turn on the platform custody
-        rail. Bank details always save and print on fee letters.
-      </p>
+      <div className="rounded-xl border border-[#1c3d32]/12 bg-[#efeadd]/60 px-4 py-3">
+        <p className="text-xs leading-relaxed text-[#4d574f]">
+          <strong className="font-semibold text-[#14201b]">Tip:</strong> till
+          setup only works after SQUL ops turn on the platform custody rail.
+          Bank details always save and print on fee letters.
+        </p>
+      </div>
     </div>
   )
 }
@@ -1089,38 +1082,46 @@ function PaymentSetupCard({
   onAction: () => void
 }) {
   return (
-    <div className="border-t border-[#14201b]/10 py-5 first:border-t-0 first:pt-0">
-      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
-        <div className="flex min-w-0 flex-1 items-start gap-4">
-          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#1c3d32]/55" strokeWidth={1.5} />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-[0.8125rem] font-medium text-[#14201b]">{title}</p>
-              {loading ? (
-                <Loader2 className="h-3 w-3 animate-spin text-[#7c857d]" />
-              ) : ready ? (
-                <span className="inline-flex items-center gap-1 text-[0.5rem] uppercase tracking-[0.16em] text-[#1c3d32]">
-                  <CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2} />
-                  Ready
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-1.5 max-w-[48ch] text-xs leading-relaxed text-[#4d574f]">
-              {description}
-            </p>
-            <p className="mt-2.5 text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">
-              {loading ? 'Checking…' : ready ? readyLabel : waitingLabel}
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onAction}
-          className="shrink-0 border-b border-[#14201b]/30 pb-0.5 text-[0.75rem] font-medium text-[#14201b] transition-colors duration-200 hover:border-[#14201b]"
-        >
-          {actionLabel}
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onAction}
+      className="group flex w-full items-start gap-4 rounded-xl border border-[#14201b]/10 bg-white/80 p-4 text-left transition-colors hover:border-[#1c3d32]/25 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1c3d32]/20"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#1c3d32]/12 bg-[#1c3d32]/[0.05] text-[#1c3d32]">
+        <Icon className="h-4 w-4" strokeWidth={1.75} />
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-[#14201b]">{title}</span>
+          {loading ? (
+            <Loader2 className="h-3 w-3 animate-spin text-[#7c857d]" />
+          ) : ready ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#1c3d32]/10 px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-[0.1em] text-[#1c3d32]">
+              <CheckCircle2 className="h-2.5 w-2.5" strokeWidth={2.25} />
+              Ready
+            </span>
+          ) : (
+            <span className="rounded-full bg-[#efeadd] px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-[0.1em] text-[#7c857d]">
+              Not set
+            </span>
+          )}
+        </span>
+        <span className="mt-1 block text-xs leading-relaxed text-[#4d574f]">
+          {description}
+        </span>
+        <span className="mt-2 block text-[0.6875rem] font-medium text-[#1c3d32]">
+          {loading ? "Checking…" : ready ? readyLabel : waitingLabel}
+        </span>
+      </span>
+
+      <span className="flex shrink-0 items-center gap-1 self-center text-[0.75rem] font-semibold text-[#1c3d32]">
+        {actionLabel}
+        <ChevronRight
+          className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
+      </span>
+    </button>
   )
 }

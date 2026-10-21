@@ -18,6 +18,7 @@ import {
   KeyRound,
   Loader2,
   Mail,
+  MessageCircle,
   MessageSquare,
   RefreshCw,
   Send,
@@ -37,8 +38,8 @@ interface StudentCredentialsDialogProps {
   onCopy: (text: string, field: string) => void;
   phone?: string;
   portalUrl: string;
-  onSend: (channel: "SMS" | "EMAIL") => void;
-  sendingChannel: "SMS" | "EMAIL" | null;
+  onSend: (channel: "SMS" | "EMAIL" | "WHATSAPP") => void;
+  sendingChannel: "SMS" | "EMAIL" | "WHATSAPP" | null;
 }
 
 function CredentialRow({
@@ -202,7 +203,7 @@ export function StudentCredentialsDialog({
               <Send className="h-3 w-3" />
               Send login details
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-3 gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -232,6 +233,21 @@ export function StudentCredentialsDialog({
                   <Mail className="h-3.5 w-3.5" />
                 )}
                 Send email
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={() => onSend("WHATSAPP")}
+                disabled={!phone || sendingChannel !== null}
+              >
+                {sendingChannel === "WHATSAPP" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-3.5 w-3.5" />
+                )}
+                WhatsApp
               </Button>
             </div>
             <p className="mt-2 text-[10px] text-slate-400">

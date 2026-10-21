@@ -28,6 +28,7 @@ import {
 import {
   cancelCommMessages,
   fetchCommMessages,
+  resendCommMessages,
   retryCommMessages,
   type CommCampaign,
   type CommMessage,
@@ -85,6 +86,9 @@ export function CampaignReportDialog({
   const stats = campaign.stats;
   const failed = rows.filter((row) => row.status === "FAILED");
   const queued = rows.filter((row) => row.status === "PENDING");
+  const resendable = rows.filter((row) =>
+    ["SENT", "FAILED", "SKIPPED", "CANCELLED"].includes(row.status),
+  );
 
   const retry = async (ids: string[]) => {
     if (!ids.length) return;
@@ -96,6 +100,21 @@ export function CampaignReportDialog({
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Retry failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const resend = async (ids: string[]) => {
+    if (!ids.length) return;
+    try {
+      setBusy("resend");
+      const count = await resendCommMessages(ids);
+      toast.success(`${count} message${count === 1 ? "" : "s"} queued to resend.`);
+      await load();
+      onChanged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Resend failed");
     } finally {
       setBusy(null);
     }
@@ -160,6 +179,19 @@ export function CampaignReportDialog({
               <RefreshCw className="h-4 w-4" />
             )}
             Retry failed ({failed.length})
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void resend(resendable.map((row) => row.id))}
+            disabled={!resendable.length || busy !== null}
+          >
+            {busy === "resend" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Resend completed ({resendable.length})
           </Button>
           <Button
             size="sm"
@@ -260,6 +292,15 @@ export function CampaignReportDialog({
                           disabled={busy !== null}
                         >
                           Cancel
+                        </Button>
+                      ) : ["SENT", "SKIPPED", "CANCELLED"].includes(row.status) ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => void resend([row.id])}
+                          disabled={busy !== null}
+                        >
+                          Resend
                         </Button>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>

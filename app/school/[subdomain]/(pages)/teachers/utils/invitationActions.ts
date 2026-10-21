@@ -1,5 +1,3 @@
-import { toast } from "sonner";
-
 export async function resendTeacherInvitation(invitationId: string) {
   const response = await fetch("/api/graphql", {
     method: "POST",
@@ -30,6 +28,57 @@ export async function resendTeacherInvitation(invitationId: string) {
     status: string;
     createdAt: string;
   };
+}
+
+export async function resendTeacherWelcome(teacherId: string): Promise<boolean> {
+  const response = await fetch("/api/graphql", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      query: `
+        mutation ResendTeacherWelcome($teacherId: ID!) {
+          resendTeacherWelcome(teacherId: $teacherId)
+        }
+      `,
+      variables: { teacherId },
+    }),
+  });
+
+  const result = await response.json();
+  if (result.errors?.length) {
+    throw new Error(
+      result.errors[0]?.message || "Failed to resend the teacher welcome",
+    );
+  }
+  return Boolean(result.data?.resendTeacherWelcome);
+}
+
+export async function resendTeacherInvitationByEmail(email: string) {
+  const lookup = await fetch("/api/graphql", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      query: `
+        query PendingTeacherInvitation($email: String!) {
+          getPendingTeacherInvitation(email: $email) { id email }
+        }
+      `,
+      variables: { email },
+    }),
+  });
+  const lookupResult = await lookup.json();
+  if (lookupResult.errors?.length) {
+    throw new Error(
+      lookupResult.errors[0]?.message || "Could not find the invitation",
+    );
+  }
+  const invitation = lookupResult.data?.getPendingTeacherInvitation;
+  if (!invitation?.id) {
+    throw new Error("No pending invitation found for this email.");
+  }
+  return resendTeacherInvitation(invitation.id);
 }
 
 export async function revokeTeacherInvitation(invitationId: string) {

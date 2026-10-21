@@ -19,6 +19,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SetTeacherPasswordDialog } from "./SetTeacherPasswordDialog";
@@ -40,6 +43,9 @@ import {
   ArrowLeft,
   MoreHorizontal,
   Phone,
+  MessageSquare,
+  MessageCircle,
+  Send,
   Calendar,
   MapPin,
   Briefcase,
@@ -67,6 +73,8 @@ import { TeacherAvatar } from "./TeacherAvatar";
 import { cn } from "@/lib/utils";
 import { formatTeacherDate, formatTenantSubjectLabel } from "../utils/teachers-utils";
 import { isTeacherProfileIncomplete } from "../utils/mapGraphqlTeacher";
+import { resendTeacherWelcome } from "../utils/invitationActions";
+import { sendTeacherLoginDetails } from "@/lib/school/credentialsApi";
 
 interface TeacherDetailViewProps {
   teacherId: string;
@@ -239,6 +247,8 @@ export function TeacherDetailView({
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [academicEditorOpen, setAcademicEditorOpen] = useState(false);
+  const [isResendingWelcome, setIsResendingWelcome] = useState(false);
+  const [sendingLogin, setSendingLogin] = useState<string | null>(null);
 
   if (loading) {
     return <TeacherDetailSkeleton />;
@@ -386,7 +396,86 @@ export function TeacherDetailView({
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 rounded-lg">
+                <DropdownMenuContent align="end" className="w-56 rounded-lg">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      try {
+                        setIsResendingWelcome(true);
+                        await resendTeacherWelcome(teacher.id);
+                        toast.success("Welcome message queued", {
+                          description:
+                            "The teacher will receive the welcome email/SMS within a minute.",
+                        });
+                      } catch (error) {
+                        toast.error(
+                          error instanceof Error
+                            ? error.message
+                            : "Could not resend the welcome",
+                        );
+                      } finally {
+                        setIsResendingWelcome(false);
+                      }
+                    }}
+                    disabled={isResendingWelcome}
+                    className="cursor-pointer gap-2"
+                  >
+                    {isResendingWelcome ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    Resend welcome
+                  </DropdownMenuItem>
+                  {userId ? <DropdownMenuSeparator /> : null}
+                  {userId ? (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="gap-2">
+                        {sendingLogin ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        Send login details
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48 rounded-lg">
+                        {(
+                          [
+                            { channel: "SMS", label: "Text via SMS", icon: MessageSquare },
+                            { channel: "EMAIL", label: "Email", icon: Mail },
+                            { channel: "WHATSAPP", label: "WhatsApp", icon: MessageCircle },
+                          ] as const
+                        ).map(({ channel, label, icon: Icon }) => (
+                          <DropdownMenuItem
+                            key={channel}
+                            disabled={sendingLogin !== null}
+                            className="cursor-pointer gap-2"
+                            onClick={async () => {
+                              try {
+                                setSendingLogin(channel);
+                                await sendTeacherLoginDetails(teacher.id, channel);
+                                toast.success(`Login details queued via ${label.replace("Text via ", "")}`, {
+                                  description:
+                                    "The message includes the temporary password and a sign-in/edit link.",
+                                });
+                              } catch (error) {
+                                toast.error(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Could not send login details",
+                                );
+                              } finally {
+                                setSendingLogin(null);
+                              }
+                            }}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  ) : null}
+                  {userId ? <DropdownMenuSeparator /> : null}
                   {userId ? (
                     <DropdownMenuItem
                       onClick={() => setPasswordDialogOpen(true)}

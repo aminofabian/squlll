@@ -123,11 +123,11 @@ function SchoolLayoutContent({
     ) {
       return;
     }
-    const tenantId = getTenantIdFromCookies();
+    const tenantId = getTenantIdFromCookies() ?? config?.tenant?.id ?? null;
     if (!isSchoolOnboardingComplete(tenantId)) {
       router.replace('/onboarding');
     }
-  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, isNonAdminRole, router]);
+  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, isNonAdminRole, router, config?.tenant?.id]);
 
   useEffect(() => {
     // Only show loading state initially, then let the config loading state take over

@@ -73,6 +73,15 @@ export async function POST(request: Request) {
           startDate: input.startDate,
           endDate: input.endDate,
           academicYearId: input.academicYearId,
+          ...(typeof input.isActive === "boolean"
+            ? { isActive: input.isActive }
+            : {}),
+          ...(input.halfTermStartDate
+            ? { halfTermStartDate: input.halfTermStartDate }
+            : {}),
+          ...(input.halfTermEndDate
+            ? { halfTermEndDate: input.halfTermEndDate }
+            : {}),
         },
       },
     };
@@ -106,9 +115,24 @@ export async function POST(request: Request) {
 
     if (result.errors) {
       console.error("CreateTerm mutation failed:", result.errors);
+      const firstError = Array.isArray(result.errors)
+        ? result.errors[0]
+        : undefined;
+      const code = firstError?.extensions?.code;
+      const status =
+        code === "CONFLICT"
+          ? 409
+          : code === "BAD_REQUEST" || code === "BAD_USER_INPUT"
+            ? 400
+            : 500;
+
       return NextResponse.json(
-        { error: "Error creating term", details: result.errors },
-        { status: 500 },
+        {
+          error: "Error creating term",
+          message: firstError?.message || "Error creating term",
+          details: result.errors,
+        },
+        { status },
       );
     }
 

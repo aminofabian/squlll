@@ -731,6 +731,14 @@ export async function retryCommMessages(ids: string[]): Promise<number> {
   return data.retryCommMessages;
 }
 
+export async function resendCommMessages(ids: string[]): Promise<number> {
+  const data = await gqlRequest<{ resendCommMessages: number }>({
+    query: `mutation ($ids: [ID!]!) { resendCommMessages(ids: $ids) }`,
+    variables: { ids },
+  });
+  return data.resendCommMessages;
+}
+
 export async function cancelCommMessages(ids: string[]): Promise<number> {
   const data = await gqlRequest<{ cancelCommMessages: number }>({
     query: `mutation ($ids: [ID!]!) { cancelCommMessages(ids: $ids) }`,

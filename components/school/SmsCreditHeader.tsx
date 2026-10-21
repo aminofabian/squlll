@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Loader2, MessageSquareText, Plus } from "lucide-react";
+import { SmsTopUpDialog } from "@/components/school/SmsTopUpDialog";
 import { cn } from "@/lib/utils";
 import {
   fetchSmsCreditBalance,
@@ -17,6 +17,7 @@ export function SmsCreditHeader() {
   const [balance, setBalance] = useState<SmsCreditBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -43,8 +44,10 @@ export function SmsCreditHeader() {
   const label = loading && !balance ? "—" : available.toLocaleString();
 
   return (
-    <Link
-      href="/sms-credits"
+    <>
+    <button
+      type="button"
+      onClick={() => setTopUpOpen(true)}
       title={`${label} SMS credits available — click to top up`}
       aria-label={`${label} SMS credits available. Top up.`}
       className={cn(
@@ -72,6 +75,16 @@ export function SmsCreditHeader() {
         <Plus className="h-3 w-3" />
         <span className="hidden md:inline">Top up</span>
       </span>
-    </Link>
+    </button>
+    <SmsTopUpDialog
+      open={topUpOpen}
+      onOpenChange={setTopUpOpen}
+      initialBalance={balance}
+      onSuccess={(next) => {
+        if (next) setBalance(next);
+        else void load();
+      }}
+    />
+    </>
   );
 }

@@ -37,8 +37,8 @@ interface StudentProfileOverviewProps {
   credentialsLoading: boolean;
   portalUrl: string;
   onViewCredentials: () => void;
-  onSendCredentials: (channel: "SMS" | "EMAIL") => void;
-  sendingChannel: "SMS" | "EMAIL" | null;
+  onSendCredentials: (channel: "SMS" | "EMAIL" | "WHATSAPP") => void;
+  sendingChannel: "SMS" | "EMAIL" | "WHATSAPP" | null;
   onTabSelect: (tab: string) => void;
   onAssignClass: () => void;
   onProfileSaved: () => void;

@@ -48,7 +48,7 @@ export function useSchoolSetupProgress() {
   const { config } = useSchoolConfigStore();
   const { data: tenantStats, isLoading: statsLoading } = useTenantStatistics();
   const { teachers, isLoading: teachersLoading } = useGetTeachers();
-  const tenantId = getTenantIdFromCookies();
+  const tenantId = getTenantIdFromCookies() ?? config?.tenant?.id ?? null;
 
   const flags = useMemo(() => {
     const levels = config?.selectedLevels ?? [];

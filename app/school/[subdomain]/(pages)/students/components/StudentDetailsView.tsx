@@ -28,7 +28,7 @@ import {
 import SchoolReportCard from "./ReportCard";
 import { useStudentDetailSummary } from "@/lib/hooks/useStudentDetailSummary";
 import { useStudentCredentials } from "@/lib/hooks/useStudentCredentials";
-import { sendTestReminder } from "@/lib/school/communicationsApi";
+import { sendStudentLoginDetails } from "@/lib/school/credentialsApi";
 import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
 import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import { cn } from "@/lib/utils";
@@ -134,24 +134,6 @@ function EmptyPanel({
   );
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    switch (character) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
-      case '"':
-        return "&quot;";
-      case "'":
-        return "&#39;";
-      default:
-        return character;
-    }
-  });
-}
 
 export function StudentDetailsView({
   studentId,
@@ -178,7 +160,7 @@ export function StudentDetailsView({
   const [pdfLoading, setPdfLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [sendingCredentials, setSendingCredentials] = useState<
-    "SMS" | "EMAIL" | null
+    "SMS" | "EMAIL" | "WHATSAPP" | null
   >(null);
 
   const params = useParams();
@@ -260,59 +242,36 @@ export function StudentDetailsView({
   };
   const missingStream = !student.streamName;
   const portalUrl = schoolPortalUrl(subdomain, "/student");
-  const schoolName = schoolConfig?.tenant?.schoolName ?? "your school";
 
-  const handleSendCredentials = async (channel: "SMS" | "EMAIL") => {
+  const handleSendCredentials = async (
+    channel: "SMS" | "EMAIL" | "WHATSAPP",
+  ) => {
     if (sendingCredentials) return;
 
-    const current = credentials ?? (await fetchCredentials());
-    const loginEmail = current?.email ?? student.email;
-    const password = current?.password ?? student.admissionNumber;
-    const to = channel === "SMS" ? student.phone : loginEmail;
-
-    if (!to) {
-      toast.error(
-        channel === "SMS"
-          ? "No phone number is on file for this student."
-          : "No email address is on file for this student.",
-      );
+    const loginEmail = credentials?.email ?? student.email;
+    const phone = student.phone;
+    if (channel === "EMAIL" && !loginEmail) {
+      toast.error("No email address is on file for this student.");
+      return;
+    }
+    if ((channel === "SMS" || channel === "WHATSAPP") && !phone) {
+      toast.error("No phone number is on file for this student.");
       return;
     }
 
     setSendingCredentials(channel);
     try {
-      const text = [
-        `Hello ${student.studentName},`,
-        "",
-        `Your ${schoolName} student portal login:`,
-        `Email: ${loginEmail}`,
-        `Password: ${password}`,
-        `Sign in: ${portalUrl}`,
-        "",
-        "Keep these details private.",
-      ].join("\n");
-      const html = [
-        `<p>Hello ${escapeHtml(student.studentName)},</p>`,
-        `<p>Your ${escapeHtml(schoolName)} student portal login:</p>`,
-        `<p><strong>Email:</strong> ${escapeHtml(loginEmail)}<br/>`,
-        `<strong>Password:</strong> ${escapeHtml(password)}<br/>`,
-        `<strong>Sign in:</strong> <a href="${portalUrl}">${portalUrl}</a></p>`,
-        "<p>Keep these details private.</p>",
-      ].join("");
-      const result = await sendTestReminder({
-        channel,
-        to,
-        body: channel === "EMAIL" ? html : text,
-        subject:
-          channel === "EMAIL" ? "Your student portal login" : undefined,
-      });
-      if (result.ok) {
-        toast.success(
-          `Login details sent via ${channel === "SMS" ? "SMS" : "email"} to ${to}`,
-        );
-      } else {
-        toast.error(result.message);
-      }
+      await sendStudentLoginDetails(student.id, channel);
+      toast.success(
+        `Login details queued via ${
+          channel === "EMAIL" ? "email" : channel === "WHATSAPP" ? "WhatsApp" : "SMS"
+        }`,
+        {
+          description: `The student will receive their login link and password ${
+            channel === "EMAIL" ? "by email" : `on ${phone}`
+          }.`,
+        },
+      );
     } catch (err) {
       toast.error(getDisplayErrorMessage(err));
     } finally {

@@ -211,7 +211,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
   const [activatingEmails, setActivatingEmails] = useState<Set<string>>(new Set());
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const { activateTeacherRecord } = useTeacherAdminActions();
 
   const resendInvitation = async (invitationId: string) => {

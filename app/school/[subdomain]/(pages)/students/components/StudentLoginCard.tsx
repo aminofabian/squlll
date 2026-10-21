@@ -8,6 +8,7 @@ import {
   KeyRound,
   Loader2,
   Mail,
+  MessageCircle,
   MessageSquare,
   Send,
 } from "lucide-react";
@@ -25,8 +26,8 @@ interface StudentLoginCardProps {
   portalUrl: string;
   onView: () => void;
   onManageAccess: () => void;
-  onSend: (channel: "SMS" | "EMAIL") => void;
-  sendingChannel: "SMS" | "EMAIL" | null;
+  onSend: (channel: "SMS" | "EMAIL" | "WHATSAPP") => void;
+  sendingChannel: "SMS" | "EMAIL" | "WHATSAPP" | null;
 }
 
 function LoginValue({
@@ -241,6 +242,24 @@ export function StudentLoginCard({
                 Send via email
                 <span className="ml-auto truncate text-[10px] text-[#1a4d42]/35">
                   {email ? "Email" : "No email"}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-full justify-start gap-2 text-xs"
+                onClick={() => onSend("WHATSAPP")}
+                disabled={!student.phone || sending}
+              >
+                {sendingChannel === "WHATSAPP" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-3.5 w-3.5" />
+                )}
+                Send via WhatsApp
+                <span className="ml-auto truncate text-[10px] text-[#1a4d42]/35">
+                  {student.phone || "No phone"}
                 </span>
               </Button>
             </div>
