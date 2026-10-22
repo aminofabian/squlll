@@ -157,9 +157,9 @@ export function CampaignReportDialog({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Recipients" value={campaign.recipientCount} icon={Send} />
           <StatCard
-            label="Delivered"
+            label="Inbox confirmed"
             value={stats.delivered}
-            hint={`${stats.deliveryRate}% provider-confirmed`}
+            hint={`${stats.deliveryRate}% of sent · provider delivery report`}
             tone="positive"
           />
           <StatCard label="Failed" value={stats.failed} tone={stats.failed ? "danger" : "default"} />

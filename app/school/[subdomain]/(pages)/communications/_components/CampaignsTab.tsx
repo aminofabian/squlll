@@ -350,7 +350,7 @@ export function CampaignsTab({
                   </div>
                   <div className="text-right text-xs text-muted-foreground">
                     <p>{formatNumber(campaign.recipientCount)} recipients</p>
-                    <p>{campaign.stats.deliveryRate}% confirmed</p>
+                    <p>{campaign.stats.deliveryRate}% inbox-confirmed</p>
                   </div>
                 </div>
               </div>

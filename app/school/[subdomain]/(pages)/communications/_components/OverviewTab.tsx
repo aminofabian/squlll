@@ -68,9 +68,9 @@ export function OverviewTab({
           loading={loading}
         />
         <StatCard
-          label="Confirmed delivery"
+          label="Inbox confirmed"
           value={`${rate}%`}
-          hint={`${formatNumber(overview?.deliveredLast30Days)} provider-confirmed`}
+          hint={`${formatNumber(overview?.deliveredLast30Days)} of ${formatNumber(overview?.sentLast30Days)} sent · email when Resend reports delivery; SMS may stay unconfirmed`}
           icon={CheckCircle2}
           tone="positive"
           loading={loading}
@@ -322,7 +322,7 @@ export function OverviewTab({
                   value={formatNumber(overview?.sentLast30Days)}
                 />
                 <MiniStat
-                  label="Delivered"
+                  label="Inbox confirmed"
                   value={formatNumber(overview?.deliveredLast30Days)}
                   tone="text-emerald-700 dark:text-emerald-300"
                 />

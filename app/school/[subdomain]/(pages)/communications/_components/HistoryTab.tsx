@@ -171,9 +171,9 @@ export function HistoryTab({ permissions }: { permissions: string[] }) {
           loading={loading}
         />
         <StatCard
-          label="Confirmed delivery"
+          label="Inbox confirmed"
           value={`${report?.deliveryRate ?? 0}%`}
-          hint={`${formatNumber(report?.delivered)} provider-confirmed`}
+          hint={`${formatNumber(report?.delivered)} of ${formatNumber(report?.sent)} sent · email via Resend; SMS may stay unconfirmed`}
           tone="positive"
           loading={loading}
         />

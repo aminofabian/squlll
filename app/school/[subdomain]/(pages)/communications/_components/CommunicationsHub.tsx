@@ -243,9 +243,9 @@ export function CommunicationsHub() {
                   hint={`${formatNumber(overview?.scheduledCampaigns)} scheduled`}
                 />
                 <HeroMetric
-                  label="Delivery"
-                  value={`${overview?.deliveryRate ?? 0}%`}
-                  hint="Confirmed · 30 days"
+                  label="Sent · 30d"
+                  value={formatNumber(overview?.sentLast30Days)}
+                  hint={`${overview?.deliveryRate ?? 0}% inbox-confirmed`}
                 />
                 <HeroMetric
                   label={canCredits ? "SMS credits" : "Automations"}
