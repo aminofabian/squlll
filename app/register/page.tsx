@@ -160,7 +160,15 @@ const STEPS: Step[] = [
     id: "school",
     title: "Your School",
     description: "Set up your institution",
-    fields: ["schoolName", "schoolUrl"],
+    fields: [
+      "schoolName",
+      "schoolUrl",
+      "schoolMotto",
+      "schoolAbout",
+      "schoolTown",
+      "metaTitle",
+      "metaDescription",
+    ],
   },
   {
     id: "review",
@@ -263,6 +271,7 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [isUrlEdited, setIsUrlEdited] = useState(false);
+  const [moreDetailsOpen, setMoreDetailsOpen] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -865,7 +874,22 @@ export default function SignupPage() {
                 )}
               </div>
 
-              <details className="group mt-2 rounded-[2px] border border-[#14201b]/10 bg-[#fcfaf4] p-4">
+              <details
+                open={
+                  moreDetailsOpen ||
+                  Boolean(
+                    form.formState.errors.schoolMotto ||
+                      form.formState.errors.schoolAbout ||
+                      form.formState.errors.schoolTown ||
+                      form.formState.errors.metaTitle ||
+                      form.formState.errors.metaDescription,
+                  )
+                }
+                onToggle={(event) =>
+                  setMoreDetailsOpen(event.currentTarget.open)
+                }
+                className="group mt-2 rounded-[2px] border border-[#14201b]/10 bg-[#fcfaf4] p-4"
+              >
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
                   <span>
                     <span className="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium text-[#14201b]">
