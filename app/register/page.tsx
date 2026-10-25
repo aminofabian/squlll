@@ -900,8 +900,8 @@ export default function SignupPage() {
                     </span>
                     <span className="mt-1 block text-[0.6875rem] leading-relaxed text-[#4d574f]">
                       A motto, a short description, your town — and how you want
-                      the school to appear on Google. You can skip this and add
-                      it later.
+                      the school to appear on Google. All optional: skip it and
+                      we&apos;ll use sensible defaults.
                     </span>
                   </span>
                   <ChevronDown
