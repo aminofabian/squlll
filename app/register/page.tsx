@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,9 @@ import {
   ArrowLeft,
   Check,
   Circle,
+  Loader2,
   Phone,
+  X,
 } from "lucide-react";
 import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
 import { suggestDomainNames } from "@/lib/school/domainSuggestions";
@@ -45,7 +47,11 @@ const signupSchema = z.object({
     .max(63, "URL must be 63 characters or fewer")
     .regex(
       /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Only lowercase letters, numbers, and hyphens",
+      "Use lowercase letters, numbers and hyphens only (no spaces)",
+    )
+    .refine(
+      (value) => !RESERVED_PORTAL_ADDRESSES.has(value),
+      "That address is reserved. Please choose another.",
     ),
   acceptTerms: z.literal(true, {
     errorMap: () => ({ message: "You must accept the terms to continue" }),
@@ -53,6 +59,43 @@ const signupSchema = z.object({
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
+
+// Mirrors the backend reservation list so the form can warn instantly.
+const RESERVED_PORTAL_ADDRESSES = new Set([
+  "www", "api", "admin", "dashboard", "app", "mail", "smtp", "imap", "pop",
+  "ns", "ns1", "ns2", "cpanel", "webmail", "autodiscover", "ftp", "localhost",
+  "register", "login", "signup", "support", "help", "status", "billing", "docs",
+  "blog", "news", "test", "demo", "staging", "dev", "portal", "schools",
+  "school", "tenants", "tenant", "auth", "sso", "cdn", "static", "assets",
+  "media", "files", "download", "uploads", "pay", "payments", "mpesa", "sms",
+  "email", "analytics",
+]);
+
+const SCHOOL_URL_AVAILABLE_QUERY = `
+  query SchoolUrlAvailable($schoolUrl: String!) {
+    schoolUrlAvailable(schoolUrl: $schoolUrl)
+  }
+`;
+
+async function isSchoolUrlAvailable(schoolUrl: string): Promise<boolean> {
+  const response = await fetch("/api/graphql", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: SCHOOL_URL_AVAILABLE_QUERY,
+      variables: { schoolUrl },
+    }),
+  });
+  if (!response.ok) throw new Error("Availability check failed");
+  const payload = (await response.json()) as {
+    data?: { schoolUrlAvailable?: boolean };
+    errors?: Array<{ message?: string }>;
+  };
+  if (payload.errors?.length) {
+    throw new Error(payload.errors[0]?.message ?? "Availability check failed");
+  }
+  return Boolean(payload.data?.schoolUrlAvailable);
+}
 
 // ─── Steps ─────────────────────────────────────────────────────
 
@@ -98,13 +141,52 @@ const PASSWORD_RULES = [
 // ─── URL Generator ─────────────────────────────────────────────
 
 /**
- * The portal address follows the same naming rules as custom domains: keep the
- * school's distinctive name, drop generic words (Primary, Junior, School,
- * Academy, ...), no hyphens. The field stays editable — this is only a start.
+ * Portal-friendly ideas derived from the same naming rules, but with readable
+ * hyphenated variants (`nyahururu-ps`, `nyahururu-primary`) instead of long
+ * concatenations. The field stays editable — these are only suggestions.
  */
+function portalIdeas(name: string): Array<{ label: string; note: string }> {
+  const suggestions = suggestDomainNames(name).filter(
+    (suggestion) => !suggestion.domain,
+  );
+  const core = suggestions.find(
+    (suggestion) => suggestion.strategy === "core",
+  )?.label;
+  if (!core) return [];
+
+  const ideas: Array<{ label: string; note: string }> = [
+    { label: core, note: "Just the school's name" },
+  ];
+  const levelSuggestion = suggestions.find(
+    (suggestion) => suggestion.strategy === "level",
+  );
+  if (levelSuggestion) {
+    const level = levelSuggestion.label.slice(core.length);
+    const short =
+      level === "primary"
+        ? "ps"
+        : level === "secondary"
+          ? "sec"
+          : level === "junior"
+            ? "jss"
+            : level;
+    ideas.push({ label: `${core}-${short}`, note: "Short, with the level" });
+    ideas.push({ label: `${core}-${level}`, note: "The level in full" });
+  } else {
+    ideas.push({ label: `${core}-school`, note: "Adds 'school'" });
+    ideas.push({ label: `${core}-academy`, note: "Adds 'academy'" });
+  }
+
+  return ideas
+    .filter(
+      (idea, index) =>
+        ideas.findIndex((candidate) => candidate.label === idea.label) === index,
+    )
+    .slice(0, 4);
+}
+
 function suggestedSchoolUrl(name: string): string {
-  const [best] = suggestDomainNames(name);
-  return best && !best.domain ? best.label : "";
+  return portalIdeas(name)[0]?.label ?? "";
 }
 
 // ─── GraphQL Mutation ──────────────────────────────────────────
@@ -158,40 +240,84 @@ export default function SignupPage() {
   const schoolName = form.watch("schoolName");
   const schoolUrlValue = form.watch("schoolUrl");
 
-  const urlSuggestions = useMemo(
-    () =>
-      suggestDomainNames(schoolName || "").filter(
-        (suggestion) => !suggestion.domain,
-      ),
-    [schoolName],
-  );
+  const ideas = useMemo(() => portalIdeas(schoolName || ""), [schoolName]);
+  const [urlCheckState, setUrlCheckState] = useState<{
+    value: string;
+    status: "idle" | "checking" | "available" | "taken" | "error";
+  }>({ value: "", status: "idle" });
+  const isUrlEditedRef = useRef(false);
 
-  // A shorter option worth mentioning when the admin has typed something long
-  // or hyphenated. Never forced — just a gentle tip.
-  const shorterSuggestion = useMemo(() => {
-    const current = (schoolUrlValue || "").toLowerCase();
-    if (!current) return null;
-    const generic = /school|academy|primary|junior|secondary|college/.test(
-      current,
-    );
-    return (
-      urlSuggestions.find(
-        (suggestion) =>
-          suggestion.label !== current &&
-          suggestion.label.length + 2 < current.length &&
-          (generic || current.includes("-")),
-      ) ?? null
-    );
-  }, [schoolUrlValue, urlSuggestions]);
-
-  // Auto-generate URL from school name (only when not manually edited)
   useEffect(() => {
-    if (currentStep < 1 || !schoolName || isUrlEdited) return;
-    const url = suggestedSchoolUrl(schoolName);
-    if (url.length >= 3) {
-      form.setValue("schoolUrl", url, { shouldValidate: true });
+    isUrlEditedRef.current = isUrlEdited;
+  }, [isUrlEdited]);
+
+  // Follow the school name until the admin edits the address themselves.
+  useEffect(() => {
+    if (currentStep !== 1 || isUrlEdited) return;
+    const core = ideas[0]?.label;
+    if (core && form.getValues("schoolUrl") !== core) {
+      form.setValue("schoolUrl", core, { shouldValidate: true });
     }
-  }, [schoolName, currentStep, isUrlEdited, form]);
+  }, [currentStep, ideas, isUrlEdited, form]);
+
+  // Debounced availability lookup for whatever is currently in the field.
+  useEffect(() => {
+    if (currentStep !== 1) return;
+    const value = (schoolUrlValue || "").trim().toLowerCase();
+
+    let alive = true;
+    const timer = setTimeout(() => {
+      const validShape = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+      if (value.length < 3 || value.length > 63 || !validShape) {
+        setUrlCheckState({ value, status: "idle" });
+        return;
+      }
+      if (RESERVED_PORTAL_ADDRESSES.has(value)) {
+        setUrlCheckState({ value, status: "taken" });
+        return;
+      }
+
+      setUrlCheckState({ value, status: "checking" });
+      void (async () => {
+        try {
+          const available = await isSchoolUrlAvailable(value);
+          if (!alive) return;
+          setUrlCheckState({
+            value,
+            status: available ? "available" : "taken",
+          });
+
+          // If the auto-chosen name is taken, quietly move to the next idea
+          // rather than pre-selecting something the school cannot have.
+          if (!available && !isUrlEditedRef.current) {
+            const alternative = ideas.find((idea) => idea.label !== value);
+            if (alternative) {
+              try {
+                const alternativeAvailable = await isSchoolUrlAvailable(
+                  alternative.label,
+                );
+                if (!alive || isUrlEditedRef.current) return;
+                if (alternativeAvailable) {
+                  form.setValue("schoolUrl", alternative.label, {
+                    shouldValidate: true,
+                  });
+                }
+              } catch {
+                // Leave the taken state visible; the admin can pick manually.
+              }
+            }
+          }
+        } catch {
+          if (alive) setUrlCheckState({ value, status: "error" });
+        }
+      })();
+    }, 550);
+
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [schoolUrlValue, currentStep, ideas, form]);
 
   // ─── Step Navigation ────────────────────────────────────────
 
@@ -285,6 +411,11 @@ export default function SignupPage() {
               "Please enter a valid phone number, e.g. 712 345 678.",
             );
           }
+          if (msg.toLowerCase().includes("reserved")) {
+            throw new Error(
+              "That portal address is reserved. Please choose another.",
+            );
+          }
           if (
             msg.toLowerCase().includes("url") ||
             msg.toLowerCase().includes("subdomain")
@@ -333,6 +464,25 @@ export default function SignupPage() {
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === STEPS.length - 1;
+
+  const normalizedUrl = (schoolUrlValue || "").toLowerCase();
+  const otherIdeas = ideas.filter((idea) => idea.label !== normalizedUrl);
+  const schoolUrlValidShape = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedUrl);
+  // Ignore a result that belongs to an older value while the new one is typed.
+  const urlCheck =
+    urlCheckState.value === normalizedUrl ? urlCheckState.status : "idle";
+  const urlChecking =
+    currentStep === 1 &&
+    normalizedUrl.length >= 3 &&
+    schoolUrlValidShape &&
+    (urlCheck === "checking" || urlCheck === "idle");
+  const canContinueFromSchool =
+    schoolName.trim().length >= 2 &&
+    normalizedUrl.length >= 3 &&
+    normalizedUrl.length <= 63 &&
+    schoolUrlValidShape &&
+    !RESERVED_PORTAL_ADDRESSES.has(normalizedUrl) &&
+    (urlCheck === "available" || urlCheck === "error");
 
   // ─── Render ──────────────────────────────────────────────────
 
@@ -397,7 +547,7 @@ export default function SignupPage() {
             </div>
             <Link
               href="/"
-              className="ml-auto text-[0.625rem] uppercase tracking-[0.16em] text-[#7c857d] transition-colors duration-200 hover:text-[#14201b]"
+              className="ml-auto text-[0.625rem] uppercase tracking-[0.16em] text-[#5a655d] transition-colors duration-200 hover:text-[#14201b]"
             >
               Back to home
             </Link>
@@ -411,14 +561,6 @@ export default function SignupPage() {
               </h2>
               <p className="mt-4 text-[0.8125rem] leading-[1.7] text-[#4d574f]">
                 Three short steps — your details, school name, then confirm.
-                Already on SQUL?{" "}
-                <Link
-                  href="/login"
-                  className="text-[#14201b] underline decoration-[#14201b]/25 underline-offset-4 transition-colors hover:decoration-[#14201b]"
-                >
-                  Sign in
-                </Link>
-                .
               </p>
             </div>
 
@@ -433,9 +575,9 @@ export default function SignupPage() {
                     }}
                     disabled={idx > currentStep}
                     className={cn(
-                      "flex items-center gap-2 text-[0.6875rem] font-medium transition-colors duration-200",
+                      "flex items-center gap-2 text-[0.75rem] font-medium transition-colors duration-200",
                       idx === currentStep && "text-[#14201b]",
-                      idx < currentStep && "cursor-pointer text-[#4d574f] hover:text-[#14201b]",
+                      idx < currentStep && "cursor-pointer text-[#4d574f] underline-offset-4 hover:text-[#14201b] hover:underline",
                       idx > currentStep && "text-[#14201b]/25",
                     )}
                   >
@@ -475,6 +617,12 @@ export default function SignupPage() {
 
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !isLastStep) {
+                    event.preventDefault();
+                    void handleNext();
+                  }
+                }}
                 className="space-y-5"
               >
             {/* ── Step 0: Personal Info ── */}
@@ -518,7 +666,7 @@ export default function SignupPage() {
                           key={i}
                           className={cn(
                             "flex items-center gap-1.5 text-xs transition-colors",
-                            met ? "text-[#1c3d32]" : "text-[#7c857d]",
+                            met ? "text-[#1c3d32]" : "text-[#5a655d]",
                           )}
                         >
                           {met ? (
@@ -546,25 +694,11 @@ export default function SignupPage() {
                 disabled={isSubmitting}
               />
               <div>
-                <div className="mb-2 flex items-baseline justify-between gap-3">
-                  <label className="block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
-                    School portal address
-                  </label>
-                  {schoolUrlValue ? (
-                    <span
-                      className={cn(
-                        "text-[0.625rem] tabular-nums",
-                        schoolUrlValue.length > 30
-                          ? "text-[#a04a3a]"
-                          : "text-[#7c857d]",
-                      )}
-                    >
-                      {schoolUrlValue.length} characters
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex overflow-hidden rounded-[2px] border border-[#14201b]/15 bg-[#fcfaf4] transition-colors focus-within:border-[#1c3d32] focus-within:ring-2 focus-within:ring-[#1c3d32]/10">
-                  <span className="flex items-center border-r border-[#14201b]/10 px-3 text-[0.8125rem] text-[#7c857d]">
+                <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+                  School portal address
+                </label>
+                <div className="flex overflow-hidden rounded-[2px] border border-[#14201b]/15 bg-[#fcfaf4] transition-colors focus-within:border-[#1c3d32] focus-within:ring-2 focus-within:ring-[#1c3d32]/25">
+                  <span className="flex items-center border-r border-[#14201b]/10 px-3 text-[0.8125rem] text-[#5a655d]">
                     https://
                   </span>
                   <input
@@ -579,35 +713,59 @@ export default function SignupPage() {
                     }}
                     className="h-12 flex-1 border-0 bg-transparent px-3 text-[0.875rem] text-[#14201b] placeholder:text-[#14201b]/30 focus:ring-0"
                   />
-                  <span className="flex items-center border-l border-[#14201b]/10 px-3 text-[0.8125rem] text-[#7c857d]">
+                  <span className="flex items-center border-l border-[#14201b]/10 px-3 text-[0.8125rem] text-[#5a655d]">
                     .squl.co.ke
                   </span>
                 </div>
 
-                {urlSuggestions.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">
-                      Ideas
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[0.75rem] text-[#4d574f]">
+                    Preview:{" "}
+                    <span className="font-mono font-medium text-[#14201b]">
+                      {(schoolUrlValue || "yourschool").toLowerCase()}.squl.co.ke
                     </span>
-                    {urlSuggestions.slice(0, 4).map((suggestion) => (
+                  </p>
+                  {schoolUrlValue.length >= 3 ? (
+                    urlCheck === "checking" ? (
+                      <span className="flex items-center gap-1 text-[0.6875rem] text-[#5a655d]">
+                        <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                        Checking…
+                      </span>
+                    ) : urlCheck === "available" ? (
+                      <span className="flex items-center gap-1 text-[0.6875rem] font-medium text-[#1c3d32]">
+                        <Check size={13} aria-hidden /> Available
+                      </span>
+                    ) : urlCheck === "taken" ? (
+                      <span className="flex items-center gap-1 text-[0.6875rem] font-medium text-[#a04a3a]">
+                        <X size={13} aria-hidden /> Taken — try an idea below
+                      </span>
+                    ) : urlCheck === "error" ? (
+                      <span className="text-[0.6875rem] text-[#5a655d]">
+                        Couldn&apos;t check — you can still continue
+                      </span>
+                    ) : null
+                  ) : null}
+                </div>
+
+                {otherIdeas.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[0.625rem] uppercase tracking-[0.12em] text-[#5a655d]">
+                      Other ideas
+                    </span>
+                    {otherIdeas.map((idea) => (
                       <button
-                        key={suggestion.label}
+                        key={idea.label}
                         type="button"
-                        title={suggestion.explanation}
+                        title={idea.note}
                         onClick={() => {
-                          form.setValue("schoolUrl", suggestion.label, {
+                          form.setValue("schoolUrl", idea.label, {
                             shouldValidate: true,
                           });
                           setIsUrlEdited(true);
                         }}
-                        className={cn(
-                          "rounded-full border px-2.5 py-1 text-[0.6875rem] transition-colors",
-                          schoolUrlValue === suggestion.label
-                            ? "border-[#1c3d32] bg-[#1c3d32] text-[#f7f4ec]"
-                            : "border-[#14201b]/15 text-[#4d574f] hover:border-[#1c3d32]/40 hover:bg-[#1c3d32]/5",
-                        )}
+                        className="rounded-full border border-[#14201b]/15 px-2.5 py-1 text-[0.6875rem] text-[#4d574f] transition-colors hover:border-[#1c3d32]/40 hover:bg-[#1c3d32]/5"
                       >
-                        {suggestion.label}
+                        {idea.label}
                       </button>
                     ))}
                     {isUrlEdited && (
@@ -629,22 +787,17 @@ export default function SignupPage() {
                   </div>
                 )}
 
-                {shorterSuggestion ? (
-                  <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#1c3d32]">
-                    Tip:{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        form.setValue("schoolUrl", shorterSuggestion.label, {
-                          shouldValidate: true,
-                        });
-                        setIsUrlEdited(true);
-                      }}
-                      className="font-medium underline decoration-[#1c3d32]/30 underline-offset-2 hover:decoration-[#1c3d32]"
-                    >
-                      {shorterSuggestion.label}
-                    </button>{" "}
-                    is shorter and easier to say over the phone.
+                <p className="mt-2 text-[0.8125rem] font-medium leading-snug text-[#14201b]">
+                  Your staff and parents will use this link.
+                </p>
+                <p className="mt-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">
+                  Choose carefully — changing it later requires support.
+                  Lowercase letters, numbers and hyphens only.
+                </p>
+                {schoolUrlValue.length > 30 ? (
+                  <p className="mt-1 text-[0.6875rem] text-[#a04a3a]">
+                    Shorter is easier to share — try to stay under 30
+                    characters.
                   </p>
                 ) : null}
 
@@ -653,19 +806,12 @@ export default function SignupPage() {
                     {form.formState.errors.schoolUrl.message}
                   </p>
                 )}
-
-                <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#7c857d]">
-                  Your staff and parents will use this link. Short is easier to
-                  share — we drop words like “Primary”, “Junior” and “School”.
-                  Prefer your own? Type it — lowercase letters, numbers or
-                  hyphens only.
-                </p>
               </div>
             </div>
 
             {/* ── Step 2: Review ── */}
             <div className={cn("space-y-4", currentStep !== 2 && "hidden")}>
-              <h3 className="text-[0.625rem] font-medium uppercase tracking-[0.16em] text-[#7c857d]">
+              <h3 className="text-[0.625rem] font-medium uppercase tracking-[0.16em] text-[#5a655d]">
                 Review before you create
               </h3>
               <ReviewRow label="Full Name" value={form.watch("name")} />
@@ -724,7 +870,7 @@ export default function SignupPage() {
                     variant="ghost"
                     onClick={handlePrev}
                     disabled={isSubmitting}
-                    className="text-[#4d574f] hover:bg-transparent hover:text-[#14201b]"
+                    className="-ml-4 px-0 text-[#4d574f] hover:bg-transparent hover:text-[#14201b]"
                   >
                     Back
                   </Button>
@@ -735,9 +881,17 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     onClick={handleNext}
-                    className="h-11 rounded-[2px] bg-[#14201b] px-6 text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none hover:bg-[#1c3d32]"
+                    disabled={currentStep === 1 && !canContinueFromSchool}
+                    className="h-11 rounded-[2px] bg-[#14201b] px-6 text-[0.8125rem] font-medium text-[#f7f4ec] shadow-none hover:bg-[#1c3d32] disabled:bg-[#14201b]/25 disabled:text-[#f7f4ec]/60"
                   >
-                    Continue
+                    {urlChecking ? (
+                      <>
+                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden />
+                        Checking…
+                      </>
+                    ) : (
+                      "Continue"
+                    )}
                   </Button>
                 ) : (
                   <Button
@@ -797,8 +951,8 @@ function Field({
       <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
         {label}
       </label>
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#7c857d]">
+      <div className="group relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#5a655d] transition-colors group-focus-within:text-[#1c3d32]">
           {icon}
         </div>
         <input
@@ -812,7 +966,7 @@ function Field({
             "text-[#14201b] placeholder:text-[#14201b]/30",
             error
               ? "border-[#a04a3a]/60 focus:border-[#a04a3a] focus:ring-2 focus:ring-[#a04a3a]/15"
-              : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/10",
+              : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/25",
             "disabled:cursor-not-allowed disabled:bg-[#efeadd] disabled:text-[#14201b]/40",
           )}
         />
@@ -837,7 +991,7 @@ function PhoneField({
     <div>
       <label className="mb-2 flex items-center justify-between text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
         <span>Phone Number</span>
-        <span className="text-[0.5625rem] font-normal normal-case tracking-normal text-[#7c857d]">
+        <span className="text-[0.5625rem] font-normal normal-case tracking-normal text-[#5a655d]">
           for urgent school updates
         </span>
       </label>
@@ -846,7 +1000,7 @@ function PhoneField({
           "flex overflow-hidden rounded-[2px] border bg-[#fcfaf4] transition-colors focus-within:ring-2",
           error
             ? "border-[#a04a3a]/60 focus-within:border-[#a04a3a] focus-within:ring-[#a04a3a]/15"
-            : "border-[#14201b]/15 focus-within:border-[#1c3d32] focus-within:ring-[#1c3d32]/10",
+            : "border-[#14201b]/15 focus-within:border-[#1c3d32] focus-within:ring-[#1c3d32]/25",
           disabled && "opacity-50",
         )}
       >
@@ -868,7 +1022,7 @@ function PhoneField({
       {error ? (
         <p className="mt-2 text-[0.6875rem] text-[#a04a3a]">{error.message}</p>
       ) : (
-        <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#7c857d]">
+        <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#5a655d]">
           Kenyan mobile number. We&apos;ll only call or text about your school
           account.
         </p>
@@ -882,7 +1036,7 @@ function PhoneField({
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-[#14201b]/8 py-3">
-      <span className="shrink-0 text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">{label}</span>
+      <span className="shrink-0 text-[0.625rem] uppercase tracking-[0.12em] text-[#5a655d]">{label}</span>
       <span className="truncate text-right text-[0.8125rem] font-medium text-[#14201b]">
         {value}
       </span>
