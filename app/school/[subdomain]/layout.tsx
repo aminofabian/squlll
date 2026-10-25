@@ -15,9 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { subdomain } = await params
   const seo = await getTenantSeo(subdomain)
-  const { identity, description, imageUrl, name, published } = seo
-
-  const title = `${name} | SQUL`
+  const { identity, description, imageUrl, name, published, title } = seo
 
   return {
     metadataBase: new URL(identity.origin),

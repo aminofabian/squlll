@@ -50,6 +50,12 @@ export interface TenantIdentity {
   host: string | null
   /** Absolute origin for canonical URLs and structured data. */
   origin: string
+  /** Optional profile captured at signup (fallbacks for Website Studio). */
+  metaTitle?: string
+  metaDescription?: string
+  motto?: string
+  about?: string
+  addressLocality?: string
 }
 
 /**
@@ -74,7 +80,17 @@ export async function getTenantIdentity(subdomain: string): Promise<TenantIdenti
       ? originForHost(host)
       : platformSchoolOrigin(subdomain, host)
 
-  return { subdomain, name, host, origin }
+  return {
+    subdomain,
+    name,
+    host,
+    origin,
+    metaTitle: str(resolution?.tenantMetaTitle),
+    metaDescription: str(resolution?.tenantMetaDescription),
+    motto: str(resolution?.tenantMotto),
+    about: str(resolution?.tenantDescription),
+    addressLocality: str(resolution?.tenantAddressLocality),
+  }
 }
 
 /**
@@ -160,6 +176,8 @@ export interface TenantSeo extends SchoolSeoFields {
   identity: TenantIdentity
   /** Final display name (SEO override → tenant record → subdomain). */
   name: string
+  /** Final `<title>` — tenant meta title → `${name} | SQUL`. */
+  title: string
   /** Whether the school has published a homepage config (drives indexing). */
   published: boolean
   config: HomepageConfig
@@ -175,13 +193,21 @@ export async function getTenantSeo(subdomain: string): Promise<TenantSeo> {
   ])
   const { config, published } = meta
   const name = resolveSchoolName(config, identity.name)
+  const base = describeHomepage(config, name)
+  const title = identity.metaTitle ?? `${name} | SQUL`
+  const description =
+    identity.metaDescription ?? identity.about ?? base.description
   return {
     identity,
     name,
+    title,
     published,
     config,
     levels,
-    ...describeHomepage(config, name),
+    ...base,
+    description,
+    motto: base.motto ?? identity.motto,
+    addressLocality: base.addressLocality ?? identity.addressLocality,
   }
 }
 

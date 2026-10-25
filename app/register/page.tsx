@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
   Circle,
   Loader2,
   Phone,
@@ -41,6 +42,36 @@ const signupSchema = z.object({
     .regex(/[a-z]/, "Must contain at least one lowercase letter")
     .regex(/[0-9]/, "Must contain at least one number"),
   schoolName: z.string().min(2, "School name must be at least 2 characters"),
+  schoolMotto: z
+    .string()
+    .trim()
+    .max(160)
+    .refine((v) => !v || v.length >= 2, "Use at least 2 characters, or leave it blank.")
+    .optional(),
+  schoolAbout: z
+    .string()
+    .trim()
+    .max(600)
+    .refine((v) => !v || v.length >= 10, "Write at least 10 characters, or leave it blank.")
+    .optional(),
+  schoolTown: z
+    .string()
+    .trim()
+    .max(120)
+    .refine((v) => !v || v.length >= 2, "Use at least 2 characters, or leave it blank.")
+    .optional(),
+  metaTitle: z
+    .string()
+    .trim()
+    .max(160)
+    .refine((v) => !v || v.length >= 2, "Use at least 2 characters, or leave it blank.")
+    .optional(),
+  metaDescription: z
+    .string()
+    .trim()
+    .max(320)
+    .refine((v) => !v || v.length >= 10, "Write at least 10 characters, or leave it blank.")
+    .optional(),
   schoolUrl: z
     .string()
     .min(3, "URL must be at least 3 characters")
@@ -242,6 +273,11 @@ export default function SignupPage() {
       password: "",
       schoolName: "",
       schoolUrl: "",
+      schoolMotto: "",
+      schoolAbout: "",
+      schoolTown: "",
+      metaTitle: "",
+      metaDescription: "",
       acceptTerms: false as unknown as true,
     },
     mode: "onChange",
@@ -249,6 +285,9 @@ export default function SignupPage() {
 
   const schoolName = form.watch("schoolName");
   const schoolUrlValue = form.watch("schoolUrl");
+  const metaTitleValue = form.watch("metaTitle") || "";
+  const metaDescriptionValue = form.watch("metaDescription") || "";
+  const schoolAboutValue = form.watch("schoolAbout") || "";
 
   const ideas = useMemo(() => portalIdeas(schoolName || ""), [schoolName]);
   const [urlCheckState, setUrlCheckState] = useState<{
@@ -384,6 +423,11 @@ export default function SignupPage() {
                 // The backend uses this as the tenant subdomain; without it the
                 // portal address shown on this step would be ignored.
                 schoolUrl: data.schoolUrl,
+                schoolMotto: data.schoolMotto?.trim() || undefined,
+                schoolAbout: data.schoolAbout?.trim() || undefined,
+                schoolTown: data.schoolTown?.trim() || undefined,
+                metaTitle: data.metaTitle?.trim() || undefined,
+                metaDescription: data.metaDescription?.trim() || undefined,
               },
             },
           }),
@@ -629,6 +673,9 @@ export default function SignupPage() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 onKeyDown={(event) => {
                   if (event.key !== "Enter" || isLastStep) return;
+                  if ((event.target as HTMLElement)?.tagName === "TEXTAREA") {
+                    return;
+                  }
                   event.preventDefault();
                   if (currentStep === 1 && !canContinueFromSchool) return;
                   void handleNext();
@@ -817,6 +864,153 @@ export default function SignupPage() {
                   </p>
                 )}
               </div>
+
+              <details className="group mt-2 rounded-[2px] border border-[#14201b]/10 bg-[#fcfaf4] p-4">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
+                  <span>
+                    <span className="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium text-[#14201b]">
+                      Add more details
+                      <span className="rounded-full border border-[#14201b]/15 px-2 py-0.5 text-[0.5625rem] uppercase tracking-[0.12em] text-[#5a655d]">
+                        Optional
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-[0.6875rem] leading-relaxed text-[#4d574f]">
+                      A motto, a short description, your town — and how you want
+                      the school to appear on Google. You can skip this and add
+                      it later.
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[#5a655d] transition-transform group-open:rotate-180"
+                    aria-hidden
+                  />
+                </summary>
+
+                <div className="mt-4 space-y-4">
+                  <SimpleField
+                    form={form}
+                    name="schoolMotto"
+                    label="School motto"
+                    placeholder="e.g. Strive for excellence"
+                    maxLength={160}
+                    hint="A short line parents will remember."
+                  />
+                  <SimpleTextArea
+                    form={form}
+                    name="schoolAbout"
+                    label="About the school"
+                    placeholder="Two or three sentences about the school, where it is, and what makes it special."
+                    maxLength={600}
+                    rows={3}
+                    hint="Used on your website and as a fallback description."
+                  />
+                  <SimpleField
+                    form={form}
+                    name="schoolTown"
+                    label="Town / County"
+                    placeholder="e.g. Nyahururu, Laikipia"
+                    maxLength={120}
+                    hint="Helps parents find you in local search."
+                  />
+
+                  <div className="border-t border-[#14201b]/10 pt-4">
+                    <div className="mb-1 flex items-baseline justify-between gap-2">
+                      <label className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+                        Meta title (Google heading)
+                      </label>
+                      <span
+                        className={cn(
+                          "text-[0.625rem] tabular-nums",
+                          metaTitleValue.length > 60
+                            ? "text-[#a04a3a]"
+                            : "text-[#5a655d]",
+                        )}
+                      >
+                        {metaTitleValue.length}/60
+                      </span>
+                    </div>
+                    <input
+                      {...form.register("metaTitle")}
+                      maxLength={160}
+                      placeholder={`${schoolName || "Your school"} | SQUL`}
+                      className={cn(
+                        "h-11 w-full rounded-[2px] border bg-white px-3 text-[0.875rem] text-[#14201b] placeholder:text-[#14201b]/30 transition-colors",
+                        form.formState.errors.metaTitle
+                          ? "border-[#a04a3a]/60 focus:border-[#a04a3a] focus:ring-2 focus:ring-[#a04a3a]/15"
+                          : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/25",
+                      )}
+                    />
+                    {form.formState.errors.metaTitle ? (
+                      <p className="mt-1 text-[0.6875rem] text-[#a04a3a]">
+                        {form.formState.errors.metaTitle.message}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">
+                        Leave it blank to use “{schoolName || "Your school"} | SQUL”.
+                        Around 60 characters shows fully on Google.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="mb-1 flex items-baseline justify-between gap-2">
+                      <label className="text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+                        Meta description (Google snippet)
+                      </label>
+                      <span
+                        className={cn(
+                          "text-[0.625rem] tabular-nums",
+                          metaDescriptionValue.length > 160
+                            ? "text-[#a04a3a]"
+                            : "text-[#5a655d]",
+                        )}
+                      >
+                        {metaDescriptionValue.length}/160
+                      </span>
+                    </div>
+                    <textarea
+                      {...form.register("metaDescription")}
+                      rows={3}
+                      maxLength={320}
+                      placeholder="What parents will read under the title on Google — e.g. A CBC school in Nyahururu offering admissions, M-Pesa fees and daily updates."
+                      className={cn(
+                        "w-full rounded-[2px] border bg-white px-3 py-2 text-[0.875rem] leading-relaxed text-[#14201b] placeholder:text-[#14201b]/30 transition-colors",
+                        form.formState.errors.metaDescription
+                          ? "border-[#a04a3a]/60 focus:border-[#a04a3a] focus:ring-2 focus:ring-[#a04a3a]/15"
+                          : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/25",
+                      )}
+                    />
+                    {form.formState.errors.metaDescription ? (
+                      <p className="mt-1 text-[0.6875rem] text-[#a04a3a]">
+                        {form.formState.errors.metaDescription.message}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">
+                        Around 160 characters shows fully. Leave blank to use the
+                        about text above.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-[2px] border border-[#14201b]/10 bg-white p-3">
+                    <p className="text-[0.5625rem] uppercase tracking-[0.14em] text-[#5a655d]">
+                      How you&apos;ll appear on Google
+                    </p>
+                    <p className="mt-1 line-clamp-1 text-[0.95rem] font-medium text-[#1a0dab]">
+                      {metaTitleValue || `${schoolName || "Your school"} | SQUL`}
+                    </p>
+                    <p className="truncate text-[0.6875rem] text-[#1c6b3c]">
+                      https://{(schoolUrlValue || "yourschool").toLowerCase()}
+                      .squl.co.ke
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-[0.75rem] leading-relaxed text-[#4d574f]">
+                      {metaDescriptionValue ||
+                        schoolAboutValue ||
+                        "A short description of your school — what makes it special, where it is, and what parents can find here."}
+                    </p>
+                  </div>
+                </div>
+              </details>
             </div>
 
             {/* ── Step 2: Review ── */}
@@ -837,6 +1031,24 @@ export default function SignupPage() {
                 label="School URL"
                 value={`https://${form.watch("schoolUrl")}.squl.co.ke`}
               />
+              {form.watch("schoolMotto") ? (
+                <ReviewRow label="Motto" value={form.watch("schoolMotto") ?? ""} />
+              ) : null}
+              {form.watch("schoolTown") ? (
+                <ReviewRow label="Town" value={form.watch("schoolTown") ?? ""} />
+              ) : null}
+              {form.watch("metaTitle") ? (
+                <ReviewRow
+                  label="Google title"
+                  value={form.watch("metaTitle") ?? ""}
+                />
+              ) : null}
+              {form.watch("metaDescription") ? (
+                <ReviewRow
+                  label="Google description"
+                  value={form.watch("metaDescription") ?? ""}
+                />
+              ) : null}
 
               {/* Terms checkbox */}
               <div className="pt-2">
@@ -929,6 +1141,97 @@ export default function SignupPage() {
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+// ─── Optional-details fields ───────────────────────────────────
+
+function SimpleField({
+  form,
+  name,
+  label,
+  placeholder,
+  hint,
+  maxLength,
+}: {
+  form: ReturnType<typeof useForm<SignupFormValues>>;
+  name: keyof SignupFormValues;
+  label: string;
+  placeholder: string;
+  hint?: string;
+  maxLength?: number;
+}) {
+  const { error } = form.getFieldState(name);
+  return (
+    <div>
+      <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+        {label}
+      </label>
+      <input
+        {...form.register(name)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        className={cn(
+          "h-11 w-full rounded-[2px] border bg-white px-3 text-[0.875rem] text-[#14201b] placeholder:text-[#14201b]/30 transition-colors",
+          error
+            ? "border-[#a04a3a]/60 focus:border-[#a04a3a] focus:ring-2 focus:ring-[#a04a3a]/15"
+            : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/25",
+        )}
+      />
+      {error ? (
+        <p className="mt-1 text-[0.6875rem] text-[#a04a3a]">{error.message}</p>
+      ) : hint ? (
+        <p className="mt-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function SimpleTextArea({
+  form,
+  name,
+  label,
+  placeholder,
+  hint,
+  maxLength,
+  rows = 3,
+}: {
+  form: ReturnType<typeof useForm<SignupFormValues>>;
+  name: keyof SignupFormValues;
+  label: string;
+  placeholder: string;
+  hint?: string;
+  maxLength?: number;
+  rows?: number;
+}) {
+  const { error } = form.getFieldState(name);
+  return (
+    <div>
+      <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+        {label}
+      </label>
+      <textarea
+        {...form.register(name)}
+        rows={rows}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        className={cn(
+          "w-full rounded-[2px] border bg-white px-3 py-2 text-[0.875rem] leading-relaxed text-[#14201b] placeholder:text-[#14201b]/30 transition-colors",
+          error
+            ? "border-[#a04a3a]/60 focus:border-[#a04a3a] focus:ring-2 focus:ring-[#a04a3a]/15"
+            : "border-[#14201b]/15 focus:border-[#1c3d32] focus:ring-2 focus:ring-[#1c3d32]/25",
+        )}
+      />
+      {error ? (
+        <p className="mt-1 text-[0.6875rem] text-[#a04a3a]">{error.message}</p>
+      ) : hint ? (
+        <p className="mt-1 text-[0.6875rem] leading-relaxed text-[#4d574f]">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

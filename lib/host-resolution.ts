@@ -21,6 +21,11 @@ export interface HostResolution {
   tenantId: string | null;
   tenantName: string | null;
   tenantStatus: string | null;
+  tenantDescription: string | null;
+  tenantMotto: string | null;
+  tenantMetaTitle: string | null;
+  tenantMetaDescription: string | null;
+  tenantAddressLocality: string | null;
   isApex: boolean;
 }
 
@@ -34,6 +39,11 @@ const RESOLVE_HOST_QUERY = `
       tenantId
       tenantName
       tenantStatus
+      tenantDescription
+      tenantMotto
+      tenantMetaTitle
+      tenantMetaDescription
+      tenantAddressLocality
       isApex
     }
   }
