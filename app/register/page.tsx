@@ -245,6 +245,9 @@ export default function SignupPage() {
                 name: data.name,
                 phoneNumber: normalizeKenyanPhone(data.phoneNumber),
                 schoolName: data.schoolName,
+                // The backend uses this as the tenant subdomain; without it the
+                // portal address shown on this step would be ignored.
+                schoolUrl: data.schoolUrl,
               },
             },
           }),
