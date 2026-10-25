@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import {
   Phone,
 } from "lucide-react";
 import { schoolPortalUrl } from "@/lib/auth/post-login-navigation";
+import { suggestDomainNames } from "@/lib/school/domainSuggestions";
 import { SqulWordmark } from "@/components/brand/SqulMark";
 import {
   formatKenyanPhone,
@@ -96,15 +97,14 @@ const PASSWORD_RULES = [
 
 // ─── URL Generator ─────────────────────────────────────────────
 
-function generateSchoolUrl(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 63);
+/**
+ * The portal address follows the same naming rules as custom domains: keep the
+ * school's distinctive name, drop generic words (Primary, Junior, School,
+ * Academy, ...), no hyphens. The field stays editable — this is only a start.
+ */
+function suggestedSchoolUrl(name: string): string {
+  const [best] = suggestDomainNames(name);
+  return best && !best.domain ? best.label : "";
 }
 
 // ─── GraphQL Mutation ──────────────────────────────────────────
@@ -156,11 +156,38 @@ export default function SignupPage() {
   });
 
   const schoolName = form.watch("schoolName");
+  const schoolUrlValue = form.watch("schoolUrl");
+
+  const urlSuggestions = useMemo(
+    () =>
+      suggestDomainNames(schoolName || "").filter(
+        (suggestion) => !suggestion.domain,
+      ),
+    [schoolName],
+  );
+
+  // A shorter option worth mentioning when the admin has typed something long
+  // or hyphenated. Never forced — just a gentle tip.
+  const shorterSuggestion = useMemo(() => {
+    const current = (schoolUrlValue || "").toLowerCase();
+    if (!current) return null;
+    const generic = /school|academy|primary|junior|secondary|college/.test(
+      current,
+    );
+    return (
+      urlSuggestions.find(
+        (suggestion) =>
+          suggestion.label !== current &&
+          suggestion.label.length + 2 < current.length &&
+          (generic || current.includes("-")),
+      ) ?? null
+    );
+  }, [schoolUrlValue, urlSuggestions]);
 
   // Auto-generate URL from school name (only when not manually edited)
   useEffect(() => {
     if (currentStep < 1 || !schoolName || isUrlEdited) return;
-    const url = generateSchoolUrl(schoolName);
+    const url = suggestedSchoolUrl(schoolName);
     if (url.length >= 3) {
       form.setValue("schoolUrl", url, { shouldValidate: true });
     }
@@ -516,16 +543,30 @@ export default function SignupPage() {
                 disabled={isSubmitting}
               />
               <div>
-                <label className="mb-2 block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
-                  School portal address
-                </label>
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <label className="block text-[0.625rem] font-medium uppercase tracking-[0.14em] text-[#4d574f]">
+                    School portal address
+                  </label>
+                  {schoolUrlValue ? (
+                    <span
+                      className={cn(
+                        "text-[0.625rem] tabular-nums",
+                        schoolUrlValue.length > 30
+                          ? "text-[#a04a3a]"
+                          : "text-[#7c857d]",
+                      )}
+                    >
+                      {schoolUrlValue.length} characters
+                    </span>
+                  ) : null}
+                </div>
                 <div className="flex overflow-hidden rounded-[2px] border border-[#14201b]/15 bg-[#fcfaf4] transition-colors focus-within:border-[#1c3d32] focus-within:ring-2 focus-within:ring-[#1c3d32]/10">
                   <span className="flex items-center border-r border-[#14201b]/10 px-3 text-[0.8125rem] text-[#7c857d]">
                     https://
                   </span>
                   <input
                     {...form.register("schoolUrl")}
-                    placeholder="greenfields-academy"
+                    placeholder="greenfields"
                     disabled={isSubmitting}
                     onChange={(e) => {
                       form.setValue("schoolUrl", e.target.value, {
@@ -539,28 +580,82 @@ export default function SignupPage() {
                     .squl.co.ke
                   </span>
                 </div>
-                {isUrlEdited && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsUrlEdited(false);
-                      const url = generateSchoolUrl(
-                        form.getValues("schoolName"),
-                      );
-                      form.setValue("schoolUrl", url, { shouldValidate: true });
-                    }}
-                    className="mt-2 text-[0.6875rem] font-medium text-[#1c3d32] underline decoration-[#1c3d32]/25 underline-offset-4 hover:decoration-[#1c3d32]"
-                  >
-                    Reset to auto-generated
-                  </button>
+
+                {urlSuggestions.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[0.625rem] uppercase tracking-[0.12em] text-[#7c857d]">
+                      Ideas
+                    </span>
+                    {urlSuggestions.slice(0, 4).map((suggestion) => (
+                      <button
+                        key={suggestion.label}
+                        type="button"
+                        title={suggestion.explanation}
+                        onClick={() => {
+                          form.setValue("schoolUrl", suggestion.label, {
+                            shouldValidate: true,
+                          });
+                          setIsUrlEdited(true);
+                        }}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-[0.6875rem] transition-colors",
+                          schoolUrlValue === suggestion.label
+                            ? "border-[#1c3d32] bg-[#1c3d32] text-[#f7f4ec]"
+                            : "border-[#14201b]/15 text-[#4d574f] hover:border-[#1c3d32]/40 hover:bg-[#1c3d32]/5",
+                        )}
+                      >
+                        {suggestion.label}
+                      </button>
+                    ))}
+                    {isUrlEdited && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsUrlEdited(false);
+                          form.setValue(
+                            "schoolUrl",
+                            suggestedSchoolUrl(form.getValues("schoolName")),
+                            { shouldValidate: true },
+                          );
+                        }}
+                        className="text-[0.6875rem] text-[#1c3d32] underline decoration-[#1c3d32]/25 underline-offset-4 hover:decoration-[#1c3d32]"
+                      >
+                        Use our suggestion
+                      </button>
+                    )}
+                  </div>
                 )}
+
+                {shorterSuggestion ? (
+                  <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#1c3d32]">
+                    Tip:{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        form.setValue("schoolUrl", shorterSuggestion.label, {
+                          shouldValidate: true,
+                        });
+                        setIsUrlEdited(true);
+                      }}
+                      className="font-medium underline decoration-[#1c3d32]/30 underline-offset-2 hover:decoration-[#1c3d32]"
+                    >
+                      {shorterSuggestion.label}
+                    </button>{" "}
+                    is shorter and easier to say over the phone.
+                  </p>
+                ) : null}
+
                 {form.formState.errors.schoolUrl && (
                   <p className="mt-2 text-[0.6875rem] text-[#a04a3a]">
                     {form.formState.errors.schoolUrl.message}
                   </p>
                 )}
+
                 <p className="mt-2 text-[0.6875rem] leading-relaxed text-[#7c857d]">
-                  Your staff and parents will use this link. We suggest one from your school name.
+                  Your staff and parents will use this link. Short is easier to
+                  share — we drop words like “Primary”, “Junior” and “School”.
+                  Prefer your own? Type it — lowercase letters, numbers or
+                  hyphens only.
                 </p>
               </div>
             </div>
