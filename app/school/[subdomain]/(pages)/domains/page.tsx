@@ -16,7 +16,7 @@ export default function DomainsPage() {
         {(
           [
             { id: "manage", label: "My domains" },
-            { id: "buy", label: "Buy a domain" },
+            { id: "buy", label: "Get a domain" },
           ] as const
         ).map((item) => (
           <button
