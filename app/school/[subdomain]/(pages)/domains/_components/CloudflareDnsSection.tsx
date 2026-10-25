@@ -51,16 +51,20 @@ function actionClass(action: CloudflareDnsResult["action"]): string {
  */
 export function CloudflareDnsSection({
   connected,
+  oauthAvailable,
   applying,
   results,
   onAddRecords,
   onConnect,
+  onConnectOAuth,
 }: {
   connected: boolean;
+  oauthAvailable: boolean;
   applying: boolean;
   results: CloudflareDnsResult[] | undefined;
   onAddRecords: () => void;
   onConnect: () => void;
+  onConnectOAuth: () => void;
 }) {
   const failed = results?.filter((row) => row.action === "failed") ?? [];
 
@@ -86,6 +90,20 @@ export function CloudflareDnsSection({
             )}
             Add records in Cloudflare
           </Button>
+        ) : oauthAvailable ? (
+          <div className="flex flex-col items-end gap-1">
+            <Button type="button" size="sm" onClick={onConnectOAuth}>
+              <Cloud className="mr-1.5 h-3.5 w-3.5" />
+              Connect Cloudflare
+            </Button>
+            <button
+              type="button"
+              onClick={onConnect}
+              className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
+              Use an API token instead
+            </button>
+          </div>
         ) : (
           <Button type="button" size="sm" onClick={onConnect}>
             <Cloud className="mr-1.5 h-3.5 w-3.5" />

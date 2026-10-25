@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -145,6 +145,7 @@ function DomainCard({
   domain,
   busy,
   cloudflareConnected,
+  cloudflareOauthAvailable,
   cloudflareApplying,
   cloudflareResults,
   onVerify,
@@ -152,10 +153,12 @@ function DomainCard({
   onRemove,
   onAddRecords,
   onConnectCloudflare,
+  onConnectCloudflareOAuth,
 }: {
   domain: TenantDomain;
   busy: boolean;
   cloudflareConnected: boolean;
+  cloudflareOauthAvailable: boolean;
   cloudflareApplying: boolean;
   cloudflareResults: CloudflareDnsResult[] | undefined;
   onVerify: (id: string) => void;
@@ -163,6 +166,7 @@ function DomainCard({
   onRemove: (id: string) => void;
   onAddRecords: () => void;
   onConnectCloudflare: () => void;
+  onConnectCloudflareOAuth: () => void;
 }) {
   const meta = statusMeta(domain.status);
   const instruction = domain.dnsInstruction;
@@ -217,10 +221,12 @@ function DomainCard({
             </div>
             <CloudflareDnsSection
               connected={cloudflareConnected}
+              oauthAvailable={cloudflareOauthAvailable}
               applying={cloudflareApplying}
               results={cloudflareResults}
               onAddRecords={onAddRecords}
               onConnect={onConnectCloudflare}
+              onConnectOAuth={onConnectCloudflareOAuth}
             />
           </div>
         ) : null}
@@ -278,9 +284,42 @@ export function DomainSettingsPanel() {
     disconnect,
   } = useTenantDomains();
   const cloudflare = useCloudflareDns();
+  const { refresh: refreshCloudflare } = cloudflare;
   const [hostname, setHostname] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [cloudflareOpen, setCloudflareOpen] = useState(false);
+  const handledCloudflareReturn = useRef(false);
+
+  useEffect(() => {
+    if (handledCloudflareReturn.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("cloudflare");
+    if (!status) return;
+    handledCloudflareReturn.current = true;
+
+    if (status === "connected") {
+      toast({
+        title: "Cloudflare connected",
+        description: "Now add the DNS records for your domain.",
+      });
+      void refreshCloudflare();
+    } else {
+      toast({
+        title: "Cloudflare connection failed",
+        description: params.get("reason") ?? "Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    params.delete("cloudflare");
+    params.delete("reason");
+    const query = params.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}`,
+    );
+  }, [refreshCloudflare, toast]);
 
   const handleConnect = async () => {
     const value = normalizeInput(hostname);
@@ -317,6 +356,19 @@ export function DomainSettingsPanel() {
     } catch (err) {
       toast({
         title: "Check failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConnectOAuth = async () => {
+    try {
+      const url = await cloudflare.startOAuth();
+      window.location.assign(url);
+    } catch (err) {
+      toast({
+        title: "Could not start Cloudflare sign-in",
         description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       });
@@ -469,6 +521,9 @@ export function DomainSettingsPanel() {
               domain={domain}
               busy={busyId === domain.id}
               cloudflareConnected={cloudflare.connection?.connected ?? false}
+              cloudflareOauthAvailable={
+                cloudflare.connection?.oauthAvailable ?? false
+              }
               cloudflareApplying={cloudflare.applyingId === domain.id}
               cloudflareResults={cloudflare.results[domain.id]}
               onVerify={handleVerify}
@@ -476,6 +531,7 @@ export function DomainSettingsPanel() {
               onRemove={(id) => void disconnect(id)}
               onAddRecords={() => void handleAddRecords(domain)}
               onConnectCloudflare={() => setCloudflareOpen(true)}
+              onConnectCloudflareOAuth={() => void handleConnectOAuth()}
             />
           ))}
         </div>

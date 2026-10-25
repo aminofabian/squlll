@@ -5,6 +5,7 @@ import {
   addDomainRecordsToCloudflare,
   connectCloudflareToken,
   disconnectCloudflareAccount,
+  startCloudflareOAuth,
   fetchCloudflareConnection,
   type CloudflareConnection,
   type CloudflareDnsResult,
@@ -75,6 +76,17 @@ export function useCloudflareDns() {
     }
   }, []);
 
+  const startOAuth = useCallback(async () => {
+    try {
+      setError(null);
+      return await startCloudflareOAuth();
+    } catch (err) {
+      const message = getDisplayErrorMessage(err);
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const disconnect = useCallback(async () => {
     try {
       setError(null);
@@ -113,6 +125,7 @@ export function useCloudflareDns() {
     error,
     refresh,
     connect,
+    startOAuth,
     disconnect,
     apply,
   };

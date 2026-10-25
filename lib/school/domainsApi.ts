@@ -260,6 +260,7 @@ export type CloudflareZone = {
 
 export type CloudflareConnection = {
   connected: boolean;
+  oauthAvailable: boolean;
   accountId: string | null;
   accountName: string | null;
   tokenStatus: string | null;
@@ -279,6 +280,7 @@ export type CloudflareDnsResult = {
 
 const CLOUDFLARE_FIELDS = `
   connected
+  oauthAvailable
   accountId
   accountName
   tokenStatus
@@ -308,6 +310,14 @@ export async function fetchCloudflareConnection(): Promise<CloudflareConnection>
     query: `query MyCloudflareConnection { myCloudflareConnection { ${CLOUDFLARE_FIELDS} } }`,
   });
   return data.myCloudflareConnection;
+}
+
+/** Returns the Cloudflare consent URL; navigate the browser to it. */
+export async function startCloudflareOAuth(): Promise<string> {
+  const data = await gqlRequest<{ cloudflareAuthorizeUrl: string }>({
+    query: `mutation CloudflareAuthorizeUrl { cloudflareAuthorizeUrl }`,
+  });
+  return data.cloudflareAuthorizeUrl;
 }
 
 export async function connectCloudflareToken(
