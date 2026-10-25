@@ -673,7 +673,7 @@ export function DomainSettingsPanel() {
             {[
               {
                 title: "Add your domain",
-                desc: "Type the address you own — or buy one from the list below.",
+                desc: "Type the address you own — or buy one in the Get a domain tab.",
               },
               {
                 title: "Add the settings",
@@ -711,10 +711,21 @@ export function DomainSettingsPanel() {
         </summary>
 
         <div className="mt-4 space-y-4">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
+            <p className="font-medium text-emerald-900 dark:text-emerald-200">
+              Easiest: buy it right here
+            </p>
+            <p className="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-300/80">
+              Switch to the <strong>Get a domain</strong> tab above. One year
+              costs <strong>KES 1,800</strong>, paid with M-Pesa — we register it
+              and connect it to your school site for you.
+            </p>
+          </div>
+
           <p className="text-sm text-muted-foreground">
-            A domain costs roughly <strong>KES 1,000–2,500 a year</strong>. Buy
-            it in your school&apos;s name from any registrar — these are popular
-            in Kenya:
+            Prefer a registrar? A domain costs roughly{" "}
+            <strong>KES 1,000–2,500 a year</strong>; buy it in your school&apos;s
+            name from any registrar — these are popular in Kenya:
           </p>
 
           <div className="grid gap-2 sm:grid-cols-2">
