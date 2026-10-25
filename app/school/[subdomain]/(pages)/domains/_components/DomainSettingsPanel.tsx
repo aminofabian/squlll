@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  Cloud,
   Copy,
   ExternalLink,
   Globe,
@@ -33,9 +34,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import type { DnsRecord, TenantDomain } from "@/lib/school/domainsApi";
+import type {
+  CloudflareDnsResult,
+  DnsRecord,
+  TenantDomain,
+} from "@/lib/school/domainsApi";
 import { cn } from "@/lib/utils";
 import { useTenantDomains } from "../useTenantDomains";
+import { useCloudflareDns } from "../useCloudflareDns";
+import {
+  CloudflareConnectDialog,
+  CloudflareDnsSection,
+} from "./CloudflareDnsSection";
 
 function statusMeta(status: string): { text: string; className: string } {
   switch (status) {
@@ -134,15 +144,25 @@ function DnsTable({ rows }: { rows: DnsRecord[] }) {
 function DomainCard({
   domain,
   busy,
+  cloudflareConnected,
+  cloudflareApplying,
+  cloudflareResults,
   onVerify,
   onSetPrimary,
   onRemove,
+  onAddRecords,
+  onConnectCloudflare,
 }: {
   domain: TenantDomain;
   busy: boolean;
+  cloudflareConnected: boolean;
+  cloudflareApplying: boolean;
+  cloudflareResults: CloudflareDnsResult[] | undefined;
   onVerify: (id: string) => void;
   onSetPrimary: (id: string) => void;
   onRemove: (id: string) => void;
+  onAddRecords: () => void;
+  onConnectCloudflare: () => void;
 }) {
   const meta = statusMeta(domain.status);
   const instruction = domain.dnsInstruction;
@@ -195,6 +215,13 @@ function DomainCard({
               </p>
               <DnsTable rows={[instruction.ownership]} />
             </div>
+            <CloudflareDnsSection
+              connected={cloudflareConnected}
+              applying={cloudflareApplying}
+              results={cloudflareResults}
+              onAddRecords={onAddRecords}
+              onConnect={onConnectCloudflare}
+            />
           </div>
         ) : null}
 
@@ -250,8 +277,10 @@ export function DomainSettingsPanel() {
     setPrimary,
     disconnect,
   } = useTenantDomains();
+  const cloudflare = useCloudflareDns();
   const [hostname, setHostname] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [cloudflareOpen, setCloudflareOpen] = useState(false);
 
   const handleConnect = async () => {
     const value = normalizeInput(hostname);
@@ -288,6 +317,49 @@ export function DomainSettingsPanel() {
     } catch (err) {
       toast({
         title: "Check failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConnectCloudflare = async (token: string) => {
+    const next = await cloudflare.connect(token);
+    toast({
+      title: "Cloudflare connected",
+      description: next.accountName
+        ? `Signed in to ${next.accountName} — ${next.zones.length} zone(s) available.`
+        : `${next.zones.length} zone(s) available.`,
+    });
+  };
+
+  const handleDisconnectCloudflare = async () => {
+    try {
+      await cloudflare.disconnect();
+      toast({ title: "Cloudflare disconnected" });
+    } catch (err) {
+      toast({
+        title: "Could not disconnect",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddRecords = async (domain: TenantDomain) => {
+    try {
+      const rows = await cloudflare.apply(domain.id);
+      const failed = rows.filter((row) => row.action === "failed").length;
+      toast({
+        title: failed ? "Some records need attention" : "DNS records added",
+        description: failed
+          ? `${rows.length - failed} written, ${failed} failed. See the messages on the domain card.`
+          : "Now choose Check connection to activate the domain.",
+        variant: failed ? "destructive" : undefined,
+      });
+    } catch (err) {
+      toast({
+        title: "Could not add records",
         description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       });
@@ -351,6 +423,36 @@ export function DomainSettingsPanel() {
         </CardContent>
       </Card>
 
+      {cloudflare.connection?.connected ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs">
+          <span className="flex items-center gap-1.5">
+            <Cloud className="h-3.5 w-3.5 text-primary" />
+            Cloudflare connected
+            {cloudflare.connection.accountName
+              ? ` as ${cloudflare.connection.accountName}`
+              : ""}
+            {" · "}
+            {cloudflare.connection.zones.length} zone(s)
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={() => void handleDisconnectCloudflare()}
+          >
+            Disconnect
+          </Button>
+        </div>
+      ) : null}
+
+      {cloudflare.error ? (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{cloudflare.error}</AlertDescription>
+        </Alert>
+      ) : null}
+
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading domains…
@@ -366,13 +468,25 @@ export function DomainSettingsPanel() {
               key={domain.id}
               domain={domain}
               busy={busyId === domain.id}
+              cloudflareConnected={cloudflare.connection?.connected ?? false}
+              cloudflareApplying={cloudflare.applyingId === domain.id}
+              cloudflareResults={cloudflare.results[domain.id]}
               onVerify={handleVerify}
               onSetPrimary={(id) => void setPrimary(id)}
               onRemove={(id) => void disconnect(id)}
+              onAddRecords={() => void handleAddRecords(domain)}
+              onConnectCloudflare={() => setCloudflareOpen(true)}
             />
           ))}
         </div>
       )}
+
+      <CloudflareConnectDialog
+        open={cloudflareOpen}
+        onOpenChange={setCloudflareOpen}
+        connecting={cloudflare.connecting}
+        onSubmit={handleConnectCloudflare}
+      />
     </div>
   );
 }

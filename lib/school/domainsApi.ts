@@ -249,3 +249,104 @@ export async function cancelDomainOrder(id: string): Promise<DomainOrder> {
   });
   return data.cancelDomainOrder;
 }
+
+// ── Cloudflare DNS automation ────────────────────────────────────────
+
+export type CloudflareZone = {
+  id: string;
+  name: string;
+  status: string;
+};
+
+export type CloudflareConnection = {
+  connected: boolean;
+  accountId: string | null;
+  accountName: string | null;
+  tokenStatus: string | null;
+  expiresAt: string | null;
+  zones: CloudflareZone[];
+  lastUsedAt: string | null;
+  lastError: string | null;
+};
+
+export type CloudflareDnsResult = {
+  type: string;
+  name: string;
+  value: string;
+  action: "created" | "updated" | "unchanged" | "failed";
+  message: string | null;
+};
+
+const CLOUDFLARE_FIELDS = `
+  connected
+  accountId
+  accountName
+  tokenStatus
+  expiresAt
+  lastUsedAt
+  lastError
+  zones { id name status }
+`;
+
+/**
+ * Opens Cloudflare's token form with Zone:Read + DNS:Edit already selected, so
+ * a school admin only has to press "Continue" and copy the token.
+ */
+export const CLOUDFLARE_TOKEN_TEMPLATE_URL = (() => {
+  const permissions = encodeURIComponent(
+    JSON.stringify([
+      { key: "dns", type: "edit" },
+      { key: "zone", type: "read" },
+    ]),
+  );
+  const name = encodeURIComponent("SQUL DNS");
+  return `https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=${permissions}&accountId=*&zoneId=all&name=${name}`;
+})();
+
+export async function fetchCloudflareConnection(): Promise<CloudflareConnection> {
+  const data = await gqlRequest<{ myCloudflareConnection: CloudflareConnection }>({
+    query: `query MyCloudflareConnection { myCloudflareConnection { ${CLOUDFLARE_FIELDS} } }`,
+  });
+  return data.myCloudflareConnection;
+}
+
+export async function connectCloudflareToken(
+  token: string,
+): Promise<CloudflareConnection> {
+  const data = await gqlRequest<{ connectCloudflare: CloudflareConnection }>({
+    query: `
+      mutation ConnectCloudflare($input: ConnectCloudflareInput!) {
+        connectCloudflare(input: $input) { ${CLOUDFLARE_FIELDS} }
+      }
+    `,
+    variables: { input: { token } },
+  });
+  return data.connectCloudflare;
+}
+
+export async function disconnectCloudflareAccount(): Promise<CloudflareConnection> {
+  const data = await gqlRequest<{ disconnectCloudflare: CloudflareConnection }>({
+    query: `
+      mutation DisconnectCloudflare {
+        disconnectCloudflare { ${CLOUDFLARE_FIELDS} }
+      }
+    `,
+  });
+  return data.disconnectCloudflare;
+}
+
+export async function addDomainRecordsToCloudflare(
+  domainId: string,
+): Promise<CloudflareDnsResult[]> {
+  const data = await gqlRequest<{ applyCloudflareDns: CloudflareDnsResult[] }>({
+    query: `
+      mutation ApplyCloudflareDns($domainId: String!) {
+        applyCloudflareDns(domainId: $domainId) {
+          type name value action message
+        }
+      }
+    `,
+    variables: { domainId },
+  });
+  return data.applyCloudflareDns ?? [];
+}
