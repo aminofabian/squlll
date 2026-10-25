@@ -116,7 +116,7 @@ export async function connectTenantDomain(
 export async function verifyTenantDomain(id: string): Promise<TenantDomain> {
   const data = await gqlRequest<{ verifyTenantDomain: TenantDomain }>({
     query: `
-      mutation VerifyTenantDomain($id: ID!) {
+      mutation VerifyTenantDomain($id: String!) {
         verifyTenantDomain(id: $id) { ${DOMAIN_FIELDS} }
       }
     `,
@@ -130,7 +130,7 @@ export async function setPrimaryTenantDomain(
 ): Promise<TenantDomain> {
   const data = await gqlRequest<{ setPrimaryTenantDomain: TenantDomain }>({
     query: `
-      mutation SetPrimaryTenantDomain($id: ID!) {
+      mutation SetPrimaryTenantDomain($id: String!) {
         setPrimaryTenantDomain(id: $id) { ${DOMAIN_FIELDS} }
       }
     `,
@@ -142,7 +142,7 @@ export async function setPrimaryTenantDomain(
 export async function disconnectTenantDomain(id: string): Promise<boolean> {
   const data = await gqlRequest<{ disconnectTenantDomain: boolean }>({
     query: `
-      mutation DisconnectTenantDomain($id: ID!) {
+      mutation DisconnectTenantDomain($id: String!) {
         disconnectTenantDomain(id: $id)
       }
     `,
@@ -242,7 +242,7 @@ export async function initiateDomainOrderPayment(
 
 export async function cancelDomainOrder(id: string): Promise<DomainOrder> {
   const data = await gqlRequest<{ cancelDomainOrder: DomainOrder }>({
-    query: `mutation CancelDomainOrder($id: ID!) {
+    query: `mutation CancelDomainOrder($id: String!) {
       cancelDomainOrder(id: $id) { ${ORDER_FIELDS} }
     }`,
     variables: { id },

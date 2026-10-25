@@ -259,7 +259,7 @@ export async function verifyPlatformDomain(
   const data = await superAdminGraphqlRequest<{
     verifyPlatformDomain: PlatformDomainRecord;
   }>(
-    `mutation VerifyPlatformDomain($id: ID!) {
+    `mutation VerifyPlatformDomain($id: String!) {
       verifyPlatformDomain(id: $id) { ${DOMAIN_FIELDS} }
     }`,
     { id },
@@ -273,7 +273,7 @@ export async function approvePlatformDomain(
   const data = await superAdminGraphqlRequest<{
     approvePlatformDomain: PlatformDomainRecord;
   }>(
-    `mutation ApprovePlatformDomain($id: ID!) {
+    `mutation ApprovePlatformDomain($id: String!) {
       approvePlatformDomain(id: $id) { ${DOMAIN_FIELDS} }
     }`,
     { id },
@@ -287,7 +287,7 @@ export async function suspendPlatformDomain(
   const data = await superAdminGraphqlRequest<{
     suspendPlatformDomain: PlatformDomainRecord;
   }>(
-    `mutation SuspendPlatformDomain($id: ID!) {
+    `mutation SuspendPlatformDomain($id: String!) {
       suspendPlatformDomain(id: $id) { ${DOMAIN_FIELDS} }
     }`,
     { id },
@@ -299,7 +299,7 @@ export async function detachPlatformDomain(id: string): Promise<boolean> {
   const data = await superAdminGraphqlRequest<{
     detachPlatformDomain: boolean;
   }>(
-    `mutation DetachPlatformDomain($id: ID!) {
+    `mutation DetachPlatformDomain($id: String!) {
       detachPlatformDomain(id: $id)
     }`,
     { id },
@@ -368,7 +368,7 @@ export async function retryPlatformDomainOrder(
   const data = await superAdminGraphqlRequest<{
     retryPlatformDomainOrder: PlatformDomainOrderRecord;
   }>(
-    `mutation RetryPlatformDomainOrder($id: ID!) {
+    `mutation RetryPlatformDomainOrder($id: String!) {
       retryPlatformDomainOrder(id: $id) { ${ORDER_FIELDS} }
     }`,
     { id },
@@ -383,7 +383,7 @@ export async function markPlatformDomainOrderRegistered(
   const data = await superAdminGraphqlRequest<{
     markPlatformDomainOrderRegistered: PlatformDomainOrderRecord;
   }>(
-    `mutation MarkPlatformDomainOrderRegistered($id: ID!, $registrarDomainId: String) {
+    `mutation MarkPlatformDomainOrderRegistered($id: String!, $registrarDomainId: String) {
       markPlatformDomainOrderRegistered(id: $id, registrarDomainId: $registrarDomainId) { ${ORDER_FIELDS} }
     }`,
     { id, registrarDomainId: registrarDomainId ?? null },
@@ -397,7 +397,7 @@ export async function markPlatformDomainOrderLive(
   const data = await superAdminGraphqlRequest<{
     markPlatformDomainOrderLive: PlatformDomainOrderRecord;
   }>(
-    `mutation MarkPlatformDomainOrderLive($id: ID!) {
+    `mutation MarkPlatformDomainOrderLive($id: String!) {
       markPlatformDomainOrderLive(id: $id) { ${ORDER_FIELDS} }
     }`,
     { id },
@@ -412,7 +412,7 @@ export async function failPlatformDomainOrder(
   const data = await superAdminGraphqlRequest<{
     failPlatformDomainOrder: PlatformDomainOrderRecord;
   }>(
-    `mutation FailPlatformDomainOrder($id: ID!, $reason: String!) {
+    `mutation FailPlatformDomainOrder($id: String!, $reason: String!) {
       failPlatformDomainOrder(id: $id, reason: $reason) { ${ORDER_FIELDS} }
     }`,
     { id, reason },
