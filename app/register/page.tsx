@@ -78,23 +78,33 @@ const SCHOOL_URL_AVAILABLE_QUERY = `
 `;
 
 async function isSchoolUrlAvailable(schoolUrl: string): Promise<boolean> {
-  const response = await fetch("/api/graphql", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      query: SCHOOL_URL_AVAILABLE_QUERY,
-      variables: { schoolUrl },
-    }),
-  });
-  if (!response.ok) throw new Error("Availability check failed");
-  const payload = (await response.json()) as {
-    data?: { schoolUrlAvailable?: boolean };
-    errors?: Array<{ message?: string }>;
-  };
-  if (payload.errors?.length) {
-    throw new Error(payload.errors[0]?.message ?? "Availability check failed");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const response = await fetch("/api/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: SCHOOL_URL_AVAILABLE_QUERY,
+        variables: { schoolUrl },
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error("Availability check failed");
+    const payload = (await response.json()) as {
+      data?: { schoolUrlAvailable?: boolean };
+      errors?: Array<{ message?: string }>;
+    };
+    if (payload.errors?.length) {
+      throw new Error(payload.errors[0]?.message ?? "Availability check failed");
+    }
+    return Boolean(payload.data?.schoolUrlAvailable);
+  } finally {
+    clearTimeout(timer);
   }
-  return Boolean(payload.data?.schoolUrlAvailable);
 }
 
 // ─── Steps ─────────────────────────────────────────────────────
@@ -618,10 +628,10 @@ export default function SignupPage() {
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !isLastStep) {
-                    event.preventDefault();
-                    void handleNext();
-                  }
+                  if (event.key !== "Enter" || isLastStep) return;
+                  event.preventDefault();
+                  if (currentStep === 1 && !canContinueFromSchool) return;
+                  void handleNext();
                 }}
                 className="space-y-5"
               >
@@ -726,7 +736,7 @@ export default function SignupPage() {
                     </span>
                   </p>
                   {schoolUrlValue.length >= 3 ? (
-                    urlCheck === "checking" ? (
+                    urlChecking ? (
                       <span className="flex items-center gap-1 text-[0.6875rem] text-[#5a655d]">
                         <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
                         Checking…
