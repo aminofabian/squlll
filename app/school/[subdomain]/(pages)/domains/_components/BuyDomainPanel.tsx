@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowRight,
@@ -8,7 +8,9 @@ import {
   CheckCircle2,
   Circle,
   Globe,
+  Info,
   Loader2,
+  RefreshCw,
   Search,
   ShieldCheck,
   Smartphone,
@@ -36,22 +38,30 @@ import {
   type DomainOrder,
   type RegistrarQuote,
 } from "@/lib/school/domainsApi";
+import {
+  STRATEGY_LABEL,
+  suggestDomainNames,
+  type DomainSuggestion,
+} from "@/lib/school/domainSuggestions";
 import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import { cn } from "@/lib/utils";
 
 const STANDARD_PRICE = "KES 1,800";
-const TLD_OPTIONS = [".co.ke", ".com", ".ac.ke"] as const;
 const ORDER_STEPS = ["Paid", "Registering", "Setting up", "Live"] as const;
 
-function normalizeInput(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "")
-    .split(/[/?#:]/)[0]
-    .replace(/\.$/, "");
-}
+const ENDINGS = [
+  { value: ".co.ke", label: "Best for Kenyan schools" },
+  { value: ".com", label: "If families abroad will search for you" },
+  { value: ".org", label: "Common for non-profits and schools" },
+  { value: ".ac.ke", label: "Only if you qualify as an academic institution" },
+] as const;
+
+type AvailabilityState =
+  | "checking"
+  | "available"
+  | "taken"
+  | "unknown"
+  | "unchecked";
 
 function formatMoney(cents: string | null, currency: string | null): string {
   if (!cents) return currency ? `Price in ${currency}` : "Price shown at payment";
@@ -145,35 +155,64 @@ function pipeline(order: DomainOrder) {
   );
 }
 
+function AvailabilityBadge({ state }: { state: AvailabilityState }) {
+  if (state === "checking") {
+    return (
+      <Badge variant="outline" className="gap-1 text-[10px]">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Checking
+      </Badge>
+    );
+  }
+  if (state === "available") {
+    return (
+      <Badge className="bg-emerald-600 text-[10px] uppercase text-white hover:bg-emerald-600">
+        Available
+      </Badge>
+    );
+  }
+  if (state === "taken") {
+    return (
+      <Badge className="bg-red-600 text-[10px] uppercase text-white hover:bg-red-600">
+        Taken
+      </Badge>
+    );
+  }
+  if (state === "unknown") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-amber-300 bg-amber-50 text-[10px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+      >
+        Confirm at payment
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+      Not checked
+    </Badge>
+  );
+}
+
 export function BuyDomainPanel() {
   const routeParams = useParams<{ subdomain?: string }>();
   const subdomain =
     typeof routeParams?.subdomain === "string" ? routeParams.subdomain : "";
-  const suggestionName = normalizeInput(subdomain) || "yourschool";
 
-  const [name, setName] = useState(subdomain || "");
+  const [schoolName, setSchoolName] = useState(subdomain || "");
   const [tld, setTld] = useState<string>(".co.ke");
-  const [quotes, setQuotes] = useState<RegistrarQuote[]>([]);
-  const [searchedFor, setSearchedFor] = useState<string | null>(null);
-  const [searching, setSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<DomainSuggestion[]>([]);
+  const [availability, setAvailability] = useState<
+    Record<string, AvailabilityState>
+  >({});
+  const [quotes, setQuotes] = useState<Record<string, RegistrarQuote>>({});
+  const [searched, setSearched] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState<DomainOrder[]>([]);
   const ordersRef = useRef<HTMLDivElement | null>(null);
-
-  const nameHasDot = normalizeInput(name).includes(".");
-
-  const chooseTld = (option: string) => {
-    const base = normalizeInput(name).replace(/\.(co\.ke|ac\.ke|com|org)$/i, "");
-    setName(base);
-    setTld(option);
-  };
-
-  const fqdn = useMemo(() => {
-    const value = normalizeInput(name);
-    if (!value) return "";
-    return value.includes(".") ? value : `${value}${tld}`;
-  }, [name, tld]);
 
   const refresh = useCallback(async () => {
     try {
@@ -191,7 +230,6 @@ export function BuyDomainPanel() {
         const rows = await fetchMyDomainOrders();
         if (alive) setOrders(rows);
       } catch (err) {
-        // Non-fatal — search and payment help still work.
         console.error(getDisplayErrorMessage(err));
       }
     })();
@@ -200,18 +238,85 @@ export function BuyDomainPanel() {
     };
   }, []);
 
-  const handleSearch = async (override?: string) => {
-    const value = normalizeInput(override ?? fqdn);
-    if (!value) return;
-    setSearching(true);
-    setSearchedFor(value);
-    try {
-      setQuotes(await searchRegistrarDomains(value));
-    } catch (err) {
-      toast.error(getDisplayErrorMessage(err));
-    } finally {
-      setSearching(false);
+  const domainFor = (suggestion: DomainSuggestion) =>
+    suggestion.domain ?? `${suggestion.label}${tld}`;
+
+  const checkAvailability = async (
+    list: DomainSuggestion[],
+    ending: string,
+  ) => {
+    const targets = list.map(
+      (suggestion) => suggestion.domain ?? `${suggestion.label}${ending}`,
+    );
+    if (!targets.length) return;
+
+    setChecking(true);
+    setAvailability((prev) => {
+      const next = { ...prev };
+      for (const domain of targets) next[domain] = "checking";
+      return next;
+    });
+
+    const results = await Promise.all(
+      targets.map(async (domain) => {
+        try {
+          const rows = await searchRegistrarDomains(domain);
+          const match =
+            rows.find(
+              (row) => row.fqdn.toLowerCase() === domain.toLowerCase(),
+            ) ?? rows[0];
+          if (!match) {
+            return { domain, state: "unchecked" as const };
+          }
+          const state: AvailabilityState =
+            match.available === true
+              ? "available"
+              : match.available === false
+                ? "taken"
+                : "unknown";
+          return { domain, state, quote: match };
+        } catch {
+          return { domain, state: "unchecked" as const };
+        }
+      }),
+    );
+
+    setAvailability((prev) => {
+      const next = { ...prev };
+      for (const result of results) next[result.domain] = result.state;
+      return next;
+    });
+    setQuotes((prev) => {
+      const next = { ...prev };
+      for (const result of results) {
+        if ("quote" in result && result.quote) next[result.domain] = result.quote;
+      }
+      return next;
+    });
+    setChecking(false);
+  };
+
+  const handleSuggest = () => {
+    const list = suggestDomainNames(schoolName);
+    if (!list.length) {
+      toast.error(
+        "Add your school's full name, including the part that makes it unique.",
+      );
+      return;
     }
+    setSuggestions(list);
+    setSearched(true);
+    setAvailability({});
+    setQuotes({});
+    void checkAvailability(list, tld);
+  };
+
+  const handleEnding = (ending: string) => {
+    setTld(ending);
+    if (!suggestions.length) return;
+    setAvailability({});
+    setQuotes({});
+    void checkAvailability(suggestions, ending);
   };
 
   const handleOrder = async (target: string) => {
@@ -221,7 +326,7 @@ export function BuyDomainPanel() {
       toast.success(`${target} is reserved for you`, {
         description: "Scroll down and pay with M-Pesa to finish.",
       });
-      setQuotes([]);
+      setSuggestions([]);
       await refresh();
       ordersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
@@ -271,6 +376,16 @@ export function BuyDomainPanel() {
     }
   };
 
+  const exactMode =
+    suggestions.length === 1 && suggestions[0]?.strategy === "exact";
+
+  const anyUnchecked =
+    searched &&
+    suggestions.length > 0 &&
+    suggestions.some(
+      (suggestion) => availability[domainFor(suggestion)] === "unchecked",
+    );
+
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden border-2">
@@ -285,9 +400,9 @@ export function BuyDomainPanel() {
                   Your school&apos;s name, on the internet
                 </h2>
                 <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                  We&apos;ll register it, connect it to your school site and set
-                  up the security certificate. You just pick the name and pay
-                  with M-Pesa.
+                  Tell us the school&apos;s full name and we&apos;ll suggest
+                  short, easy addresses. Pick one, pay with M-Pesa, and we
+                  register it and connect your site.
                 </p>
               </div>
             </div>
@@ -321,166 +436,199 @@ export function BuyDomainPanel() {
       <Card className="border-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Search className="h-4 w-4 text-primary" />
-            Find your address
+            <Sparkles className="h-4 w-4 text-primary" />
+            What&apos;s your school called?
           </CardTitle>
           <CardDescription>
-            Type your school&apos;s name. We&apos;ll check what&apos;s available.
+            Use the full official name — we&apos;ll shorten it the way parents
+            would say it.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="domain-name" className="text-sm font-medium">
+            <Label htmlFor="school-name" className="text-sm font-medium">
               School name
             </Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
-                id="domain-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={suggestionName}
+                id="school-name"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+                placeholder="Qarsaabula Primary and Junior School"
                 autoComplete="off"
                 spellCheck={false}
                 className="h-11 flex-1 border-2 focus:border-primary"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void handleSearch();
+                  if (e.key === "Enter") handleSuggest();
                 }}
               />
-              <Button
-                onClick={() => void handleSearch()}
-                disabled={searching || !fqdn}
-                className="h-11"
-              >
-                {searching ? (
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="mr-1.5 h-4 w-4" />
-                )}
-                Search
+              <Button onClick={handleSuggest} className="h-11">
+                <Sparkles className="mr-1.5 h-4 w-4" />
+                Suggest names
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Already know the exact address? Type it in full, e.g.{" "}
+              <span className="font-mono">mirema.ac.ke</span>.
+            </p>
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">
-              Ending
-            </p>
+            <p className="text-xs font-medium text-muted-foreground">Ending</p>
             <div className="flex flex-wrap gap-2">
-              {TLD_OPTIONS.map((option) => (
+              {ENDINGS.map((ending) => (
                 <button
-                  key={option}
+                  key={ending.value}
                   type="button"
-                  onClick={() => chooseTld(option)}
+                  title={ending.label}
+                  disabled={exactMode}
+                  onClick={() => handleEnding(ending.value)}
                   className={cn(
                     "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                    tld === option && !nameHasDot
+                    tld === ending.value
                       ? "border-primary bg-primary text-primary-foreground"
                       : "bg-background hover:border-primary/40 hover:bg-primary/5",
+                    exactMode && "cursor-not-allowed opacity-50",
                   )}
                 >
-                  {option}
+                  {ending.value}
                 </button>
               ))}
-              <span className="self-center text-xs text-muted-foreground">
-                .co.ke is best for Kenyan schools · .com for international ·
-                .ac.ke if you&apos;re an academic institution
-              </span>
             </div>
+            <p className="text-xs text-muted-foreground">
+              {exactMode
+                ? "The ending is included in the exact address you typed."
+                : ENDINGS.find((ending) => ending.value === tld)?.label}
+            </p>
           </div>
 
-          <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-            Searching for:{" "}
-            <span className="font-mono font-medium">{fqdn || "—"}</span>
-          </div>
+          <details className="rounded-lg border bg-muted/20 px-3 py-2 text-xs">
+            <summary className="cursor-pointer font-medium">
+              How we choose names
+            </summary>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+              <li>
+                Drop generic words like <em>Primary</em>, <em>Junior</em> and{" "}
+                <em>School</em> — they make addresses long.
+              </li>
+              <li>Keep the part that makes your school recognisable.</li>
+              <li>
+                Prefer something easy to say and spell; no hyphens or numbers.
+              </li>
+              <li>
+                <span className="font-mono">.co.ke</span> by default;{" "}
+                <span className="font-mono">.ac.ke</span> only if you meet the
+                requirements.
+              </li>
+            </ul>
+          </details>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="self-center text-xs text-muted-foreground">
-              <Sparkles className="mr-1 inline h-3.5 w-3.5 text-primary" />
-              Ideas:
-            </span>
-            {[`${suggestionName}.co.ke`, `${suggestionName}.com`, `${suggestionName}.org`].map(
-              (idea) => (
-                <button
-                  key={idea}
-                  type="button"
-                  onClick={() => {
-                    setName(idea);
-                    void handleSearch(idea);
-                  }}
-                  className="rounded-full border bg-background px-3 py-1 text-xs hover:border-primary/40 hover:bg-primary/5"
-                >
-                  {idea}
-                </button>
-              ),
-            )}
-          </div>
-
-          {searching ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Checking availability…
+          {checking ? (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Checking availability with the registrar…
             </p>
           ) : null}
 
-          {!searching && searchedFor && quotes.length === 0 ? (
+          {anyUnchecked ? (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                We couldn&apos;t check availability for some names just now. You
+                can try again, or order and we&apos;ll confirm before
+                registering.
+              </span>
+            </div>
+          ) : null}
+
+          {searched && suggestions.length === 0 ? (
             <div className="rounded-lg border border-dashed p-4 text-sm">
-              <p className="font-medium">We couldn&apos;t check that name online.</p>
+              <p className="font-medium">
+                We couldn&apos;t build a name from that.
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                You can still buy from a registrar like Truehost or HostPinnacle,
-                then add the domain under <strong>My domains</strong> and connect
-                it. Or try a different ending above.
+                Include the school&apos;s distinctive name, for example{" "}
+                <em>Qarsaabula</em> rather than just <em>Primary School</em>.
               </p>
             </div>
           ) : null}
 
-          {quotes.length ? (
+          {suggestions.length ? (
             <div className="space-y-2">
-              {quotes.map((quote) => {
-                const available = quote.available !== false;
+              {suggestions.map((suggestion, index) => {
+                const domain = domainFor(suggestion);
+                const state = availability[domain] ?? "unchecked";
+                const quote = quotes[domain];
+                const taken = state === "taken";
                 return (
                   <div
-                    key={quote.fqdn}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+                    key={domain}
+                    className={cn(
+                      "rounded-xl border p-4",
+                      index === 0 && !taken
+                        ? "border-primary/40 bg-primary/[0.03]"
+                        : "bg-background",
+                    )}
                   >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate font-mono text-sm font-medium">
-                          {quote.fqdn}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            #{index + 1}
+                          </span>
+                          <p className="break-all font-mono text-base font-semibold">
+                            {domain}
+                          </p>
+                          {index === 0 && !taken ? (
+                            <Badge className="bg-primary text-[10px] uppercase text-primary-foreground hover:bg-primary">
+                              Best match
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-[10px]">
+                            {STRATEGY_LABEL[suggestion.strategy]}
+                          </Badge>
+                          <AvailabilityBadge state={state} />
+                          {quote ? (
+                            <span className="text-xs text-muted-foreground">
+                              {formatMoney(quote.priceCents, quote.currency)} /
+                              year
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                          {suggestion.explanation}
                         </p>
-                        <Badge
-                          className={cn(
-                            "text-[10px] uppercase",
-                            available
-                              ? "bg-emerald-600 text-white hover:bg-emerald-600"
-                              : "bg-red-600 text-white hover:bg-red-600",
-                          )}
-                        >
-                          {quote.available === false
-                            ? "Taken"
-                            : quote.available === true
-                              ? "Available"
-                              : "Check at payment"}
-                        </Badge>
                       </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {formatMoney(quote.priceCents, quote.currency)} per year
-                        {quote.note ? ` · ${quote.note}` : ""}
-                      </p>
+                      <Button
+                        size="sm"
+                        disabled={busy || taken || state === "checking"}
+                        onClick={() => void handleOrder(domain)}
+                      >
+                        {taken ? "Taken" : "Get this domain"}
+                        {!taken ? (
+                          <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                        ) : null}
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      disabled={busy || !available}
-                      onClick={() => void handleOrder(quote.fqdn)}
-                    >
-                      {available ? "Get this domain" : "Unavailable"}
-                      {available ? (
-                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                      ) : null}
-                    </Button>
                   </div>
                 );
               })}
             </div>
+          ) : null}
+
+          {suggestions.length ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={checking}
+              onClick={() => void checkAvailability(suggestions, tld)}
+            >
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+              Check availability again
+            </Button>
           ) : null}
 
           <p className="text-xs text-muted-foreground">
@@ -541,11 +689,11 @@ export function BuyDomainPanel() {
 
         {orders.length === 0 ? (
           <div className="rounded-xl border border-dashed p-6 text-center">
-            <Globe className="mx-auto h-8 w-8 text-muted-foreground/60" />
+            <Search className="mx-auto h-8 w-8 text-muted-foreground/60" />
             <p className="mt-2 text-sm font-medium">No orders yet</p>
             <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
-              Search for a name above. Once you pick one, it appears here and you
-              can pay with M-Pesa.
+              Pick a name above. It appears here once reserved, and you can pay
+              with M-Pesa.
             </p>
           </div>
         ) : (
@@ -658,7 +806,7 @@ export function BuyDomainPanel() {
             {[
               {
                 title: "Pick a name",
-                desc: "Search above and choose the address you like.",
+                desc: "We suggest short options from your school's name. Choose your favourite.",
               },
               {
                 title: "Pay with M-Pesa",
