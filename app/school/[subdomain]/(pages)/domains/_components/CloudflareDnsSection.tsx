@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
-  Cloud,
   ExternalLink,
   Loader2,
   ShieldCheck,
@@ -25,29 +24,11 @@ import {
   CLOUDFLARE_TOKEN_TEMPLATE_URL,
   type CloudflareDnsResult,
 } from "@/lib/school/domainsApi";
-import { cn } from "@/lib/utils";
-
-const ACTION_LABEL: Record<CloudflareDnsResult["action"], string> = {
-  created: "Added",
-  updated: "Updated",
-  unchanged: "Already correct",
-  failed: "Failed",
-};
-
-function actionClass(action: CloudflareDnsResult["action"]): string {
-  if (action === "created" || action === "unchanged") {
-    return "bg-emerald-600 text-white hover:bg-emerald-600";
-  }
-  if (action === "updated") {
-    return "bg-amber-600 text-white hover:bg-amber-600";
-  }
-  return "bg-red-600 text-white hover:bg-red-600";
-}
+import { CloudflareLogo } from "./CloudflareLogo";
 
 /**
- * "Add these records for me" affordance shown inside a pending domain card.
- * Without a connection it opens the dialog; with one it writes the rows to
- * Cloudflare and reports per-record results.
+ * The "we can do this for you" panel. Plain-language copy: the school admin
+ * should never need to know what a TXT or CNAME record is to use this.
  */
 export function CloudflareDnsSection({
   connected,
@@ -57,6 +38,8 @@ export function CloudflareDnsSection({
   onAddRecords,
   onConnect,
   onConnectOAuth,
+  onCheckLive,
+  onShowManual,
 }: {
   connected: boolean;
   oauthAvailable: boolean;
@@ -65,88 +48,134 @@ export function CloudflareDnsSection({
   onAddRecords: () => void;
   onConnect: () => void;
   onConnectOAuth: () => void;
+  onCheckLive: () => void;
+  onShowManual: () => void;
 }) {
   const failed = results?.filter((row) => row.action === "failed") ?? [];
+  const written =
+    results?.filter((row) => row.action !== "failed").length ?? 0;
+  const allDone = Boolean(results?.length) && failed.length === 0;
 
   return (
-    <div className="rounded-md border border-dashed p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Cloud className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">Add DNS records automatically</span>
+    <div className="rounded-xl border border-[#F38020]/30 bg-[#F38020]/[0.06] p-4">
+      <div className="flex items-start gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10">
+          <CloudflareLogo className="h-5 w-5 text-[#F38020]" />
         </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold">
+              Let us add these settings for you
+            </p>
+            {connected ? (
+              <Badge
+                variant="outline"
+                className="border-emerald-600/30 bg-emerald-50 text-[10px] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+              >
+                Cloudflare connected
+              </Badge>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {connected
+              ? "We'll copy the settings for this domain into your Cloudflare account. It usually takes less than a minute."
+              : "Cloudflare keeps your domain's settings. Connect it once — you approve on Cloudflare's website — and we'll add everything for you."}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
         {connected ? (
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            className="bg-[#F38020] text-white hover:bg-[#d9700e]"
             onClick={onAddRecords}
             disabled={applying}
           >
             {applying ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Cloud className="mr-1.5 h-3.5 w-3.5" />
+              <CloudflareLogo className="mr-2 h-4 w-4" />
             )}
-            Add records in Cloudflare
+            {applying ? "Adding settings…" : "Add settings now"}
           </Button>
-        ) : oauthAvailable ? (
-          <div className="flex flex-col items-end gap-1">
-            <Button type="button" size="sm" onClick={onConnectOAuth}>
-              <Cloud className="mr-1.5 h-3.5 w-3.5" />
-              Connect Cloudflare
-            </Button>
-            <button
-              type="button"
-              onClick={onConnect}
-              className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            >
-              Use an API token instead
-            </button>
-          </div>
         ) : (
-          <Button type="button" size="sm" onClick={onConnect}>
-            <Cloud className="mr-1.5 h-3.5 w-3.5" />
+          <Button
+            type="button"
+            size="sm"
+            className="bg-[#F38020] text-white hover:bg-[#d9700e]"
+            onClick={oauthAvailable ? onConnectOAuth : onConnect}
+          >
+            <CloudflareLogo className="mr-2 h-4 w-4" />
             Connect Cloudflare
           </Button>
         )}
-      </div>
 
-      {!connected ? (
-        <p className="mt-1 text-xs text-muted-foreground">
-          Already have this domain on Cloudflare? Connect it once and we will
-          create the rows above for you.
-        </p>
-      ) : null}
+        <button
+          type="button"
+          onClick={onShowManual}
+          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          I&apos;d rather add them myself
+        </button>
+
+        {!connected && oauthAvailable ? (
+          <button
+            type="button"
+            onClick={onConnect}
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Use an API token
+          </button>
+        ) : null}
+      </div>
 
       {results?.length ? (
         <div className="mt-3 space-y-1.5">
           {results.map((row) => (
             <div
               key={`${row.type}-${row.name}-${row.value}`}
-              className="flex flex-wrap items-center gap-2 text-xs"
+              className="flex items-start gap-2 text-xs"
             >
-              <Badge className={cn("text-[10px] uppercase", actionClass(row.action))}>
-                {ACTION_LABEL[row.action]}
-              </Badge>
-              <span className="font-mono">{row.type}</span>
-              <span className="font-mono break-all">{row.name}</span>
-              {row.message ? (
-                <span className="text-red-600">{row.message}</span>
-              ) : null}
+              {row.action === "failed" ? (
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
+              ) : (
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+              )}
+              <span className={row.action === "failed" ? "text-red-600" : ""}>
+                {row.action === "failed"
+                  ? (row.message ?? `Could not add ${row.type} for ${row.name}.`)
+                  : `${row.type} setting for ${row.name}`}
+              </span>
             </div>
           ))}
+
+          {allDone ? (
+            <div className="mt-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <p className="font-medium">Settings added — nice work.</p>
+              <p className="mt-0.5">
+                Next, check that the internet has picked them up. This can take
+                a few minutes.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2 h-7 border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:bg-transparent"
+                onClick={onCheckLive}
+              >
+                Check if it&apos;s live
+              </Button>
+            </div>
+          ) : null}
+
           {failed.length ? (
             <p className="text-xs text-red-600">
-              {failed.length} record(s) could not be written. Fix the message
-              above and try again.
+              {written} setting(s) added, {failed.length} failed. Fix the message
+              above and try again — or add them yourself below.
             </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Records are in Cloudflare. Click <strong>Check connection</strong>{" "}
-              to activate the domain.
-            </p>
-          )}
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -194,10 +223,13 @@ export function CloudflareConnectDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Connect Cloudflare</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <CloudflareLogo className="h-5 w-5 text-[#F38020]" />
+            Connect Cloudflare with a token
+          </DialogTitle>
           <DialogDescription>
-            Cloudflare lets us add the DNS rows for you with a short-lived API
-            token. You stay signed in to Cloudflare in this browser.
+            This is the manual way in. Most schools can just press the orange
+            Connect button instead.
           </DialogDescription>
         </DialogHeader>
 
@@ -217,8 +249,8 @@ export function CloudflareConnectDialog({
             <p className="text-xs text-muted-foreground">
               The form opens with <strong>Zone:Read</strong> and{" "}
               <strong>DNS:Edit</strong> already selected. Choose the school&apos;s
-              zone (or all zones), press <em>Continue</em>, then{" "}
-              <em>Create token</em> and copy it — Cloudflare shows it once.
+              zone, press <em>Continue</em>, then <em>Create token</em> and copy
+              it — Cloudflare shows it once.
             </p>
           </div>
 
@@ -258,12 +290,17 @@ export function CloudflareConnectDialog({
           <Button
             type="button"
             variant="ghost"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={connecting}
           >
             Cancel
           </Button>
-          <Button type="button" onClick={() => void submit()} disabled={connecting}>
+          <Button
+            type="button"
+            className="bg-[#F38020] text-white hover:bg-[#d9700e]"
+            onClick={() => void submit()}
+            disabled={connecting}
+          >
             {connecting ? (
               <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
             ) : (
