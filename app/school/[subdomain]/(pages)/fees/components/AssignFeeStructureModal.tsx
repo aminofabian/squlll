@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, type ReactNode } from 'react'
 import {
   Drawer,
   DrawerContent,
@@ -42,6 +42,14 @@ interface FeeStructure {
   isActive?: boolean
   /** Grades already linked to this plan (tenant grade-level ids). */
   linkedGrades?: Array<{ id: string; name: string }>
+  /** Assignment batches already linked to this plan, for unlinking. */
+  linkedAssignments?: Array<{
+    id: string
+    gradeIds: string[]
+    studentCount: number
+    description?: string
+    createdAt?: string
+  }>
 }
 
 interface AssignFeeStructureModalProps {
@@ -49,7 +57,11 @@ interface AssignFeeStructureModalProps {
   onClose: () => void
   feeStructure: FeeStructure | null
   availableGrades: Grade[]
+  /** Grades to preselect when the drawer opens (e.g. a year-level gap flow). */
+  initialSelectedGradeIds?: string[]
   onSuccess?: (response: unknown) => void
+  /** Deactivates an assignment batch. Resolves true when the UI may close. */
+  onUnlinkAssignment?: (assignmentId: string) => Promise<boolean>
 }
 
 const FLOW_STEPS = [
@@ -58,6 +70,8 @@ const FLOW_STEPS = [
 ] as const
 
 type FlowStepId = (typeof FLOW_STEPS)[number]['id']
+
+type LinkedAssignment = NonNullable<FeeStructure['linkedAssignments']>[number]
 
 function FlowProgressBar({
   currentStep,
@@ -264,7 +278,9 @@ export const AssignFeeStructureModal = ({
   onClose,
   feeStructure,
   availableGrades,
+  initialSelectedGradeIds,
   onSuccess,
+  onUnlinkAssignment,
 }: AssignFeeStructureModalProps) => {
   const [description, setDescription] = useState('')
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([])
@@ -277,6 +293,10 @@ export const AssignFeeStructureModal = ({
     number | null
   >(null)
   const [eligibilityLoading, setEligibilityLoading] = useState(false)
+  const [unlinkTarget, setUnlinkTarget] = useState<LinkedAssignment | null>(null)
+  const [isUnlinking, setIsUnlinking] = useState(false)
+  const [unlinkError, setUnlinkError] = useState<string | null>(null)
+  const initialSelectionKeyRef = useRef<string | null>(null)
   const { toast } = useToast()
 
   const { gradeLevels, isLoading: isLoadingGradeLevels } = useGradeLevels()
@@ -378,6 +398,31 @@ export const AssignFeeStructureModal = ({
     )
   }, [feeStructure, displayItems, isLinkedGrade])
 
+  const linkedGradeNameById = useMemo(() => {
+    const names = new Map<string, string>()
+    for (const grade of linkedItems) names.set(grade.key, grade.name)
+    for (const grade of displayItems) {
+      if (!isLinkedGrade(grade)) continue
+      names.set(grade.id, grade.name)
+      if (grade.tenantGradeLevelId) {
+        names.set(grade.tenantGradeLevelId, grade.name)
+      }
+    }
+    return names
+  }, [linkedItems, displayItems, isLinkedGrade])
+
+  const linkedAssignments = feeStructure?.linkedAssignments ?? []
+  const linkedAssignmentLabel = (assignment: LinkedAssignment) => {
+    const names = assignment.gradeIds
+      .map((id) => linkedGradeNameById.get(id))
+      .filter(Boolean) as string[]
+    return names.length
+      ? names.join(', ')
+      : `${assignment.studentCount} student${
+          assignment.studentCount === 1 ? '' : 's'
+        }`
+  }
+
   const hasExistingLinks = linkedItems.length > 0
 
   const allSelected =
@@ -415,6 +460,43 @@ export const AssignFeeStructureModal = ({
       ),
     [selectedPreview, feeStructure?.id],
   )
+
+  // Year-level “link missing grades” opens this drawer with the gap grades
+  // already selected. Apply once per open/plan so later renders don't keep
+  // resetting the user's choices. Match display id or tenant grade-level id.
+  useEffect(() => {
+    if (!isOpen) {
+      initialSelectionKeyRef.current = null
+      return
+    }
+    if (!initialSelectedGradeIds?.length) return
+    if (isLoading || displayItems.length === 0) return
+
+    const key = `${feeStructure?.id ?? ''}::${initialSelectedGradeIds.join('|')}`
+    if (initialSelectionKeyRef.current === key) return
+
+    const wanted = new Set(initialSelectedGradeIds)
+    const initial = displayItems
+      .filter(
+        (grade) =>
+          !isLinkedGrade(grade) &&
+          (wanted.has(grade.id) || wanted.has(grade.tenantGradeLevelId)),
+      )
+      .map((grade) => grade.id)
+
+    // Preselect once after grades load; the key guard prevents re-applying.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initial.length > 0) setSelectedGradeIds(initial)
+    initialSelectionKeyRef.current = key
+  }, [
+    isOpen,
+    feeStructure?.id,
+    initialSelectedGradeIds,
+    isLoading,
+    displayItems,
+    displayItems.length,
+    isLinkedGrade,
+  ])
 
   useEffect(() => {
     const fetchFilteredFeeStructure = async () => {
@@ -496,6 +578,9 @@ export const AssignFeeStructureModal = ({
     setSelectedGradeIds([])
     setError(null)
     setEligibleStudentCount(null)
+    setUnlinkTarget(null)
+    setIsUnlinking(false)
+    setUnlinkError(null)
   }, [isOpen, feeStructure])
 
   useEffect(() => {
@@ -678,6 +763,20 @@ export const AssignFeeStructureModal = ({
     </Button>
   )
 
+  const handleConfirmUnlink = async () => {
+    if (!unlinkTarget || !onUnlinkAssignment) return
+    setIsUnlinking(true)
+    setUnlinkError(null)
+    const ok = await onUnlinkAssignment(unlinkTarget.id)
+    setIsUnlinking(false)
+    if (ok) {
+      setUnlinkTarget(null)
+      onClose()
+    } else {
+      setUnlinkError('The link could not be removed. Please try again.')
+    }
+  }
+
   return (
     <Drawer
       open={isOpen}
@@ -811,8 +910,8 @@ export const AssignFeeStructureModal = ({
                                 Already linked
                               </p>
                               <p className="mt-0.5 text-[10px] leading-relaxed text-emerald-800/80">
-                                These grades stay linked. Only new selections
-                                below are added.
+                                These grades are already linked. Add more below,
+                                or unlink a batch.
                               </p>
                             </div>
                             <span className="rounded-full border border-emerald-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-emerald-800">
@@ -846,6 +945,94 @@ export const AssignFeeStructureModal = ({
                               </li>
                             ))}
                           </ul>
+
+                          {linkedAssignments.length > 0 && onUnlinkAssignment ? (
+                            <div className="mt-2 space-y-1 border-t border-emerald-200/70 pt-2">
+                              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-800/60">
+                                Linked through
+                              </p>
+                              {linkedAssignments.map((assignment) => {
+                                const label = linkedAssignmentLabel(assignment)
+                                return (
+                                  <div
+                                    key={assignment.id}
+                                    className="flex items-center justify-between gap-2 rounded-md border border-emerald-100 bg-white/70 px-2 py-1.5"
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="truncate text-[10px] font-medium text-slate-700">
+                                        {label}
+                                      </p>
+                                      <p className="truncate text-[9px] text-slate-500">
+                                        {assignment.studentCount} student
+                                        {assignment.studentCount === 1 ? '' : 's'}
+                                        {assignment.description
+                                          ? ` · ${assignment.description}`
+                                          : ''}
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="shrink-0 text-[10px] font-semibold text-rose-700 hover:underline disabled:opacity-50"
+                                      disabled={isUnlinking}
+                                      onClick={() => {
+                                        setUnlinkTarget(assignment)
+                                        setUnlinkError(null)
+                                      }}
+                                    >
+                                      Unlink
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          ) : null}
+
+                          {unlinkTarget ? (
+                            <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5">
+                              <p className="text-xs font-semibold text-rose-950">
+                                Unlink {linkedAssignmentLabel(unlinkTarget)}?
+                              </p>
+                              <p className="mt-1 text-[10px] leading-relaxed text-rose-900/80">
+                                Future billing stops for these grades. Existing
+                                invoices, payments, and balances stay unchanged.
+                                The link moves to Class links → Inactive.
+                              </p>
+                              {unlinkError ? (
+                                <p className="mt-1 text-[10px] font-medium text-rose-700">
+                                  {unlinkError}
+                                </p>
+                              ) : null}
+                              <div className="mt-2 flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-[10px]"
+                                  disabled={isUnlinking}
+                                  onClick={() => setUnlinkTarget(null)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-7 px-2 text-[10px]"
+                                  disabled={isUnlinking}
+                                  onClick={handleConfirmUnlink}
+                                >
+                                  {isUnlinking ? (
+                                    <>
+                                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                      Unlinking…
+                                    </>
+                                  ) : (
+                                    'Unlink link'
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
 

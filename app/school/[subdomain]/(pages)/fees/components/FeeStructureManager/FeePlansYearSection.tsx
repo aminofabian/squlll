@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { AlertTriangle, ChevronDown } from "lucide-react";
+import { AlertTriangle, ChevronDown, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AcademicYearPlanGroup } from "../../lib/feePlanYearLinkage";
 import { feesOverviewHref } from "../../lib/feesRoutes";
@@ -16,6 +16,7 @@ interface FeePlansYearSectionProps {
   pageLevelConflictAlert?: boolean;
   /** All structures in this year have no billing yet — row badges stay minimal. */
   allPlansUnbilled?: boolean;
+  onLinkMissingGrades?: (group: AcademicYearPlanGroup) => void;
   children: ReactNode;
 }
 
@@ -25,6 +26,7 @@ export function FeePlansYearSection({
   isCurrentSchoolYear,
   pageLevelConflictAlert = false,
   allPlansUnbilled = false,
+  onLinkMissingGrades,
   children,
 }: FeePlansYearSectionProps) {
   const {
@@ -152,14 +154,26 @@ export function FeePlansYearSection({
 
         {showUnlinked ? (
           <div className="mt-2">
-            <button
-              type="button"
-              className="text-[11px] font-medium text-amber-800 underline decoration-amber-300/80 underline-offset-2 hover:text-amber-950"
-              onClick={() => setShowUnlinkedDetails((v) => !v)}
-            >
-              {showUnlinkedDetails ? "Hide" : "Show"} {unlinkedGrades.length}{" "}
-              grade{unlinkedGrades.length === 1 ? "" : "s"} not linked
-            </button>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              {onLinkMissingGrades ? (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a1f1a] px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-[#143b31]"
+                  onClick={() => onLinkMissingGrades(group)}
+                >
+                  <Link2 className="h-3 w-3" />
+                  Link {unlinkedGrades.length} missing grade
+                  {unlinkedGrades.length === 1 ? "" : "s"}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="text-[11px] font-medium text-amber-800 underline decoration-amber-300/80 underline-offset-2 hover:text-amber-950"
+                onClick={() => setShowUnlinkedDetails((v) => !v)}
+              >
+                {showUnlinkedDetails ? "Hide" : "Show"} names
+              </button>
+            </div>
             {showUnlinkedDetails ? (
               <div className="mt-1.5 flex flex-wrap gap-1">
                 {visibleUnlinked.map((g) => (

@@ -36,6 +36,14 @@ export interface FeeStructureToAssign {
   isActive?: boolean
   /** Grades already linked to this plan — shown separately in the drawer. */
   linkedGrades?: Array<{ id: string; name: string }>
+  /** Assignment batches already linked to this plan, for unlinking. */
+  linkedAssignments?: Array<{
+    id: string
+    gradeIds: string[]
+    studentCount: number
+    description?: string
+    createdAt?: string
+  }>
 }
 
 // Structure for delete confirmation

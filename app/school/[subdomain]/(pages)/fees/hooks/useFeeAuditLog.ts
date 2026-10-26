@@ -7,6 +7,7 @@ export type FeeAuditAction =
   | "fee_plan_created"
   | "fee_plan_deleted"
   | "plan_assigned"
+  | "plan_unlinked"
   | "invoices_generated"
   | "payment_recorded"
   | "payment_voided"

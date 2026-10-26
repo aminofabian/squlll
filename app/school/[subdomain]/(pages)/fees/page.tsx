@@ -49,8 +49,12 @@ import {
   buildLinkedClassCountByPlanId,
   countStudentsForPlan,
   findPlanForStructureId,
+  getLinkedAssignmentGroupsForPlan,
   getLinkedClassesForPlan,
+  type LinkedAssignmentGroup,
 } from "./lib/feePlanLinkage";
+import type { AcademicYearPlanGroup } from "./lib/feePlanYearLinkage";
+import type { ProcessedFeeStructure } from "./components/FeeStructureManager/types";
 import { Download, FileStack, Upload } from "lucide-react";
 
 // Import modular components and hooks
@@ -84,6 +88,7 @@ import { FeeAssignmentsView } from "./components/FeeAssignmentsView";
 import PaymentReminderDrawer from "./components/PaymentReminderDrawer";
 import { FeeStructuresTab } from "./components/FeeStructureManager/FeeStructuresTab";
 import { AssignFeeStructureModal } from "./components/AssignFeeStructureModal";
+import { LinkMissingGradesDialog } from "./components/LinkMissingGradesDialog";
 import { useFeeAssignments } from "./hooks/useFeeAssignments";
 import { useFeeReminderLog } from "./hooks/useFeeReminderLog";
 import { useFeesAccess } from "./hooks/useFeesAccess";
@@ -238,7 +243,15 @@ export default function FeesPage() {
     isActive?: boolean;
     /** Grades already linked to this plan — shown separately in the drawer. */
     linkedGrades?: Array<{ id: string; name: string }>;
+    /** Assignment batches already linked to this plan, for unlink. */
+    linkedAssignments?: LinkedAssignmentGroup[];
   } | null>(null);
+
+  /** Grades preselected when a year-level “link missing grades” flow opens. */
+  const [pendingLinkGradeIds, setPendingLinkGradeIds] = useState<string[]>([]);
+  const [missingGradesGroup, setMissingGradesGroup] =
+    useState<AcademicYearPlanGroup | null>(null);
+  const [showLinkMissingGrades, setShowLinkMissingGrades] = useState(false);
 
   const {
     selectedStudent,
@@ -1161,7 +1174,10 @@ export default function FeesPage() {
           id: result,
           name,
           isActive: true,
+          linkedGrades: [],
+          linkedAssignments: [],
         });
+        setPendingLinkGradeIds([]);
         setIsAssignModalOpen(true);
       }
 
@@ -1229,7 +1245,10 @@ export default function FeesPage() {
     }
   };
 
-  const handleAssignToGrade = (feeStructureId: string) => {
+  const openLinkGradesDrawer = (
+    feeStructureId: string,
+    initialGradeIds: string[] = [],
+  ) => {
     const structure = processedFeeStructures.find(
       (s) => s.structureId === feeStructureId,
     );
@@ -1245,12 +1264,23 @@ export default function FeesPage() {
     }
 
     if (structure) {
+      const plan = findPlanForStructureId(
+        processedFeeStructures,
+        structure.structureId,
+      );
+      setPendingLinkGradeIds(initialGradeIds);
       setFeeStructureToAssign({
         id: structure.structureId,
         name: structure.structureName,
         academicYear: structure.academicYear,
         isActive: structure.isActive,
         linkedGrades: getLinkedClasses(structure.structureId),
+        linkedAssignments: plan
+          ? getLinkedAssignmentGroupsForPlan(
+              plan,
+              feeAssignmentsData?.feeAssignments,
+            )
+          : [],
       });
       setIsAssignModalOpen(true);
     } else {
@@ -1263,6 +1293,10 @@ export default function FeesPage() {
       });
     }
   };
+
+  /** Standard row/detail action: open the drawer with no preselected grades. */
+  const handleAssignToGrade = (feeStructureId: string) =>
+    openLinkGradesDrawer(feeStructureId);
 
   // Handle assignment success
   const handleAssignmentSuccess = (assignmentResult: any) => {
@@ -1283,6 +1317,90 @@ export default function FeesPage() {
         variant: "destructive",
       });
     });
+  };
+
+  const handleUnlinkAssignment = async (
+    assignmentId: string,
+  ): Promise<boolean> => {
+    if (!feesAccess.canManagePlans) {
+      toast({
+        title: "View only",
+        description: "Your role cannot change grade links.",
+      });
+      return false;
+    }
+
+    try {
+      const response = await fetch("/api/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `
+            mutation UpdateFeeAssignment($id: ID!, $input: UpdateFeeAssignmentInput!) {
+              updateFeeAssignment(id: $id, updateFeeAssignmentInput: $input) {
+                id
+                isActive
+              }
+            }
+          `,
+          variables: {
+            id: assignmentId,
+            input: { isActive: false },
+          },
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`GraphQL request failed with status ${response.status}`);
+      }
+      if (result.errors?.length) {
+        throw new Error(
+          result.errors[0]?.message || "Failed to unlink this fee plan",
+        );
+      }
+      if (!result.data?.updateFeeAssignment) {
+        throw new Error("The fee plan link could not be updated.");
+      }
+
+      await Promise.all([
+        refetchFeeAssignments(),
+        fetchFeeStructures(),
+        fetchGradeData(),
+      ]);
+
+      appendAudit({
+        action: "plan_unlinked",
+        summary: "Fee plan link removed from future billing",
+      });
+
+      toast({
+        title: "Link removed",
+        description:
+          "Future billing stops for these grades. Existing balances and invoices are unchanged.",
+      });
+      return true;
+    } catch (error) {
+      const message = getDisplayErrorMessage(error);
+      toast({
+        title: "Could not unlink",
+        description: message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const handleOpenLinkMissingGrades = (group: AcademicYearPlanGroup) => {
+    setMissingGradesGroup(group);
+    setShowLinkMissingGrades(true);
+  };
+
+  const handleSelectPlanForMissingGrades = (plan: ProcessedFeeStructure) => {
+    const gradeIds =
+      missingGradesGroup?.unlinkedGrades.map((grade) => grade.id) ?? [];
+    setShowLinkMissingGrades(false);
+    setMissingGradesGroup(null);
+    openLinkGradesDrawer(plan.structureId, gradeIds);
   };
 
   const handleSendRemindersFromSelection = () => {
@@ -1676,6 +1794,7 @@ export default function FeesPage() {
                     collectionByPlanId={collectionByPlanId}
                     feeAssignments={feeAssignmentsData?.feeAssignments}
                     schoolGrades={schoolGradesForLinkage}
+                    onLinkMissingGrades={handleOpenLinkMissingGrades}
                     onGuidedSetup={openGuidedSetup}
                     hasFetched={!!lastFetchTime}
                     isDeleting={isDeleting}
@@ -2160,16 +2279,34 @@ export default function FeesPage() {
         submitError={adjustmentError}
       />
 
+      <LinkMissingGradesDialog
+        open={showLinkMissingGrades}
+        onOpenChange={(open) => {
+          setShowLinkMissingGrades(open);
+          if (!open) setMissingGradesGroup(null);
+        }}
+        group={missingGradesGroup}
+        onSelectPlan={handleSelectPlanForMissingGrades}
+        onCreateNew={() => {
+          setShowLinkMissingGrades(false);
+          setMissingGradesGroup(null);
+          handleCreateNew();
+        }}
+      />
+
       {/* Assign Fee Structure to Grades Modal */}
       <AssignFeeStructureModal
         isOpen={isAssignModalOpen}
         onClose={() => {
           setIsAssignModalOpen(false);
           setFeeStructureToAssign(null);
+          setPendingLinkGradeIds([]);
         }}
         feeStructure={feeStructureToAssign}
         availableGrades={grades}
+        initialSelectedGradeIds={pendingLinkGradeIds}
         onSuccess={handleAssignmentSuccess}
+        onUnlinkAssignment={handleUnlinkAssignment}
       />
     </div>
   );

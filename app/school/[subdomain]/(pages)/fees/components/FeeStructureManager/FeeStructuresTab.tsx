@@ -20,7 +20,10 @@ import { buildAcademicYearPlanGroups } from '../../lib/feePlanYearLinkage'
 import type { FeePlanCollectionStats } from '../../lib/feePlanCollection'
 import type { LinkedClassEntry } from '../../lib/feePlanLinkage'
 import type { FeeAssignmentGroup } from '../../types'
-import type { SchoolGradeRef } from '../../lib/feePlanYearLinkage'
+import type {
+  AcademicYearPlanGroup,
+  SchoolGradeRef,
+} from '../../lib/feePlanYearLinkage'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useQuery } from '@tanstack/react-query'
 
@@ -49,6 +52,7 @@ interface FeeStructuresTabProps {
   collectionByPlanId?: Map<string, FeePlanCollectionStats>
   feeAssignments?: FeeAssignmentGroup[]
   schoolGrades?: SchoolGradeRef[]
+  onLinkMissingGrades?: (group: AcademicYearPlanGroup) => void
   canManage?: boolean
   canBill?: boolean
 }
@@ -77,6 +81,7 @@ export const FeeStructuresTab = ({
   collectionByPlanId,
   feeAssignments,
   schoolGrades = [],
+  onLinkMissingGrades,
   canManage = true,
   canBill = true,
 }: FeeStructuresTabProps) => {
@@ -322,6 +327,7 @@ export const FeeStructuresTab = ({
               assignments={feeAssignments}
               schoolGrades={schoolGrades}
               pageLevelConflictAlert={conflictCount > 0}
+              onLinkMissingGrades={onLinkMissingGrades}
               onLinkGrades={(structure) =>
                 onAssignToGrade(
                   structure.structureId,

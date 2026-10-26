@@ -24,6 +24,7 @@ import {
   buildLinkedClassCountByPlanId,
   countStudentsForPlan,
   findPlanForStructureId,
+  getLinkedAssignmentGroupsForPlan,
   getLinkedClassesForPlan,
 } from '../../lib/feePlanLinkage'
 import {
@@ -254,6 +255,7 @@ export const FeeStructureManager = ({
   
   // Handle opening the assign fee structure modal
   const handleAssignToGrade = (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => {
+    const plan = findPlanForStructureId(graphQLStructures, feeStructureId)
     setFeeStructureToAssign({
       id: feeStructureId,
       name,
@@ -262,6 +264,12 @@ export const FeeStructureManager = ({
       termId,
       isActive: true,
       linkedGrades: getLinkedClasses(feeStructureId),
+      linkedAssignments: plan
+        ? getLinkedAssignmentGroupsForPlan(
+            plan,
+            feeAssignmentsData?.feeAssignments,
+          )
+        : [],
     })
     setIsAssignModalOpen(true)
   }

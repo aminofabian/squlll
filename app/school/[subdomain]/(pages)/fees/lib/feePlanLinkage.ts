@@ -128,6 +128,53 @@ export function countStudentsForPlan(
   );
 }
 
+export type LinkedAssignmentGroup = {
+  id: string;
+  gradeIds: string[];
+  studentCount: number;
+  description?: string;
+  createdAt?: string;
+};
+
+/**
+ * Active assignment batches for a plan. A single batch can cover several
+ * grades, so unlink actions must operate on the batch and say which grades
+ * are affected.
+ */
+export function getLinkedAssignmentGroupsForPlan(
+  plan: Pick<ProcessedFeeStructure, "structureId" | "allStructures">,
+  assignments: FeeAssignmentGroup[] | undefined,
+): LinkedAssignmentGroup[] {
+  return matchingAssignmentGroups(plan, assignments)
+    .map((group) => {
+      const gradeIds = new Set<string>();
+
+      for (const gl of group.feeAssignment?.gradeLevels ?? []) {
+        if (gl.tenantGradeLevelId) gradeIds.add(gl.tenantGradeLevelId);
+      }
+      for (const id of group.feeAssignment?.tenantGradeLevelIds ?? []) {
+        if (id) gradeIds.add(id);
+      }
+      for (const sa of group.studentAssignments ?? []) {
+        if (sa.isActive === false) continue;
+        const id = sa.student?.grade?.id || sa.student?.grade?.gradeLevel?.id;
+        if (id) gradeIds.add(id);
+      }
+
+      return {
+        id: group.feeAssignment.id,
+        gradeIds: [...gradeIds],
+        studentCount:
+          group.totalStudents ??
+          group.feeAssignment?.studentsAssignedCount ??
+          0,
+        description: group.feeAssignment?.description,
+        createdAt: group.feeAssignment?.createdAt,
+      };
+    })
+    .filter((group) => !!group.id);
+}
+
 export function buildLinkedClassCountByPlanId(
   structures: ProcessedFeeStructure[],
   assignments: FeeAssignmentGroup[] | undefined,

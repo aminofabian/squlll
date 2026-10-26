@@ -30,6 +30,7 @@ import { feePlanDetailHref, feesOverviewHref } from "../../lib/feesRoutes";
 import {
   buildAcademicYearPlanGroups,
   getPlanLinkedGradeCount,
+  type AcademicYearPlanGroup,
   type SchoolGradeRef,
 } from "../../lib/feePlanYearLinkage";
 import type { FeeAssignmentGroup } from "../../types";
@@ -64,6 +65,8 @@ interface FeePlansTableProps {
   pageLevelConflictAlert?: boolean;
   /** Opens the link-grades drawer for this plan. */
   onLinkGrades?: (structure: ProcessedFeeStructure) => void;
+  /** Opens the year-level “link missing grades” batch flow. */
+  onLinkMissingGrades?: (group: AcademicYearPlanGroup) => void;
   className?: string;
 }
 
@@ -385,6 +388,7 @@ export function FeePlansTable({
   schoolGrades = [],
   pageLevelConflictAlert = false,
   onLinkGrades,
+  onLinkMissingGrades,
   className,
 }: FeePlansTableProps) {
   const router = useRouter();
@@ -443,6 +447,7 @@ export function FeePlansTable({
               isCurrentSchoolYear={isCurrentSchoolYear}
               pageLevelConflictAlert={pageLevelConflictAlert}
               allPlansUnbilled={allPlansUnbilled}
+              onLinkMissingGrades={onLinkMissingGrades}
             >
               <ul className="flex flex-col gap-2 p-3 md:hidden">
                 {group.plans.map((structure) => {
