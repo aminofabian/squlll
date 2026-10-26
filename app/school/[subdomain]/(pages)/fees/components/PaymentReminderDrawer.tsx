@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, type ReactNode } from "react";
+import {
+  Fragment,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import {
   Drawer,
   DrawerContent,
@@ -19,9 +26,11 @@ import type { PaymentReminderForm, StudentSummaryFromAPI } from "../types";
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
   CalendarDays,
+  Check,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   ExternalLink,
   Link2,
@@ -33,6 +42,7 @@ import {
   Tag,
   Users,
   Wallet,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +61,7 @@ interface PaymentReminderDrawerProps {
 
 type ReminderStep = "audience" | "compose" | "review";
 type ReminderChannel = "sms" | "email" | "whatsapp";
+type MobilePane = "edit" | "preview";
 
 type ReminderTemplate = {
   id: string;
@@ -123,7 +134,7 @@ School Administration`,
     id: "next-term",
     label: "Next term",
     hint: "Back-to-school",
-    tone: "sky",
+    tone: "emerald",
     body: `Dear Parent/Guardian,
 
 As we prepare for {{next_term}}, kindly arrange payment of the school fees for {{student_name}} in {{grade}}.
@@ -204,11 +215,22 @@ const REMINDER_TAGS = [
 ];
 
 const TONE_STYLES: Record<ReminderTemplate["tone"], string> = {
-  emerald: "border-emerald-200/80 bg-emerald-50/60",
-  sky: "border-sky-200/80 bg-sky-50/60",
-  amber: "border-amber-200/80 bg-amber-50/60",
-  slate: "border-slate-200/80 bg-slate-50/60",
+  emerald: "border-emerald-200/80 bg-[#eef7f1]",
+  sky: "border-sky-200/80 bg-[#edf5fb]",
+  amber: "border-amber-200/80 bg-[#fff8e8]",
+  slate: "border-slate-200/80 bg-slate-50",
 };
+
+function formatTermDate(value?: string): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 function MessageBody({
   text,
@@ -233,6 +255,89 @@ function MessageBody({
           <span key={index}>{part}</span>
         ),
       )}
+    </div>
+  );
+}
+
+function StepRail({
+  current,
+  onSelect,
+}: {
+  current: ReminderStep;
+  onSelect: (step: ReminderStep) => void;
+}) {
+  const currentIndex = STEPS.findIndex((step) => step.id === current);
+
+  return (
+    <nav aria-label="Reminder steps" className="mt-3 flex items-center">
+      {STEPS.map((step, index) => {
+        const done = index < currentIndex;
+        const active = index === currentIndex;
+        return (
+          <Fragment key={step.id}>
+            <button
+              type="button"
+              disabled={index > currentIndex}
+              onClick={() => onSelect(step.id)}
+              aria-current={active ? "step" : undefined}
+              className={cn(
+                "flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-1 text-[10px] font-semibold transition-colors lg:min-h-8",
+                active
+                  ? "text-[#0a1f1a]"
+                  : done
+                    ? "text-[#246a59]"
+                    : "text-slate-400",
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded-full text-[9px]",
+                  done
+                    ? "bg-[#246a59] text-white"
+                    : active
+                      ? "bg-[#0a1f1a] text-white"
+                      : "border border-slate-300 bg-white text-slate-400",
+                )}
+              >
+                {done ? <Check className="h-3 w-3" /> : index + 1}
+              </span>
+              {step.label}
+            </button>
+            {index < STEPS.length - 1 ? (
+              <span className="mx-2 h-px flex-1 bg-slate-200" />
+            ) : null}
+          </Fragment>
+        );
+      })}
+    </nav>
+  );
+}
+
+function MiniMetric({
+  label,
+  value,
+  tone = "slate",
+}: {
+  label: string;
+  value: string;
+  tone?: "slate" | "emerald" | "rose" | "sky";
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-2.5 py-2">
+      <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-0.5 truncate text-sm font-semibold tabular-nums",
+          tone === "emerald" && "text-emerald-800",
+          tone === "rose" && "text-rose-800",
+          tone === "sky" && "text-sky-800",
+          tone === "slate" && "text-slate-900",
+        )}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -270,88 +375,6 @@ function SectionCard({
       </div>
       <div className="p-3.5">{children}</div>
     </section>
-  );
-}
-
-function MiniMetric({
-  label,
-  value,
-  tone = "slate",
-}: {
-  label: string;
-  value: string;
-  tone?: "slate" | "emerald" | "rose" | "sky";
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-2.5 py-2">
-      <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-slate-400">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5 truncate text-sm font-semibold tabular-nums",
-          tone === "emerald" && "text-emerald-800",
-          tone === "rose" && "text-rose-800",
-          tone === "sky" && "text-sky-800",
-          tone === "slate" && "text-slate-900",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function StepRail({
-  current,
-  onSelect,
-}: {
-  current: ReminderStep;
-  onSelect: (step: ReminderStep) => void;
-}) {
-  const currentIndex = STEPS.findIndex((step) => step.id === current);
-
-  return (
-    <nav
-      aria-label="Reminder steps"
-      className="mt-3 flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1"
-    >
-      {STEPS.map((step, index) => {
-        const done = index < currentIndex;
-        const active = index === currentIndex;
-        return (
-          <button
-            key={step.id}
-            type="button"
-            disabled={index > currentIndex}
-            onClick={() => onSelect(step.id)}
-            aria-current={active ? "step" : undefined}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-all",
-              active
-                ? "bg-white text-[#0a1f1a] shadow-sm"
-                : done
-                  ? "text-[#246a59] hover:bg-white/70"
-                  : "text-slate-400",
-            )}
-          >
-            <span
-              className={cn(
-                "flex h-4 w-4 items-center justify-center rounded-full text-[8px]",
-                done
-                  ? "bg-[#246a59] text-white"
-                  : active
-                    ? "bg-[#0a1f1a] text-white"
-                    : "border border-slate-300 bg-white text-slate-400",
-              )}
-            >
-              {done ? <Check className="h-2.5 w-2.5" /> : index + 1}
-            </span>
-            {step.label}
-          </button>
-        );
-      })}
-    </nav>
   );
 }
 
@@ -408,15 +431,180 @@ function RecipientList({
   );
 }
 
-function formatTermDate(value?: string): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+function SummaryStrip({
+  count,
+  channel,
+  total,
+  nextTermName,
+  nextTermStartDate,
+  onChangeAudience,
+}: {
+  count: number;
+  channel: (typeof CHANNELS)[number];
+  total: number;
+  nextTermName?: string;
+  nextTermStartDate?: string;
+  onChangeAudience: () => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200/80 bg-white text-[10px] sm:grid-cols-3">
+      <div className="col-span-2 flex items-start gap-2 px-3 py-2.5 sm:col-span-1">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ef] text-[#1a4d42]">
+          <channel.icon className="h-3.5 w-3.5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400">
+            Sending to
+          </p>
+          <p className="mt-0.5 text-[11px] font-semibold text-slate-900">
+            {count} famil{count === 1 ? "y" : "ies"} by{" "}
+            {channel.label.toLowerCase()}
+          </p>
+          <button
+            type="button"
+            onClick={onChangeAudience}
+            className="mt-1 inline-flex min-h-11 items-center text-[9px] font-semibold text-[#246a59] underline decoration-[#246a59]/30 underline-offset-2 hover:decoration-[#246a59] lg:min-h-8"
+          >
+            Change audience
+          </button>
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100 px-3 py-2.5 sm:border-l sm:border-t-0">
+        <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400">
+          Outstanding
+        </p>
+        <p className="mt-0.5 text-[11px] font-semibold tabular-nums text-slate-900">
+          KES {total.toLocaleString()}
+        </p>
+        <p className="mt-0.5 text-[9px] text-slate-500">
+          across the selected families
+        </p>
+      </div>
+
+      <div className="border-t border-slate-100 px-3 py-2.5 sm:border-l sm:border-t-0">
+        <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400">
+          Next term
+        </p>
+        <p className="mt-0.5 text-[11px] font-semibold text-[#0a1f1a]">
+          {nextTermName || "Not scheduled"}
+        </p>
+        <p className="mt-0.5 text-[9px] text-slate-500">
+          {nextTermStartDate
+            ? `Starts ${formatTermDate(nextTermStartDate)} · `
+            : ""}
+          <span className="text-[#1a4d42]/45">Taken from school dates</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ParentPreview({
+  message,
+  channel,
+  sampleName,
+  sampleGrade,
+  sampleIndex,
+  sampleCount,
+  onPrev,
+  onNext,
+}: {
+  message: string;
+  channel: (typeof CHANNELS)[number];
+  sampleName?: string;
+  sampleGrade?: string;
+  sampleIndex: number;
+  sampleCount: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+          Parent view
+        </p>
+        <span className="rounded-full border border-[#1a4d42]/12 bg-[#f8fbfa] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#1a4d42]/60">
+          {channel.label}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200/80 bg-white px-1.5 py-1">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={sampleCount < 2}
+          className="flex h-11 w-11 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-30 lg:h-7 lg:w-7"
+          aria-label="Previous sample family"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+        <div className="min-w-0 flex-1 text-center">
+          <p className="truncate text-[9.5px] font-semibold text-slate-900">
+            {sampleName || "Sample parent"}
+          </p>
+          <p className="truncate text-[8.5px] text-slate-500">
+            {sampleGrade || "Preview family"}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={sampleCount < 2}
+          className="flex h-11 w-11 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-30 lg:h-7 lg:w-7"
+          aria-label="Next sample family"
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="rounded-[1.3rem] border border-[#1a4d42]/10 bg-[#eef4f1] p-2 shadow-inner">
+        <div className="overflow-hidden rounded-[1rem] bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a1f1a] text-[8px] font-bold tracking-wide text-white">
+              SC
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[9.5px] font-semibold text-slate-900">
+                School Administration
+              </p>
+              <p className="truncate text-[8.5px] text-slate-500">
+                to Parent/Guardian of {sampleName || "your child"}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-slate-200 px-1.5 py-0.5 text-[7.5px] font-semibold text-slate-500">
+              Reminder
+            </span>
+          </div>
+
+          <div className="px-3 py-3">
+            <p className="mb-1.5 text-[10px] font-semibold text-slate-900">
+              School fees
+            </p>
+            {message.trim() ? (
+              <MessageBody
+                text={message}
+                formatBold={channel.id === "email"}
+                className="text-[10.5px] leading-relaxed text-slate-700"
+              />
+            ) : (
+              <p className="py-7 text-center text-[10px] text-slate-400">
+                Your message preview will appear here.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-[8.5px] text-slate-400">
+        <span>
+          Sample {sampleIndex + 1} of {Math.max(sampleCount, 1)}
+        </span>
+        <span>{channel.id === "email" ? "Email preview" : "Plain-text preview"}</span>
+      </div>
+    </div>
+  );
 }
 
 export default function PaymentReminderDrawer({
@@ -432,8 +620,11 @@ export default function PaymentReminderDrawer({
   nextTermFeesByGrade = {},
 }: PaymentReminderDrawerProps) {
   const [step, setStep] = useState<ReminderStep>("compose");
+  const [mobilePane, setMobilePane] = useState<MobilePane>("edit");
   const [minBalance, setMinBalance] = useState("0");
   const [copiedLink, setCopiedLink] = useState(false);
+  const [sampleIndex, setSampleIndex] = useState(0);
+  const [activeTemplateId, setActiveTemplateId] = useState("balance");
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const prefilledRef = useRef(false);
   const portalLink =
@@ -454,6 +645,12 @@ export default function PaymentReminderDrawer({
           ...prev,
           message: REMINDER_TEMPLATES[0].body,
         }));
+        setActiveTemplateId(REMINDER_TEMPLATES[0].id);
+      } else {
+        const match = REMINDER_TEMPLATES.find(
+          (template) => template.body === form.message,
+        );
+        if (match) setActiveTemplateId(match.id);
       }
     }
   }, [isOpen, form.message, form.studentIds.length, setForm]);
@@ -473,11 +670,20 @@ export default function PaymentReminderDrawer({
     0,
   );
 
-  const paymentLink =
-    form.paymentLink !== undefined ? form.paymentLink : portalLink;
-  const sampleStudent = filteredByBalance[0];
   const channel =
     CHANNELS.find((item) => item.id === form.reminderType) ?? CHANNELS[0];
+  const paymentLink =
+    form.paymentLink !== undefined ? form.paymentLink : portalLink;
+  const activeTemplate =
+    REMINDER_TEMPLATES.find((template) => template.id === activeTemplateId) ??
+    REMINDER_TEMPLATES[0];
+  const isTemplateDirty = form.message !== activeTemplate.body;
+
+  const safeIndex = Math.max(
+    0,
+    Math.min(sampleIndex, Math.max(0, filteredByBalance.length - 1)),
+  );
+  const sampleStudent = filteredByBalance[safeIndex];
 
   const nextTermFeeFor = (gradeLevelName?: string) => {
     if (!gradeLevelName) return undefined;
@@ -507,10 +713,7 @@ export default function PaymentReminderDrawer({
         "{{admission_number}}",
         student?.admissionNumber ?? "on file",
       )
-      .replaceAll(
-        "{{next_term}}",
-        nextTermName?.trim() || "the next term",
-      )
+      .replaceAll("{{next_term}}", nextTermName?.trim() || "the next term")
       .replaceAll(
         "{{next_term_fees}}",
         upcomingFee != null ? upcomingFee.toLocaleString() : "[amount]",
@@ -518,15 +721,20 @@ export default function PaymentReminderDrawer({
       .replaceAll("{{payment_link}}", paymentLink.trim() || "[payment link]");
   };
 
-  const previewMessage = renderMessage(form.message, sampleStudent);
-  const plainPreview = previewMessage.replace(/\*\*/g, "");
+  const sampleMessage = renderMessage(form.message, sampleStudent);
   const previewText =
-    form.reminderType === "email" ? previewMessage : plainPreview;
-  const characterCount = plainPreview.length;
-  const smsSegments = Math.max(1, Math.ceil(characterCount / 160));
+    form.reminderType === "email"
+      ? sampleMessage
+      : sampleMessage.replace(/\*\*/g, "");
+  const characterCount = sampleMessage.replace(/\*\*/g, "").length;
 
-  const applyTemplate = (body: string) => {
-    setForm((prev) => ({ ...prev, message: body }));
+  const applyTemplate = (template: ReminderTemplate) => {
+    setActiveTemplateId(template.id);
+    setForm((prev) => ({ ...prev, message: template.body }));
+  };
+
+  const resetToTemplate = () => {
+    setForm((prev) => ({ ...prev, message: activeTemplate.body }));
   };
 
   const insertTag = (token: string) => {
@@ -557,6 +765,17 @@ export default function PaymentReminderDrawer({
     }
   };
 
+  const changeSample = (direction: -1 | 1) => {
+    if (filteredByBalance.length < 2) return;
+    setSampleIndex((current) => {
+      const index = Math.min(current, filteredByBalance.length - 1);
+      return (
+        (index + direction + filteredByBalance.length) %
+        filteredByBalance.length
+      );
+    });
+  };
+
   const handleClose = () => {
     setStep("compose");
     onClose();
@@ -576,7 +795,21 @@ export default function PaymentReminderDrawer({
   };
 
   const meta = STEPS.find((item) => item.id === step) ?? STEPS[1];
-  const canReview = filteredByBalance.length > 0 && form.message.trim().length > 0;
+  const canReview =
+    filteredByBalance.length > 0 && form.message.trim().length > 0;
+
+  const preview = (
+    <ParentPreview
+      message={previewText}
+      channel={channel}
+      sampleName={sampleStudent?.studentName}
+      sampleGrade={sampleStudent?.gradeLevelName}
+      sampleIndex={safeIndex}
+      sampleCount={filteredByBalance.length}
+      onPrev={() => changeSample(-1)}
+      onNext={() => changeSample(1)}
+    />
+  );
 
   return (
     <Drawer
@@ -584,33 +817,77 @@ export default function PaymentReminderDrawer({
       onOpenChange={(open) => !open && handleClose()}
       direction="right"
     >
-      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-4xl flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 sm:max-w-4xl">
-        <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/10 bg-white px-5 pb-3 pt-5 pr-12 text-left">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#246a59]">
-                <Sparkles className="h-3 w-3" />
-                Fee reminders
-              </p>
-              <DrawerTitle className="mt-1 font-display text-xl tracking-tight text-[#0a1f1a]">
-                {meta.title}
-              </DrawerTitle>
-              <DrawerDescription className="mt-0.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
-                {meta.description}
-              </DrawerDescription>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-1 text-[10px] font-semibold text-[#1a4d42]/70">
-              <Users className="h-3 w-3" />
-              {filteredByBalance.length} famil
-              {filteredByBalance.length === 1 ? "y" : "ies"}
-            </div>
-          </div>
+      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[65rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 sm:max-w-[65rem]">
+        <DrawerHeader className="relative shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-4 pr-14 sm:px-5 sm:pt-5">
+          <DrawerClose asChild>
+            <button
+              type="button"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800 sm:right-4 sm:top-4 lg:h-8 lg:w-8"
+              aria-label="Close reminder studio"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </DrawerClose>
+
+          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#246a59]">
+            <Sparkles className="h-3.5 w-3.5" />
+            Fee reminders
+          </p>
+          <DrawerTitle className="mt-1 font-display text-[1.65rem] font-normal tracking-tight text-[#0a1f1a] sm:text-[1.8rem]">
+            {meta.title}
+          </DrawerTitle>
+          <DrawerDescription className="mt-0.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
+            {meta.description}
+          </DrawerDescription>
+
           <StepRail current={step} onSelect={goTo} />
         </DrawerHeader>
 
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_19rem]">
-            <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-5">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {step === "compose" || step === "review" ? (
+            <div className="shrink-0 px-4 pt-3 sm:px-5">
+              <SummaryStrip
+                count={filteredByBalance.length}
+                channel={channel}
+                total={totalBalance}
+                nextTermName={nextTermName}
+                nextTermStartDate={nextTermStartDate}
+                onChangeAudience={() => setStep("audience")}
+              />
+            </div>
+          ) : null}
+
+          {step === "compose" ? (
+            <div className="mx-4 mt-2 grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-slate-200/80 bg-white p-1 sm:mx-5 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobilePane("edit")}
+                className={cn(
+                  "flex min-h-11 items-center justify-center rounded-lg text-[11px] font-semibold transition-colors",
+                  mobilePane === "edit"
+                    ? "bg-[#0a1f1a] text-white"
+                    : "text-slate-500 hover:bg-slate-50",
+                )}
+              >
+                Edit message
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobilePane("preview")}
+                className={cn(
+                  "flex min-h-11 items-center justify-center rounded-lg text-[11px] font-semibold transition-colors",
+                  mobilePane === "preview"
+                    ? "bg-[#0a1f1a] text-white"
+                    : "text-slate-500 hover:bg-slate-50",
+                )}
+              >
+                Parent view
+              </button>
+            </div>
+          ) : null}
+
+          <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_19rem]">
+            <div className="min-h-0 overflow-y-auto px-4 py-3 sm:px-5">
               {step === "audience" ? (
                 <div className="space-y-3">
                   <SectionCard
@@ -680,7 +957,7 @@ export default function PaymentReminderDrawer({
                         value={minBalance}
                         onChange={(event) => setMinBalance(event.target.value)}
                         placeholder="0 = everyone selected"
-                        className="h-9"
+                        className="h-11 text-sm sm:h-9"
                       />
                       <p className="text-[10px] text-slate-500">
                         {filteredByBalance.length} of {selectedStudents.length} selected
@@ -710,7 +987,7 @@ export default function PaymentReminderDrawer({
                               }))
                             }
                             className={cn(
-                              "flex cursor-pointer flex-col items-start gap-1 rounded-xl border px-2.5 py-2 text-left transition-all active:scale-[0.98]",
+                              "flex min-h-11 cursor-pointer flex-col items-start gap-1 rounded-xl border px-2.5 py-2 text-left transition-all active:scale-[0.98]",
                               active
                                 ? "border-[#246a59] bg-[#e8f2ef] text-[#1a4d42] ring-1 ring-[#246a59]/20"
                                 : "border-slate-200 bg-white text-slate-600 hover:border-[#246a59]/30",
@@ -736,7 +1013,7 @@ export default function PaymentReminderDrawer({
                     }
                   >
                     <RecipientList students={filteredByBalance} max={5} />
-                    <label className="mt-2 flex items-start gap-2 border-t border-slate-100 pt-2.5">
+                    <label className="mt-2 flex min-h-11 items-start gap-2 border-t border-slate-100 pt-2.5">
                       <Checkbox
                         checked={form.includeInvoiceDetails}
                         onCheckedChange={(checked) =>
@@ -756,110 +1033,99 @@ export default function PaymentReminderDrawer({
               ) : null}
 
               {step === "compose" ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 rounded-xl border border-[#1a4d42]/12 bg-white px-3 py-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#e8f2ef] text-[#1a4d42]">
-                      <Users className="h-3.5 w-3.5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold text-slate-900">
-                        {filteredByBalance.length} famil
-                        {filteredByBalance.length === 1 ? "y" : "ies"} ·{" "}
-                        {channel.label}
+                <div
+                  className={cn(
+                    "space-y-3",
+                    mobilePane !== "edit" && "hidden lg:block",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                        Start from a template
                       </p>
-                      <p className="text-[9px] text-slate-500">
-                        KES {totalBalance.toLocaleString()} outstanding
+                      <p className="mt-0.5 text-[9px] text-slate-400">
+                        You can edit every word
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-[10px] text-[#246a59]"
-                      onClick={() => setStep("audience")}
-                    >
-                      Change
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-1.5 text-[9.5px] text-[#1a4d42]/70">
-                    <CalendarDays className="h-3 w-3" />
-                    <span className="font-semibold text-[#0a1f1a]">Next term:</span>
-                    <span>{nextTermName || "Not scheduled"}</span>
-                    {nextTermStartDate ? (
-                      <span>· starts {formatTermDate(nextTermStartDate)}</span>
-                    ) : null}
-                    <span className="ml-auto rounded-full bg-white px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#1a4d42]/45">
-                      From dates
+                    <span className="rounded-full border border-[#1a4d42]/10 bg-[#f8fbfa] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#1a4d42]/45 lg:hidden">
+                      Swipe for more
                     </span>
                   </div>
 
-                  <SectionCard
-                    icon={Sparkles}
-                    title="Templates"
-                    description="Pick a starting point. You can edit every word."
-                  >
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {REMINDER_TEMPLATES.map((template) => {
-                        const selected = form.message === template.body;
-                        return (
-                          <button
-                            key={template.id}
-                            type="button"
-                            onClick={() => applyTemplate(template.body)}
-                            className={cn(
-                              "relative flex cursor-pointer flex-col rounded-xl border p-2.5 text-left transition-all active:scale-[0.99]",
-                              selected
-                                ? "border-[#246a59] bg-[#f3f9f6] ring-1 ring-[#246a59]/20"
-                                : TONE_STYLES[template.tone],
-                            )}
-                          >
-                            {selected ? (
-                              <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#246a59] text-white">
-                                <Check className="h-2.5 w-2.5" />
-                              </span>
-                            ) : null}
-                            <span className="pr-4 text-[11px] font-semibold text-slate-900">
-                              {template.label}
-                            </span>
-                            <span className="mt-0.5 text-[9px] text-slate-500">
-                              {template.hint}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </SectionCard>
-
-                  <SectionCard
-                    icon={Tag}
-                    title="Message"
-                    description="Tags are replaced per family when queued."
-                    action={
-                      <span className="text-[9px] tabular-nums text-slate-400">
-                        {form.reminderType === "sms"
-                          ? `${characterCount} chars · ${smsSegments} SMS`
-                          : `${characterCount} chars`}
-                      </span>
-                    }
-                  >
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      {REMINDER_TAGS.map((tag) => (
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
+                    {REMINDER_TEMPLATES.map((template) => {
+                      const selected = activeTemplateId === template.id;
+                      return (
                         <button
-                          key={tag.token}
+                          key={template.id}
                           type="button"
-                          onClick={() => insertTag(tag.token)}
-                          className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9.5px] font-medium text-slate-600 transition-colors hover:border-[#246a59]/30 hover:bg-[#e8f2ef] hover:text-[#1a4d42] active:scale-[0.97]"
+                          onClick={() => applyTemplate(template)}
+                          className={cn(
+                            "relative flex min-h-[76px] min-w-[9.5rem] cursor-pointer flex-col justify-between rounded-xl border p-2.5 text-left transition-all active:scale-[0.99] sm:min-w-0",
+                            selected
+                              ? "border-[#246a59] bg-[#eef7f1] ring-1 ring-[#246a59]/25"
+                              : TONE_STYLES[template.tone],
+                          )}
                         >
-                          <Tag className="h-2.5 w-2.5" />
-                          {tag.label}
+                          {selected ? (
+                            <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#246a59] text-white">
+                              <Check className="h-2.5 w-2.5" />
+                            </span>
+                          ) : null}
+                          <span className="pr-4 text-[11px] font-semibold leading-snug text-slate-900">
+                            {template.label}
+                          </span>
+                          <span className="mt-1 text-[9px] text-slate-500">
+                            {template.hint}
+                          </span>
                         </button>
-                      ))}
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-1">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-xs font-semibold text-slate-900">
+                        Message
+                      </h3>
+                      <div className="flex items-center gap-2 text-[9px] text-slate-400">
+                        <span>{characterCount} characters</span>
+                        {isTemplateDirty ? (
+                          <button
+                            type="button"
+                            onClick={resetToTemplate}
+                            className="inline-flex min-h-11 items-center font-semibold text-[#246a59] underline decoration-[#246a59]/30 underline-offset-2 lg:min-h-8"
+                          >
+                            Reset to template
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
+
+                    <div className="mb-1.5 flex items-center gap-1.5">
+                      <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                        Insert tag
+                      </span>
+                      <div className="-mr-1 flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+                        {REMINDER_TAGS.map((tag) => (
+                          <button
+                            key={tag.token}
+                            type="button"
+                            onClick={() => insertTag(tag.token)}
+                            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-[9.5px] font-medium text-slate-600 transition-colors hover:border-[#246a59]/30 hover:bg-[#e8f2ef] hover:text-[#1a4d42] active:scale-[0.97] lg:min-h-7 lg:px-1.5 lg:text-[9px]"
+                          >
+                            <Tag className="h-2.5 w-2.5" />
+                            {tag.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <Textarea
                       ref={messageRef}
                       id="reminder-message"
-                      rows={9}
+                      rows={10}
                       value={form.message}
                       onChange={(event) =>
                         setForm((prev) => ({
@@ -868,13 +1134,14 @@ export default function PaymentReminderDrawer({
                         }))
                       }
                       placeholder="Write your reminder or pick a template above."
-                      className="min-h-[13rem] resize-y text-[12px] leading-relaxed"
+                      className="min-h-[15rem] resize-y text-[12px] leading-relaxed"
                     />
                     <p className="mt-1.5 text-[9px] leading-relaxed text-slate-400">
-                      Tip: wrap a phrase in <code>**double asterisks**</code> for
-                      bold in email. SMS and WhatsApp strip the asterisks.
+                      Tags are replaced per family when queued. Wrap words in{" "}
+                      <code>**double asterisks**</code> to make them bold in the
+                      email.
                     </p>
-                  </SectionCard>
+                  </div>
 
                   <SectionCard
                     icon={Link2}
@@ -884,7 +1151,7 @@ export default function PaymentReminderDrawer({
                       <button
                         type="button"
                         onClick={() => void copyPaymentLink()}
-                        className="inline-flex cursor-pointer items-center gap-1 text-[10px] font-semibold text-[#246a59] hover:underline"
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-[10px] font-semibold text-[#246a59] hover:underline lg:min-h-8"
                       >
                         {copiedLink ? (
                           <Check className="h-3 w-3" />
@@ -905,14 +1172,14 @@ export default function PaymentReminderDrawer({
                         }))
                       }
                       placeholder="https://your-school.squl.co.ke/parent?tab=payments"
-                      className="h-9 font-mono text-[11px]"
+                      className="h-11 font-mono text-[11px] sm:h-9"
                     />
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-[9.5px] text-slate-500">
                       <a
                         href={paymentLink || undefined}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-[#246a59] hover:underline"
+                        className="inline-flex min-h-11 items-center gap-1 font-semibold text-[#246a59] hover:underline lg:min-h-8"
                       >
                         <Link2 className="h-3 w-3" />
                         Test link
@@ -924,23 +1191,23 @@ export default function PaymentReminderDrawer({
                     </div>
                   </SectionCard>
 
-                  {previewMessage.includes("[amount]") ? (
+                  {sampleMessage.includes("[amount]") ? (
                     <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-medium text-amber-800">
                       No next-term fee was found for this grade. Replace{" "}
                       <code>[amount]</code> before sending.
                     </p>
                   ) : null}
+                </div>
+              ) : null}
 
-                  <div className="lg:hidden">
-                    <ParentPreview
-                      message={previewText}
-                      channel={channel}
-                      paymentLink={paymentLink}
-                      sampleName={sampleStudent?.studentName}
-                      characterCount={characterCount}
-                      smsSegments={smsSegments}
-                    />
-                  </div>
+              {step === "compose" ? (
+                <div
+                  className={cn(
+                    "lg:hidden",
+                    mobilePane !== "preview" && "hidden",
+                  )}
+                >
+                  {preview}
                 </div>
               ) : null}
 
@@ -992,56 +1259,28 @@ export default function PaymentReminderDrawer({
                     <RecipientList students={filteredByBalance} max={10} />
                   </SectionCard>
 
-                  <div className="lg:hidden">
-                    <ParentPreview
-                      message={previewText}
-                      channel={channel}
-                      paymentLink={paymentLink}
-                      sampleName={sampleStudent?.studentName}
-                      characterCount={characterCount}
-                      smsSegments={smsSegments}
-                    />
-                  </div>
+                  <div className="lg:hidden">{preview}</div>
                 </div>
               ) : null}
             </div>
 
             <aside className="hidden min-h-0 overflow-y-auto border-l border-[#1a4d42]/10 bg-white p-4 lg:block">
-              <div className="sticky top-0 space-y-3">
-                <ParentPreview
-                  message={previewText}
-                  channel={channel}
-                  paymentLink={paymentLink}
-                  sampleName={sampleStudent?.studentName}
-                  characterCount={characterCount}
-                  smsSegments={smsSegments}
-                />
-                <div className="rounded-xl border border-[#1a4d42]/10 bg-[#f8fbfa] p-3">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#1a4d42]/45">
-                    Why this works
-                  </p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-[#1a4d42]/65">
-                    Each parent sees their child’s name and balance. The payment
-                    link opens the parent portal, so the message stays short and
-                    safe.
-                  </p>
-                </div>
-              </div>
+              <div className="sticky top-0 space-y-3">{preview}</div>
             </aside>
           </div>
         </div>
 
-        <DrawerFooter className="shrink-0 flex-row gap-2 border-t border-[#1a4d42]/10 bg-white px-4 py-3">
+        <DrawerFooter className="shrink-0 border-t border-[#1a4d42]/10 bg-white px-4 py-3">
           <div className="flex w-full items-center gap-2">
             {step === "audience" ? (
               <>
                 <DrawerClose asChild>
-                  <Button variant="outline" className="flex-1">
+                  <Button variant="outline" className="h-11 flex-1 text-xs sm:h-9 sm:flex-none sm:px-5">
                     Cancel
                   </Button>
                 </DrawerClose>
                 <Button
-                  className="flex-1 bg-[#0a1f1a] text-white hover:bg-[#143b31]"
+                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] sm:h-9 sm:flex-none sm:px-5"
                   disabled={filteredByBalance.length === 0}
                   onClick={() => setStep("compose")}
                 >
@@ -1055,18 +1294,29 @@ export default function PaymentReminderDrawer({
               <>
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="h-11 w-11 shrink-0 px-0 lg:hidden"
+                  onClick={() => setStep("audience")}
+                  aria-label="Back to audience"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hidden h-9 lg:inline-flex"
                   onClick={() => setStep("audience")}
                 >
                   <ArrowLeft className="mr-1 h-3.5 w-3.5" />
                   Audience
                 </Button>
+                <span className="hidden flex-1 text-center text-[10px] text-slate-400 lg:block">
+                  Next: review {filteredByBalance.length} emails before sending.
+                </span>
                 <Button
-                  className="flex-1 bg-[#0a1f1a] text-white hover:bg-[#143b31]"
+                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] lg:ml-auto lg:h-9 lg:flex-none lg:px-5"
                   disabled={!canReview}
                   onClick={() => setStep("review")}
                 >
-                  Review
+                  Review {filteredByBalance.length} emails
                   <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </>
@@ -1076,14 +1326,26 @@ export default function PaymentReminderDrawer({
               <>
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="h-11 w-11 shrink-0 px-0 lg:hidden"
+                  onClick={() => setStep("compose")}
+                  aria-label="Back to message"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hidden h-9 lg:inline-flex"
                   onClick={() => setStep("compose")}
                 >
                   <ArrowLeft className="mr-1 h-3.5 w-3.5" />
                   Message
                 </Button>
+                <span className="hidden flex-1 text-center text-[10px] text-slate-400 lg:block">
+                  Ready to queue {filteredByBalance.length} reminder
+                  {filteredByBalance.length === 1 ? "" : "s"}.
+                </span>
                 <Button
-                  className="flex-1 bg-[#0a1f1a] text-white hover:bg-[#143b31]"
+                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] lg:ml-auto lg:h-9 lg:flex-none lg:px-5"
                   disabled={filteredByBalance.length === 0}
                   onClick={handleConfirmSend}
                 >
@@ -1096,74 +1358,5 @@ export default function PaymentReminderDrawer({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
-  );
-}
-
-function ParentPreview({
-  message,
-  channel,
-  paymentLink,
-  sampleName,
-  characterCount,
-  smsSegments,
-}: {
-  message: string;
-  channel: { label: string; id: ReminderChannel };
-  paymentLink: string;
-  sampleName?: string;
-  characterCount: number;
-  smsSegments: number;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
-          Parent view
-        </p>
-        <span className="rounded-full border border-[#1a4d42]/12 bg-[#f8fbfa] px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-[#1a4d42]/60">
-          {channel.label}
-        </span>
-      </div>
-      <div className="rounded-[1.4rem] border border-[#1a4d42]/10 bg-[#eef4f1] p-2 shadow-inner">
-        <div className="rounded-[1.1rem] bg-white p-3 shadow-sm">
-          <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-1.5">
-            <span className="text-[9px] font-bold text-[#0a1f1a]">
-              School fees
-            </span>
-            <span className="text-[8px] text-slate-400">Reminder</span>
-          </div>
-          {message.trim() ? (
-            <MessageBody
-              text={message}
-              formatBold={channel.id === "email"}
-              className="text-[10.5px] leading-relaxed text-slate-700"
-            />
-          ) : (
-            <p className="py-6 text-center text-[10px] text-slate-400">
-              Your message preview will appear here.
-            </p>
-          )}
-          {paymentLink.trim() ? (
-            <a
-              href={paymentLink.trim()}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 flex items-center justify-center gap-1 rounded-lg bg-[#0a1f1a] px-2 py-1.5 text-[9.5px] font-semibold text-white transition-colors hover:bg-[#143b31]"
-            >
-              View fees & pay
-              <ExternalLink className="h-2.5 w-2.5" />
-            </a>
-          ) : null}
-        </div>
-      </div>
-      <div className="flex items-center justify-between text-[8.5px] text-slate-400">
-        <span>{sampleName ? `Sample · ${sampleName}` : "Sample parent"}</span>
-        <span>
-          {channel.id === "sms"
-            ? `${characterCount} chars · ${smsSegments} SMS`
-            : "Email preview"}
-        </span>
-      </div>
-    </div>
   );
 }
