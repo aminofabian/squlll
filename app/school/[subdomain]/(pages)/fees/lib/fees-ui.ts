@@ -26,7 +26,7 @@ export const FEES_TH =
 export const FEES_DETAIL = {
   maxWidth: "max-w-3xl",
   /** Single fee structure slug page — room for structure + letter tooling */
-  planPageWidth: "max-w-5xl",
+  planPageWidth: "max-w-7xl",
   pageGap: "space-y-3",
   planPageGap: "space-y-3",
   cardRadius: "rounded-lg",

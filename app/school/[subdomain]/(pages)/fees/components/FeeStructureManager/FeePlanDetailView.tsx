@@ -11,6 +11,7 @@ import { FeePlanDetailHeader } from "./FeePlanDetailHeader";
 import { FeePlanDetailSectionNav } from "./FeePlanDetailSectionNav";
 import { FeePlanLinkedClasses } from "./FeePlanLinkedClasses";
 import { FeePlanNextSteps } from "./FeePlanNextSteps";
+import { FeePlanSummaryStrip } from "./FeePlanSummaryStrip";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { FeePlanDocument, FeePlanSection } from "./FeePlanSection";
 import type { LinkedClassEntry } from "../../lib/feePlanLinkage";
@@ -357,6 +358,12 @@ export function FeePlanDetailView({
         isDeleting={isDeleting}
       />
 
+      <FeePlanSummaryStrip
+        structure={structure}
+        linkedClassCount={linkedClasses.length}
+        collection={collection}
+      />
+
       {!billingReady ? (
         <FeePlanNextSteps
           termsReady={termsReady}
@@ -368,7 +375,7 @@ export function FeePlanDetailView({
       <FeePlanDetailSectionNav className="max-md:mx-0 md:rounded-lg" />
 
       <FeePlanDocument className="min-w-0 max-md:!bg-transparent max-md:!border-0 max-md:!shadow-none">
-        <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:divide-x lg:divide-[#1a4d42]/10">
+        <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:divide-x lg:divide-[#1a4d42]/10">
           <div className="min-w-0 lg:col-span-1">
             <FeeStructureCard
               structure={structure}
@@ -392,7 +399,7 @@ export function FeePlanDetailView({
             />
 
             <FeePlanSection
-              id="linked-classes"
+              id={!isLgViewport ? "linked-classes" : undefined}
               compact
               hideStep
               title="Linked classes"
@@ -415,6 +422,7 @@ export function FeePlanDetailView({
 
           <aside className="hidden min-w-0 flex-col lg:flex">
             <FeePlanSection
+              id={isLgViewport ? "linked-classes" : undefined}
               compact
               hideStep
               title="Linked classes"
