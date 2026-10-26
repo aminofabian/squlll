@@ -126,8 +126,8 @@ export const FeesDataTable = ({
         </div>
       )}
 
-      {/* Mobile — contact-style list */}
-      <div className={cn("md:hidden", !embedded && "px-0")}>
+      {/* Mobile / tablet — contact-style list */}
+      <div className={cn("lg:hidden", !embedded && "px-0")}>
         {students.length > 0 && (
           <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-2.5">
             <Checkbox checked={allSelected} onCheckedChange={onSelectAll} />
@@ -221,11 +221,11 @@ export const FeesDataTable = ({
       </div>
 
       {/* Desktop — table */}
-      <div className={cn(FEES_LAYOUT.tableScroll, "hidden md:block")}>
+      <div className={cn(FEES_LAYOUT.tableScroll, "hidden lg:block")}>
         <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow className="border-slate-200 hover:bg-transparent">
-              <TableHead className="w-12">
+              <TableHead className="w-10">
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={onSelectAll}
@@ -234,11 +234,11 @@ export const FeesDataTable = ({
               <TableHead className="text-xs font-medium text-slate-500">
                 Student
               </TableHead>
-              <TableHead className="text-xs font-medium text-slate-500">
+              <TableHead className="hidden text-xs font-medium text-slate-500 xl:table-cell">
                 Class
               </TableHead>
               {streamlined ? (
-                <TableHead className="text-right text-xs font-medium text-slate-500">
+                <TableHead className="w-36 text-right text-xs font-medium text-slate-500">
                   Balance
                 </TableHead>
               ) : (
@@ -260,7 +260,7 @@ export const FeesDataTable = ({
                   </TableHead>
                 </>
               )}
-              <TableHead className="w-16" />
+              <TableHead className="w-10 xl:w-16" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -286,17 +286,25 @@ export const FeesDataTable = ({
                       onCheckedChange={() => onSelectStudent(student.id)}
                     />
                   </TableCell>
-                  <TableCell className={FEES_LAYOUT.textWrap}>
+                  <TableCell
+                    className={cn(FEES_LAYOUT.textWrap, "whitespace-normal")}
+                  >
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-slate-900">
                         {student.studentName}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-400 xl:hidden">
+                        {student.gradeLevelName}
+                        {student.streamName ? ` · ${student.streamName}` : ""}
+                        {" · "}
+                        {student.admissionNumber}
+                      </p>
+                      <p className="hidden text-xs text-slate-400 xl:block">
                         {student.admissionNumber}
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">
+                  <TableCell className="hidden whitespace-nowrap text-sm text-slate-600 xl:table-cell">
                     {student.gradeLevelName}
                     {student.streamName ? (
                       <span className="text-slate-400">
@@ -306,7 +314,7 @@ export const FeesDataTable = ({
                     ) : null}
                   </TableCell>
                   {streamlined ? (
-                    <TableCell className="text-right">
+                    <TableCell className="whitespace-normal text-right">
                       <p
                         className={cn(
                           "text-sm font-bold tabular-nums",
@@ -319,7 +327,7 @@ export const FeesDataTable = ({
                       >
                         {formatCurrency(student.feeSummary.balance)}
                       </p>
-                      <p className="mt-0.5 text-[10px] text-slate-500">
+                      <p className="mt-0.5 hidden text-[10px] text-slate-500 xl:block">
                         <span className="text-emerald-700">
                           {formatCurrency(student.feeSummary.totalPaid)}
                         </span>
@@ -380,15 +388,16 @@ export const FeesDataTable = ({
                       </TableCell>
                     </>
                   )}
-                  <TableCell>
+                  <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onViewStudent(student)}
-                      className="h-8 text-xs font-medium text-slate-500 hover:text-slate-700"
+                      className="h-8 w-8 p-0 text-xs font-medium text-slate-500 hover:text-slate-700 xl:w-auto xl:px-2"
+                      aria-label={`View ${student.studentName}`}
                     >
-                      <Eye className="mr-1 h-3 w-3" />
-                      View
+                      <Eye className="h-3.5 w-3.5" />
+                      <span className="ml-1 hidden xl:inline">View</span>
                     </Button>
                   </TableCell>
                 </TableRow>
