@@ -54,6 +54,8 @@ export interface FeeStructureToAssign {
   }>
   /** Term labels for the current plan, shown in the drawer summary. */
   planTermNames?: string[]
+  /** Grade levels configured on the plan — used to scope the drawer list. */
+  gradeLevelIds?: string[]
 }
 
 // Structure for delete confirmation

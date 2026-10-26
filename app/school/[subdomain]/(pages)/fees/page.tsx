@@ -255,6 +255,8 @@ export default function FeesPage() {
     }>;
     /** Term labels for the current plan, shown in the drawer summary. */
     planTermNames?: string[];
+    /** Grade levels configured on the plan — used to scope the drawer list. */
+    gradeLevelIds?: string[];
   } | null>(null);
 
   /** Grades preselected when a year-level “link missing grades” flow opens. */
@@ -1187,6 +1189,7 @@ export default function FeesPage() {
           isActive: true,
           linkedGrades: [],
           linkedAssignments: [],
+          gradeLevelIds: [],
         });
         setPendingLinkGradeIds([]);
         setIsAssignModalOpen(true);
@@ -1363,6 +1366,9 @@ export default function FeesPage() {
           termNames: [...conflict.termNames],
         })),
         planTermNames: structure.terms.map((term) => term.name),
+        gradeLevelIds: structure.gradeLevels
+          .map((gradeLevel) => gradeLevel.id)
+          .filter(Boolean),
       });
       setIsAssignModalOpen(true);
     } else {

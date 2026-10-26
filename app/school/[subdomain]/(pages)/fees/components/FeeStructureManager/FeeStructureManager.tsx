@@ -324,6 +324,10 @@ export const FeeStructureManager = ({
         termNames: [...conflict.termNames],
       })),
       planTermNames: plan?.terms.map((term) => term.name) ?? [],
+      gradeLevelIds:
+        plan?.gradeLevels
+          .map((gradeLevel) => gradeLevel.id)
+          .filter(Boolean) ?? [],
     })
     setIsAssignModalOpen(true)
   }

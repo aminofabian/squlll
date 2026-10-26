@@ -60,6 +60,8 @@ interface FeeStructure {
   }>
   /** Term labels for the current plan, shown in the drawer summary. */
   planTermNames?: string[]
+  /** Grade levels configured on the plan — used to scope the drawer list. */
+  gradeLevelIds?: string[]
 }
 
 interface AssignFeeStructureModalProps {
@@ -267,6 +269,47 @@ function GradeSelectRow({
   )
 }
 
+function gradeScopeTokens(name: string): string[] {
+  const normalized = name.toLowerCase();
+  const tokens = new Set<string>();
+
+  for (const match of normalized.matchAll(/grade\s*(\d+)/g)) {
+    tokens.add(`grade ${match[1]}`);
+  }
+  for (const match of normalized.matchAll(/form\s*(\d+)/g)) {
+    tokens.add(`form ${match[1]}`);
+  }
+  if (/\bpp1\b|pre-?primary\s*1/.test(normalized)) tokens.add('pp1');
+  if (/\bpp2\b|pre-?primary\s*2/.test(normalized)) tokens.add('pp2');
+  if (/playgroup/.test(normalized)) tokens.add('playgroup');
+
+  return [...tokens];
+}
+
+function gradeNameMatchesToken(name: string, token: string): boolean {
+  const normalized = name.toLowerCase();
+
+  if (token.startsWith('grade ')) {
+    const number = token.slice('grade '.length);
+    return (
+      new RegExp(`grade\\s*${number}(?!\\d)`).test(normalized) ||
+      new RegExp(`g${number}(?!\\d)`).test(normalized)
+    );
+  }
+  if (token.startsWith('form ')) {
+    const number = token.slice('form '.length);
+    return new RegExp(`form\\s*${number}(?!\\d)`).test(normalized);
+  }
+  if (token === 'pp1') {
+    return /\bpp1\b|pre-?primary\s*1/.test(normalized);
+  }
+  if (token === 'pp2') {
+    return /\bpp2\b|pre-?primary\s*2/.test(normalized);
+  }
+  if (token === 'playgroup') return /playgroup/.test(normalized);
+  return false;
+}
+
 function abbreviateGradeName(name: string): string {
   const normalized = name.toLowerCase().trim()
 
@@ -349,14 +392,47 @@ export const AssignFeeStructureModal = ({
 
   const allAvailableGrades =
     gradeLevelsAsGrades.length > 0 ? gradeLevelsAsGrades : availableGrades
+
+  const planGradeIdSet = useMemo(
+    () => new Set(feeStructure?.gradeLevelIds ?? []),
+    [feeStructure],
+  );
+  const planNameTokens = useMemo(
+    () => gradeScopeTokens(feeStructure?.name ?? ''),
+    [feeStructure?.name],
+  );
+
+  // A plan named “Grade 3” (or configured for specific grade levels) should
+  // only offer Grade 3 streams. This is what stops unrelated grades — already
+  // on their own plans — from appearing as “conflicts”.
+  const scopedGrades = useMemo(() => {
+    if (planGradeIdSet.size > 0) {
+      const byId = allAvailableGrades.filter(
+        (grade) =>
+          planGradeIdSet.has(grade.tenantGradeLevelId) ||
+          planGradeIdSet.has(grade.id),
+      );
+      if (byId.length > 0) return byId;
+    }
+    if (planNameTokens.length > 0) {
+      const byName = allAvailableGrades.filter((grade) =>
+        planNameTokens.some((token) =>
+          gradeNameMatchesToken(grade.name, token),
+        ),
+      );
+      if (byName.length > 0) return byName;
+    }
+    return allAvailableGrades;
+  }, [allAvailableGrades, planGradeIdSet, planNameTokens]);
+
   const filteredGrades =
     filteredGradeLevels.length > 0
-      ? allAvailableGrades.filter(
+      ? scopedGrades.filter(
           (grade) =>
             filteredGradeLevels.includes(grade.tenantGradeLevelId) ||
             filteredGradeLevels.includes(grade.id),
         )
-      : allAvailableGrades
+      : scopedGrades
 
   const displayItems = useMemo(
     () =>
@@ -478,10 +554,17 @@ export const AssignFeeStructureModal = ({
   // not a reason to paint the "Already linked" section red.
   const selectableConflicts = useMemo(() => {
     const linkedKeys = new Set(linkedItems.map((grade) => grade.key))
+    const scopedKeys = new Set<string>()
+    for (const grade of displayItems) {
+      scopedKeys.add(grade.id)
+      scopedKeys.add(grade.tenantGradeLevelId)
+    }
     return (feeStructure?.conflictingGrades ?? []).filter(
-      (conflict) => !linkedKeys.has(conflict.gradeId),
+      (conflict) =>
+        !linkedKeys.has(conflict.gradeId) &&
+        scopedKeys.has(conflict.gradeId),
     )
-  }, [feeStructure, linkedItems])
+  }, [feeStructure, linkedItems, displayItems])
 
   const hasNote = description.trim().length > 0
   const hasGrades = selectedGradeIds.length > 0
