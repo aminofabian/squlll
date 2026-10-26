@@ -87,12 +87,12 @@ export function BalancesGradeSidebar({
       <aside
         aria-label="Grade filter"
         className={cn(
-          "hidden w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-[#1a4d42]/12 bg-[#f8fbfa] lg:sticky lg:top-[7rem] lg:flex lg:self-start",
+          "hidden w-56 shrink-0 flex-col border-r border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-900 lg:flex",
           className,
         )}
       >
-        <div className="flex max-h-[calc(100vh-9rem)] flex-col overflow-hidden p-2">
-          <p className="px-1 pb-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/45">
+        <div className="sticky top-[7rem] flex max-h-[calc(100vh-9rem)] flex-col overflow-hidden px-2 py-2">
+          <p className="px-1 pb-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/45 dark:text-white/40">
             Grades
           </p>
           {filter}

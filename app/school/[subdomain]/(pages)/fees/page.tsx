@@ -73,7 +73,6 @@ import { OverviewStatsCards } from "./components/OverviewStatsCards";
 import { FiltersSection } from "./components/FiltersSection";
 import { FeesDataTable } from "./components/FeesDataTable";
 import { BalancesGradeSidebar } from "./components/BalancesGradeSidebar";
-import { OverviewGradeFilter } from "./components/OverviewGradeFilter";
 import { ArrearsSummaryPanel } from "./components/ArrearsSummaryPanel";
 import { StudentInvoicesTable } from "./components/StudentInvoicesTable";
 import { FeeStructureDrawer } from "./components/FeeStructureDrawer";
@@ -1934,20 +1933,21 @@ export default function FeesPage() {
                 }}
               />
 
-              <div
-                className={cn(
-                  "flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden",
-                  FEES_MOBILE.stack,
-                )}
-              >
-              {feesSection === "overview" && (
-                <div className="space-y-2">
-                  <OverviewGradeFilter
-                    className={FEES_LAYOUT.page}
-                    grades={balanceClassOptions}
-                    value={selectedClass || "all"}
-                    onChange={setSelectedClass}
+              <div className="flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden lg:flex-row">
+                {(feesSection === "overview" || feesSection === "balances") && (
+                  <BalancesGradeSidebar
+                    selectedGradeName={selectedClass || "all"}
+                    onGradeNameChange={setSelectedClass}
                   />
+                )}
+
+                <div
+                  className={cn(
+                    "flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden",
+                    FEES_MOBILE.stack,
+                  )}
+                >
+              {feesSection === "overview" && (
                 <FeesOverviewBoard
                   metrics={bursarMetrics}
                   completedSteps={feeWorkflowCompleted}
@@ -1977,7 +1977,6 @@ export default function FeesPage() {
                       : undefined
                   }
                 />
-                </div>
               )}
 
               {feesSection === "reports" && feesAccess.canViewReports && (
@@ -2063,11 +2062,6 @@ export default function FeesPage() {
               )}
 
               {feesSection === "balances" && (
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 lg:flex-row">
-                  <BalancesGradeSidebar
-                    selectedGradeName={selectedClass || "all"}
-                    onGradeNameChange={setSelectedClass}
-                  />
                 <FeesPanel
                   dense
                   noPadding
@@ -2176,7 +2170,6 @@ export default function FeesPage() {
                   />
                   </div>
                 </FeesPanel>
-                </div>
               )}
 
               {feesSection === "assignments" && (
@@ -2188,6 +2181,7 @@ export default function FeesPage() {
                   <FeeAssignmentsView />
                 </FeesPanel>
               )}
+                </div>
               </div>
             </div>
           </FeesPageShell>
