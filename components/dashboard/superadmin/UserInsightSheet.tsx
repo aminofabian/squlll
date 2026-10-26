@@ -22,9 +22,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AdminUserListItem } from "@/lib/superadmin/types";
+import {
+  primaryMembership,
+  resolveUserRole,
+  roleLabel,
+} from "@/lib/superadmin/userRoles";
+import {
+  RoleGlyph,
+  roleVisual,
+  statusVisual,
+} from "@/components/dashboard/superadmin/userRoleVisuals";
 import {
   LOGIN_FRESHNESS_STYLES,
   accountAgeLabel,
@@ -51,8 +60,9 @@ export function UserInsightSheet({
 }: UserInsightSheetProps) {
   if (!user) return null;
 
-  const membership = user.memberships[0];
-  const role = user.isGlobalAdmin ? "SUPER_ADMIN" : membership?.role ?? "—";
+  const membership = primaryMembership(user);
+  const role = resolveUserRole(user);
+  const roleStyle = roleVisual(role);
   const freshness = loginFreshness(user.lastLoginAt);
   const tone = LOGIN_FRESHNESS_STYLES[freshness];
   const telHref = phoneToTelHref(user.phoneNumber);
@@ -76,9 +86,15 @@ export function UserInsightSheet({
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wide">
-              {role}
-            </Badge>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                roleStyle.chip,
+              )}
+            >
+              <RoleGlyph role={role} className="h-3 w-3" />
+              {roleLabel(role)}
+            </span>
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium dark:bg-slate-800/70",
@@ -250,15 +266,34 @@ export function UserInsightSheet({
                       </div>
                     </div>
                     <div className="flex flex-shrink-0 items-center gap-1.5">
-                      <Badge variant="outline" className="text-[9px] uppercase">
-                        {item.role}
-                      </Badge>
-                      <Badge
-                        variant={item.status === "ACTIVE" ? "default" : "secondary"}
-                        className="text-[9px] uppercase"
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-medium",
+                          roleVisual(item.role).chip,
+                        )}
+                        title={roleLabel(item.role)}
                       >
-                        {item.status}
-                      </Badge>
+                        {roleLabel(item.role)}
+                        {item.id === membership?.id ? (
+                          <span className="text-[8px] font-semibold uppercase tracking-wide opacity-70">
+                            primary
+                          </span>
+                        ) : null}
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-medium",
+                          statusVisual(item.status).chip,
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "h-1 w-1 rounded-full",
+                            statusVisual(item.status).dot,
+                          )}
+                        />
+                        {statusVisual(item.status).label}
+                      </span>
                     </div>
                   </div>
                 ))}

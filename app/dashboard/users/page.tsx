@@ -1,22 +1,21 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CreateUserDialog } from "@/components/dashboard/superadmin/CreateUserDialog";
-import { UserRowActions } from "@/components/dashboard/superadmin/UserRowActions";
 import { UserInsightSheet } from "@/components/dashboard/superadmin/UserInsightSheet";
 import { DashboardErrorBanner } from "@/components/dashboard/superadmin/DashboardStatCards";
 import {
   AdminPageHeader,
   AdminPagination,
-  AdminSearchBar,
   AdminStatGrid,
   AdminTableSkeleton,
 } from "@/components/dashboard/superadmin/AdminPageChrome";
+import { UserDirectoryToolbar } from "@/components/dashboard/superadmin/UserDirectoryToolbar";
+import { UserDirectoryTable } from "@/components/dashboard/superadmin/UserDirectoryTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -27,61 +26,31 @@ import {
 } from "@/components/ui/dialog";
 import { useUsers } from "@/lib/superadmin/useUsers";
 import type { AdminUserListItem } from "@/lib/superadmin/types";
+import { countLoginActivity } from "@/lib/superadmin/userActivity";
 import {
-  LOGIN_FRESHNESS_STYLES,
-  countLoginActivity,
-  formatExactLogin,
-  formatPhoneDisplay,
-  formatRelativeLogin,
-  loginCountLabel,
-  loginFreshness,
-  phoneToTelHref,
-  phoneToWhatsAppHref,
-} from "@/lib/superadmin/userActivity";
+  ALL_ROLES,
+  ALL_STATUSES,
+  countUsersByRole,
+  filterUsers,
+  resolveUserRole,
+  resolveUserStatus,
+  roleLabel,
+  rolePlural,
+  sortUsers,
+  type UserSortKey,
+} from "@/lib/superadmin/userRoles";
+import type { RoleFacet } from "@/lib/superadmin/userRoles";
 import {
   Users,
   Plus,
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Shield,
-  Phone,
-  MessageCircle,
-  Copy,
-  Check,
   Radio,
+  GraduationCap,
+  SearchX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-function roleBadgeVariant(
-  role: string,
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (role) {
-    case "SUPER_ADMIN":
-      return "destructive";
-    case "SCHOOL_ADMIN":
-      return "default";
-    case "TEACHER":
-      return "secondary";
-    default:
-      return "outline";
-  }
-}
-
-function statusBadgeVariant(
-  status: string,
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "ACTIVE":
-      return "default";
-    case "PENDING":
-      return "secondary";
-    case "SUSPENDED":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
 
 export default function UsersPage() {
   return (
@@ -111,7 +80,12 @@ function UsersPageContent() {
     removeUser,
     createUser,
   } = useUsers();
+
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>(ALL_ROLES);
+  const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES);
+  const [sortKey, setSortKey] = useState<UserSortKey>("role");
+  const [grouped, setGrouped] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [createOpen, setCreateOpen] = useState(
@@ -145,37 +119,139 @@ function UsersPageContent() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteError, setDeleteError] = useState("");
 
-  const filtered = useMemo(() => {
-    if (!searchTerm) return users;
-    const term = searchTerm.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.name.toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term) ||
-        (u.phoneNumber ?? "").toLowerCase().includes(term) ||
-        u.memberships.some((m) => m.tenantName.toLowerCase().includes(term)),
-    );
-  }, [users, searchTerm]);
+  // Filter updates reset pagination so the user always lands on page 1 of the
+  // new result set (no effect needed, so no cascading renders).
+  const updateSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  }, []);
 
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-  const activeCount = users.filter((u) =>
-    u.memberships.some((m) => m.status === "ACTIVE"),
+  const updateRole = useCallback((role: string) => {
+    setRoleFilter(role);
+    setPage(1);
+  }, []);
+
+  const updateStatus = useCallback((status: string) => {
+    setStatusFilter(status);
+    setPage(1);
+  }, []);
+
+  const updateSort = useCallback((sort: UserSortKey) => {
+    setSortKey(sort);
+    setPage(1);
+  }, []);
+
+  const updateGrouped = useCallback((next: boolean) => {
+    setGrouped(next);
+    setPage(1);
+  }, []);
+
+  const filtersActive =
+    searchTerm.trim().length > 0 ||
+    roleFilter !== ALL_ROLES ||
+    statusFilter !== ALL_STATUSES;
+
+  // Role chips keep a stable order (all roles in the data) but their counts
+  // follow the search/status filters, so the chips preview what's clickable.
+  const roleFacets = useMemo(() => countUsersByRole(users), [users]);
+  const searchAndStatusFiltered = useMemo(
+    () => filterUsers(users, { status: statusFilter, query: searchTerm }),
+    [users, statusFilter, searchTerm],
+  );
+  const roleFacetCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const user of searchAndStatusFiltered) {
+      const role = resolveUserRole(user);
+      counts.set(role, (counts.get(role) ?? 0) + 1);
+    }
+    return counts;
+  }, [searchAndStatusFiltered]);
+
+  const facetsWithCounts = useMemo<RoleFacet[]>(
+    () =>
+      roleFacets.map((facet) => ({
+        ...facet,
+        count: roleFacetCounts.get(facet.key) ?? 0,
+      })),
+    [roleFacets, roleFacetCounts],
+  );
+
+  const filtered = useMemo(
+    () =>
+      sortUsers(
+        filterUsers(users, {
+          role: roleFilter,
+          status: statusFilter,
+          query: searchTerm,
+        }),
+        sortKey,
+      ),
+    [users, roleFilter, statusFilter, searchTerm, sortKey],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage,
+  );
+
+  const roleTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const facet of facetsWithCounts) totals[facet.key] = facet.count;
+    return totals;
+  }, [facetsWithCounts]);
+
+  const activeCount = users.filter(
+    (user) => resolveUserStatus(user) === "ACTIVE",
   ).length;
-  const superAdminCount = users.filter((u) => u.isGlobalAdmin).length;
+  const suspendedCount = users.filter(
+    (user) => resolveUserStatus(user) === "SUSPENDED",
+  ).length;
+  const teacherCount = useMemo(() => {
+    const facet = roleFacets.find((item) => item.key === "TEACHER");
+    return facet?.count ?? 0;
+  }, [roleFacets]);
   const loginPulse = useMemo(
     () => countLoginActivity(users, now),
     [users, now],
   );
+
+  // ── Filter shortcuts ─────────────────────────────────────────
+
+  const clearFilters = useCallback(() => {
+    setSearchTerm("");
+    setRoleFilter(ALL_ROLES);
+    setStatusFilter(ALL_STATUSES);
+    setPage(1);
+  }, []);
+
+  const showRoleSlice = useCallback((role: string) => {
+    setSearchTerm("");
+    setStatusFilter(ALL_STATUSES);
+    setRoleFilter(role);
+    setPage(1);
+  }, []);
+
+  const showStatusSlice = useCallback((status: string) => {
+    setSearchTerm("");
+    setRoleFilter(ALL_ROLES);
+    setStatusFilter(status);
+    setPage(1);
+  }, []);
 
   const stats = useMemo(
     () => [
       {
         label: "Total users",
         value: hasMore ? `${users.length}+` : String(users.length),
-        helper: hasMore ? "More users available" : "Across all schools",
+        helper: hasMore ? "Showing first 1,000" : "Across all schools",
         icon: Users,
         color: "text-blue-600",
         gradient: "from-blue-500/10 to-blue-500/5",
+        onClick: clearFilters,
+        active: !filtersActive,
+        title: "Show every user",
       },
       {
         label: "Active",
@@ -185,32 +261,52 @@ function UsersPageContent() {
             ? `${Math.round((activeCount / users.length) * 100)}% of all`
             : "—",
         icon: CheckCircle,
-        color: "text-green-600",
-        gradient: "from-green-500/10 to-green-500/5",
+        color: "text-emerald-600",
+        gradient: "from-emerald-500/10 to-emerald-500/5",
+        onClick: () => showStatusSlice("ACTIVE"),
+        active: statusFilter === "ACTIVE",
+        title: "Show active users",
       },
       {
-        label: "Super admins",
-        value: String(superAdminCount),
-        helper: "Platform administrators",
-        icon: Shield,
+        label: "Teachers",
+        value: String(teacherCount),
+        helper: "Teaching staff",
+        icon: GraduationCap,
         color: "text-violet-600",
         gradient: "from-violet-500/10 to-violet-500/5",
+        onClick: () => showRoleSlice("TEACHER"),
+        active: roleFilter === "TEACHER",
+        title: "Show teachers",
       },
       {
         label: "Suspended",
-        value: String(
-          users.filter((user) =>
-            user.memberships.some((membership) => membership.status === "SUSPENDED"),
-          ).length,
-        ),
+        value: String(suspendedCount),
         helper: "Requires attention",
         icon: XCircle,
         color: "text-red-600",
         gradient: "from-red-500/10 to-red-500/5",
+        onClick: () => showStatusSlice("SUSPENDED"),
+        active: statusFilter === "SUSPENDED",
+        title: "Show suspended users",
       },
     ],
-    [users, hasMore, activeCount, superAdminCount],
+    [
+      users.length,
+      hasMore,
+      activeCount,
+      teacherCount,
+      suspendedCount,
+      filtersActive,
+      roleFilter,
+      statusFilter,
+      clearFilters,
+      showRoleSlice,
+      showStatusSlice,
+    ],
   );
+
+  const firstLoad = loading && users.length === 0;
+  const showDirectory = !firstLoad && !(error && users.length === 0);
 
   // ── Handlers ─────────────────────────────────────────────────
 
@@ -240,13 +336,23 @@ function UsersPageContent() {
     }
   };
 
+  const filterSummary = [
+    roleFilter !== ALL_ROLES ? rolePlural(roleFilter).toLowerCase() : null,
+    statusFilter !== ALL_STATUSES
+      ? `${statusFilter.toLowerCase()} accounts`
+      : null,
+    searchTerm.trim() ? `matching “${searchTerm.trim()}”` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <AdminPageHeader
           icon={Users}
           title="Users"
-          description={`Manage users across all schools${hasMore ? " (showing first 1,000 users)" : ""}`}
+          description={`Every account across all schools — filter by role and status, or search a school${hasMore ? " (showing first 1,000 users)" : ""}`}
           count={users.length}
           loading={loading}
           onRefresh={refresh}
@@ -270,9 +376,22 @@ function UsersPageContent() {
               <Radio className="h-3.5 w-3.5" />
               Login pulse
             </span>
-            <PulseStat dot="bg-emerald-500" label="last 15m" value={loginPulse.live} pulse />
-            <PulseStat dot="bg-emerald-400" label="today" value={loginPulse.today} />
-            <PulseStat dot="bg-amber-500" label="this week" value={loginPulse.thisWeek} />
+            <PulseStat
+              dot="bg-emerald-500"
+              label="last 15m"
+              value={loginPulse.live}
+              pulse
+            />
+            <PulseStat
+              dot="bg-emerald-400"
+              label="today"
+              value={loginPulse.today}
+            />
+            <PulseStat
+              dot="bg-amber-500"
+              label="this week"
+              value={loginPulse.thisWeek}
+            />
             <PulseStat
               dot="bg-rose-500"
               label="never signed in"
@@ -280,166 +399,115 @@ function UsersPageContent() {
               title="No sign-in recorded since activity tracking was enabled"
             />
           </div>
-          <p className="text-[11px] text-slate-400">Live · refreshes every minute</p>
+          <p className="text-[11px] text-slate-400">
+            Live · refreshes every minute
+          </p>
         </div>
-
-        <AdminSearchBar
-          value={searchTerm}
-          onChange={(value) => {
-            setSearchTerm(value);
-            setPage(1);
-          }}
-          placeholder="Search by name, email, phone, or school..."
-          resultCount={filtered.length}
-          loading={loading}
-        />
 
         {error ? (
           <DashboardErrorBanner message={error} onRetry={refresh} />
         ) : null}
 
-        {/* Loading */}
-        {loading && !error ? <AdminTableSkeleton /> : null}
+        {firstLoad ? <AdminTableSkeleton /> : null}
 
-        {/* Table */}
-        {!loading && !error && (
-          <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800">
-                    {[
-                      "Name",
-                      "Contact",
-                      "Role",
-                      "Tenant",
-                      "Status",
-                      "Last sign-in",
-                      "Actions",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {paginated.map((user) => {
-                    const membership = user.memberships[0];
-                    const role = user.isGlobalAdmin
-                      ? "SUPER_ADMIN"
-                      : membership?.role || "—";
-                    const status = membership?.status || "—";
-                    const tenantName = membership?.tenantName || "—";
+        {showDirectory ? (
+          <>
+            <UserDirectoryToolbar
+              search={searchTerm}
+              onSearchChange={updateSearch}
+              role={roleFilter}
+              onRoleChange={updateRole}
+              roleFacets={facetsWithCounts}
+              totalUsers={users.length}
+              resultCount={filtered.length}
+              status={statusFilter}
+              onStatusChange={updateStatus}
+              sort={sortKey}
+              onSortChange={updateSort}
+              grouped={grouped}
+              onGroupedChange={updateGrouped}
+              filtersActive={filtersActive}
+              onClearFilters={clearFilters}
+            />
 
-                    return (
-                      <tr
-                        key={user.id}
-                        tabIndex={0}
-                        aria-label={`Open profile for ${user.name}`}
-                        onClick={() => openInsight(user)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            openInsight(user);
-                          }
-                        }}
-                        title="Open user profile"
-                        className="cursor-pointer transition-colors hover:bg-slate-50/70 focus:bg-slate-50/70 focus:outline-none dark:hover:bg-slate-800/30 dark:focus:bg-slate-800/30"
+            <div
+              className={cn(
+                "transition-opacity",
+                loading && "pointer-events-none opacity-60",
+              )}
+              aria-busy={loading}
+            >
+              <UserDirectoryTable
+                users={paginated}
+                grouped={grouped}
+                roleTotals={roleTotals}
+                now={now}
+                actionLoadingId={actionLoading}
+                sort={sortKey}
+                onSortChange={updateSort}
+                onOpenUser={openInsight}
+                onToggleStatus={handleToggleStatus}
+                onDeleteUser={(user) => {
+                  setDeleteTarget(user);
+                  setDeleteConfirm("");
+                  setDeleteError("");
+                }}
+                onFilterRole={updateRole}
+                emptyState={
+                  <div className="flex flex-col items-center px-5 py-16 text-center">
+                    <div
+                      className={cn(
+                        "mb-4 flex h-14 w-14 items-center justify-center rounded-2xl",
+                        filtersActive
+                          ? "bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-400"
+                          : "bg-slate-100 text-slate-400 dark:bg-slate-800",
+                      )}
+                    >
+                      {filtersActive ? (
+                        <SearchX className="h-6 w-6" />
+                      ) : (
+                        <Users className="h-6 w-6" />
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      {filtersActive
+                        ? "No users match these filters"
+                        : "No users found"}
+                    </p>
+                    <p className="mt-1 max-w-sm text-xs text-slate-400">
+                      {filtersActive
+                        ? `${filterSummary || "This combination"} returned nothing. Try a different role, status or search term.`
+                        : "Users will appear here once created."}
+                    </p>
+                    {filtersActive ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="mt-4 h-8 rounded-lg text-xs"
                       >
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-sm font-bold text-primary">
-                                {user.name.charAt(0)}
-                              </span>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
-                                {user.name}
-                              </p>
-                              {user.isGlobalAdmin && (
-                                <p className="text-[10px] font-semibold text-red-500 uppercase tracking-wider">
-                                  Global Admin
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td
-                          className="px-4 py-3.5"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <ContactCell user={user} />
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <Badge
-                            variant={roleBadgeVariant(role)}
-                            className="text-[10px] uppercase font-semibold tracking-wide"
-                          >
-                            {role}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span className="text-sm text-slate-600 dark:text-slate-400">
-                            {tenantName}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <Badge
-                            variant={statusBadgeVariant(status)}
-                            className="text-[10px] uppercase font-semibold tracking-wide"
-                          >
-                            {status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <LastSignInCell user={user} now={now} />
-                        </td>
-                        <td
-                          className="px-4 py-3.5 text-right"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          {!user.isGlobalAdmin && (
-                            <UserRowActions
-                              status={status}
-                              loading={actionLoading === user.id}
-                              onToggleStatus={() => handleToggleStatus(user)}
-                              onDelete={() => {
-                                setDeleteTarget(user);
-                                setDeleteConfirm("");
-                                setDeleteError("");
-                              }}
-                            />
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        Clear filters
+                      </Button>
+                    ) : null}
+                  </div>
+                }
+              />
             </div>
 
-            {filtered.length === 0 && (
-              <div className="text-center py-16 px-5">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-                  <Users className="h-6 w-6 text-slate-400" />
-                </div>
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                  {searchTerm ? "No users match your search" : "No users found"}
-                </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  {searchTerm
-                    ? "Try adjusting your search"
-                    : "Users will appear here once created"}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+            {filtered.length > 0 ? (
+              <AdminPagination
+                page={currentPage}
+                perPage={perPage}
+                totalItems={filtered.length}
+                onPageChange={setPage}
+                onPerPageChange={(size) => {
+                  setPerPage(size);
+                  setPage(1);
+                }}
+              />
+            ) : null}
+          </>
+        ) : null}
 
         {/* Delete dialog */}
         <Dialog
@@ -459,7 +527,11 @@ function UsersPageContent() {
               </DialogTitle>
               <DialogDescription>
                 Permanently delete <strong>{deleteTarget?.name}</strong> (
-                {deleteTarget?.email}). This cannot be undone.
+                {deleteTarget?.email}
+                {deleteTarget
+                  ? `, ${roleLabel(resolveUserRole(deleteTarget))})`
+                  : ")"}{" "}
+                This cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
@@ -506,19 +578,6 @@ function UsersPageContent() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {!loading && !error && filtered.length > 0 ? (
-          <AdminPagination
-            page={page}
-            perPage={perPage}
-            totalItems={filtered.length}
-            onPageChange={setPage}
-            onPerPageChange={(size) => {
-              setPerPage(size);
-              setPage(1);
-            }}
-          />
-        ) : null}
       </div>
 
       <CreateUserDialog
@@ -564,129 +623,5 @@ function PulseStat({
       </span>
       <span className="text-slate-400">{label}</span>
     </span>
-  );
-}
-
-function ContactCell({ user }: { user: AdminUserListItem }) {
-  const telHref = phoneToTelHref(user.phoneNumber);
-  const whatsappHref = phoneToWhatsAppHref(user.phoneNumber);
-
-  return (
-    <div className="min-w-0 max-w-[220px]">
-      <p className="truncate text-sm text-slate-600 dark:text-slate-400">
-        {user.email}
-      </p>
-      {user.phoneNumber ? (
-        <div className="mt-1 flex items-center gap-1.5">
-          {telHref ? (
-            <a
-              href={telHref}
-              className="truncate font-mono text-[11px] font-medium text-slate-500 hover:text-primary hover:underline dark:text-slate-400"
-              title="Call"
-            >
-              {formatPhoneDisplay(user.phoneNumber)}
-            </a>
-          ) : (
-            <span className="truncate font-mono text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              {formatPhoneDisplay(user.phoneNumber)}
-            </span>
-          )}
-          <span className="flex flex-shrink-0 items-center gap-0.5">
-            {whatsappHref ? (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noreferrer"
-                title="Message on WhatsApp"
-                className="rounded-md p-1 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
-              >
-                <MessageCircle className="h-3 w-3" />
-              </a>
-            ) : null}
-            <CopyPhoneButton value={user.phoneNumber} />
-          </span>
-        </div>
-      ) : (
-        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-          <Phone className="h-3 w-3" />
-          No phone
-        </p>
-      )}
-    </div>
-  );
-}
-
-function LastSignInCell({
-  user,
-  now,
-}: {
-  user: AdminUserListItem;
-  now: Date;
-}) {
-  const freshness = loginFreshness(user.lastLoginAt, now);
-  const tone = LOGIN_FRESHNESS_STYLES[freshness];
-
-  return (
-    <div
-      title={formatExactLogin(user.lastLoginAt)}
-      className="min-w-0 max-w-[180px]"
-    >
-      <div className="flex items-center gap-1.5">
-        <span
-          className={cn(
-            "h-1.5 w-1.5 flex-shrink-0 rounded-full",
-            tone.dot,
-            freshness === "live" && "animate-pulse",
-          )}
-        />
-        <span
-          suppressHydrationWarning
-          className={cn("truncate text-sm font-medium", tone.text)}
-        >
-          {formatRelativeLogin(user.lastLoginAt, now)}
-        </span>
-      </div>
-      <p className="mt-0.5 truncate text-[11px] text-slate-400">
-        {loginCountLabel(user.loginCount)}
-      </p>
-    </div>
-  );
-}
-
-function CopyPhoneButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timeout.current) clearTimeout(timeout.current);
-    };
-  }, []);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      if (timeout.current) clearTimeout(timeout.current);
-      timeout.current = setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // Clipboard permissions can be denied; the number remains visible.
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={() => void copy()}
-      title={copied ? "Copied" : "Copy phone number"}
-      aria-label={copied ? "Copied" : "Copy phone number"}
-      className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-    >
-      {copied ? (
-        <Check className="h-3 w-3 text-emerald-600" />
-      ) : (
-        <Copy className="h-3 w-3" />
-      )}
-    </button>
   );
 }

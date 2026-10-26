@@ -20,6 +20,11 @@ export interface AdminStatItem {
   icon: LucideIcon;
   color: string;
   gradient: string;
+  /** Turns the card into a shortcut that applies a directory filter. */
+  onClick?: () => void;
+  /** Highlights the card while its filter is applied. */
+  active?: boolean;
+  title?: string;
 }
 
 interface AdminPageHeaderProps {
@@ -85,32 +90,54 @@ export function AdminStatGrid({ stats }: { stats: AdminStatItem[] }) {
     <div className="grid grid-cols-2 gap-4 md:gap-5 lg:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
+        const className = cn(
+          "relative overflow-hidden rounded-2xl border border-slate-200/60 bg-gradient-to-br p-5 text-left shadow-sm transition-all dark:border-slate-800/60 dark:from-slate-900 dark:to-slate-900/80",
+          stat.gradient,
+          stat.onClick &&
+            "hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:border-slate-700",
+          stat.active &&
+            "border-primary/40 ring-2 ring-primary/25 dark:border-primary/50",
+        );
+
+        const content = (
+          <span className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 shadow-sm dark:bg-slate-800/80">
+              <Icon className={cn("h-5 w-5", stat.color)} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400">
+                {stat.label}
+              </span>
+              <span className="mt-0.5 block text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                {stat.value}
+              </span>
+              {stat.helper ? (
+                <span className="mt-0.5 block text-xs text-slate-400 dark:text-slate-500">
+                  {stat.helper}
+                </span>
+              ) : null}
+            </span>
+          </span>
+        );
+
+        if (stat.onClick) {
+          return (
+            <button
+              key={stat.label}
+              type="button"
+              onClick={stat.onClick}
+              aria-pressed={stat.active ?? false}
+              title={stat.title}
+              className={className}
+            >
+              {content}
+            </button>
+          );
+        }
+
         return (
-          <div
-            key={stat.label}
-            className={cn(
-              "relative overflow-hidden rounded-2xl border border-slate-200/60 bg-gradient-to-br p-5 shadow-sm dark:border-slate-800/60 dark:from-slate-900 dark:to-slate-900/80",
-              stat.gradient,
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 shadow-sm dark:bg-slate-800/80">
-                <Icon className={cn("h-5 w-5", stat.color)} />
-              </div>
-              <div>
-                <p className="text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400">
-                  {stat.label}
-                </p>
-                <p className="mt-0.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                  {stat.value}
-                </p>
-                {stat.helper ? (
-                  <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                    {stat.helper}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+          <div key={stat.label} className={className}>
+            {content}
           </div>
         );
       })}
@@ -207,7 +234,7 @@ export function AdminPagination({
         </span>
       </div>
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
           <span>Show</span>
           <select
             value={perPage}

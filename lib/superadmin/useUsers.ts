@@ -8,6 +8,7 @@ import {
   fetchAllUsers,
 } from "./usersApi";
 import type { AdminUserListItem } from "./types";
+import { primaryMembership } from "./userRoles";
 
 export function useUsers() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -36,7 +37,9 @@ export function useUsers() {
 
   const toggleUserStatus = useCallback(
     async (user: AdminUserListItem) => {
-      const membership = user.memberships[0];
+      // Mirror the role/status pair shown in the directory: the primary
+      // membership, not just the first one returned by the API.
+      const membership = primaryMembership(user);
       if (!membership) return;
       const newStatus =
         membership.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";

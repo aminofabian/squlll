@@ -33,32 +33,34 @@ export function UserRowActions({
 
   return (
     <>
-      <div className="hidden items-center justify-end gap-1 sm:flex">
+      <div className="hidden items-center justify-end gap-0.5 sm:flex">
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 px-2.5 text-xs rounded-lg"
+          title={isActive ? "Suspend user" : "Activate user"}
+          aria-label={isActive ? "Suspend user" : "Activate user"}
+          className="h-8 w-8 rounded-lg p-0"
           onClick={onToggleStatus}
           disabled={loading}
         >
           {loading ? (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : isActive ? (
-            <XCircle className="mr-1 h-3.5 w-3.5 text-amber-500" />
+            <XCircle className="h-3.5 w-3.5 text-amber-500" />
           ) : (
-            <CheckCircle className="mr-1 h-3.5 w-3.5 text-green-500" />
+            <CheckCircle className="h-3.5 w-3.5 text-green-500" />
           )}
-          {isActive ? "Suspend" : "Activate"}
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 rounded-lg px-2.5 text-xs text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+          title="Delete user"
+          aria-label="Delete user"
+          className="h-8 w-8 rounded-lg p-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
           onClick={onDelete}
           disabled={loading}
         >
-          <Trash2 className="mr-1 h-3.5 w-3.5" />
-          Delete
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
 
