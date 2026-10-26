@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Audit Logs",
-  description: "Platform actions performed by super admins",
+  description: "Super-admin audit trail across users, schools, billing and portal access",
 };
 
 export default function LogsLayout({

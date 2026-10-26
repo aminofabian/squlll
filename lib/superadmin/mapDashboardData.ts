@@ -56,20 +56,31 @@ function classifyAuditAction(message: string): {
   label: string;
 } {
   const msg = message.toUpperCase();
+  // Impersonation is a portal-access event, not a school update, and must be
+  // checked before the generic TENANT match.
+  if (msg.includes("IMPERSONATE")) {
+    return { type: "tenant", label: "Entered school portal" };
+  }
+  if (msg.includes("DELETE_TENANT")) {
+    return { type: "tenant", label: "School deleted" };
+  }
   if (msg.includes("CREATE_TENANT")) {
     return { type: "tenant", label: "School created" };
   }
   if (msg.includes("TENANT")) {
     return { type: "tenant", label: "School updated" };
   }
-  if (msg.includes("SUBSCRIPTION") || msg.includes("PLAN")) {
+  if (msg.includes("SUBSCRIPTION")) {
     return { type: "subscription", label: "Subscription change" };
-  }
-  if (msg.includes("USER")) {
-    return { type: "user", label: "User change" };
   }
   if (msg.includes("PLAN")) {
     return { type: "plan", label: "Plan updated" };
+  }
+  if (msg.includes("CHANGE_STATUS")) {
+    return { type: "user", label: "User status changed" };
+  }
+  if (msg.includes("USER")) {
+    return { type: "user", label: "User change" };
   }
   return { type: "system", label: message.replace(/_/g, " ").toLowerCase() };
 }

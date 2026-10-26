@@ -126,4 +126,22 @@ describe("mapAuditLogsToActivity", () => {
     expect(result[0]?.target).toBe("Green Valley Academy");
     expect(result[0]?.type).toBe("tenant");
   });
+
+  it("labels impersonation as portal access, not a school update", () => {
+    const logs: AuditLogRecord[] = [
+      {
+        id: "log-1",
+        message: "IMPERSONATE_TENANT_ADMIN",
+        source: "SUPER_ADMIN",
+        level: "INFO",
+        metadata: { subdomain: "mirema", actorEmail: "super@squl.co.ke" },
+        timestamp: new Date().toISOString(),
+      },
+    ];
+
+    const result = mapAuditLogsToActivity(logs);
+
+    expect(result[0]?.action).toBe("Entered school portal");
+    expect(result[0]?.target).toBe("mirema");
+  });
 });

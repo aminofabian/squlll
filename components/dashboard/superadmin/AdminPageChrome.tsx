@@ -85,13 +85,25 @@ export function AdminPageHeader({
   );
 }
 
-export function AdminStatGrid({ stats }: { stats: AdminStatItem[] }) {
+export function AdminStatGrid({
+  stats,
+  className,
+}: {
+  stats: AdminStatItem[];
+  /** Optional column layout override (e.g. five audit categories). */
+  className?: string;
+}) {
   return (
-    <div className="grid grid-cols-2 gap-4 md:gap-5 lg:grid-cols-4">
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-4 md:gap-5",
+        className ?? "lg:grid-cols-4",
+      )}
+    >
       {stats.map((stat) => {
         const Icon = stat.icon;
         const className = cn(
-          "relative overflow-hidden rounded-2xl border border-slate-200/60 bg-gradient-to-br p-5 text-left shadow-sm transition-all dark:border-slate-800/60 dark:from-slate-900 dark:to-slate-900/80",
+          "relative h-full overflow-hidden rounded-2xl border border-slate-200/60 bg-gradient-to-br p-5 text-left shadow-sm transition-all dark:border-slate-800/60 dark:from-slate-900 dark:to-slate-900/80",
           stat.gradient,
           stat.onClick &&
             "hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:border-slate-700",
