@@ -47,9 +47,19 @@ interface FeeStructure {
     id: string
     gradeIds: string[]
     studentCount: number
+    hasInvoice?: boolean
     description?: string
     createdAt?: string
   }>
+  /** Grades already on another plan for overlapping terms. */
+  conflictingGrades?: Array<{
+    gradeId: string
+    gradeName: string
+    planNames: string[]
+    termNames: string[]
+  }>
+  /** Term labels for the current plan, shown in the drawer summary. */
+  planTermNames?: string[]
 }
 
 interface AssignFeeStructureModalProps {
@@ -59,9 +69,13 @@ interface AssignFeeStructureModalProps {
   availableGrades: Grade[]
   /** Grades to preselect when the drawer opens (e.g. a year-level gap flow). */
   initialSelectedGradeIds?: string[]
+  /** True while assignments are still loading; blocks a stale duplicate link. */
+  linkedGradesLoading?: boolean
   onSuccess?: (response: unknown) => void
-  /** Deactivates an assignment batch. Resolves true when the UI may close. */
+  /** Removes an unpaid assignment batch. Resolves true when the UI may close. */
   onUnlinkAssignment?: (assignmentId: string) => Promise<boolean>
+  /** Closes the drawer and opens the Class links view to resolve a conflict. */
+  onReviewConflicts?: () => void
 }
 
 const FLOW_STEPS = [
@@ -186,6 +200,9 @@ function GradeSelectRow({
   title,
   subtitle,
   badge,
+  badgeTone = 'default',
+  conflict,
+  disabled = false,
 }: {
   id: string
   checked: boolean
@@ -193,34 +210,57 @@ function GradeSelectRow({
   title: string
   subtitle?: string
   badge?: string
+  badgeTone?: 'default' | 'danger'
+  conflict?: { planNames: string[]; termNames: string[] }
+  disabled?: boolean
 }) {
   return (
     <label
       htmlFor={id}
       className={cn(
-        'flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors',
-        checked
-          ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/15'
-          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80',
+        'flex items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+        conflict
+          ? 'border-rose-300 bg-rose-50/60 ring-1 ring-rose-200'
+          : checked
+            ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/15'
+            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80',
       )}
     >
       <Checkbox
         id={id}
         checked={checked}
         onCheckedChange={onToggle}
+        disabled={disabled && !checked}
         className="mt-0.5"
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-medium text-slate-900">{title}</p>
           {badge ? (
-            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+            <span
+              className={cn(
+                'rounded-md px-1.5 py-0.5 text-[10px] font-medium',
+                badgeTone === 'danger'
+                  ? 'bg-rose-100 text-rose-800'
+                  : 'bg-slate-100 text-slate-600',
+              )}
+            >
               {badge}
             </span>
           ) : null}
         </div>
         {subtitle ? (
           <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
+        ) : null}
+        {conflict ? (
+          <p className="mt-1 flex items-start gap-1 text-[10px] font-medium leading-snug text-rose-700">
+            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+            <span>
+              Already on {conflict.planNames.join(', ')} for{' '}
+              {conflict.termNames.join(', ')}. Remove that link first.
+            </span>
+          </p>
         ) : null}
       </div>
     </label>
@@ -279,8 +319,10 @@ export const AssignFeeStructureModal = ({
   feeStructure,
   availableGrades,
   initialSelectedGradeIds,
+  linkedGradesLoading = false,
   onSuccess,
   onUnlinkAssignment,
+  onReviewConflicts,
 }: AssignFeeStructureModalProps) => {
   const [description, setDescription] = useState('')
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([])
@@ -297,6 +339,8 @@ export const AssignFeeStructureModal = ({
   const [isUnlinking, setIsUnlinking] = useState(false)
   const [unlinkError, setUnlinkError] = useState<string | null>(null)
   const initialSelectionKeyRef = useRef<string | null>(null)
+  const submitInFlightRef = useRef(false)
+  const unlinkInFlightRef = useRef(false)
   const { toast } = useToast()
 
   const { gradeLevels, isLoading: isLoadingGradeLevels } = useGradeLevels()
@@ -413,9 +457,13 @@ export const AssignFeeStructureModal = ({
 
   const linkedAssignments = feeStructure?.linkedAssignments ?? []
   const linkedAssignmentLabel = (assignment: LinkedAssignment) => {
-    const names = assignment.gradeIds
-      .map((id) => linkedGradeNameById.get(id))
-      .filter(Boolean) as string[]
+    const names = [
+      ...new Set(
+        assignment.gradeIds
+          .map((id) => linkedGradeNameById.get(id))
+          .filter(Boolean) as string[],
+      ),
+    ]
     return names.length
       ? names.join(', ')
       : `${assignment.studentCount} student${
@@ -424,10 +472,6 @@ export const AssignFeeStructureModal = ({
   }
 
   const hasExistingLinks = linkedItems.length > 0
-
-  const allSelected =
-    selectableItems.length > 0 &&
-    selectableItems.every((g) => selectedGradeIds.includes(g.id))
 
   const hasNote = description.trim().length > 0
   const hasGrades = selectedGradeIds.length > 0
@@ -451,15 +495,39 @@ export const AssignFeeStructureModal = ({
     [selectedGradeIds, displayItems],
   )
 
-  const selectedOnOtherPlan = useMemo(
-    () =>
-      selectedPreview.filter(
-        (grade) =>
-          !!grade.feeStructureId &&
-          grade.feeStructureId !== feeStructure?.id,
-      ),
-    [selectedPreview, feeStructure?.id],
+  const conflictByGrade = useMemo(() => {
+    const conflicts = new Map<
+      string,
+      NonNullable<FeeStructure['conflictingGrades']>[number]
+    >()
+    for (const conflict of feeStructure?.conflictingGrades ?? []) {
+      conflicts.set(conflict.gradeId, conflict)
+    }
+    return conflicts
+  }, [feeStructure])
+
+  const conflictForGrade = useCallback(
+    (grade: (typeof displayItems)[number]) =>
+      conflictByGrade.get(grade.tenantGradeLevelId) ??
+      conflictByGrade.get(grade.id),
+    [conflictByGrade],
   )
+
+  const selectedConflicts = selectedPreview.flatMap((grade) => {
+    const conflict = conflictForGrade(grade)
+    return conflict ? [{ grade, conflict }] : []
+  })
+
+  const eligibleSelectableItems = useMemo(
+    () => selectableItems.filter((grade) => !conflictForGrade(grade)),
+    [selectableItems, conflictForGrade],
+  )
+
+  const allSelected =
+    eligibleSelectableItems.length > 0 &&
+    eligibleSelectableItems.every((grade) =>
+      selectedGradeIds.includes(grade.id),
+    )
 
   // Year-level “link missing grades” opens this drawer with the gap grades
   // already selected. Apply once per open/plan so later renders don't keep
@@ -480,6 +548,7 @@ export const AssignFeeStructureModal = ({
       .filter(
         (grade) =>
           !isLinkedGrade(grade) &&
+          !conflictForGrade(grade) &&
           (wanted.has(grade.id) || wanted.has(grade.tenantGradeLevelId)),
       )
       .map((grade) => grade.id)
@@ -496,6 +565,7 @@ export const AssignFeeStructureModal = ({
     displayItems,
     displayItems.length,
     isLinkedGrade,
+    conflictForGrade,
   ])
 
   useEffect(() => {
@@ -646,6 +716,14 @@ export const AssignFeeStructureModal = ({
   }, [isOpen, feeStructure, selectedGradeIds, displayItems])
 
   const handleGradeToggle = (gradeId: string) => {
+    const grade = selectableItems.find((item) => item.id === gradeId)
+    if (
+      grade &&
+      conflictForGrade(grade) &&
+      !selectedGradeIds.includes(gradeId)
+    ) {
+      return
+    }
     setSelectedGradeIds((prev) =>
       prev.includes(gradeId)
         ? prev.filter((id) => id !== gradeId)
@@ -657,25 +735,49 @@ export const AssignFeeStructureModal = ({
     if (allSelected) {
       setSelectedGradeIds([])
     } else {
-      setSelectedGradeIds(selectableItems.map((item) => item.id))
+      setSelectedGradeIds(eligibleSelectableItems.map((item) => item.id))
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitInFlightRef.current) return
 
     if (!feeStructure) {
       setError('No fee plan selected')
       return
     }
 
-    if (selectedGradeIds.length === 0) {
-      setError(`Select at least one ${gradeLabel} to continue`)
+    if (linkedGradesLoading) {
+      setError('Still checking existing grade links. Try again in a moment.')
+      return
+    }
+
+    if (selectedConflicts.length > 0) {
+      const detail = selectedConflicts
+        .map(
+          ({ grade, conflict }) =>
+            `${grade.abbreviatedName} is already on ${conflict.planNames.join(
+              ', ',
+            )} for ${conflict.termNames.join(', ')}`,
+        )
+        .join('; ')
+      setError(`Double-link blocked: ${detail}. Remove the other link first.`)
+      return
+    }
+
+    const selectableIds = new Set(selectableItems.map((grade) => grade.id))
+    const gradeIdsToLink = selectedGradeIds.filter((id) =>
+      selectableIds.has(id),
+    )
+
+    if (gradeIdsToLink.length === 0) {
+      setError(`Select at least one unlinked ${gradeLabel} to continue`)
       return
     }
 
     const tenantGradeLevelIds = resolveTenantGradeLevelIds(
-      selectedGradeIds,
+      gradeIdsToLink,
       displayItems,
     )
 
@@ -684,6 +786,7 @@ export const AssignFeeStructureModal = ({
       return
     }
 
+    submitInFlightRef.current = true
     setIsSubmitting(true)
     setError(null)
 
@@ -746,6 +849,7 @@ export const AssignFeeStructureModal = ({
         variant: 'destructive',
       })
     } finally {
+      submitInFlightRef.current = false
       setIsSubmitting(false)
     }
   }
@@ -765,15 +869,21 @@ export const AssignFeeStructureModal = ({
 
   const handleConfirmUnlink = async () => {
     if (!unlinkTarget || !onUnlinkAssignment) return
+    if (unlinkInFlightRef.current) return
+    unlinkInFlightRef.current = true
     setIsUnlinking(true)
     setUnlinkError(null)
-    const ok = await onUnlinkAssignment(unlinkTarget.id)
-    setIsUnlinking(false)
-    if (ok) {
-      setUnlinkTarget(null)
-      onClose()
-    } else {
-      setUnlinkError('The link could not be removed. Please try again.')
+    try {
+      const ok = await onUnlinkAssignment(unlinkTarget.id)
+      if (ok) {
+        setUnlinkTarget(null)
+        onClose()
+      } else {
+        setUnlinkError('The link could not be removed. Please try again.')
+      }
+    } finally {
+      unlinkInFlightRef.current = false
+      setIsUnlinking(false)
     }
   }
 
@@ -806,8 +916,14 @@ export const AssignFeeStructureModal = ({
                   {feeStructure.academicYear
                     ? ` · ${feeStructure.academicYear}`
                     : ''}
+                  {feeStructure.planTermNames?.length
+                    ? ` · ${feeStructure.planTermNames.length} terms`
+                    : ''}
                   {hasExistingLinks
-                    ? ` · ${linkedItems.length} already linked`
+                    ? ` · ${linkedItems.length} linked`
+                    : ''}
+                  {!linkedGradesLoading && eligibleSelectableItems.length > 0
+                    ? ` · ${eligibleSelectableItems.length} available`
                     : ''}
                 </span>
               ) : (
@@ -873,7 +989,7 @@ export const AssignFeeStructureModal = ({
                       : `Tap to select. Applies to every student currently in that ${gradeLabel}.`
                   }
                   action={
-                    selectableItems.length > 0 && !isLoading
+                    eligibleSelectableItems.length > 0 && !isLoading
                       ? sectionAction(
                           allSelected
                             ? 'Clear selection'
@@ -899,6 +1015,53 @@ export const AssignFeeStructureModal = ({
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      {linkedGradesLoading ? (
+                        <p className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[11px] text-slate-600">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                          Checking existing grade links before allowing changes…
+                        </p>
+                      ) : null}
+                      {initialSelectedGradeIds?.length ? (
+                        <p className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-2 text-[11px] leading-relaxed text-emerald-900">
+                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            {initialSelectedGradeIds.length} missing grade
+                            {initialSelectedGradeIds.length === 1 ? '' : 's'}{' '}
+                            preselected from the year view. Review the impact,
+                            then link.
+                          </span>
+                        </p>
+                      ) : null}
+                      {(feeStructure.conflictingGrades?.length ?? 0) > 0 ? (
+                        <div className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-[11px] leading-relaxed text-rose-900">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-semibold">
+                                {feeStructure.conflictingGrades?.length} grade
+                                {feeStructure.conflictingGrades?.length === 1
+                                  ? ''
+                                  : 's'}{' '}
+                                already on another plan
+                              </p>
+                              <p className="mt-0.5">
+                                They can’t be added until the other link is
+                                removed. Existing conflicts are marked in the
+                                linked section too.
+                              </p>
+                              {onReviewConflicts ? (
+                                <button
+                                  type="button"
+                                  className="mt-1 text-[10px] font-semibold text-rose-800 underline underline-offset-2 hover:text-rose-950"
+                                  onClick={onReviewConflicts}
+                                >
+                                  Open Class links
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
                       {hasExistingLinks ? (
                         <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/70 p-2.5">
                           <div className="flex items-start gap-2">
@@ -910,8 +1073,11 @@ export const AssignFeeStructureModal = ({
                                 Already linked
                               </p>
                               <p className="mt-0.5 text-[10px] leading-relaxed text-emerald-800/80">
-                                These grades are already linked. Add more below,
-                                or unlink a batch.
+                                These grades are already linked. Add more below
+                                {linkedAssignments.length > 0 &&
+                                onUnlinkAssignment
+                                  ? ', or remove a link.'
+                                  : '.'}
                               </p>
                             </div>
                             <span className="rounded-full border border-emerald-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-emerald-800">
@@ -919,7 +1085,11 @@ export const AssignFeeStructureModal = ({
                             </span>
                           </div>
                           <ul className="mt-2 space-y-1">
-                            {linkedItems.map((grade) => (
+                            {linkedItems.map((grade) => {
+                              const linkedConflict = conflictByGrade.get(
+                                grade.key,
+                              )
+                              return (
                               <li
                                 key={grade.key}
                                 className="flex min-w-0 items-center gap-2 rounded-md border border-emerald-100 bg-white/80 px-2 py-1.5"
@@ -939,17 +1109,33 @@ export const AssignFeeStructureModal = ({
                                     {grade.studentCount === 1 ? '' : 's'}
                                   </span>
                                 ) : null}
-                                <span className="ml-auto shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-emerald-800">
-                                  Linked
+                                <span
+                                  className={
+                                    linkedConflict
+                                      ? 'ml-auto shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-rose-800'
+                                      : 'ml-auto shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-emerald-800'
+                                  }
+                                  title={
+                                    linkedConflict
+                                      ? `Also on ${linkedConflict.planNames.join(
+                                          ', ',
+                                        )} for ${linkedConflict.termNames.join(
+                                          ', ',
+                                        )}`
+                                      : undefined
+                                  }
+                                >
+                                  {linkedConflict ? 'Conflict' : 'Linked'}
                                 </span>
                               </li>
-                            ))}
+                              )
+                            })}
                           </ul>
 
                           {linkedAssignments.length > 0 && onUnlinkAssignment ? (
                             <div className="mt-2 space-y-1 border-t border-emerald-200/70 pt-2">
                               <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-800/60">
-                                Linked through
+                                Link batches
                               </p>
                               {linkedAssignments.map((assignment) => {
                                 const label = linkedAssignmentLabel(assignment)
@@ -972,30 +1158,57 @@ export const AssignFeeStructureModal = ({
                                     </div>
                                     <button
                                       type="button"
-                                      className="shrink-0 text-[10px] font-semibold text-rose-700 hover:underline disabled:opacity-50"
-                                      disabled={isUnlinking}
+                                      className={
+                                        assignment.hasInvoice
+                                          ? 'shrink-0 cursor-not-allowed text-[10px] font-semibold text-slate-400'
+                                          : 'shrink-0 text-[10px] font-semibold text-rose-700 hover:underline disabled:opacity-50'
+                                      }
+                                      disabled={
+                                        isUnlinking || assignment.hasInvoice
+                                      }
+                                      title={
+                                        assignment.hasInvoice
+                                          ? 'Invoices exist for this link. Reverse them before removing it.'
+                                          : 'Remove this link'
+                                      }
                                       onClick={() => {
                                         setUnlinkTarget(assignment)
                                         setUnlinkError(null)
                                       }}
                                     >
-                                      Unlink
+                                      {assignment.hasInvoice
+                                        ? 'Invoiced'
+                                        : 'Remove'}
                                     </button>
                                   </div>
                                 )
                               })}
+                              {linkedAssignments.some(
+                                (assignment) => assignment.hasInvoice,
+                              ) ? (
+                                <p className="text-[9px] leading-relaxed text-rose-700">
+                                  Invoiced links are locked. Reverse the
+                                  invoice in Balances before removing them.
+                                </p>
+                              ) : null}
                             </div>
                           ) : null}
 
                           {unlinkTarget ? (
                             <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5">
                               <p className="text-xs font-semibold text-rose-950">
-                                Unlink {linkedAssignmentLabel(unlinkTarget)}?
+                                Remove this link?
                               </p>
                               <p className="mt-1 text-[10px] leading-relaxed text-rose-900/80">
-                                Future billing stops for these grades. Existing
-                                invoices, payments, and balances stay unchanged.
-                                The link moves to Class links → Inactive.
+                                This removes the link for{' '}
+                                {linkedAssignmentLabel(unlinkTarget)} and deletes
+                                the unpaid fee items it created for those
+                                students. It cannot be undone.
+                              </p>
+                              <p className="mt-1 flex items-center gap-1 text-[9px] font-medium text-emerald-800">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Safe: no invoices or payments are deleted.
+                                Invoiced links are locked.
                               </p>
                               {unlinkError ? (
                                 <p className="mt-1 text-[10px] font-medium text-rose-700">
@@ -1027,7 +1240,7 @@ export const AssignFeeStructureModal = ({
                                       Unlinking…
                                     </>
                                   ) : (
-                                    'Unlink link'
+                                    'Remove link'
                                   )}
                                 </Button>
                               </div>
@@ -1079,6 +1292,7 @@ export const AssignFeeStructureModal = ({
                               const displayTitle =
                                 grade.abbreviatedName +
                                 (grade.section ? ` · ${grade.section}` : '')
+                              const conflict = conflictForGrade(grade)
 
                               return (
                                 <GradeSelectRow
@@ -1093,25 +1307,55 @@ export const AssignFeeStructureModal = ({
                                       : undefined
                                   }
                                   badge={
-                                    grade.feeStructureId
-                                      ? 'On another plan'
-                                      : undefined
+                                    conflict
+                                      ? 'Conflict'
+                                      : grade.feeStructureId
+                                        ? 'On another plan'
+                                        : undefined
                                   }
+                                  badgeTone={conflict ? 'danger' : 'default'}
+                                  conflict={conflict}
+                                  disabled={Boolean(conflict) && !isSelected}
                                 />
                               )
                             })}
                           </div>
 
-                          {selectedOnOtherPlan.length > 0 ? (
-                            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-900">
-                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                              <span>
-                                {selectedOnOtherPlan.length} selected{' '}
-                                {gradeLabel}
-                                {selectedOnOtherPlan.length !== 1 ? 's are' : ' is'}{' '}
-                                also on another plan for this year. Linking
-                                may create a duplicate link for the same term.
-                              </span>
+                          {selectedConflicts.length > 0 ? (
+                            <div className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-[11px] leading-relaxed text-rose-900">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-semibold">
+                                    Double-link blocked
+                                  </p>
+                                  <p className="mt-0.5">
+                                    {selectedConflicts
+                                      .map(
+                                        ({ grade, conflict }) =>
+                                          `${grade.name} is already on ${conflict.planNames.join(
+                                            ', ',
+                                          )} for ${conflict.termNames.join(', ')}`,
+                                      )
+                                      .join('; ')}
+                                    . Remove the other link first, or
+                                    deselect{' '}
+                                    {selectedConflicts.length === 1
+                                      ? 'that grade'
+                                      : 'those grades'}
+                                    .
+                                  </p>
+                                  {onReviewConflicts ? (
+                                    <button
+                                      type="button"
+                                      className="mt-1 text-[10px] font-semibold text-rose-800 underline underline-offset-2 hover:text-rose-950"
+                                      onClick={onReviewConflicts}
+                                    >
+                                      Open Class links
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
                             </div>
                           ) : null}
                         </div>
@@ -1217,7 +1461,12 @@ export const AssignFeeStructureModal = ({
                 <Button
                   type="submit"
                   className="flex-1 bg-primary text-white disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
-                  disabled={isSubmitting || !hasGrades}
+                  disabled={
+                    isSubmitting ||
+                    !hasGrades ||
+                    linkedGradesLoading ||
+                    selectedConflicts.length > 0
+                  }
                 >
                   {isSubmitting ? (
                     <>
@@ -1227,15 +1476,19 @@ export const AssignFeeStructureModal = ({
                   ) : (
                     <>
                       <Users className="mr-2 h-4 w-4 shrink-0" />
-                      {selectedGradeIds.length > 0
-                        ? `Link ${selectedGradeIds.length} ${
-                            selectedGradeIds.length === 1
-                              ? gradeLabel
-                              : gradeLabelPlural
-                          }`
-                        : hasExistingLinks
-                          ? 'Select grades to add'
-                          : 'Link grades'}
+                      {linkedGradesLoading
+                        ? 'Checking links…'
+                        : selectedConflicts.length > 0
+                          ? 'Resolve conflict first'
+                          : selectedGradeIds.length > 0
+                            ? `Link ${selectedGradeIds.length} ${
+                                selectedGradeIds.length === 1
+                                  ? gradeLabel
+                                  : gradeLabelPlural
+                              }`
+                            : hasExistingLinks
+                              ? 'Select grades to add'
+                              : 'Link grades'}
                     </>
                   )}
                 </Button>

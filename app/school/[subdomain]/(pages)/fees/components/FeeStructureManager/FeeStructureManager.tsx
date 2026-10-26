@@ -24,6 +24,7 @@ import {
   buildLinkedClassCountByPlanId,
   countStudentsForPlan,
   findPlanForStructureId,
+  getGradePlanLinks,
   getLinkedAssignmentGroupsForPlan,
   getLinkedClassesForPlan,
 } from '../../lib/feePlanLinkage'
@@ -256,6 +257,43 @@ export const FeeStructureManager = ({
   // Handle opening the assign fee structure modal
   const handleAssignToGrade = (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => {
     const plan = findPlanForStructureId(graphQLStructures, feeStructureId)
+    const planTermIds = new Set(plan?.terms.map((term) => term.id) ?? [])
+    const conflictsByGrade = new Map<
+      string,
+      {
+        gradeId: string
+        gradeName: string
+        planNames: Set<string>
+        termNames: Set<string>
+      }
+    >()
+
+    for (const link of getGradePlanLinks(
+      graphQLStructures,
+      feeAssignmentsData?.feeAssignments,
+    )) {
+      if (link.planId === feeStructureId) continue
+      const overlappingTerms = link.termIds
+        .map((id, index) => ({ id, name: link.termNames[index] ?? 'Term' }))
+        .filter((term) => planTermIds.has(term.id))
+      if (overlappingTerms.length === 0) continue
+
+      const existing = conflictsByGrade.get(link.gradeId) ?? {
+        gradeId: link.gradeId,
+        gradeName:
+          grades.find(
+            (grade) =>
+              grade.tenantGradeLevelId === link.gradeId ||
+              grade.id === link.gradeId,
+          )?.name ?? 'Grade',
+        planNames: new Set<string>(),
+        termNames: new Set<string>(),
+      }
+      existing.planNames.add(link.planName)
+      for (const term of overlappingTerms) existing.termNames.add(term.name)
+      conflictsByGrade.set(link.gradeId, existing)
+    }
+
     setFeeStructureToAssign({
       id: feeStructureId,
       name,
@@ -270,6 +308,13 @@ export const FeeStructureManager = ({
             feeAssignmentsData?.feeAssignments,
           )
         : [],
+      conflictingGrades: [...conflictsByGrade.values()].map((conflict) => ({
+        gradeId: conflict.gradeId,
+        gradeName: conflict.gradeName,
+        planNames: [...conflict.planNames],
+        termNames: [...conflict.termNames],
+      })),
+      planTermNames: plan?.terms.map((term) => term.name) ?? [],
     })
     setIsAssignModalOpen(true)
   }

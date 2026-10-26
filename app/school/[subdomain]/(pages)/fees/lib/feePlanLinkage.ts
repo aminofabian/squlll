@@ -128,10 +128,87 @@ export function countStudentsForPlan(
   );
 }
 
+function linkedGradeIdsFromGroup(group: FeeAssignmentGroup): string[] {
+  const ids = new Set<string>();
+  for (const gl of group.feeAssignment?.gradeLevels ?? []) {
+    if (gl.tenantGradeLevelId) ids.add(gl.tenantGradeLevelId);
+  }
+  for (const id of group.feeAssignment?.tenantGradeLevelIds ?? []) {
+    if (id) ids.add(id);
+  }
+  for (const sa of group.studentAssignments ?? []) {
+    if (sa.isActive === false) continue;
+    const grade = sa.student?.grade;
+    // Keep both keys: a stream id can differ from its tenant grade-level id.
+    if (grade?.id) ids.add(grade.id);
+    if (grade?.gradeLevel?.id) ids.add(grade.gradeLevel.id);
+  }
+  return [...ids];
+}
+
+function gradeLevelIdsFromGroup(group: FeeAssignmentGroup): string[] {
+  const ids = new Set<string>();
+  for (const gl of group.feeAssignment?.gradeLevels ?? []) {
+    if (gl.tenantGradeLevelId) ids.add(gl.tenantGradeLevelId);
+  }
+  for (const id of group.feeAssignment?.tenantGradeLevelIds ?? []) {
+    if (id) ids.add(id);
+  }
+  for (const sa of group.studentAssignments ?? []) {
+    if (sa.isActive === false) continue;
+    const grade = sa.student?.grade;
+    const id = grade?.gradeLevel?.id || grade?.id;
+    if (id) ids.add(id);
+  }
+  return [...ids];
+}
+
+export type GradePlanLink = {
+  gradeId: string;
+  planId: string;
+  planName: string;
+  termIds: string[];
+  termNames: string[];
+  assignmentId: string;
+};
+
+/**
+ * Every active grade→plan link, one row per grade/plan pair. Used by the link
+ * drawer to block a grade from being put on two plans for overlapping terms.
+ */
+export function getGradePlanLinks(
+  plans: ProcessedFeeStructure[],
+  assignments: FeeAssignmentGroup[] | undefined,
+): GradePlanLink[] {
+  const byKey = new Map<string, GradePlanLink>();
+
+  for (const plan of plans) {
+    const termIds = plan.terms.map((term) => term.id);
+    const termNames = plan.terms.map((term) => term.name);
+    for (const group of matchingAssignmentGroups(plan, assignments)) {
+      for (const gradeId of gradeLevelIdsFromGroup(group)) {
+        const key = `${gradeId}::${plan.structureId}`;
+        if (byKey.has(key)) continue;
+        byKey.set(key, {
+          gradeId,
+          planId: plan.structureId,
+          planName: plan.structureName,
+          termIds,
+          termNames,
+          assignmentId: group.feeAssignment.id,
+        });
+      }
+    }
+  }
+
+  return [...byKey.values()];
+}
+
 export type LinkedAssignmentGroup = {
   id: string;
   gradeIds: string[];
   studentCount: number;
+  hasInvoice: boolean;
   description?: string;
   createdAt?: string;
 };
@@ -147,27 +224,16 @@ export function getLinkedAssignmentGroupsForPlan(
 ): LinkedAssignmentGroup[] {
   return matchingAssignmentGroups(plan, assignments)
     .map((group) => {
-      const gradeIds = new Set<string>();
-
-      for (const gl of group.feeAssignment?.gradeLevels ?? []) {
-        if (gl.tenantGradeLevelId) gradeIds.add(gl.tenantGradeLevelId);
-      }
-      for (const id of group.feeAssignment?.tenantGradeLevelIds ?? []) {
-        if (id) gradeIds.add(id);
-      }
-      for (const sa of group.studentAssignments ?? []) {
-        if (sa.isActive === false) continue;
-        const id = sa.student?.grade?.id || sa.student?.grade?.gradeLevel?.id;
-        if (id) gradeIds.add(id);
-      }
-
       return {
         id: group.feeAssignment.id,
-        gradeIds: [...gradeIds],
+        gradeIds: linkedGradeIdsFromGroup(group),
         studentCount:
           group.totalStudents ??
           group.feeAssignment?.studentsAssignedCount ??
           0,
+        hasInvoice: (group.studentAssignments ?? []).some(
+          (assignment) => assignment.hasInvoice === true,
+        ),
         description: group.feeAssignment?.description,
         createdAt: group.feeAssignment?.createdAt,
       };

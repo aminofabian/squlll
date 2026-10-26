@@ -322,7 +322,7 @@ export function FeePlanDetailView({
         disabled={isDeleting}
       >
         <Link2 className="h-3.5 w-3.5" />
-        {linkedClasses.length > 0 ? "Add grades" : "Link grades"}
+        {linkedClasses.length > 0 ? "Manage grades" : "Link grades"}
       </Button>
     ) : null;
 

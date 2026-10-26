@@ -64,6 +64,7 @@ export const useFeeAssignments = (): UseFeeAssignmentsResult => {
                 studentId
                 isActive
                 createdAt
+                hasInvoice
                 student {
                   id
                   user {

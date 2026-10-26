@@ -506,11 +506,11 @@ export function FeePlansTable({
                                 aria-label={
                                   linked === 0
                                     ? `Link grades to ${structure.structureName}`
-                                    : `Add grades to ${structure.structureName}`
+                                    : `Manage grades for ${structure.structureName}`
                                 }
                               >
                                 <Link2 className="h-3 w-3" />
-                                {linked === 0 ? "Link grades" : "Add grades"}
+                                {linked === 0 ? "Link grades" : "Manage"}
                               </Button>
                             ) : (
                               <span />
@@ -642,15 +642,15 @@ export function FeePlansTable({
                                 aria-label={
                                   linked === 0
                                     ? `Link grades to ${structure.structureName}`
-                                    : `Add grades to ${structure.structureName}`
+                                    : `Manage grades for ${structure.structureName}`
                                 }
                               >
                                 <Link2 className="h-3 w-3 shrink-0" />
                                 <span className="hidden xl:inline">
-                                  {linked === 0 ? "Link grades" : "Add grades"}
+                                  {linked === 0 ? "Link grades" : "Manage grades"}
                                 </span>
                                 <span className="xl:hidden">
-                                  {linked === 0 ? "Link" : "Add"}
+                                  {linked === 0 ? "Link" : "Manage"}
                                 </span>
                               </Button>
                             ) : null}

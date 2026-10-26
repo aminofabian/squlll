@@ -41,9 +41,19 @@ export interface FeeStructureToAssign {
     id: string
     gradeIds: string[]
     studentCount: number
+    hasInvoice?: boolean
     description?: string
     createdAt?: string
   }>
+  /** Grades already on another plan for overlapping terms. */
+  conflictingGrades?: Array<{
+    gradeId: string
+    gradeName: string
+    planNames: string[]
+    termNames: string[]
+  }>
+  /** Term labels for the current plan, shown in the drawer summary. */
+  planTermNames?: string[]
 }
 
 // Structure for delete confirmation

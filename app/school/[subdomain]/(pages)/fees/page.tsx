@@ -49,6 +49,7 @@ import {
   buildLinkedClassCountByPlanId,
   countStudentsForPlan,
   findPlanForStructureId,
+  getGradePlanLinks,
   getLinkedAssignmentGroupsForPlan,
   getLinkedClassesForPlan,
   type LinkedAssignmentGroup,
@@ -245,6 +246,15 @@ export default function FeesPage() {
     linkedGrades?: Array<{ id: string; name: string }>;
     /** Assignment batches already linked to this plan, for unlink. */
     linkedAssignments?: LinkedAssignmentGroup[];
+    /** Grades already on another plan for overlapping terms. */
+    conflictingGrades?: Array<{
+      gradeId: string;
+      gradeName: string;
+      planNames: string[];
+      termNames: string[];
+    }>;
+    /** Term labels for the current plan, shown in the drawer summary. */
+    planTermNames?: string[];
   } | null>(null);
 
   /** Grades preselected when a year-level “link missing grades” flow opens. */
@@ -470,6 +480,7 @@ export default function FeesPage() {
   const {
     data: feeAssignmentsData,
     loading: feeAssignmentsLoading,
+    error: feeAssignmentsError,
     refetch: refetchFeeAssignments,
   } = useFeeAssignments();
 
@@ -1249,6 +1260,23 @@ export default function FeesPage() {
     feeStructureId: string,
     initialGradeIds: string[] = [],
   ) => {
+    if (feeAssignmentsLoading) {
+      toast({
+        title: "Checking current grade links",
+        description:
+          "Give it a moment, then try again. This stops a grade being linked twice.",
+      });
+      return;
+    }
+    if (feeAssignmentsError) {
+      toast({
+        title: "Could not check grade links",
+        description: "Refresh the page and try again before linking.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const structure = processedFeeStructures.find(
       (s) => s.structureId === feeStructureId,
     );
@@ -1268,6 +1296,44 @@ export default function FeesPage() {
         processedFeeStructures,
         structure.structureId,
       );
+      const planTermIds = new Set(structure.terms.map((term) => term.id));
+      const conflictsByGrade = new Map<
+        string,
+        {
+          gradeId: string;
+          gradeName: string;
+          planNames: Set<string>;
+          termNames: Set<string>;
+        }
+      >();
+
+      for (const link of getGradePlanLinks(
+        processedFeeStructures,
+        feeAssignmentsData?.feeAssignments,
+      )) {
+        if (link.planId === structure.structureId) continue;
+        const overlappingTerms = link.termIds
+          .map((id, index) => ({
+            id,
+            name: link.termNames[index] ?? "Term",
+          }))
+          .filter((term) => planTermIds.has(term.id));
+        if (overlappingTerms.length === 0) continue;
+
+        const key = link.gradeId;
+        const existing = conflictsByGrade.get(key) ?? {
+          gradeId: link.gradeId,
+          gradeName: tenantGradeLabelMap.get(link.gradeId) ?? "Grade",
+          planNames: new Set<string>(),
+          termNames: new Set<string>(),
+        };
+        existing.planNames.add(link.planName);
+        for (const term of overlappingTerms) {
+          existing.termNames.add(term.name);
+        }
+        conflictsByGrade.set(key, existing);
+      }
+
       setPendingLinkGradeIds(initialGradeIds);
       setFeeStructureToAssign({
         id: structure.structureId,
@@ -1281,6 +1347,13 @@ export default function FeesPage() {
               feeAssignmentsData?.feeAssignments,
             )
           : [],
+        conflictingGrades: [...conflictsByGrade.values()].map((conflict) => ({
+          gradeId: conflict.gradeId,
+          gradeName: conflict.gradeName,
+          planNames: [...conflict.planNames],
+          termNames: [...conflict.termNames],
+        })),
+        planTermNames: structure.terms.map((term) => term.name),
       });
       setIsAssignModalOpen(true);
     } else {
@@ -1336,17 +1409,11 @@ export default function FeesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: `
-            mutation UpdateFeeAssignment($id: ID!, $input: UpdateFeeAssignmentInput!) {
-              updateFeeAssignment(id: $id, updateFeeAssignmentInput: $input) {
-                id
-                isActive
-              }
+            mutation RemoveFeeAssignment($id: ID!) {
+              removeFeeAssignment(id: $id)
             }
           `,
-          variables: {
-            id: assignmentId,
-            input: { isActive: false },
-          },
+          variables: { id: assignmentId },
         }),
       });
       const result = await response.json();
@@ -1358,25 +1425,32 @@ export default function FeesPage() {
           result.errors[0]?.message || "Failed to unlink this fee plan",
         );
       }
-      if (!result.data?.updateFeeAssignment) {
-        throw new Error("The fee plan link could not be updated.");
+      if (result.data?.removeFeeAssignment !== true) {
+        throw new Error("The fee plan link could not be removed.");
       }
 
       await Promise.all([
         refetchFeeAssignments(),
         fetchFeeStructures(),
         fetchGradeData(),
-      ]);
+      ]).catch((refreshError) => {
+        console.error("Link removed, but refresh failed:", refreshError);
+        toast({
+          title: "Link removed — refresh needed",
+          description:
+            "Future billing stopped, but the list may look stale. Refresh the page to update it.",
+        });
+      });
 
       appendAudit({
         action: "plan_unlinked",
-        summary: "Fee plan link removed from future billing",
+        summary: "Fee plan link removed and unpaid fee items cleared",
       });
 
       toast({
         title: "Link removed",
         description:
-          "Future billing stops for these grades. Existing balances and invoices are unchanged.",
+          "Unpaid fee items created by this link were removed. No invoices or payments were deleted.",
       });
       return true;
     } catch (error) {
@@ -1391,6 +1465,22 @@ export default function FeesPage() {
   };
 
   const handleOpenLinkMissingGrades = (group: AcademicYearPlanGroup) => {
+    if (feeAssignmentsLoading) {
+      toast({
+        title: "Checking current grade links",
+        description:
+          "Give it a moment, then try again. This stops a grade being linked twice.",
+      });
+      return;
+    }
+    if (feeAssignmentsError) {
+      toast({
+        title: "Could not check grade links",
+        description: "Refresh the page and try again before linking.",
+        variant: "destructive",
+      });
+      return;
+    }
     setMissingGradesGroup(group);
     setShowLinkMissingGrades(true);
   };
@@ -2305,8 +2395,15 @@ export default function FeesPage() {
         feeStructure={feeStructureToAssign}
         availableGrades={grades}
         initialSelectedGradeIds={pendingLinkGradeIds}
+        linkedGradesLoading={feeAssignmentsLoading}
         onSuccess={handleAssignmentSuccess}
         onUnlinkAssignment={handleUnlinkAssignment}
+        onReviewConflicts={() => {
+          setIsAssignModalOpen(false);
+          setFeeStructureToAssign(null);
+          setPendingLinkGradeIds([]);
+          navigateToFeesSection("assignments");
+        }}
       />
     </div>
   );

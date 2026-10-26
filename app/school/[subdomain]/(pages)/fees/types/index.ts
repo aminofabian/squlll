@@ -385,6 +385,7 @@ export interface StudentAssignment {
   id: string;
   studentId: string;
   isActive: boolean;
+  hasInvoice?: boolean;
   createdAt: string;
   student: {
     id: string;
