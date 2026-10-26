@@ -252,7 +252,7 @@ export function SchoolSidebar({
                   [
                     {
                       label: "People",
-                      hrefs: ["/parents", "/staff"],
+                      hrefs: ["/staff"],
                     },
                     {
                       label: "Academic",

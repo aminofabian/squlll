@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { ParentFilter } from "../utils/parents-utils";
-import { parentsFilterPill, parentsSelect } from "./parents-ui";
+import { parentsFilterPill } from "./parents-ui";
 
 interface ParentsFilterBarProps {
   filter: ParentFilter;
@@ -16,6 +16,7 @@ interface ParentsFilterBarProps {
   grades: string[];
   gradeFilter: string;
   onGradeFilterChange: (grade: string) => void;
+  gradeCounts?: Record<string, number>;
 }
 
 const filters: { id: ParentFilter; label: string }[] = [
@@ -32,6 +33,7 @@ export function ParentsFilterBar({
   grades,
   gradeFilter,
   onGradeFilterChange,
+  gradeCounts = {},
 }: ParentsFilterBarProps) {
   const countFor = (id: ParentFilter) => {
     switch (id) {
@@ -49,8 +51,9 @@ export function ParentsFilterBar({
   };
 
   return (
-    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-      {filters.map(({ id, label }) => {
+    <div className="min-w-0 flex-1 space-y-1.5">
+      <div className="flex flex-wrap items-center gap-1">
+        {filters.map(({ id, label }) => {
         const isActive = filter === id;
         return (
           <button
@@ -69,24 +72,54 @@ export function ParentsFilterBar({
               {countFor(id)}
             </span>
           </button>
-        );
-      })}
+          );
+        })}
+      </div>
 
       {grades.length > 0 ? (
-        <select
-          id="grade-filter"
-          aria-label="Child grade"
-          value={gradeFilter}
-          onChange={(e) => onGradeFilterChange(e.target.value)}
-          className={parentsSelect}
-        >
-          <option value="all">All grades</option>
-          {grades.map((grade) => (
-            <option key={grade} value={grade}>
-              {grade}
-            </option>
-          ))}
-        </select>
+        <div className="flex min-w-0 flex-wrap items-center gap-1 border-t border-[#1a4d42]/10 pt-1.5 dark:border-white/10">
+          <span className="mr-0.5 shrink-0 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/40 dark:text-white/35">
+            Grade
+          </span>
+          <button
+            type="button"
+            onClick={() => onGradeFilterChange("all")}
+            aria-pressed={gradeFilter === "all"}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10.5px] font-medium transition-colors",
+              gradeFilter === "all"
+                ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+                : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/55",
+            )}
+          >
+            All
+            <span className="tabular-nums opacity-70">{counts.all}</span>
+          </button>
+          {grades.map((grade) => {
+            const active = gradeFilter === grade;
+            return (
+              <button
+                key={grade}
+                type="button"
+                onClick={() => onGradeFilterChange(grade)}
+                aria-pressed={active}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10.5px] font-medium transition-colors",
+                  active
+                    ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+                    : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/55",
+                )}
+              >
+                {grade}
+                {gradeCounts[grade] != null ? (
+                  <span className="tabular-nums opacity-70">
+                    {gradeCounts[grade]}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );

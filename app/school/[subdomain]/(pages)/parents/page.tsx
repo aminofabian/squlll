@@ -82,7 +82,22 @@ export default function ParentsPage() {
         unique.add(grade);
       }
     }
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+    return Array.from(unique).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true }),
+    );
+  }, [parents]);
+
+  const gradeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const parent of parents) {
+      const seen = new Set<string>();
+      for (const grade of parent.grades) {
+        if (!grade || seen.has(grade)) continue;
+        seen.add(grade);
+        counts[grade] = (counts[grade] ?? 0) + 1;
+      }
+    }
+    return counts;
   }, [parents]);
 
   const filteredParents = useMemo(() => {
@@ -368,6 +383,7 @@ export default function ParentsPage() {
                       grades={grades}
                       gradeFilter={gradeFilter}
                       onGradeFilterChange={setGradeFilter}
+                      gradeCounts={gradeCounts}
                     />
                     <div className="flex flex-wrap items-center gap-2">
                       {hasActiveFilters ? (

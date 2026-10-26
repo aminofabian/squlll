@@ -43,8 +43,9 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
     items: [
       { title: "Dashboard", shortLabel: "Home", href: "/dashboard", icon: LayoutGrid },
       { title: "Students", shortLabel: "Students", href: "/students", icon: Users2 },
-      { title: "Classes", shortLabel: "Classes", href: "/classes", icon: Building2 },
+      { title: "Parents", shortLabel: "Parents", href: "/parents", icon: Users },
       { title: "Teachers", shortLabel: "Teachers", href: "/teachers", icon: GraduationCap },
+      { title: "Classes", shortLabel: "Classes", href: "/classes", icon: Building2 },
       { title: "Messages", shortLabel: "Chat", href: "/communication", icon: ICONS.messages },
       { title: "Communications", shortLabel: "Comms", href: "/communications", icon: Megaphone },
     ],
@@ -70,9 +71,10 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
 /** Daily-use pages — shown in expanded panel */
 export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Students", href: "/students", icon: Users2 },
+  { title: "Parents", href: "/parents", icon: Users },
   { title: "Teachers", href: "/teachers", icon: GraduationCap },
+  { title: "Classes", href: "/classes", icon: Building2 },
   { title: "Messages", href: "/communication", icon: ICONS.messages },
   { title: "Communications", href: "/communications", icon: Megaphone },
   { title: "Timetable", href: "/timetable", icon: ICONS.timetable },
@@ -83,7 +85,6 @@ export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
 /** Less frequent pages — tucked under "More" */
 export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
   { title: "Transport", href: "/transport", icon: ICONS.transport },
-  { title: "Parents", href: "/parents", icon: Users },
   { title: "Staff", href: "/staff", icon: Briefcase },
   { title: "Attendances", href: "/attendances", icon: ICONS.attendance },
   { title: "Grading", href: "/grading", icon: Trophy },
@@ -124,8 +125,8 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
     label: "People",
     items: [
       { title: "Students", href: "/students", icon: Users2 },
-      { title: "Teachers", href: "/teachers", icon: GraduationCap },
       { title: "Parents", href: "/parents", icon: Users },
+      { title: "Teachers", href: "/teachers", icon: GraduationCap },
       { title: "Staff", href: "/staff", icon: Briefcase },
     ],
   },
