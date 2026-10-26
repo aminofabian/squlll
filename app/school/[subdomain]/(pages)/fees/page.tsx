@@ -1874,6 +1874,9 @@ export default function FeesPage() {
     setShowRecordPaymentDrawer(true);
   };
 
+  const hasGradeRail =
+    feesSection === "overview" || feesSection === "balances";
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
       {/* Main Content */}
@@ -1893,60 +1896,75 @@ export default function FeesPage() {
 
         {/* Content Based on Current View */}
         {currentView === "dashboard" ? (
-          <FeesPageShell>
-            <div className="flex min-h-0 flex-1 flex-col">
-              <FeesPageChrome
-                feesSection={feesSection}
-                planDetailMode={
-                  !!planSlugFromUrl && feesSection === "plans"
-                }
-                assignmentCount={
-                  feeAssignmentsData?.totalFeeAssignments ?? undefined
-                }
-                hideReports={!feesAccess.canViewReports}
-                isReadOnly={feesAccess.isReadOnly}
-                onNavigateReports={() => navigateToFeesSection("reports")}
-                header={{
-                  collectionRate: bursarMetrics.collectionRate,
-                  totalExpected: bursarMetrics.totalExpected,
-                  totalCollected: bursarMetrics.totalCollected,
-                  todayPaymentCount: bursarMetrics.todayPaymentCount,
-                  overviewSetupMode:
-                    feesSection === "overview" &&
-                    !overviewBootstrapping &&
-                    !hasMeaningfulFeeMetrics({
-                      totalExpected: bursarMetrics.totalExpected,
-                      totalCollected: bursarMetrics.totalCollected,
-                      todayPaymentCount: bursarMetrics.todayPaymentCount,
-                    }) &&
-                    !setupMilestonesComplete(feeWorkflowCompleted),
-                  isReadOnly: feesAccess.isReadOnly,
-                  selectedStudent: selectedStudent,
-                  searchTerm,
-                  setSearchTerm,
-                  filteredStudents,
-                  onStudentSelect: handleStudentSelect,
-                  onClearSelection: handleClearStudentSelection,
-                  selectedGrade: selectedClass || "all",
-                  onGradeChange: setSelectedClass,
-                  gradeOptions: balanceClassOptions,
-                }}
-              />
+          <FeesPageShell fullBleed={hasGradeRail}>
+            <div
+              className={cn(
+                "flex min-h-0 min-w-0 flex-1 flex-col",
+                hasGradeRail && "lg:flex-row",
+              )}
+            >
+              {hasGradeRail ? (
+                <BalancesGradeSidebar
+                  selectedGradeName={selectedClass || "all"}
+                  onGradeNameChange={setSelectedClass}
+                />
+              ) : null}
 
-              <div className="flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden lg:flex-row">
-                {(feesSection === "overview" || feesSection === "balances") && (
-                  <BalancesGradeSidebar
-                    selectedGradeName={selectedClass || "all"}
-                    onGradeNameChange={setSelectedClass}
-                  />
+              <div
+                className={cn(
+                  "flex min-h-0 min-w-0 flex-1 flex-col",
+                  hasGradeRail && "px-2 py-2 sm:px-4 sm:py-3",
                 )}
-
+              >
                 <div
                   className={cn(
-                    "flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden",
-                    FEES_MOBILE.stack,
+                    "flex min-h-0 min-w-0 flex-1 flex-col",
+                    hasGradeRail && "mx-auto w-full max-w-7xl",
                   )}
                 >
+                    <FeesPageChrome
+                      feesSection={feesSection}
+                      planDetailMode={
+                        !!planSlugFromUrl && feesSection === "plans"
+                      }
+                      assignmentCount={
+                        feeAssignmentsData?.totalFeeAssignments ?? undefined
+                      }
+                      hideReports={!feesAccess.canViewReports}
+                      isReadOnly={feesAccess.isReadOnly}
+                      onNavigateReports={() => navigateToFeesSection("reports")}
+                      header={{
+                        collectionRate: bursarMetrics.collectionRate,
+                        totalExpected: bursarMetrics.totalExpected,
+                        totalCollected: bursarMetrics.totalCollected,
+                        todayPaymentCount: bursarMetrics.todayPaymentCount,
+                        overviewSetupMode:
+                          feesSection === "overview" &&
+                          !overviewBootstrapping &&
+                          !hasMeaningfulFeeMetrics({
+                            totalExpected: bursarMetrics.totalExpected,
+                            totalCollected: bursarMetrics.totalCollected,
+                            todayPaymentCount: bursarMetrics.todayPaymentCount,
+                          }) &&
+                          !setupMilestonesComplete(feeWorkflowCompleted),
+                        isReadOnly: feesAccess.isReadOnly,
+                        selectedStudent: selectedStudent,
+                        searchTerm,
+                        setSearchTerm,
+                        filteredStudents,
+                        onStudentSelect: handleStudentSelect,
+                        onClearSelection: handleClearStudentSelection,
+                        selectedGrade: selectedClass || "all",
+                        onGradeChange: setSelectedClass,
+                        gradeOptions: balanceClassOptions,
+                      }}
+                    />
+                  <div
+                    className={cn(
+                      "flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden",
+                      FEES_MOBILE.stack,
+                    )}
+                  >
               {feesSection === "overview" && (
                 <FeesOverviewBoard
                   metrics={bursarMetrics}
@@ -2181,6 +2199,7 @@ export default function FeesPage() {
                   <FeeAssignmentsView />
                 </FeesPanel>
               )}
+                  </div>
                 </div>
               </div>
             </div>

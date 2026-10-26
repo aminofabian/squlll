@@ -74,7 +74,7 @@ export function BalancesGradeSidebar({
       <Button
         type="button"
         variant="outline"
-        className="sticky top-[6.5rem] z-10 h-10 w-full justify-start gap-2 rounded-xl border-[#1a4d42]/15 bg-white text-xs text-[#1a4d42] shadow-sm lg:hidden"
+        className="h-10 w-full justify-start gap-2 rounded-xl border-[#1a4d42]/15 bg-white text-xs text-[#1a4d42] shadow-sm lg:hidden"
         onClick={() => setSheetOpen(true)}
       >
         <GraduationCap className="h-4 w-4 text-[#246a59]" />
@@ -91,7 +91,7 @@ export function BalancesGradeSidebar({
           className,
         )}
       >
-        <div className="sticky top-[7rem] flex max-h-[calc(100vh-9rem)] flex-col overflow-hidden px-2 py-2">
+        <div className="sticky top-[2.75rem] flex max-h-[calc(100vh-5.5rem)] flex-col overflow-hidden px-2 py-2">
           <p className="px-1 pb-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/45 dark:text-white/40">
             Grades
           </p>
