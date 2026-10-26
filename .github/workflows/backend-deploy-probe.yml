@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       app_uuid:
-        description: Coolify app UUID to deploy (leave blank to list apps)
+        description: Coolify app UUID to inspect/deploy (blank lists apps)
         required: false
       confirm:
         description: Type deploy to actually trigger a deployment
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: List or deploy
+      - name: List, inspect, or deploy
         env:
           WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
           TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
@@ -29,13 +29,18 @@ jobs:
           fi
           BASE="${WEBHOOK%/api/v1/*}"
           echo "Coolify host: $BASE"
+          echo "--- applications ---"
           APPS=$(curl -fsS -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" "$BASE/api/v1/applications")
-          echo "$APPS" | jq -r 'if type == "array" then .[] else (.data // [])[] end | [.uuid, .name, (.status // "")] | @tsv'
+          echo "$APPS" | jq -r 'if type == "array" then .[] else (.data // [])[] end | [.uuid, .name, (.status // ""), (.fqdn // "")] | @tsv'
+          echo "--- services ---"
+          curl -fsS -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" "$BASE/api/v1/services" | jq -r 'if type == "array" then .[] else (.data // [])[] end | [.uuid, .name, (.status // ""), (.fqdn // "")] | @tsv' || true
           if [ -n "${APP_UUID:-}" ]; then
-            if [ "${CONFIRM:-}" != "deploy" ]; then
-              echo "::error::Set confirm=deploy to trigger a deployment"
-              exit 1
+            echo "--- selected application ---"
+            curl -fsS -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" "$BASE/api/v1/applications/$APP_UUID" | jq '{uuid,name,fqdn,git_repository,git_branch,build_pack,dockerfile_location,status}'
+            if [ "${CONFIRM:-}" = "deploy" ]; then
+              curl -fsS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" "$BASE/api/v1/deploy?uuid=$APP_UUID&force=false"
+              echo "Deploy triggered for $APP_UUID"
+            else
+              echo "Inspection only — set confirm=deploy to deploy."
             fi
-            curl -fsS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" "$BASE/api/v1/deploy?uuid=$APP_UUID&force=false"
-            echo "Deploy triggered for $APP_UUID"
           fi
