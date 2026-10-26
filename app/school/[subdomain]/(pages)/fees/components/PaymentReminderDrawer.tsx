@@ -817,7 +817,7 @@ export default function PaymentReminderDrawer({
       onOpenChange={(open) => !open && handleClose()}
       direction="right"
     >
-      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[130rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 sm:max-w-[130rem] lg:w-[96vw]">
+      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[130rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 data-[vaul-drawer-direction=right]:max-w-[130rem] data-[vaul-drawer-direction=right]:sm:max-w-[130rem] data-[vaul-drawer-direction=right]:lg:w-[96vw] sm:max-w-[130rem] lg:w-[96vw]">
         <DrawerHeader className="relative shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-4 pr-14 sm:px-5 sm:pt-5">
           <DrawerClose asChild>
             <button
