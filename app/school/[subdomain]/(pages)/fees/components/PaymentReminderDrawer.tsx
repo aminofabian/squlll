@@ -817,7 +817,7 @@ export default function PaymentReminderDrawer({
       onOpenChange={(open) => !open && handleClose()}
       direction="right"
     >
-      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[65rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 sm:max-w-[65rem]">
+      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[130rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 sm:max-w-[130rem] lg:w-[96vw]">
         <DrawerHeader className="relative shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-4 pr-14 sm:px-5 sm:pt-5">
           <DrawerClose asChild>
             <button
@@ -886,7 +886,7 @@ export default function PaymentReminderDrawer({
             </div>
           ) : null}
 
-          <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_28rem]">
             <div className="min-h-0 overflow-y-auto px-4 py-3 sm:px-5">
               {step === "audience" ? (
                 <div className="space-y-3">
@@ -1134,7 +1134,7 @@ export default function PaymentReminderDrawer({
                         }))
                       }
                       placeholder="Write your reminder or pick a template above."
-                      className="min-h-[15rem] resize-y text-[12px] leading-relaxed"
+                      className="min-h-[15rem] resize-y text-[12px] leading-relaxed lg:min-h-[20rem]"
                     />
                     <p className="mt-1.5 text-[9px] leading-relaxed text-slate-400">
                       Tags are replaced per family when queued. Wrap words in{" "}
