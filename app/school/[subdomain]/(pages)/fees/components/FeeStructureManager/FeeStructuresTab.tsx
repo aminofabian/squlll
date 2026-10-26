@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
 import { FeeStructure } from '../../types'
 import { ProcessedFeeStructure } from './types'
-import { Loader2, RefreshCw, Search, X } from 'lucide-react'
+import { GraduationCap, Loader2, RefreshCw, Search, X } from 'lucide-react'
 import { FeePlansTable } from './FeePlansTable'
 import { FeePlansListNextSteps } from './FeePlansListNextSteps'
 import { FeePlansListAlerts } from './FeePlansListAlerts'
@@ -46,6 +46,9 @@ interface FeeStructuresTabProps {
   onGuidedSetup?: () => void
   hasFetched?: boolean
   isDeleting?: boolean
+  /** Shared grade filter from the page rail. */
+  selectedGradeName?: string
+  onClearGradeFilter?: () => void
   /** From URL ?plan= — when set, show single-plan detail */
   selectedPlanSlug?: string | null
   onBackToPlanList?: () => void
@@ -76,6 +79,8 @@ export const FeeStructuresTab = ({
   onGuidedSetup,
   hasFetched = false,
   isDeleting = false,
+  selectedGradeName = "all",
+  onClearGradeFilter,
   selectedPlanSlug = null,
   onBackToPlanList,
   collectionByPlanId,
@@ -145,9 +150,37 @@ export const FeeStructuresTab = ({
     return Array.from(years).sort().reverse()
   }, [graphQLStructures])
 
+  const gradeFilterActive =
+    !!selectedGradeName && selectedGradeName !== "all";
+
   // Filter structures
   const filteredStructures = useMemo(() => {
+    const matchesGrade = (structure: ProcessedFeeStructure) => {
+      if (!gradeFilterActive) return true;
+      const planGrades = (structure.gradeLevels ?? []).map(
+        (grade) =>
+          grade.shortName || grade.gradeLevel?.name || grade.name || "",
+      );
+      if (
+        planGrades.some(
+          (grade) =>
+            grade === selectedGradeName ||
+            grade.includes(selectedGradeName) ||
+            selectedGradeName.includes(grade),
+        )
+      ) {
+        return true;
+      }
+      return getLinkedClasses(structure.structureId).some(
+        (entry) =>
+          entry.name === selectedGradeName ||
+          entry.name.includes(selectedGradeName) ||
+          selectedGradeName.includes(entry.name),
+      );
+    };
+
     return graphQLStructures.filter(structure => {
+      if (!matchesGrade(structure)) return false;
       // Search filter
       const matchesSearch = searchQuery === '' || 
         structure.structureName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -164,7 +197,15 @@ export const FeeStructuresTab = ({
 
       return matchesSearch && matchesStatus && matchesYear
     })
-  }, [graphQLStructures, searchQuery, statusFilter, academicYearFilter])
+  }, [
+    graphQLStructures,
+    searchQuery,
+    statusFilter,
+    academicYearFilter,
+    selectedGradeName,
+    gradeFilterActive,
+    getLinkedClasses,
+  ])
 
   const activePlan = useMemo(
     () => findFeePlanBySlug(graphQLStructures, selectedPlanSlug),
@@ -264,10 +305,19 @@ export const FeeStructuresTab = ({
       )
     }
 
+    const scopedSchoolGrades = gradeFilterActive
+      ? schoolGrades.filter(
+          (grade) =>
+            grade.name === selectedGradeName ||
+            grade.name.includes(selectedGradeName) ||
+            selectedGradeName.includes(grade.name),
+        )
+      : schoolGrades
+
     const yearGroupsForList = buildAcademicYearPlanGroups(
       filteredStructures,
       feeAssignments,
-      schoolGrades,
+      scopedSchoolGrades.length > 0 ? scopedSchoolGrades : schoolGrades,
     )
     const allConflicts = yearGroupsForList.flatMap((g) => g.conflicts)
     const conflictCount = allConflicts.length
@@ -275,13 +325,13 @@ export const FeeStructuresTab = ({
       (s) => !collectionByPlanId?.get(s.structureId)?.hasBilling,
     ).length
     const schoolYears = new Set(
-      graphQLStructures.map((s) => s.academicYear),
+      filteredStructures.map((s) => s.academicYear),
     ).size
     const coverageGroup =
       yearGroupsForList.find((g) => g.linkedGradeCount > 0) ??
       yearGroupsForList[0]
     const dashboardStats = buildFeePlansDashboardStats(
-      graphQLStructures,
+      filteredStructures,
       getLinkedClassCount,
       {
         schoolYears,
@@ -299,6 +349,27 @@ export const FeeStructuresTab = ({
           onCreateNew={onCreateNew}
           canCreate={canCreateFeeStructure}
         />
+        {gradeFilterActive ? (
+          <div className="flex flex-wrap items-center gap-2 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 text-[11px] text-[#1a4d42]/65 sm:px-4">
+            <GraduationCap className="h-3.5 w-3.5 text-[#246a59]" />
+            <span>
+              Showing plans for{" "}
+              <strong className="font-semibold text-[#0a1f1a]">
+                {selectedGradeName}
+              </strong>
+            </span>
+            {onClearGradeFilter ? (
+              <button
+                type="button"
+                onClick={onClearGradeFilter}
+                className="ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold text-[#246a59] hover:bg-white"
+              >
+                <X className="h-3 w-3" />
+                Clear grade
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         <FeePlansListAlerts
           conflictCount={conflictCount}
           conflicts={allConflicts}
@@ -325,7 +396,7 @@ export const FeeStructuresTab = ({
               getLinkedClassCount={getLinkedClassCount}
               collectionByPlanId={collectionByPlanId}
               assignments={feeAssignments}
-              schoolGrades={schoolGrades}
+              schoolGrades={scopedSchoolGrades.length > 0 ? scopedSchoolGrades : schoolGrades}
               pageLevelConflictAlert={conflictCount > 0}
               onLinkMissingGrades={onLinkMissingGrades}
               onLinkGrades={(structure) =>
@@ -356,7 +427,10 @@ export const FeeStructuresTab = ({
               <p className="mt-1 text-xs text-[#1a4d42]/55">
                 Try a different search or clear filters to see all structures.
               </p>
-              {(searchQuery || statusFilter !== 'all' || academicYearFilter !== 'all') && (
+              {(searchQuery ||
+                statusFilter !== 'all' ||
+                academicYearFilter !== 'all' ||
+                gradeFilterActive) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -365,6 +439,7 @@ export const FeeStructuresTab = ({
                     setSearchQuery('')
                     setStatusFilter('all')
                     setAcademicYearFilter('all')
+                    onClearGradeFilter?.()
                   }}
                 >
                   <X className="mr-1.5 h-3 w-3" />

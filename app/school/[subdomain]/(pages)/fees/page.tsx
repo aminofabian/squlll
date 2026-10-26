@@ -1875,7 +1875,9 @@ export default function FeesPage() {
   };
 
   const hasGradeRail =
-    feesSection === "overview" || feesSection === "balances";
+    feesSection === "overview" ||
+    feesSection === "balances" ||
+    (feesSection === "plans" && !planSlugFromUrl);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
@@ -2070,6 +2072,8 @@ export default function FeesPage() {
                     onGuidedSetup={openGuidedSetup}
                     hasFetched={!!lastFetchTime}
                     isDeleting={isDeleting}
+                    selectedGradeName={selectedClass || "all"}
+                    onClearGradeFilter={() => setSelectedClass("all")}
                     selectedPlanSlug={planSlugFromUrl}
                     onBackToPlanList={backToFeePlanList}
                     canManage={feesAccess.canManagePlans}
