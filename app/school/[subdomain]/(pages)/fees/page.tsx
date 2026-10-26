@@ -160,7 +160,7 @@ export default function FeesPage() {
   );
 
   const feesAccess = useFeesAccess();
-  const { selectedTerm, termsLoading } = useTerm();
+  const { selectedTerm, availableTerms, termsLoading } = useTerm();
   const {
     applyFeeAdjustment,
     isApplying: isApplyingAdjustment,
@@ -923,6 +923,34 @@ export default function FeesPage() {
   const bursarMetrics = useBursarDashboardMetrics(overviewStudents, {
     studentIds: overviewStudentIdSet,
   });
+
+  const reminderNextTerm = useMemo(() => {
+    const terms = [...(availableTerms ?? [])].sort((a, b) =>
+      a.startDate.localeCompare(b.startDate),
+    );
+    const index = terms.findIndex((term) => term.id === selectedTerm?.id);
+    return index >= 0 ? (terms[index + 1] ?? null) : null;
+  }, [availableTerms, selectedTerm?.id]);
+
+  const reminderNextTermFeesByGrade = useMemo(() => {
+    const byGrade: Record<string, number> = {};
+    const termId = reminderNextTerm?.id;
+    if (!termId) return byGrade;
+
+    for (const plan of processedFeeStructures) {
+      const buckets = plan.termFeesMap?.[termId] ?? [];
+      const total = buckets.reduce(
+        (sum, bucket) => sum + (bucket.totalAmount || 0),
+        0,
+      );
+      if (total <= 0) continue;
+      for (const gradeLevel of plan.gradeLevels ?? []) {
+        const name = gradeLevel.name || gradeLevel.gradeLevel?.name;
+        if (name && byGrade[name] == null) byGrade[name] = total;
+      }
+    }
+    return byGrade;
+  }, [processedFeeStructures, reminderNextTerm?.id]);
 
   const overviewBootstrapping =
     studentsLoading || feeAssignmentsLoading;
@@ -2426,6 +2454,8 @@ export default function FeesPage() {
         setForm={setReminderForm}
         onSubmit={handleSubmitReminder}
         students={allStudentsSummary}
+        nextTermName={reminderNextTerm?.name}
+        nextTermFeesByGrade={reminderNextTermFeesByGrade}
       />
 
       {/* Record Payment Drawer */}

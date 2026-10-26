@@ -33,6 +33,8 @@ interface PaymentReminderDrawerProps {
   setForm: React.Dispatch<React.SetStateAction<PaymentReminderForm>>;
   onSubmit: (filteredStudentIds?: string[]) => void;
   students?: StudentSummaryFromAPI[];
+  nextTermName?: string;
+  nextTermFeesByGrade?: Record<string, number>;
 }
 
 type ReminderTemplate = {
@@ -44,41 +46,55 @@ type ReminderTemplate = {
 
 const REMINDER_TEMPLATES: ReminderTemplate[] = [
   {
-    id: "friendly",
-    label: "Friendly",
-    hint: "Warm nudge",
-    body: `Dear parent/guardian,
+    id: "balance",
+    label: "Balance reminder",
+    hint: "Friendly, with link",
+    body: `Dear Parent/Guardian,
 
-A friendly reminder that fees for {{student_name}} ({{grade}}) have an outstanding balance of {{balance}}.
+This is a friendly reminder that {{student_name}} ({{grade}}) has an outstanding school fee balance of KES {{balance}}.
 
-You can view the statement and pay securely here:
+Kindly make the payment at your earliest convenience using the link below:
+
 {{payment_link}}
 
-Thank you,
-The school finance office`,
+You can view the fee breakdown and payment details through the link.
+
+If you have already made the payment, please disregard this reminder. For any questions or assistance, kindly contact the school office.
+
+Thank you for your continued support.
+
+School Administration`,
+  },
+  {
+    id: "next-term",
+    label: "Next term",
+    hint: "Back-to-school",
+    body: `Dear Parent/Guardian,
+
+As we prepare for {{next_term}}, kindly arrange payment of the school fees for {{student_name}} in {{grade}}.
+
+The fees for the upcoming term are KES {{next_term_fees}}.
+
+You can view the fee details and make your payment using the link below:
+
+{{payment_link}}
+
+We encourage you to make payments early to ensure a smooth start to the new term.
+
+Thank you for your continued support.
+
+Kind regards,
+School Administration`,
   },
   {
     id: "urgent",
     label: "Urgent",
     hint: "Needs action",
-    body: `Dear parent/guardian,
+    body: `Dear Parent/Guardian,
 
-This is a reminder that {{student_name}} ({{grade}}) has an outstanding fee balance of {{balance}}.
+This is a reminder that {{student_name}} ({{grade}}) has an outstanding fee balance of KES {{balance}}.
 
 Please pay, or reply to arrange a plan, as soon as possible:
-{{payment_link}}
-
-Thank you.`,
-  },
-  {
-    id: "final",
-    label: "Final notice",
-    hint: "Firm, last call",
-    body: `Dear parent/guardian,
-
-Our records show an outstanding balance of {{balance}} for {{student_name}} ({{grade}}).
-
-Please settle it or contact the school office this week:
 {{payment_link}}
 
 Thank you.`,
@@ -87,9 +103,9 @@ Thank you.`,
     id: "plan",
     label: "Payment plan",
     hint: "Offer installments",
-    body: `Dear parent/guardian,
+    body: `Dear Parent/Guardian,
 
-{{student_name}} ({{grade}}) has an outstanding balance of {{balance}}. If paying in full is difficult, reply and we can arrange a payment plan.
+{{student_name}} ({{grade}}) has an outstanding balance of KES {{balance}}. If paying in full is difficult, reply and we can arrange a payment plan.
 
 View the statement and pay here:
 {{payment_link}}
@@ -103,6 +119,8 @@ const REMINDER_TAGS = [
   { label: "Grade", token: "{{grade}}" },
   { label: "Balance", token: "{{balance}}" },
   { label: "Admission no.", token: "{{admission_number}}" },
+  { label: "Next term", token: "{{next_term}}" },
+  { label: "Next term fees", token: "{{next_term_fees}}" },
   { label: "Payment link", token: "{{payment_link}}" },
 ];
 
@@ -113,19 +131,35 @@ export default function PaymentReminderDrawer({
   setForm,
   onSubmit,
   students = [],
+  nextTermName,
+  nextTermFeesByGrade = {},
 }: PaymentReminderDrawerProps) {
   const [step, setStep] = useState<"compose" | "preview">("compose");
   const [minBalance, setMinBalance] = useState("0");
   const [copiedLink, setCopiedLink] = useState(false);
   const messageRef = useRef<HTMLTextAreaElement>(null);
+  const prefilledRef = useRef(false);
   const portalLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/parent?tab=payments`
       : "";
 
   useEffect(() => {
-    if (isOpen) setStep("compose");
-  }, [isOpen]);
+    if (!isOpen) {
+      prefilledRef.current = false;
+      return;
+    }
+    setStep("compose");
+    if (!prefilledRef.current) {
+      prefilledRef.current = true;
+      if (!form.message.trim()) {
+        setForm((prev) => ({
+          ...prev,
+          message: REMINDER_TEMPLATES[0].body,
+        }));
+      }
+    }
+  }, [isOpen, form.message, setForm]);
 
   const selectedStudents = useMemo(
     () => students.filter((s) => form.studentIds.includes(s.id)),
@@ -141,13 +175,26 @@ export default function PaymentReminderDrawer({
     form.paymentLink !== undefined ? form.paymentLink : portalLink;
   const sampleStudent = filteredByBalance[0];
 
+  const nextTermFeeFor = (gradeLevelName?: string) => {
+    if (!gradeLevelName) return undefined;
+    if (nextTermFeesByGrade[gradeLevelName] != null) {
+      return nextTermFeesByGrade[gradeLevelName];
+    }
+    const match = Object.entries(nextTermFeesByGrade).find(
+      ([grade]) =>
+        gradeLevelName.includes(grade) || grade.includes(gradeLevelName),
+    );
+    return match?.[1];
+  };
+
   const renderMessage = (
     template: string,
     student?: StudentSummaryFromAPI,
   ) => {
     const balance = student
-      ? `KES ${student.feeSummary.balance.toLocaleString()}`
-      : "the outstanding balance";
+      ? student.feeSummary.balance.toLocaleString()
+      : "the amount";
+    const upcomingFee = nextTermFeeFor(student?.gradeLevelName);
     return template
       .replaceAll("{{student_name}}", student?.studentName ?? "your child")
       .replaceAll("{{grade}}", student?.gradeLevelName ?? "your child’s grade")
@@ -155,6 +202,14 @@ export default function PaymentReminderDrawer({
       .replaceAll(
         "{{admission_number}}",
         student?.admissionNumber ?? "on file",
+      )
+      .replaceAll(
+        "{{next_term}}",
+        nextTermName?.trim() || "the next term",
+      )
+      .replaceAll(
+        "{{next_term_fees}}",
+        upcomingFee != null ? upcomingFee.toLocaleString() : "[amount]",
       )
       .replaceAll("{{payment_link}}", paymentLink.trim() || "[payment link]");
   };
@@ -384,6 +439,12 @@ export default function PaymentReminderDrawer({
                   <div className="whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
                     {previewMessage}
                   </div>
+                  {previewMessage.includes("[amount]") ? (
+                    <p className="mt-1.5 text-[9px] font-medium text-amber-700">
+                      No next-term fee was found for this grade. Replace{" "}
+                      <code>[amount]</code> before sending.
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
 
