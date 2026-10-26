@@ -99,6 +99,7 @@ import { useFeeReminderLog } from "./hooks/useFeeReminderLog";
 import { useFeesAccess } from "./hooks/useFeesAccess";
 import { useTerm } from "../contexts/TermContext";
 import { useFeeAuditLog } from "./hooks/useFeeAuditLog";
+import { resolveTermWindow } from "./lib/termWindow";
 import { FeesReportsPanel } from "./components/FeesReportsPanel";
 import {
   FeeAdjustmentDrawer,
@@ -924,13 +925,11 @@ export default function FeesPage() {
     studentIds: overviewStudentIdSet,
   });
 
-  const reminderNextTerm = useMemo(() => {
-    const terms = [...(availableTerms ?? [])].sort((a, b) =>
-      a.startDate.localeCompare(b.startDate),
-    );
-    const index = terms.findIndex((term) => term.id === selectedTerm?.id);
-    return index >= 0 ? (terms[index + 1] ?? null) : null;
-  }, [availableTerms, selectedTerm?.id]);
+  const reminderTermWindow = useMemo(
+    () => resolveTermWindow(availableTerms ?? []),
+    [availableTerms],
+  );
+  const reminderNextTerm = reminderTermWindow.next;
 
   const reminderNextTermFeesByGrade = useMemo(() => {
     const byGrade: Record<string, number> = {};
@@ -2454,7 +2453,9 @@ export default function FeesPage() {
         setForm={setReminderForm}
         onSubmit={handleSubmitReminder}
         students={allStudentsSummary}
+        currentTermName={reminderTermWindow.current?.name}
         nextTermName={reminderNextTerm?.name}
+        nextTermStartDate={reminderNextTerm?.startDate}
         nextTermFeesByGrade={reminderNextTermFeesByGrade}
       />
 

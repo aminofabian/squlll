@@ -20,6 +20,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CalendarDays,
   CheckCircle2,
   Copy,
   ExternalLink,
@@ -42,7 +43,9 @@ interface PaymentReminderDrawerProps {
   setForm: React.Dispatch<React.SetStateAction<PaymentReminderForm>>;
   onSubmit: (filteredStudentIds?: string[]) => void;
   students?: StudentSummaryFromAPI[];
+  currentTermName?: string;
   nextTermName?: string;
+  nextTermStartDate?: string;
   nextTermFeesByGrade?: Record<string, number>;
 }
 
@@ -405,6 +408,17 @@ function RecipientList({
   );
 }
 
+function formatTermDate(value?: string): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function PaymentReminderDrawer({
   isOpen,
   onClose,
@@ -412,7 +426,9 @@ export default function PaymentReminderDrawer({
   setForm,
   onSubmit,
   students = [],
+  currentTermName,
   nextTermName,
+  nextTermStartDate,
   nextTermFeesByGrade = {},
 }: PaymentReminderDrawerProps) {
   const [step, setStep] = useState<ReminderStep>("compose");
@@ -598,6 +614,46 @@ export default function PaymentReminderDrawer({
               {step === "audience" ? (
                 <div className="space-y-3">
                   <SectionCard
+                    icon={CalendarDays}
+                    title="Term window"
+                    description="Detected from the school calendar, not just the term picker."
+                    action={
+                      <span className="rounded-full bg-[#e8f2ef] px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-[#1a4d42]/60">
+                        From dates
+                      </span>
+                    }
+                  >
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-2.5 py-2">
+                        <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                          Current term
+                        </p>
+                        <p className="mt-0.5 text-[11px] font-semibold text-slate-900">
+                          {currentTermName || "No term in session"}
+                        </p>
+                        <p className="mt-0.5 text-[9px] text-slate-500">
+                          {currentTermName
+                            ? "Today falls inside this term."
+                            : "Today is before or between scheduled terms."}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-[#1a4d42]/12 bg-[#f8fbfa] px-2.5 py-2">
+                        <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-[#1a4d42]/45">
+                          Next term
+                        </p>
+                        <p className="mt-0.5 text-[11px] font-semibold text-[#0a1f1a]">
+                          {nextTermName || "Not scheduled"}
+                        </p>
+                        <p className="mt-0.5 text-[9px] text-[#1a4d42]/55">
+                          {nextTermStartDate
+                            ? `Starts ${formatTermDate(nextTermStartDate)}.`
+                            : "No upcoming term in this calendar."}
+                        </p>
+                      </div>
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard
                     icon={Users}
                     title="Audience"
                     description="Only families in this list will receive the reminder."
@@ -724,6 +780,18 @@ export default function PaymentReminderDrawer({
                     >
                       Change
                     </Button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-1.5 text-[9.5px] text-[#1a4d42]/70">
+                    <CalendarDays className="h-3 w-3" />
+                    <span className="font-semibold text-[#0a1f1a]">Next term:</span>
+                    <span>{nextTermName || "Not scheduled"}</span>
+                    {nextTermStartDate ? (
+                      <span>· starts {formatTermDate(nextTermStartDate)}</span>
+                    ) : null}
+                    <span className="ml-auto rounded-full bg-white px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#1a4d42]/45">
+                      From dates
+                    </span>
                   </div>
 
                   <SectionCard
