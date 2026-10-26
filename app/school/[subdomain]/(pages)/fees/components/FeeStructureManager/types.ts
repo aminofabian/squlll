@@ -34,6 +34,8 @@ export interface FeeStructureToAssign {
   academicYearId?: string
   termId?: string
   isActive?: boolean
+  /** Grades already linked to this plan — shown separately in the drawer. */
+  linkedGrades?: Array<{ id: string; name: string }>
 }
 
 // Structure for delete confirmation

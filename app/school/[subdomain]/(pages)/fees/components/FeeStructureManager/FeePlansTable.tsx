@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronRight, Link2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { FEES_BRAND, FEES_LAYOUT, FEES_TH } from "../../lib/fees-ui";
 import type { ProcessedFeeStructure } from "./types";
 import {
@@ -61,6 +62,8 @@ interface FeePlansTableProps {
   assignments?: FeeAssignmentGroup[];
   schoolGrades?: SchoolGradeRef[];
   pageLevelConflictAlert?: boolean;
+  /** Opens the link-grades drawer for this plan. */
+  onLinkGrades?: (structure: ProcessedFeeStructure) => void;
   className?: string;
 }
 
@@ -173,7 +176,11 @@ function PlanGradesLinked({ linked }: { linked: number }) {
   }
 
   return (
-    <span className="text-sm font-medium tabular-nums text-slate-800">
+    <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums text-slate-800">
+      <CheckCircle2
+        className="h-3.5 w-3.5 shrink-0 text-emerald-600"
+        aria-hidden
+      />
       {linked} grade{linked === 1 ? "" : "s"}
     </span>
   );
@@ -377,6 +384,7 @@ export function FeePlansTable({
   assignments,
   schoolGrades = [],
   pageLevelConflictAlert = false,
+  onLinkGrades,
   className,
 }: FeePlansTableProps) {
   const router = useRouter();
@@ -473,16 +481,45 @@ export function FeePlansTable({
                             <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-300" />
                           </div>
                         </button>
-                        {unbilled && !allPlansUnbilled ? (
-                          <div className="border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-2">
-                            <Link
-                              href={feesOverviewHref()}
-                              scroll={false}
-                              className="text-[11px] font-semibold hover:underline"
-                              style={{ color: FEES_BRAND.primary }}
-                            >
-                              Bill on Overview →
-                            </Link>
+                        {onLinkGrades || (unbilled && !allPlansUnbilled) ? (
+                          <div className="flex items-center justify-between gap-2 border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-2">
+                            {onLinkGrades ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-7 gap-1 rounded-lg px-2 text-[11px] font-medium text-[#1a4d42]",
+                                  linked === 0
+                                    ? "border-[#246a59]/25 bg-[#e8f2ef] hover:bg-[#d9ebe5]"
+                                    : "border-[#1a4d42]/15 bg-white hover:bg-[#e8f2ef]",
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onLinkGrades(structure);
+                                }}
+                                aria-label={
+                                  linked === 0
+                                    ? `Link grades to ${structure.structureName}`
+                                    : `Add grades to ${structure.structureName}`
+                                }
+                              >
+                                <Link2 className="h-3 w-3" />
+                                {linked === 0 ? "Link grades" : "Add grades"}
+                              </Button>
+                            ) : (
+                              <span />
+                            )}
+                            {unbilled && !allPlansUnbilled ? (
+                              <Link
+                                href={feesOverviewHref()}
+                                scroll={false}
+                                className="text-[11px] font-semibold hover:underline"
+                                style={{ color: FEES_BRAND.primary }}
+                              >
+                                Bill on Overview →
+                              </Link>
+                            ) : null}
                           </div>
                         ) : null}
                       </div>
@@ -494,10 +531,11 @@ export function FeePlansTable({
               <div className={cn("hidden md:block", FEES_LAYOUT.tableContained)}>
                 <Table className="w-full table-fixed">
                   <colgroup>
-                    <col style={{ width: "36%" }} />
-                    <col style={{ width: "14%" }} />
-                    <col style={{ width: "16%" }} />
-                    <col style={{ width: "34%" }} />
+                    <col style={{ width: "33%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "15%" }} />
+                    <col style={{ width: "28%" }} />
+                    <col style={{ width: "12%" }} />
                   </colgroup>
                   <TableHeader>
                     <TableRow className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] hover:bg-[#f8fbfa]">
@@ -512,7 +550,7 @@ export function FeePlansTable({
                       </TableHead>
                       <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint
-                          label="Classes"
+                          label="Grades"
                           hint="Grades linked to this plan"
                         />
                       </TableHead>
@@ -521,6 +559,9 @@ export function FeePlansTable({
                           label="Billing"
                           hint="Collection and whether students have been billed"
                         />
+                      </TableHead>
+                      <TableHead className={cn("min-w-0", FEES_TH)}>
+                        <span className="sr-only">Link grades</span>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -572,9 +613,42 @@ export function FeePlansTable({
                             <CollectionCell
                               stats={collection}
                               yearTotal={yearTotal}
-                              showChevron
+                              showChevron={!onLinkGrades}
                               compactUnbilled={allPlansUnbilled}
                             />
+                          </TableCell>
+                          <TableCell className="min-w-0 py-3 pl-1 pr-2 text-right">
+                            {onLinkGrades ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-7 gap-1 rounded-lg px-2 text-[11px] font-medium text-[#1a4d42]",
+                                  linked === 0
+                                    ? "border-[#246a59]/25 bg-[#e8f2ef] hover:bg-[#d9ebe5]"
+                                    : "border-[#1a4d42]/15 bg-white hover:bg-[#e8f2ef]",
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onLinkGrades(structure);
+                                }}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                aria-label={
+                                  linked === 0
+                                    ? `Link grades to ${structure.structureName}`
+                                    : `Add grades to ${structure.structureName}`
+                                }
+                              >
+                                <Link2 className="h-3 w-3 shrink-0" />
+                                <span className="hidden xl:inline">
+                                  {linked === 0 ? "Link grades" : "Add grades"}
+                                </span>
+                                <span className="xl:hidden">
+                                  {linked === 0 ? "Link" : "Add"}
+                                </span>
+                              </Button>
+                            ) : null}
                           </TableCell>
                         </TableRow>
                       );

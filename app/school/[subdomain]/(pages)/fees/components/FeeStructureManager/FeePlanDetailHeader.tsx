@@ -179,7 +179,7 @@ export function FeePlanDetailHeader({
                     disabled={isDeleting}
                   >
                     <Link2 className="h-3.5 w-3.5 shrink-0" />
-                    Link
+                    Link grades
                   </Button>
                 ) : null}
                 {showPrimaryEdit && !showPrimaryBill ? (
@@ -242,7 +242,7 @@ export function FeePlanDetailHeader({
                       {!showPrimaryLink && canModifyPlan ? (
                         <DropdownMenuItem onClick={onLinkClasses}>
                           <Link2 className="mr-2 h-4 w-4" />
-                          Link classes
+                          Add grades
                         </DropdownMenuItem>
                       ) : null}
                       {!showPrimaryBill && canBill && onBillStudents ? (

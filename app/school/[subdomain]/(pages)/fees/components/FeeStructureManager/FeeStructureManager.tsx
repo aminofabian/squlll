@@ -260,7 +260,8 @@ export const FeeStructureManager = ({
       academicYear,
       academicYearId,
       termId,
-      isActive: true
+      isActive: true,
+      linkedGrades: getLinkedClasses(feeStructureId),
     })
     setIsAssignModalOpen(true)
   }

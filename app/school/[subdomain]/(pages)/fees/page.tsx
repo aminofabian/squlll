@@ -236,6 +236,8 @@ export default function FeesPage() {
     name: string;
     academicYear?: string;
     isActive?: boolean;
+    /** Grades already linked to this plan — shown separately in the drawer. */
+    linkedGrades?: Array<{ id: string; name: string }>;
   } | null>(null);
 
   const {
@@ -1248,6 +1250,7 @@ export default function FeesPage() {
         name: structure.structureName,
         academicYear: structure.academicYear,
         isActive: structure.isActive,
+        linkedGrades: getLinkedClasses(structure.structureId),
       });
       setIsAssignModalOpen(true);
     } else {

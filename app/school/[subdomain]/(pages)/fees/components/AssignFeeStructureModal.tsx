@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
 import {
   Drawer,
   DrawerContent,
@@ -13,7 +13,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, Users, GraduationCap, X, Check, Link2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  GraduationCap,
+  Link2,
+  Loader2,
+  Users,
+  X,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
 import { Grade } from '../types'
@@ -31,6 +40,8 @@ interface FeeStructure {
   academicYearId?: string
   termId?: string
   isActive?: boolean
+  /** Grades already linked to this plan (tenant grade-level ids). */
+  linkedGrades?: Array<{ id: string; name: string }>
 }
 
 interface AssignFeeStructureModalProps {
@@ -298,13 +309,80 @@ export const AssignFeeStructureModal = ({
   const isLoading =
     (availableGrades.length === 0 && isLoadingGradeLevels) ||
     isLoadingFilteredStructure
-  const isShowingGradeLevels = availableGrades.length === 0
-  const gradeLabel = isShowingGradeLevels ? 'grade' : 'class'
-  const gradeLabelPlural = isShowingGradeLevels ? 'grades' : 'classes'
+  // Fee assignments are always grade-level links; keep the language
+  // consistent even when the caller supplies class/stream cards.
+  const gradeLabel = 'grade'
+  const gradeLabelPlural = 'grades'
+
+  const linkedKeySet = useMemo(() => {
+    const keys = new Set<string>()
+    for (const grade of feeStructure?.linkedGrades ?? []) {
+      if (grade.id) keys.add(grade.id)
+    }
+    return keys
+  }, [feeStructure])
+
+  const isLinkedGrade = useCallback(
+    (grade: (typeof displayItems)[number]) =>
+      !!feeStructure &&
+      (linkedKeySet.has(grade.tenantGradeLevelId) ||
+        linkedKeySet.has(grade.id) ||
+        grade.feeStructureId === feeStructure.id),
+    [feeStructure, linkedKeySet],
+  )
+
+  /** Only grades that are not already on this plan can be selected. */
+  const selectableItems = useMemo(
+    () => displayItems.filter((grade) => !isLinkedGrade(grade)),
+    [displayItems, isLinkedGrade],
+  )
+
+  /** Already-linked grades, including names that are not in the current filter. */
+  const linkedItems = useMemo(() => {
+    const byKey = new Map<
+      string,
+      { key: string; name: string; studentCount?: number; section?: string }
+    >()
+
+    for (const grade of feeStructure?.linkedGrades ?? []) {
+      if (!grade?.id || !grade?.name) continue
+      byKey.set(grade.id, { key: grade.id, name: grade.name })
+    }
+
+    for (const grade of displayItems) {
+      if (!isLinkedGrade(grade)) continue
+      const key = grade.tenantGradeLevelId || grade.id
+      const existing = byKey.get(key)
+      if (existing) {
+        if (existing.studentCount == null) {
+          existing.studentCount = grade.studentCount
+        }
+        if (!existing.section && grade.section) {
+          existing.section = grade.section
+        }
+      } else {
+        byKey.set(key, {
+          key,
+          name: grade.name,
+          studentCount: grade.studentCount,
+          section: grade.section,
+        })
+      }
+    }
+
+    return [...byKey.values()].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      }),
+    )
+  }, [feeStructure, displayItems, isLinkedGrade])
+
+  const hasExistingLinks = linkedItems.length > 0
 
   const allSelected =
-    displayItems.length > 0 &&
-    displayItems.every((g) => selectedGradeIds.includes(g.id))
+    selectableItems.length > 0 &&
+    selectableItems.every((g) => selectedGradeIds.includes(g.id))
 
   const hasNote = description.trim().length > 0
   const hasGrades = selectedGradeIds.length > 0
@@ -312,12 +390,13 @@ export const AssignFeeStructureModal = ({
   const flowCompleted = useMemo(
     (): Record<FlowStepId, boolean> => ({
       note: hasNote,
-      grades: hasGrades,
+      grades: hasGrades || hasExistingLinks,
     }),
-    [hasNote, hasGrades],
+    [hasNote, hasGrades, hasExistingLinks],
   )
 
-  const currentFlowStep: FlowStepId = hasGrades ? 'grades' : 'note'
+  const currentFlowStep: FlowStepId =
+    hasGrades || hasExistingLinks ? 'grades' : 'note'
 
   const selectedPreview = useMemo(
     () =>
@@ -325,6 +404,16 @@ export const AssignFeeStructureModal = ({
         .map((id) => displayItems.find((g) => g.id === id))
         .filter(Boolean) as (typeof displayItems)[number][],
     [selectedGradeIds, displayItems],
+  )
+
+  const selectedOnOtherPlan = useMemo(
+    () =>
+      selectedPreview.filter(
+        (grade) =>
+          !!grade.feeStructureId &&
+          grade.feeStructureId !== feeStructure?.id,
+      ),
+    [selectedPreview, feeStructure?.id],
   )
 
   useEffect(() => {
@@ -483,7 +572,7 @@ export const AssignFeeStructureModal = ({
     if (allSelected) {
       setSelectedGradeIds([])
     } else {
-      setSelectedGradeIds(displayItems.map((item) => item.id))
+      setSelectedGradeIds(selectableItems.map((item) => item.id))
     }
   }
 
@@ -610,13 +699,16 @@ export const AssignFeeStructureModal = ({
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="text-base font-semibold text-slate-900">
-                Link fee plan to grades
+                Link grades to this plan
               </span>
               {feeStructure ? (
                 <span className="truncate text-xs text-slate-500">
                   {feeStructure.name}
                   {feeStructure.academicYear
                     ? ` · ${feeStructure.academicYear}`
+                    : ''}
+                  {hasExistingLinks
+                    ? ` · ${linkedItems.length} already linked`
                     : ''}
                 </span>
               ) : (
@@ -676,11 +768,19 @@ export const AssignFeeStructureModal = ({
                 <DrawerSection
                   step={2}
                   title={`Which ${gradeLabelPlural} should get this fee plan?`}
-                  hint={`Tap to select. Applies to every student currently in that ${gradeLabel}.`}
+                  hint={
+                    hasExistingLinks
+                      ? `${linkedItems.length} already linked. Select any other ${gradeLabel} below to add it.`
+                      : `Tap to select. Applies to every student currently in that ${gradeLabel}.`
+                  }
                   action={
-                    displayItems.length > 0 && !isLoading
+                    selectableItems.length > 0 && !isLoading
                       ? sectionAction(
-                          allSelected ? 'Clear all' : 'Select all',
+                          allSelected
+                            ? 'Clear selection'
+                            : hasExistingLinks
+                              ? 'Select all unlinked'
+                              : 'Select all',
                           handleSelectAll,
                         )
                       : undefined
@@ -691,7 +791,7 @@ export const AssignFeeStructureModal = ({
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       Loading {gradeLabelPlural}…
                     </div>
-                  ) : displayItems.length === 0 ? (
+                  ) : displayItems.length === 0 && !hasExistingLinks ? (
                     <div className="py-6 text-center">
                       <GraduationCap className="mx-auto mb-2 h-8 w-8 text-slate-300" />
                       <p className="text-sm text-slate-600">
@@ -699,55 +799,136 @@ export const AssignFeeStructureModal = ({
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-500">
-                        {selectedGradeIds.length === 0 ? (
-                          `Select one or more ${gradeLabelPlural} below.`
-                        ) : (
-                          <>
-                            <span className="font-semibold tabular-nums text-slate-800">
-                              {selectedGradeIds.length}
-                            </span>{' '}
-                            {gradeLabel}
-                            {selectedGradeIds.length !== 1 ? 's' : ''}{' '}
-                            selected
-                          </>
-                        )}
-                      </p>
-                      <div className="max-h-[min(22rem,50vh)] space-y-2 overflow-y-auto pr-0.5">
-                        {displayItems.map((grade) => {
-                          const isSelected = selectedGradeIds.includes(
-                            grade.id,
-                          )
-                          const isAlreadyAssigned =
-                            grade.feeStructureId === feeStructure.id
-                          const displayTitle =
-                            grade.abbreviatedName +
-                            (grade.section ? ` · ${grade.section}` : '')
+                    <div className="space-y-3">
+                      {hasExistingLinks ? (
+                        <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/70 p-2.5">
+                          <div className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                              <Check className="h-3 w-3" strokeWidth={3} />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-emerald-950">
+                                Already linked
+                              </p>
+                              <p className="mt-0.5 text-[10px] leading-relaxed text-emerald-800/80">
+                                These grades stay linked. Only new selections
+                                below are added.
+                              </p>
+                            </div>
+                            <span className="rounded-full border border-emerald-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-emerald-800">
+                              {linkedItems.length}
+                            </span>
+                          </div>
+                          <ul className="mt-2 space-y-1">
+                            {linkedItems.map((grade) => (
+                              <li
+                                key={grade.key}
+                                className="flex min-w-0 items-center gap-2 rounded-md border border-emerald-100 bg-white/80 px-2 py-1.5"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                <span className="min-w-0 truncate text-xs font-medium text-slate-800">
+                                  {grade.name}
+                                </span>
+                                {grade.section ? (
+                                  <span className="shrink-0 text-[10px] text-slate-500">
+                                    {grade.section}
+                                  </span>
+                                ) : null}
+                                {grade.studentCount != null ? (
+                                  <span className="shrink-0 text-[10px] tabular-nums text-slate-500">
+                                    {grade.studentCount} student
+                                    {grade.studentCount === 1 ? '' : 's'}
+                                  </span>
+                                ) : null}
+                                <span className="ml-auto shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-emerald-800">
+                                  Linked
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
 
-                          return (
-                            <GradeSelectRow
-                              key={grade.id}
-                              id={`link-grade-${grade.id}`}
-                              checked={isSelected}
-                              onToggle={() => handleGradeToggle(grade.id)}
-                              title={displayTitle}
-                              subtitle={
-                                grade.studentCount !== undefined
-                                  ? `${grade.studentCount} student${grade.studentCount !== 1 ? 's' : ''} enrolled`
-                                  : undefined
-                              }
-                              badge={
-                                isAlreadyAssigned
-                                  ? 'Already on this plan'
-                                  : grade.feeStructureId
-                                    ? 'Other plan'
-                                    : undefined
-                              }
-                            />
-                          )
-                        })}
-                      </div>
+                      {selectableItems.length === 0 ? (
+                        <div className="py-5 text-center">
+                          <CheckCircle2 className="mx-auto mb-2 h-7 w-7 text-emerald-500" />
+                          <p className="text-sm font-medium text-slate-700">
+                            Every available {gradeLabel} is already linked
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            Nothing else to add for this plan.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="h-px flex-1 bg-slate-200" />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                              {hasExistingLinks
+                                ? 'Add more grades'
+                                : 'Available grades'}
+                            </span>
+                            <span className="h-px flex-1 bg-slate-200" />
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {selectedGradeIds.length === 0 ? (
+                              `Select one or more ${gradeLabelPlural} below.`
+                            ) : (
+                              <>
+                                <span className="font-semibold tabular-nums text-slate-800">
+                                  {selectedGradeIds.length}
+                                </span>{' '}
+                                {gradeLabel}
+                                {selectedGradeIds.length !== 1 ? 's' : ''}{' '}
+                                selected
+                              </>
+                            )}
+                          </p>
+                          <div className="max-h-[min(22rem,50vh)] space-y-2 overflow-y-auto pr-0.5">
+                            {selectableItems.map((grade) => {
+                              const isSelected = selectedGradeIds.includes(
+                                grade.id,
+                              )
+                              const displayTitle =
+                                grade.abbreviatedName +
+                                (grade.section ? ` · ${grade.section}` : '')
+
+                              return (
+                                <GradeSelectRow
+                                  key={grade.id}
+                                  id={`link-grade-${grade.id}`}
+                                  checked={isSelected}
+                                  onToggle={() => handleGradeToggle(grade.id)}
+                                  title={displayTitle}
+                                  subtitle={
+                                    grade.studentCount !== undefined
+                                      ? `${grade.studentCount} student${grade.studentCount !== 1 ? 's' : ''} enrolled`
+                                      : undefined
+                                  }
+                                  badge={
+                                    grade.feeStructureId
+                                      ? 'On another plan'
+                                      : undefined
+                                  }
+                                />
+                              )
+                            })}
+                          </div>
+
+                          {selectedOnOtherPlan.length > 0 ? (
+                            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-900">
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                              <span>
+                                {selectedOnOtherPlan.length} selected{' '}
+                                {gradeLabel}
+                                {selectedOnOtherPlan.length !== 1 ? 's are' : ' is'}{' '}
+                                also on another plan for this year. Linking
+                                may create a duplicate link for the same term.
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   )}
                 </DrawerSection>
@@ -823,7 +1004,15 @@ export const AssignFeeStructureModal = ({
                 </div>
               ) : (
                 <p className="w-full text-center text-xs text-slate-500">
-                  Select at least one {gradeLabel} to link this structure
+                  {hasExistingLinks
+                    ? selectableItems.length === 0
+                      ? `All ${linkedItems.length} ${gradeLabel}${
+                          linkedItems.length === 1 ? '' : 's'
+                        } are already linked to this plan.`
+                      : `${linkedItems.length} ${gradeLabel}${
+                          linkedItems.length === 1 ? '' : 's'
+                        } already linked. Select another to add it.`
+                    : `Select at least one ${gradeLabel} to link this structure`}
                 </p>
               )}
 
@@ -851,10 +1040,15 @@ export const AssignFeeStructureModal = ({
                   ) : (
                     <>
                       <Users className="mr-2 h-4 w-4 shrink-0" />
-                      Link {selectedGradeIds.length || ''}{' '}
-                      {selectedGradeIds.length === 1
-                        ? gradeLabel
-                        : gradeLabelPlural}
+                      {selectedGradeIds.length > 0
+                        ? `Link ${selectedGradeIds.length} ${
+                            selectedGradeIds.length === 1
+                              ? gradeLabel
+                              : gradeLabelPlural
+                          }`
+                        : hasExistingLinks
+                          ? 'Select grades to add'
+                          : 'Link grades'}
                     </>
                   )}
                 </Button>

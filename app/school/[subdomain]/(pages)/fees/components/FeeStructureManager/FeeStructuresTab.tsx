@@ -322,6 +322,15 @@ export const FeeStructuresTab = ({
               assignments={feeAssignments}
               schoolGrades={schoolGrades}
               pageLevelConflictAlert={conflictCount > 0}
+              onLinkGrades={(structure) =>
+                onAssignToGrade(
+                  structure.structureId,
+                  structure.structureName,
+                  structure.academicYear,
+                  structure.academicYearId,
+                  structure.termId,
+                )
+              }
             />
             <FeePlansListNextSteps
               planCount={filteredStructures.length}

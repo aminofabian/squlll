@@ -63,8 +63,8 @@ export function FeePlanLinkedClasses({
         </p>
         <p className="mt-0.5 text-[11px] text-[#1a4d42]/50">
           {onLinkMore
-            ? "Use Manage to assign this structure to grades."
-            : "Not assigned to any class yet."}
+            ? "Use Link grades to assign this plan to grades."
+            : "Not assigned to any grade yet."}
         </p>
       </div>
     );
