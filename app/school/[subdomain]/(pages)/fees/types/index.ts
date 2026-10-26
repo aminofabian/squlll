@@ -160,6 +160,8 @@ export interface PaymentReminderForm {
   includeInvoiceDetails: boolean;
   scheduledDate: string;
   followUpDays: string;
+  /** Tappable parent-portal link included by the {{payment_link}} tag. */
+  paymentLink?: string;
 }
 
 export interface RecordPaymentForm {

@@ -73,6 +73,7 @@ import { OverviewStatsCards } from "./components/OverviewStatsCards";
 import { FiltersSection } from "./components/FiltersSection";
 import { FeesDataTable } from "./components/FeesDataTable";
 import { BalancesGradeSidebar } from "./components/BalancesGradeSidebar";
+import { OverviewGradeFilter } from "./components/OverviewGradeFilter";
 import { ArrearsSummaryPanel } from "./components/ArrearsSummaryPanel";
 import { StudentInvoicesTable } from "./components/StudentInvoicesTable";
 import { FeeStructureDrawer } from "./components/FeeStructureDrawer";
@@ -902,7 +903,26 @@ export default function FeesPage() {
     refreshAudit();
   }, [refreshAudit]);
 
-  const bursarMetrics = useBursarDashboardMetrics(allStudentsSummary);
+  const overviewStudents = useMemo(() => {
+    if (!selectedClass || selectedClass === "all") return allStudentsSummary;
+    return allStudentsSummary.filter(
+      (student) =>
+        student.gradeLevelName === selectedClass ||
+        student.gradeLevelName?.includes(selectedClass),
+    );
+  }, [allStudentsSummary, selectedClass]);
+
+  const overviewStudentIdSet = useMemo(
+    () =>
+      selectedClass && selectedClass !== "all"
+        ? new Set(overviewStudents.map((student) => student.id))
+        : undefined,
+    [overviewStudents, selectedClass],
+  );
+
+  const bursarMetrics = useBursarDashboardMetrics(overviewStudents, {
+    studentIds: overviewStudentIdSet,
+  });
 
   const overviewBootstrapping =
     studentsLoading || feeAssignmentsLoading;
@@ -959,7 +979,9 @@ export default function FeesPage() {
     for (const s of allStudentsSummary) {
       if (s.gradeLevelName) names.add(s.gradeLevelName);
     }
-    return Array.from(names).sort();
+    return Array.from(names).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true }),
+    );
   }, [allStudentsSummary]);
 
   const displayedStudentsForBalances = useMemo(() => {
@@ -1892,6 +1914,13 @@ export default function FeesPage() {
                 )}
               >
               {feesSection === "overview" && (
+                <div className="space-y-2">
+                  <OverviewGradeFilter
+                    className={FEES_LAYOUT.page}
+                    grades={balanceClassOptions}
+                    value={selectedClass || "all"}
+                    onChange={setSelectedClass}
+                  />
                 <FeesOverviewBoard
                   metrics={bursarMetrics}
                   completedSteps={feeWorkflowCompleted}
@@ -1921,6 +1950,7 @@ export default function FeesPage() {
                       : undefined
                   }
                 />
+                </div>
               )}
 
               {feesSection === "reports" && feesAccess.canViewReports && (
@@ -2014,7 +2044,7 @@ export default function FeesPage() {
                 <FeesPanel
                   dense
                   noPadding
-                  title="Students"
+                  title="Student balances"
                   description={
                     studentsLoading || arrearsSummaryLoading
                       ? "Loading balances…"
@@ -2104,7 +2134,6 @@ export default function FeesPage() {
                     loading={arrearsSummaryLoading}
                     error={arrearsSummaryError}
                     selectedGrade={selectedClass || "all"}
-                    onGradeSelect={setSelectedClass}
                   />
                   <div className="min-h-0 flex-1 overflow-auto max-md:p-0 sm:p-3">
                   <FeesDataTable

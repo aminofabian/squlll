@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PaymentReminderForm, StudentSummaryFromAPI } from "../types";
-import { ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft, Copy, ExternalLink, Link2, Sparkles, Tag } from "lucide-react";
 import { FEES_BRAND } from "../lib/fees-ui";
 
 interface PaymentReminderDrawerProps {
@@ -35,11 +35,76 @@ interface PaymentReminderDrawerProps {
   students?: StudentSummaryFromAPI[];
 }
 
-const defaultMessage = (name: string, balance: number) =>
-  `Dear parent/guardian, this is a reminder that fees for ${name} have an outstanding balance of KES ${balance.toLocaleString()}. Please arrange payment before the deadline. Thank you.`;
+type ReminderTemplate = {
+  id: string;
+  label: string;
+  hint: string;
+  body: string;
+};
 
-const bulkMessage = (count: number, totalBalance: number) =>
-  `Dear parent/guardian, this is a reminder regarding outstanding school fees (${count} student${count !== 1 ? "s" : ""}, total KES ${totalBalance.toLocaleString()}). Please arrange payment before the deadline. Thank you.`;
+const REMINDER_TEMPLATES: ReminderTemplate[] = [
+  {
+    id: "friendly",
+    label: "Friendly",
+    hint: "Warm nudge",
+    body: `Dear parent/guardian,
+
+A friendly reminder that fees for {{student_name}} ({{grade}}) have an outstanding balance of {{balance}}.
+
+You can view the statement and pay securely here:
+{{payment_link}}
+
+Thank you,
+The school finance office`,
+  },
+  {
+    id: "urgent",
+    label: "Urgent",
+    hint: "Needs action",
+    body: `Dear parent/guardian,
+
+This is a reminder that {{student_name}} ({{grade}}) has an outstanding fee balance of {{balance}}.
+
+Please pay, or reply to arrange a plan, as soon as possible:
+{{payment_link}}
+
+Thank you.`,
+  },
+  {
+    id: "final",
+    label: "Final notice",
+    hint: "Firm, last call",
+    body: `Dear parent/guardian,
+
+Our records show an outstanding balance of {{balance}} for {{student_name}} ({{grade}}).
+
+Please settle it or contact the school office this week:
+{{payment_link}}
+
+Thank you.`,
+  },
+  {
+    id: "plan",
+    label: "Payment plan",
+    hint: "Offer installments",
+    body: `Dear parent/guardian,
+
+{{student_name}} ({{grade}}) has an outstanding balance of {{balance}}. If paying in full is difficult, reply and we can arrange a payment plan.
+
+View the statement and pay here:
+{{payment_link}}
+
+Thank you.`,
+  },
+];
+
+const REMINDER_TAGS = [
+  { label: "Student", token: "{{student_name}}" },
+  { label: "Grade", token: "{{grade}}" },
+  { label: "Balance", token: "{{balance}}" },
+  { label: "Admission no.", token: "{{admission_number}}" },
+  { label: "Payment link", token: "{{payment_link}}" },
+];
 
 export default function PaymentReminderDrawer({
   isOpen,
@@ -51,6 +116,12 @@ export default function PaymentReminderDrawer({
 }: PaymentReminderDrawerProps) {
   const [step, setStep] = useState<"compose" | "preview">("compose");
   const [minBalance, setMinBalance] = useState("0");
+  const [copiedLink, setCopiedLink] = useState(false);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+  const portalLink =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/parent?tab=payments`
+      : "";
 
   useEffect(() => {
     if (isOpen) setStep("compose");
@@ -66,25 +137,59 @@ export default function PaymentReminderDrawer({
     return selectedStudents.filter((s) => s.feeSummary.balance >= min);
   }, [selectedStudents, minBalance]);
 
-  const totalBalance = filteredByBalance.reduce(
-    (sum, s) => sum + s.feeSummary.balance,
-    0,
-  );
+  const paymentLink =
+    form.paymentLink !== undefined ? form.paymentLink : portalLink;
+  const sampleStudent = filteredByBalance[0];
 
-  const applyTemplate = () => {
-    if (filteredByBalance.length === 1) {
-      const s = filteredByBalance[0];
-      setForm((prev) => ({
-        ...prev,
-        message: defaultMessage(s.studentName, s.feeSummary.balance),
-      }));
+  const renderMessage = (
+    template: string,
+    student?: StudentSummaryFromAPI,
+  ) => {
+    const balance = student
+      ? `KES ${student.feeSummary.balance.toLocaleString()}`
+      : "the outstanding balance";
+    return template
+      .replaceAll("{{student_name}}", student?.studentName ?? "your child")
+      .replaceAll("{{grade}}", student?.gradeLevelName ?? "your child’s grade")
+      .replaceAll("{{balance}}", balance)
+      .replaceAll(
+        "{{admission_number}}",
+        student?.admissionNumber ?? "on file",
+      )
+      .replaceAll("{{payment_link}}", paymentLink.trim() || "[payment link]");
+  };
+
+  const previewMessage = renderMessage(form.message, sampleStudent);
+
+  const applyTemplate = (body: string) => {
+    setForm((prev) => ({ ...prev, message: body }));
+  };
+
+  const insertTag = (token: string) => {
+    const textarea = messageRef.current;
+    if (!textarea) {
+      setForm((prev) => ({ ...prev, message: `${prev.message}${token}` }));
       return;
     }
-    if (filteredByBalance.length > 1) {
-      setForm((prev) => ({
-        ...prev,
-        message: bulkMessage(filteredByBalance.length, totalBalance),
-      }));
+    const start = textarea.selectionStart ?? form.message.length;
+    const end = textarea.selectionEnd ?? start;
+    const next =
+      form.message.slice(0, start) + token + form.message.slice(end);
+    setForm((prev) => ({ ...prev, message: next }));
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + token.length, start + token.length);
+    });
+  };
+
+  const copyPaymentLink = async () => {
+    if (!paymentLink.trim() || typeof navigator === "undefined") return;
+    try {
+      await navigator.clipboard.writeText(paymentLink.trim());
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 1500);
+    } catch {
+      setCopiedLink(false);
     }
   };
 
@@ -170,29 +275,117 @@ export default function PaymentReminderDrawer({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-[#246a59]" />
+                  <Label>Start from a template</Label>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {REMINDER_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => applyTemplate(template.body)}
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left transition-all hover:border-[#246a59]/35 hover:bg-[#f3f9f6] active:scale-[0.99]"
+                    >
+                      <span className="block text-[11px] font-semibold text-slate-900">
+                        {template.label}
+                      </span>
+                      <span className="block text-[10px] text-slate-500">
+                        {template.hint}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-end justify-between gap-2">
                   <Label htmlFor="reminder-message">Message</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto shrink-0 px-2 text-xs"
-                    onClick={applyTemplate}
-                    disabled={filteredByBalance.length === 0}
-                  >
-                    Use template
-                  </Button>
+                  <span className="text-[10px] text-slate-400">
+                    Tags fill in per student
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {REMINDER_TAGS.map((tag) => (
+                    <button
+                      key={tag.token}
+                      type="button"
+                      onClick={() => insertTag(tag.token)}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-[#246a59]/30 hover:bg-[#e8f2ef] hover:text-[#1a4d42]"
+                    >
+                      <Tag className="h-2.5 w-2.5" />
+                      {tag.label}
+                    </button>
+                  ))}
                 </div>
                 <Textarea
+                  ref={messageRef}
                   id="reminder-message"
-                  rows={6}
+                  rows={7}
                   value={form.message}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, message: e.target.value }))
                   }
-                  placeholder="Include student name, balance, and payment deadline."
+                  placeholder="Write your reminder, or start with a template above. Use tags for the student name, balance, and payment link."
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="reminder-link">Payment link</Label>
+                  <button
+                    type="button"
+                    onClick={() => void copyPaymentLink()}
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#246a59] hover:underline"
+                  >
+                    {copiedLink ? (
+                      <Check className="h-3 w-3" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                    {copiedLink ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <Input
+                  id="reminder-link"
+                  value={paymentLink}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      paymentLink: e.target.value,
+                    }))
+                  }
+                  placeholder="https://your-school.squl.co.ke/parent?tab=payments"
+                  className="font-mono text-[11px]"
+                />
+                <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                  <a
+                    href={paymentLink || undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-semibold text-[#246a59] hover:underline"
+                  >
+                    <Link2 className="h-3 w-3" />
+                    Open link
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                  <span>
+                    Parents sign in, see the balance, and pay. Insert it in the
+                    message with the Payment link tag.
+                  </span>
+                </div>
+              </div>
+
+              {form.message.trim() && sampleStudent ? (
+                <div className="rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] p-3">
+                  <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#1a4d42]/45">
+                    Sample for {sampleStudent.studentName}
+                  </p>
+                  <div className="whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
+                    {previewMessage}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="flex items-start gap-2">
                 <Checkbox
@@ -240,8 +433,29 @@ export default function PaymentReminderDrawer({
               </div>
 
               {form.message.trim() ? (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm whitespace-pre-wrap text-slate-700">
-                  {form.message}
+                <div className="rounded-lg border border-[#1a4d42]/12 bg-[#f8fbfa] p-3">
+                  <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#1a4d42]/45">
+                    Preview for{" "}
+                    {sampleStudent?.studentName ?? "the first recipient"}
+                  </p>
+                  <div className="whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
+                    {previewMessage}
+                  </div>
+                  {paymentLink.trim() ? (
+                    <a
+                      href={paymentLink.trim()}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-[#246a59] hover:underline"
+                    >
+                      <Link2 className="h-3 w-3" />
+                      {paymentLink.trim()}
+                      <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                  ) : null}
+                  <p className="mt-1 text-[9px] text-[#1a4d42]/45">
+                    Tags are filled per recipient when the reminder is queued.
+                  </p>
                 </div>
               ) : null}
             </>

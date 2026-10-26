@@ -24,6 +24,7 @@ function todayIsoDate(): string {
 
 export function useBursarDashboardMetrics(
   students: StudentSummaryFromAPI[],
+  options?: { studentIds?: ReadonlySet<string> },
 ): BursarDashboardMetrics {
   const { payments, fetchPayments, isLoading: loadingToday } =
     usePaymentsQuery();
@@ -70,13 +71,17 @@ export function useBursarDashboardMetrics(
     const today = todayIsoDate();
     const todayPayments = payments.filter((p) => {
       const d = p.paymentDate?.split("T")[0];
-      return d === today;
+      if (d !== today) return false;
+      if (options?.studentIds && !options.studentIds.has(p.student.id)) {
+        return false;
+      }
+      return true;
     });
     return {
       todayCollected: todayPayments.reduce((sum, p) => sum + p.amount, 0),
       todayPaymentCount: todayPayments.length,
     };
-  }, [payments]);
+  }, [payments, options?.studentIds]);
 
   return {
     ...aggregated,

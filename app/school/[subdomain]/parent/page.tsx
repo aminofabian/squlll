@@ -28,6 +28,13 @@ const ParentsPortal = () => {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
+  // Deep link from a fee reminder: /parent?tab=payments opens the pay tab.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "payments" || tab === "fees") setActiveTab("payments");
+  }, [])
+
   const {
     portalChildren,
     consolidatedFees,

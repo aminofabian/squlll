@@ -281,6 +281,7 @@ export interface PaymentListItem {
   notes?: string | null;
   parentProofUrl?: string | null;
   student: {
+    id: string;
     admission_number: string;
     user: { name: string };
   };
@@ -306,7 +307,7 @@ export const usePaymentsQuery = () => {
             paymentDate
             notes
             parentProofUrl
-            student { admission_number user { name } }
+            student { id admission_number user { name } }
             invoice { invoiceNumber }
           }
         }
