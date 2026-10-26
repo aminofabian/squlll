@@ -473,6 +473,16 @@ export const AssignFeeStructureModal = ({
 
   const hasExistingLinks = linkedItems.length > 0
 
+  // The notice is about grades the user can't add. A linked grade that also
+  // overlaps another plan is an existing conflict for the page-level banner,
+  // not a reason to paint the "Already linked" section red.
+  const selectableConflicts = useMemo(() => {
+    const linkedKeys = new Set(linkedItems.map((grade) => grade.key))
+    return (feeStructure?.conflictingGrades ?? []).filter(
+      (conflict) => !linkedKeys.has(conflict.gradeId),
+    )
+  }, [feeStructure, linkedItems])
+
   const hasNote = description.trim().length > 0
   const hasGrades = selectedGradeIds.length > 0
 
@@ -1032,16 +1042,14 @@ export const AssignFeeStructureModal = ({
                           </span>
                         </p>
                       ) : null}
-                      {(feeStructure.conflictingGrades?.length ?? 0) > 0 ? (
+                      {selectableConflicts.length > 0 ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-[11px] leading-relaxed text-rose-900">
                           <div className="flex items-start gap-2">
                             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                             <div className="min-w-0">
                               <p className="font-semibold">
-                                {feeStructure.conflictingGrades?.length} grade
-                                {feeStructure.conflictingGrades?.length === 1
-                                  ? ''
-                                  : 's'}{' '}
+                                {selectableConflicts.length} grade
+                                {selectableConflicts.length === 1 ? '' : 's'}{' '}
                                 already on another plan
                               </p>
                               <p className="mt-0.5">
@@ -1085,11 +1093,7 @@ export const AssignFeeStructureModal = ({
                             </span>
                           </div>
                           <ul className="mt-2 space-y-1">
-                            {linkedItems.map((grade) => {
-                              const linkedConflict = conflictByGrade.get(
-                                grade.key,
-                              )
-                              return (
+                            {linkedItems.map((grade) => (
                               <li
                                 key={grade.key}
                                 className="flex min-w-0 items-center gap-2 rounded-md border border-emerald-100 bg-white/80 px-2 py-1.5"
@@ -1109,27 +1113,11 @@ export const AssignFeeStructureModal = ({
                                     {grade.studentCount === 1 ? '' : 's'}
                                   </span>
                                 ) : null}
-                                <span
-                                  className={
-                                    linkedConflict
-                                      ? 'ml-auto shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-rose-800'
-                                      : 'ml-auto shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-emerald-800'
-                                  }
-                                  title={
-                                    linkedConflict
-                                      ? `Also on ${linkedConflict.planNames.join(
-                                          ', ',
-                                        )} for ${linkedConflict.termNames.join(
-                                          ', ',
-                                        )}`
-                                      : undefined
-                                  }
-                                >
-                                  {linkedConflict ? 'Conflict' : 'Linked'}
+                                <span className="ml-auto shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-emerald-800">
+                                  Linked
                                 </span>
                               </li>
-                              )
-                            })}
+                            ))}
                           </ul>
 
                           {linkedAssignments.length > 0 && onUnlinkAssignment ? (

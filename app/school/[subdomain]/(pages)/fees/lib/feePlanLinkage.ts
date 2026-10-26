@@ -166,6 +166,8 @@ function gradeLevelIdsFromGroup(group: FeeAssignmentGroup): string[] {
 export type GradePlanLink = {
   gradeId: string;
   planId: string;
+  /** The actual fee structure on the assignment. */
+  feeStructureId: string;
   planName: string;
   termIds: string[];
   termNames: string[];
@@ -192,6 +194,7 @@ export function getGradePlanLinks(
         byKey.set(key, {
           gradeId,
           planId: plan.structureId,
+          feeStructureId: group.feeAssignment.feeStructureId,
           planName: plan.structureName,
           termIds,
           termNames,

@@ -258,6 +258,10 @@ export const FeeStructureManager = ({
   const handleAssignToGrade = (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => {
     const plan = findPlanForStructureId(graphQLStructures, feeStructureId)
     const planTermIds = new Set(plan?.terms.map((term) => term.id) ?? [])
+    const ownStructureIds = new Set<string>([
+      feeStructureId,
+      ...(plan?.allStructures?.map((item: { id: string }) => item.id) ?? []),
+    ])
     const conflictsByGrade = new Map<
       string,
       {
@@ -272,7 +276,12 @@ export const FeeStructureManager = ({
       graphQLStructures,
       feeAssignmentsData?.feeAssignments,
     )) {
-      if (link.planId === feeStructureId) continue
+      if (
+        link.planId === feeStructureId ||
+        ownStructureIds.has(link.feeStructureId)
+      ) {
+        continue
+      }
       const overlappingTerms = link.termIds
         .map((id, index) => ({ id, name: link.termNames[index] ?? 'Term' }))
         .filter((term) => planTermIds.has(term.id))

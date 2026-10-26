@@ -1297,6 +1297,10 @@ export default function FeesPage() {
         structure.structureId,
       );
       const planTermIds = new Set(structure.terms.map((term) => term.id));
+      const ownStructureIds = new Set<string>([
+        structure.structureId,
+        ...(plan?.allStructures?.map((item: { id: string }) => item.id) ?? []),
+      ]);
       const conflictsByGrade = new Map<
         string,
         {
@@ -1311,7 +1315,12 @@ export default function FeesPage() {
         processedFeeStructures,
         feeAssignmentsData?.feeAssignments,
       )) {
-        if (link.planId === structure.structureId) continue;
+        if (
+          link.planId === structure.structureId ||
+          ownStructureIds.has(link.feeStructureId)
+        ) {
+          continue;
+        }
         const overlappingTerms = link.termIds
           .map((id, index) => ({
             id,
