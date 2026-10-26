@@ -141,39 +141,51 @@ function toInput(details: LetterSchoolDetailsPayload) {
   }
 }
 
-export function useTenantFeeLetterSettings(subdomain: string) {
-  const [details, setDetails] = useState<LetterSchoolDetailsPayload>(() =>
+type UseTenantFeeLetterSettingsOptions = {
+  /** Fetch only when the surface that needs the details is open. */
+  enabled?: boolean
+}
+
+export function useTenantFeeLetterSettings(
+  subdomain: string,
+  options: UseTenantFeeLetterSettingsOptions = {},
+) {
+  const { enabled = true } = options
+  const [details, setDetailsState] = useState<LetterSchoolDetailsPayload>(() =>
     createDefaultLetterSchoolDetails(subdomain),
   )
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(enabled)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(async () => {
+    if (!enabled) return
     setLoading(true)
     setError(null)
     try {
       const data = await fetchSettings()
       if (data.tenantFeeLetterSettings) {
-        setDetails(toPayload(data.tenantFeeLetterSettings))
+        setDetailsState(toPayload(data.tenantFeeLetterSettings))
       } else {
-        setDetails(createDefaultLetterSchoolDetails(subdomain))
+        setDetailsState(createDefaultLetterSchoolDetails(subdomain))
       }
       setLoaded(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load letter details')
-      setDetails(createDefaultLetterSchoolDetails(subdomain))
+      setDetailsState(createDefaultLetterSchoolDetails(subdomain))
       setLoaded(true)
     } finally {
       setLoading(false)
     }
-  }, [subdomain])
+  }, [enabled, subdomain])
 
   useEffect(() => {
-    load()
-  }, [load])
+    if (!enabled) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch owns the loading state
+    void load()
+  }, [enabled, load])
 
   const saveNow = useCallback(
     async (next: LetterSchoolDetailsPayload) => {
@@ -188,7 +200,7 @@ export function useTenantFeeLetterSettings(subdomain: string) {
           query: UPSERT_MUTATION,
           variables: { input: toInput(next) },
         })
-        setDetails(toPayload(data.upsertTenantFeeLetterSettings))
+        setDetailsState(toPayload(data.upsertTenantFeeLetterSettings))
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to save')
         throw e
@@ -201,7 +213,7 @@ export function useTenantFeeLetterSettings(subdomain: string) {
 
   const setDetailsAndPersist = useCallback(
     (next: LetterSchoolDetailsPayload) => {
-      setDetails(next)
+      setDetailsState(next)
       if (!loaded) return
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => {
@@ -214,6 +226,8 @@ export function useTenantFeeLetterSettings(subdomain: string) {
   return {
     details,
     setDetails: setDetailsAndPersist,
+    /** Update locally without scheduling an autosave. */
+    setLocalDetails: setDetailsState,
     saveNow,
     loading,
     saving,

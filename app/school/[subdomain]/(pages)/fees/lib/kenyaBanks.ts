@@ -155,6 +155,63 @@ export function bankShortName(bank: KenyaBankOption): string {
   return SHORT_NAMES[bank.id] ?? bank.name
 }
 
+/** Marks owners recognise on a tile, e.g. “KCB”, “EQ”, “NCBA”. */
+const MONOGRAMS: Record<string, string> = {
+  absa: 'ABS',
+  boa: 'BOA',
+  barclays: 'BCL',
+  coop: 'CO-OP',
+  equity: 'EQ',
+  family: 'FAM',
+  kcb: 'KCB',
+  ncba: 'NCBA',
+  stanchart: 'SC',
+  im: 'I&M',
+  nbk: 'NBK',
+  nic: 'NIC',
+  sbm: 'SBM',
+  credit: 'CR',
+  fcb: 'FCB',
+  gtb: 'GTB',
+  jamii: 'JB',
+  mayfair: 'MF',
+  paramount: 'PM',
+  sidian: 'SID',
+  baroda: 'BOD',
+  boi: 'BOI',
+  citi: 'CITI',
+  dtb: 'DTB',
+  ecobank: 'ECO',
+  equatorial: 'EQB',
+  habib: 'HAB',
+  hf: 'HF',
+  meb: 'MEB',
+  prime: 'PRI',
+  spire: 'SPI',
+  tnb: 'TNB',
+  uba: 'UBA',
+}
+
+/** 2–4 character mark for bank tiles. */
+export function bankMonogram(bank: KenyaBankOption): string {
+  const mark = MONOGRAMS[bank.id]
+  if (mark) return mark
+  const short = bankShortName(bank).replace(/[^A-Za-z0-9]/g, '')
+  if (!short) return 'BK'
+  if (short.length <= 3) return short.toUpperCase()
+  const initials = bankShortName(bank)
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join('')
+  return (initials.length > 1 ? initials : short.slice(0, 3)).toUpperCase()
+}
+
+/** Paybill label for the picker: “Paybill 247247” or “Paybill on slip”. */
+export function bankPaybillLabel(bank: KenyaBankOption): string {
+  return bank.businessNumber ? `Paybill ${bank.businessNumber}` : 'Paybill on slip'
+}
+
 export function popularKenyaBanks(): KenyaBankOption[] {
   return POPULAR_BANK_IDS.flatMap((id) => {
     const bank = KENYA_BANKS.find((item) => item.id === id)

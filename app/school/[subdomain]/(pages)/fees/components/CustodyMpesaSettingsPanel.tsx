@@ -66,6 +66,7 @@ export function CustodyMpesaSettingsPanel({
 
   useEffect(() => {
     if (!destination) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate the form from the saved destination
     setType(destination.type)
     setTillNumber(destination.tillNumber ?? '')
     setBusinessNumber(destination.businessNumber ?? '')
@@ -300,7 +301,16 @@ export function CustodyMpesaSettingsPanel({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+        <Button
+          type="button"
+          className={
+            compact
+              ? 'bg-[#0a1f1a] text-white hover:bg-[#143b31]'
+              : undefined
+          }
+          onClick={() => void handleSave()}
+          disabled={saving}
+        >
           {saving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

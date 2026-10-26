@@ -6,8 +6,8 @@ import {
   BookOpen,
   ChevronRight,
   GraduationCap,
+  Landmark,
   Megaphone,
-  Smartphone,
   UserPlus,
 } from "lucide-react";
 import { DashboardBroadcastSheet } from "./DashboardBroadcastSheet";
@@ -59,8 +59,8 @@ const BASE_ACTIONS: QuickAction[] = [
 const OWNER_PAYMENTS_ACTION: QuickAction = {
   id: "payments",
   label: "Payment methods",
-  description: "Till, paybill & bank",
-  icon: Smartphone,
+  description: "Bank, paybill & M-Pesa",
+  icon: Landmark,
   variant: "payments",
 };
 

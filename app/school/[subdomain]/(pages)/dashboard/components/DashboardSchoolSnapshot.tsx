@@ -6,7 +6,7 @@ import {
   BookOpen,
   ChevronRight,
   CircleDollarSign,
-  Smartphone,
+  Landmark,
   Users,
 } from "lucide-react";
 import type { SchoolConfiguration } from "@/lib/types/school-config";
@@ -188,14 +188,14 @@ export function DashboardSchoolSnapshot({
               className="group flex w-full items-center gap-2.5 border border-[#1a4d42]/10 bg-white p-2.5 text-left transition-colors hover:border-[#246a59]/30 hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-white/[0.03]"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#1a4d42]/12 bg-[#f8fbfa] text-[#246a59] transition-colors group-hover:border-[#246a59]/30 group-hover:bg-[#0a1f1a] group-hover:text-white dark:border-white/10 dark:bg-[#071411] dark:text-emerald-300">
-                <Smartphone className="h-4 w-4" strokeWidth={1.75} />
+                <Landmark className="h-4 w-4" strokeWidth={1.75} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45 dark:text-white/40">
                   Payment methods
                 </span>
                 <span className="mt-0.5 block truncate text-[12px] font-semibold text-[#0a1f1a] dark:text-white">
-                  Till · paybill · bank
+                  Bank · paybill · M-Pesa
                 </span>
                 <span className="mt-0.5 block truncate text-[10.5px] text-[#1a4d42]/50 transition-colors group-hover:text-[#246a59] dark:text-white/40">
                   Owner settings
