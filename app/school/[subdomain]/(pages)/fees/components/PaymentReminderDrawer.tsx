@@ -817,7 +817,7 @@ export default function PaymentReminderDrawer({
       onOpenChange={(open) => !open && handleClose()}
       direction="right"
     >
-      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[130rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 data-[vaul-drawer-direction=right]:max-w-[130rem] data-[vaul-drawer-direction=right]:sm:max-w-[130rem] data-[vaul-drawer-direction=right]:lg:w-[96vw] sm:max-w-[130rem] lg:w-[96vw]">
+      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-[130rem] flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 data-[vaul-drawer-direction=right]:max-w-[130rem] data-[vaul-drawer-direction=right]:sm:max-w-[130rem] data-[vaul-drawer-direction=right]:xl:w-[50vw] sm:max-w-[130rem] xl:w-[50vw]">
         <DrawerHeader className="relative shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-4 pr-14 sm:px-5 sm:pt-5">
           <DrawerClose asChild>
             <button
@@ -858,7 +858,7 @@ export default function PaymentReminderDrawer({
           ) : null}
 
           {step === "compose" ? (
-            <div className="mx-4 mt-2 grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-slate-200/80 bg-white p-1 sm:mx-5 lg:hidden">
+            <div className="mx-4 mt-2 grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-slate-200/80 bg-white p-1 sm:mx-5 2xl:hidden">
               <button
                 type="button"
                 onClick={() => setMobilePane("edit")}
@@ -886,7 +886,7 @@ export default function PaymentReminderDrawer({
             </div>
           ) : null}
 
-          <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_28rem]">
+          <div className="grid min-h-0 flex-1 2xl:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="min-h-0 overflow-y-auto px-4 py-3 sm:px-5">
               {step === "audience" ? (
                 <div className="space-y-3">
@@ -1036,7 +1036,7 @@ export default function PaymentReminderDrawer({
                 <div
                   className={cn(
                     "space-y-3",
-                    mobilePane !== "edit" && "hidden lg:block",
+                    mobilePane !== "edit" && "hidden 2xl:block",
                   )}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -1048,12 +1048,12 @@ export default function PaymentReminderDrawer({
                         You can edit every word
                       </p>
                     </div>
-                    <span className="rounded-full border border-[#1a4d42]/10 bg-[#f8fbfa] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#1a4d42]/45 lg:hidden">
+                    <span className="rounded-full border border-[#1a4d42]/10 bg-[#f8fbfa] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#1a4d42]/45 sm:hidden">
                       Swipe for more
                     </span>
                   </div>
 
-                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible min-[1800px]:grid-cols-3">
                     {REMINDER_TEMPLATES.map((template) => {
                       const selected = activeTemplateId === template.id;
                       return (
@@ -1134,7 +1134,7 @@ export default function PaymentReminderDrawer({
                         }))
                       }
                       placeholder="Write your reminder or pick a template above."
-                      className="min-h-[15rem] resize-y text-[12px] leading-relaxed lg:min-h-[20rem]"
+                      className="min-h-[15rem] resize-y text-[12px] leading-relaxed 2xl:min-h-[20rem]"
                     />
                     <p className="mt-1.5 text-[9px] leading-relaxed text-slate-400">
                       Tags are replaced per family when queued. Wrap words in{" "}
@@ -1203,7 +1203,7 @@ export default function PaymentReminderDrawer({
               {step === "compose" ? (
                 <div
                   className={cn(
-                    "lg:hidden",
+                    "2xl:hidden",
                     mobilePane !== "preview" && "hidden",
                   )}
                 >
@@ -1259,12 +1259,12 @@ export default function PaymentReminderDrawer({
                     <RecipientList students={filteredByBalance} max={10} />
                   </SectionCard>
 
-                  <div className="lg:hidden">{preview}</div>
+                  <div className="2xl:hidden">{preview}</div>
                 </div>
               ) : null}
             </div>
 
-            <aside className="hidden min-h-0 overflow-y-auto border-l border-[#1a4d42]/10 bg-white p-4 lg:block">
+            <aside className="hidden min-h-0 overflow-y-auto border-l border-[#1a4d42]/10 bg-white p-4 2xl:block">
               <div className="sticky top-0 space-y-3">{preview}</div>
             </aside>
           </div>
@@ -1294,7 +1294,7 @@ export default function PaymentReminderDrawer({
               <>
                 <Button
                   variant="outline"
-                  className="h-11 w-11 shrink-0 px-0 lg:hidden"
+                  className="h-11 w-11 shrink-0 px-0 2xl:hidden"
                   onClick={() => setStep("audience")}
                   aria-label="Back to audience"
                 >
@@ -1302,17 +1302,17 @@ export default function PaymentReminderDrawer({
                 </Button>
                 <Button
                   variant="outline"
-                  className="hidden h-9 lg:inline-flex"
+                  className="hidden h-9 2xl:inline-flex"
                   onClick={() => setStep("audience")}
                 >
                   <ArrowLeft className="mr-1 h-3.5 w-3.5" />
                   Audience
                 </Button>
-                <span className="hidden flex-1 text-center text-[10px] text-slate-400 lg:block">
+                <span className="hidden flex-1 text-center text-[10px] text-slate-400 2xl:block">
                   Next: review {filteredByBalance.length} emails before sending.
                 </span>
                 <Button
-                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] lg:ml-auto lg:h-9 lg:flex-none lg:px-5"
+                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] 2xl:ml-auto 2xl:h-9 2xl:flex-none 2xl:px-5"
                   disabled={!canReview}
                   onClick={() => setStep("review")}
                 >
@@ -1326,7 +1326,7 @@ export default function PaymentReminderDrawer({
               <>
                 <Button
                   variant="outline"
-                  className="h-11 w-11 shrink-0 px-0 lg:hidden"
+                  className="h-11 w-11 shrink-0 px-0 2xl:hidden"
                   onClick={() => setStep("compose")}
                   aria-label="Back to message"
                 >
@@ -1334,18 +1334,18 @@ export default function PaymentReminderDrawer({
                 </Button>
                 <Button
                   variant="outline"
-                  className="hidden h-9 lg:inline-flex"
+                  className="hidden h-9 2xl:inline-flex"
                   onClick={() => setStep("compose")}
                 >
                   <ArrowLeft className="mr-1 h-3.5 w-3.5" />
                   Message
                 </Button>
-                <span className="hidden flex-1 text-center text-[10px] text-slate-400 lg:block">
+                <span className="hidden flex-1 text-center text-[10px] text-slate-400 2xl:block">
                   Ready to queue {filteredByBalance.length} reminder
                   {filteredByBalance.length === 1 ? "" : "s"}.
                 </span>
                 <Button
-                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] lg:ml-auto lg:h-9 lg:flex-none lg:px-5"
+                  className="h-11 flex-1 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] 2xl:ml-auto 2xl:h-9 2xl:flex-none 2xl:px-5"
                   disabled={filteredByBalance.length === 0}
                   onClick={handleConfirmSend}
                 >
