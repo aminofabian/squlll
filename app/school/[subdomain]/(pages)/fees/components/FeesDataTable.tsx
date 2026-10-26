@@ -175,6 +175,7 @@ export const FeesDataTable = ({
                       </span>
                       <span className="mt-0.5 block text-xs text-slate-500">
                         {student.gradeLevelName}
+                        {student.streamName ? ` · ${student.streamName}` : ""}
                         <span className="text-slate-300"> · </span>
                         {student.admissionNumber}
                       </span>
@@ -297,6 +298,12 @@ export const FeesDataTable = ({
                   </TableCell>
                   <TableCell className="text-sm text-slate-600">
                     {student.gradeLevelName}
+                    {student.streamName ? (
+                      <span className="text-slate-400">
+                        {" "}
+                        · {student.streamName}
+                      </span>
+                    ) : null}
                   </TableCell>
                   {streamlined ? (
                     <TableCell className="text-right">

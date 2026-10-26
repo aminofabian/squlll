@@ -9,6 +9,8 @@ const GET_ALL_STUDENTS_SUMMARY = `
       admissionNumber
       studentName
       gradeLevelName
+      streamName
+      streamId
       feeSummary {
         totalOwed
         totalPaid

@@ -294,6 +294,16 @@ export default function FeesPage() {
     selectedStudentInvoicesError,
   } = useFeesData();
 
+  const [selectedStream, setSelectedStream] = useState("");
+
+  const handleGradeFilterChange = useCallback(
+    (grade: string) => {
+      setSelectedClass(grade);
+      setSelectedStream("");
+    },
+    [setSelectedClass],
+  );
+
   // Fee Structure hooks
   const {
     feeStructures,
@@ -479,9 +489,9 @@ export default function FeesPage() {
   useEffect(() => {
     const classFromUrl = searchParams.get(FEE_BALANCE_CLASS_QUERY);
     if (classFromUrl && feesSection === "balances") {
-      setSelectedClass(decodeURIComponent(classFromUrl));
+      handleGradeFilterChange(decodeURIComponent(classFromUrl));
     }
-  }, [searchParams, feesSection, setSelectedClass]);
+  }, [searchParams, feesSection, handleGradeFilterChange]);
 
   const {
     data: feeAssignmentsData,
@@ -904,20 +914,30 @@ export default function FeesPage() {
   }, [refreshAudit]);
 
   const overviewStudents = useMemo(() => {
-    if (!selectedClass || selectedClass === "all") return allStudentsSummary;
-    return allStudentsSummary.filter(
-      (student) =>
-        student.gradeLevelName === selectedClass ||
-        student.gradeLevelName?.includes(selectedClass),
-    );
-  }, [allStudentsSummary, selectedClass]);
+    let list = allStudentsSummary;
+    if (selectedClass && selectedClass !== "all") {
+      list = list.filter(
+        (student) =>
+          student.gradeLevelName === selectedClass ||
+          student.gradeLevelName?.includes(selectedClass),
+      );
+    }
+    if (selectedStream) {
+      list = list.filter(
+        (student) =>
+          student.streamName === selectedStream ||
+          student.streamName?.includes(selectedStream),
+      );
+    }
+    return list;
+  }, [allStudentsSummary, selectedClass, selectedStream]);
 
   const overviewStudentIdSet = useMemo(
     () =>
-      selectedClass && selectedClass !== "all"
+      (selectedClass && selectedClass !== "all") || selectedStream
         ? new Set(overviewStudents.map((student) => student.id))
         : undefined,
-    [overviewStudents, selectedClass],
+    [overviewStudents, selectedClass, selectedStream],
   );
 
   const bursarMetrics = useBursarDashboardMetrics(overviewStudents, {
@@ -997,8 +1017,43 @@ export default function FeesPage() {
           s.gradeLevelName?.includes(selectedClass),
       );
     }
+    if (selectedStream) {
+      list = list.filter(
+        (s) =>
+          s.streamName === selectedStream ||
+          s.streamName?.includes(selectedStream),
+      );
+    }
     return list;
-  }, [allStudentsSummary, selectedClass]);
+  }, [allStudentsSummary, selectedClass, selectedStream]);
+
+  const streamArrearsSummary = useMemo(() => {
+    if (!selectedStream) return null;
+    let billed = 0;
+    let paid = 0;
+    let outstanding = 0;
+    let credit = 0;
+    let owing = 0;
+    for (const student of filteredStudentsForBalances) {
+      billed += student.feeSummary.totalOwed;
+      paid += student.feeSummary.totalPaid;
+      const balance = student.feeSummary.balance;
+      if (balance > 0) {
+        outstanding += balance;
+        owing += 1;
+      } else if (balance < 0) {
+        credit += Math.abs(balance);
+      }
+    }
+    return {
+      billed,
+      paid,
+      outstanding,
+      credit,
+      owing,
+      count: filteredStudentsForBalances.length,
+    };
+  }, [filteredStudentsForBalances, selectedStream]);
 
   const balanceClassOptions = useMemo(() => {
     const names = new Set<string>();
@@ -1908,7 +1963,10 @@ export default function FeesPage() {
               {hasGradeRail ? (
                 <BalancesGradeSidebar
                   selectedGradeName={selectedClass || "all"}
-                  onGradeNameChange={setSelectedClass}
+                  onGradeNameChange={handleGradeFilterChange}
+                  selectedStreamName={selectedStream}
+                  onStreamNameChange={setSelectedStream}
+                  allowStreams={feesSection !== "plans"}
                 />
               ) : null}
 
@@ -1957,7 +2015,7 @@ export default function FeesPage() {
                         onStudentSelect: handleStudentSelect,
                         onClearSelection: handleClearStudentSelection,
                         selectedGrade: selectedClass || "all",
-                        onGradeChange: setSelectedClass,
+                        onGradeChange: handleGradeFilterChange,
                         gradeOptions: balanceClassOptions,
                       }}
                     />
@@ -2073,7 +2131,7 @@ export default function FeesPage() {
                     hasFetched={!!lastFetchTime}
                     isDeleting={isDeleting}
                     selectedGradeName={selectedClass || "all"}
-                    onClearGradeFilter={() => setSelectedClass("all")}
+                    onClearGradeFilter={() => handleGradeFilterChange("all")}
                     selectedPlanSlug={planSlugFromUrl}
                     onBackToPlanList={backToFeePlanList}
                     canManage={feesAccess.canManagePlans}
@@ -2094,7 +2152,9 @@ export default function FeesPage() {
                       : [
                           `${displayedStudentsForBalances.length} shown`,
                           selectedClass && selectedClass !== "all"
-                            ? selectedClass
+                            ? selectedStream
+                              ? `${selectedClass} · ${selectedStream}`
+                              : selectedClass
                             : null,
                           balancesStatusFilter !== "all"
                             ? balancesStatusFilter.replace(/_/g, " ")
@@ -2172,12 +2232,66 @@ export default function FeesPage() {
                     </div>
                   }
                 >
-                  <ArrearsSummaryPanel
-                    summary={schoolArrearsSummary}
-                    loading={arrearsSummaryLoading}
-                    error={arrearsSummaryError}
-                    selectedGrade={selectedClass || "all"}
-                  />
+                  {selectedStream && streamArrearsSummary ? (
+                    <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white px-3 py-3 sm:px-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                            {selectedClass} · {selectedStream}
+                          </p>
+                          <p
+                            className={cn(
+                              "text-2xl font-bold tabular-nums tracking-tight sm:text-[1.65rem]",
+                              streamArrearsSummary.outstanding > 0
+                                ? "text-rose-800"
+                                : "text-emerald-800",
+                            )}
+                          >
+                            {streamArrearsSummary.outstanding > 0
+                              ? `KES ${streamArrearsSummary.outstanding.toLocaleString()}`
+                              : "All clear"}
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-600">
+                            {streamArrearsSummary.owing} of{" "}
+                            {streamArrearsSummary.count} owing
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="rounded-lg border border-slate-200/80 bg-white px-2 py-1.5">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                              Billed
+                            </p>
+                            <p className="text-xs font-bold tabular-nums text-slate-800">
+                              KES {streamArrearsSummary.billed.toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="rounded-lg border border-slate-200/80 bg-white px-2 py-1.5">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                              Paid
+                            </p>
+                            <p className="text-xs font-bold tabular-nums text-emerald-800">
+                              KES {streamArrearsSummary.paid.toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="rounded-lg border border-slate-200/80 bg-white px-2 py-1.5">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                              Credit
+                            </p>
+                            <p className="text-xs font-bold tabular-nums text-sky-800">
+                              KES {streamArrearsSummary.credit.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <ArrearsSummaryPanel
+                      summary={schoolArrearsSummary}
+                      loading={arrearsSummaryLoading}
+                      error={arrearsSummaryError}
+                      selectedGrade={selectedClass || "all"}
+                    />
+                  )}
                   <div className="min-h-0 flex-1 overflow-auto max-md:p-0 sm:p-3">
                   <FeesDataTable
                     embedded

@@ -12,6 +12,10 @@ interface BalancesGradeSidebarProps {
   /** Grade name currently held in ?class= / selectedClass. */
   selectedGradeName: string;
   onGradeNameChange: (gradeName: string) => void;
+  selectedStreamName?: string;
+  onStreamNameChange?: (streamName: string) => void;
+  /** Plans are grade-level; hide stream controls there. */
+  allowStreams?: boolean;
   className?: string;
 }
 
@@ -22,6 +26,9 @@ interface BalancesGradeSidebarProps {
 export function BalancesGradeSidebar({
   selectedGradeName,
   onGradeNameChange,
+  selectedStreamName = "",
+  onStreamNameChange,
+  allowStreams = true,
   className,
 }: BalancesGradeSidebarProps) {
   const { config } = useSchoolConfigStore();
@@ -38,6 +45,20 @@ export function BalancesGradeSidebar({
     return "";
   }, [config?.selectedLevels, selectedGradeName]);
 
+  const selectedStreamId = useMemo(() => {
+    if (!selectedStreamName) return "";
+    for (const level of config?.selectedLevels ?? []) {
+      const grade = (level.gradeLevels ?? []).find(
+        (item) => item.name === selectedGradeName,
+      );
+      const stream = grade?.streams?.find(
+        (item) => item.name === selectedStreamName,
+      );
+      if (stream) return stream.id;
+    }
+    return "";
+  }, [config?.selectedLevels, selectedGradeName, selectedStreamName]);
+
   const findGrade = (gradeId: string, levelId: string) => {
     const level = config?.selectedLevels?.find((item) => item.id === levelId);
     return level?.gradeLevels?.find((item) => item.id === gradeId);
@@ -47,12 +68,27 @@ export function BalancesGradeSidebar({
     const grade = findGrade(gradeId, levelId);
     if (grade) {
       onGradeNameChange(grade.name);
+      onStreamNameChange?.("");
       setSheetOpen(false);
     }
   };
 
+  const handleStreamSelect = (
+    streamId: string,
+    gradeId: string,
+    levelId: string,
+  ) => {
+    const grade = findGrade(gradeId, levelId);
+    if (!grade) return;
+    const stream = (grade.streams ?? []).find((item) => item.id === streamId);
+    onGradeNameChange(grade.name);
+    onStreamNameChange?.(stream?.name ?? "");
+    setSheetOpen(false);
+  };
+
   const handleAll = () => {
     onGradeNameChange("all");
+    onStreamNameChange?.("");
     setSheetOpen(false);
   };
 
@@ -62,10 +98,17 @@ export function BalancesGradeSidebar({
       variant="minimal"
       type="grades"
       onGradeSelect={handleGradeSelect}
+      onStreamSelect={allowStreams ? handleStreamSelect : undefined}
       onSelectAllClasses={handleAll}
       selectedGradeId={selectedGradeId}
-      selectedStreamId=""
-      allClassesSelected={selectedGradeName === "all"}
+      selectedStreamId={allowStreams ? selectedStreamId : ""}
+      allClassesSelected={
+        selectedGradeName === "all" &&
+        (!allowStreams || !selectedStreamName)
+      }
+      autoSelectStream={false}
+      allowAllStreams={allowStreams}
+      showStreams={allowStreams}
     />
   );
 
@@ -79,7 +122,11 @@ export function BalancesGradeSidebar({
       >
         <GraduationCap className="h-4 w-4 text-[#246a59]" />
         <span className="min-w-0 flex-1 truncate text-left">
-          {selectedGradeName === "all" ? "All grades" : selectedGradeName}
+          {selectedGradeName === "all"
+            ? "All grades"
+            : allowStreams && selectedStreamName
+              ? `${selectedGradeName} · ${selectedStreamName}`
+              : selectedGradeName}
         </span>
         <span className="text-[10px] font-medium text-[#1a4d42]/45">Filter</span>
       </Button>
@@ -103,11 +150,17 @@ export function BalancesGradeSidebar({
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onGradeSelect={handleGradeSelect}
-        onStreamSelect={() => {}}
+        onStreamSelect={allowStreams ? handleStreamSelect : () => {}}
         selectedGradeId={selectedGradeId}
-        selectedStreamId=""
-        allClassesSelected={selectedGradeName === "all"}
+        selectedStreamId={allowStreams ? selectedStreamId : ""}
+        allClassesSelected={
+          selectedGradeName === "all" &&
+          (!allowStreams || !selectedStreamName)
+        }
         onSelectAllClasses={handleAll}
+        autoSelectStream={false}
+        allowAllStreams={allowStreams}
+        showStreams={allowStreams}
       />
     </>
   );

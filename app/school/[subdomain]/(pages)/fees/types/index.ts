@@ -122,6 +122,8 @@ export interface StudentSummaryFromAPI {
   admissionNumber: string;
   studentName: string;
   gradeLevelName: string;
+  streamName: string | null;
+  streamId?: string | null;
   feeSummary: FeeSummary;
 }
 

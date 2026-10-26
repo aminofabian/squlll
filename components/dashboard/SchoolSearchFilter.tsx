@@ -61,6 +61,12 @@ interface SchoolSearchFilterProps {
   onSelectAllClasses?: () => void
   /** When set, only these grade IDs appear in the list (e.g. exam session scope). */
   allowedGradeIds?: string[]
+  /** Minimal rail: auto-pick the first stream when a grade is chosen. */
+  autoSelectStream?: boolean
+  /** Minimal rail: offer an explicit “All streams” option. */
+  allowAllStreams?: boolean
+  /** Hide stream controls entirely (e.g. grade-only plan filters). */
+  showStreams?: boolean
 }
 
 export function SchoolSearchFilter({ 
@@ -77,6 +83,9 @@ export function SchoolSearchFilter({
   allClassesSelected = false,
   onSelectAllClasses,
   allowedGradeIds,
+  autoSelectStream = true,
+  allowAllStreams = false,
+  showStreams = true,
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
@@ -178,7 +187,15 @@ export function SchoolSearchFilter({
 
   // Auto-select first stream when a grade with streams is chosen (minimal sidebar)
   useEffect(() => {
-    if (variant !== "minimal" || !selectedGradeId || !onStreamSelect) return;
+    if (
+      variant !== "minimal" ||
+      !selectedGradeId ||
+      !onStreamSelect ||
+      !autoSelectStream ||
+      !showStreams
+    ) {
+      return
+    }
 
     const grade = allGrades.find((g) => g.id === selectedGradeId);
     if (!grade?.streams?.length) return;
@@ -196,6 +213,8 @@ export function SchoolSearchFilter({
     selectedStreamId,
     allGrades,
     onStreamSelect,
+    autoSelectStream,
+    showStreams,
   ]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,16 +244,20 @@ export function SchoolSearchFilter({
         onGradeSelect(grade.id, grade.levelId);
       }
 
-      if (grade.streams?.length && onStreamSelect) {
-        const keepCurrentStream =
-          selectedGradeId === grade.id &&
-          selectedStreamId &&
-          grade.streams.some((stream) => stream.id === selectedStreamId);
-        onStreamSelect(
-          keepCurrentStream ? selectedStreamId : grade.streams[0].id,
-          grade.id,
-          grade.levelId,
-        );
+      if (showStreams && grade.streams?.length && onStreamSelect) {
+        if (allowAllStreams) {
+          onStreamSelect("", grade.id, grade.levelId);
+        } else {
+          const keepCurrentStream =
+            selectedGradeId === grade.id &&
+            selectedStreamId &&
+            grade.streams.some((stream) => stream.id === selectedStreamId);
+          onStreamSelect(
+            keepCurrentStream ? selectedStreamId : grade.streams[0].id,
+            grade.id,
+            grade.levelId,
+          );
+        }
       }
       return;
     }
@@ -720,7 +743,7 @@ export function SchoolSearchFilter({
                                   </div>
                                   <span>{abbreviateGradeShort(grade.name)}</span>
                                 </div>
-                                {grade.streams?.length > 0 && (
+                                {showStreams && grade.streams?.length > 0 && (
                                     <span
                                       className={cn(
                                         "text-[10px] tabular-nums",
@@ -771,7 +794,9 @@ export function SchoolSearchFilter({
                       </div>
                       )}
 
-                      {activeGrade && activeGrade.streams?.length > 0 && (
+                      {showStreams &&
+                        activeGrade &&
+                        activeGrade.streams?.length > 0 && (
                         <div
                           className={cn(
                             isMinimal
@@ -789,6 +814,21 @@ export function SchoolSearchFilter({
                                 : "flex flex-wrap gap-1.5",
                             )}
                           >
+                            {allowAllStreams ? (
+                              <button
+                                type="button"
+                                className={streamButtonClass(!selectedStreamId)}
+                                onClick={() =>
+                                  handleStreamClick(
+                                    "",
+                                    activeGrade.id,
+                                    activeGrade.levelId,
+                                  )
+                                }
+                              >
+                                All
+                              </button>
+                            ) : null}
                             {activeGrade.streams.map((stream) => {
                               const isSelected = selectedStreamId === stream.id;
 
