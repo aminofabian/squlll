@@ -67,9 +67,12 @@ import {
 } from "./lib/feesWorkflow";
 import { FeesPanel } from "./components/FeesPanel";
 import { FeesOverviewBoard } from "./components/FeesOverviewBoard";
+import { OwnerPaymentsDrawer } from "../dashboard/components/OwnerPaymentsDrawer";
+import { readIsSchoolOwner } from "@/lib/school/isSchoolOwner";
 import { OverviewStatsCards } from "./components/OverviewStatsCards";
 import { FiltersSection } from "./components/FiltersSection";
 import { FeesDataTable } from "./components/FeesDataTable";
+import { BalancesGradeSidebar } from "./components/BalancesGradeSidebar";
 import { ArrearsSummaryPanel } from "./components/ArrearsSummaryPanel";
 import { StudentInvoicesTable } from "./components/StudentInvoicesTable";
 import { FeeStructureDrawer } from "./components/FeeStructureDrawer";
@@ -93,6 +96,7 @@ import { LinkMissingGradesDialog } from "./components/LinkMissingGradesDialog";
 import { useFeeAssignments } from "./hooks/useFeeAssignments";
 import { useFeeReminderLog } from "./hooks/useFeeReminderLog";
 import { useFeesAccess } from "./hooks/useFeesAccess";
+import { useTerm } from "../contexts/TermContext";
 import { useFeeAuditLog } from "./hooks/useFeeAuditLog";
 import { FeesReportsPanel } from "./components/FeesReportsPanel";
 import {
@@ -155,6 +159,7 @@ export default function FeesPage() {
   );
 
   const feesAccess = useFeesAccess();
+  const { selectedTerm, termsLoading } = useTerm();
   const {
     applyFeeAdjustment,
     isApplying: isApplyingAdjustment,
@@ -183,6 +188,8 @@ export default function FeesPage() {
     "dashboard" | "structures" | "invoices"
   >("dashboard");
   const [showAdjustmentDrawer, setShowAdjustmentDrawer] = useState(false);
+  const [showPaymentsDrawer, setShowPaymentsDrawer] = useState(false);
+  const isSchoolOwner = useMemo(() => readIsSchoolOwner(), []);
   const [adjustmentForm, setAdjustmentForm] = useState<FeeAdjustmentForm>({
     type: "discount",
     amount: "",
@@ -450,27 +457,23 @@ export default function FeesPage() {
     );
   }, [graphQLStructures]);
 
+  const currentPlanStructureIds = useMemo(() => {
+    const currentYearName = selectedTerm?.academicYear?.name;
+    if (!currentYearName) return null;
+    const ids = new Set<string>();
+    for (const plan of processedFeeStructures) {
+      if (plan.academicYear !== currentYearName) continue;
+      ids.add(plan.structureId);
+      for (const item of plan.allStructures ?? []) {
+        if (item?.id) ids.add(item.id);
+      }
+    }
+    return ids;
+  }, [processedFeeStructures, selectedTerm?.academicYear?.name]);
+
   const backToFeePlanList = useCallback(() => {
     router.push(feesPlansHref(), { scroll: false });
   }, [router]);
-
-  useEffect(() => {
-    if (currentView !== "dashboard") return;
-
-    const sectionParam = searchParams.get(FEE_SECTION_QUERY);
-
-    if (planSlugFromUrl && sectionParam !== "plans") {
-      router.replace(
-        buildFeesHref({ section: "plans", plan: planSlugFromUrl }),
-        { scroll: false },
-      );
-      return;
-    }
-
-    if (!planSlugFromUrl && !sectionParam) {
-      router.replace(feesPlansHref(), { scroll: false });
-    }
-  }, [currentView, planSlugFromUrl, router, searchParams]);
 
   useEffect(() => {
     const classFromUrl = searchParams.get(FEE_BALANCE_CLASS_QUERY);
@@ -508,6 +511,85 @@ export default function FeesPage() {
     }
     return [...byId.values()];
   }, [grades]);
+
+  /** Every school grade has at least one active fee link. */
+  const allGradesLinked = useMemo(() => {
+    if (
+      schoolGradesForLinkage.length === 0 ||
+      feeAssignmentsLoading ||
+      feeAssignmentsError ||
+      termsLoading
+    ) {
+      return false;
+    }
+
+    const linked = new Set<string>();
+    for (const group of feeAssignmentsData?.feeAssignments ?? []) {
+      if (group.feeAssignment?.isActive === false) continue;
+      if (
+        currentPlanStructureIds &&
+        !currentPlanStructureIds.has(group.feeAssignment.feeStructureId)
+      ) {
+        continue;
+      }
+      for (const id of group.feeAssignment?.tenantGradeLevelIds ?? []) {
+        if (id) linked.add(id);
+      }
+      for (const gradeLevel of group.feeAssignment?.gradeLevels ?? []) {
+        if (gradeLevel.tenantGradeLevelId) {
+          linked.add(gradeLevel.tenantGradeLevelId);
+        }
+      }
+      for (const assignment of group.studentAssignments ?? []) {
+        if (assignment.isActive === false) continue;
+        const id =
+          assignment.student?.grade?.id ||
+          assignment.student?.grade?.gradeLevel?.id;
+        if (id) linked.add(id);
+      }
+    }
+
+    return schoolGradesForLinkage.every((grade) => linked.has(grade.id));
+  }, [
+    schoolGradesForLinkage,
+    feeAssignmentsData?.feeAssignments,
+    feeAssignmentsLoading,
+    feeAssignmentsError,
+    currentPlanStructureIds,
+    termsLoading,
+  ]);
+
+  useEffect(() => {
+    if (currentView !== "dashboard") return;
+
+    const sectionParam = searchParams.get(FEE_SECTION_QUERY);
+
+    if (planSlugFromUrl && sectionParam !== "plans") {
+      router.replace(
+        buildFeesHref({ section: "plans", plan: planSlugFromUrl }),
+        { scroll: false },
+      );
+      return;
+    }
+
+    if (!planSlugFromUrl && !sectionParam) {
+      if (feeAssignmentsLoading || termsLoading) return;
+      router.replace(
+        allGradesLinked
+          ? buildFeesHref({ section: "overview" })
+          : feesPlansHref(),
+        { scroll: false },
+      );
+    }
+  }, [
+    currentView,
+    planSlugFromUrl,
+    router,
+    searchParams,
+    allGradesLinked,
+    feeAssignmentsLoading,
+    termsLoading,
+  ]);
 
   const linkedClassCountByPlan = useMemo(
     () =>
@@ -1819,6 +1901,17 @@ export default function FeesPage() {
                   onViewHighBalances={handleViewHighBalances}
                   onGenerateInvoices={() => openBulkInvoiceGenerator()}
                   onRecordPayment={() => openRecordPayment()}
+                  onOpenPaymentSettings={() => {
+                    if (!isSchoolOwner) {
+                      toast({
+                        title: "School owner only",
+                        description:
+                          "Ask the school owner to add or change payment details.",
+                      });
+                      return;
+                    }
+                    setShowPaymentsDrawer(true);
+                  }}
                   onGuidedSetup={
                     feesAccess.canManagePlans ? openGuidedSetup : undefined
                   }
@@ -1913,6 +2006,11 @@ export default function FeesPage() {
               )}
 
               {feesSection === "balances" && (
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 lg:flex-row">
+                  <BalancesGradeSidebar
+                    selectedGradeName={selectedClass || "all"}
+                    onGradeNameChange={setSelectedClass}
+                  />
                 <FeesPanel
                   dense
                   noPadding
@@ -1933,7 +2031,7 @@ export default function FeesPage() {
                           .join(" · ")
                   }
                   className={cn(
-                    "flex min-h-0 flex-1 flex-col",
+                    "flex min-h-0 min-w-0 flex-1 flex-col",
                     FEES_MOBILE.panelGhost,
                   )}
                   action={
@@ -2022,6 +2120,7 @@ export default function FeesPage() {
                   />
                   </div>
                 </FeesPanel>
+                </div>
               )}
 
               {feesSection === "assignments" && (
@@ -2383,6 +2482,14 @@ export default function FeesPage() {
         isSubmitting={isApplyingAdjustment}
         submitError={adjustmentError}
       />
+
+      {isSchoolOwner ? (
+        <OwnerPaymentsDrawer
+          open={showPaymentsDrawer}
+          onOpenChange={setShowPaymentsDrawer}
+          defaultRail="bank"
+        />
+      ) : null}
 
       <LinkMissingGradesDialog
         open={showLinkMissingGrades}

@@ -144,6 +144,7 @@ export function FeesPageHeader({
             onGradeChange={onGradeChange}
             gradeOptions={gradeOptions}
             inline
+            showGradeFilter={false}
           />
           </div>
         )}

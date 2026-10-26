@@ -440,7 +440,7 @@ export function SchoolSearchFilter({
   const gradeButtonClass = (selected: boolean) => {
     if (!isMinimal) {
       return cn(
-        "relative h-8 w-full rounded-lg border px-2.5 text-xs font-medium transition-all",
+        "relative h-8 w-full cursor-pointer rounded-lg border px-2.5 text-xs font-medium transition-all active:scale-[0.98]",
         selected
           ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
           : "border-[#1a4d42]/15 bg-white hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06] hover:text-[#246a59]",
@@ -448,7 +448,7 @@ export function SchoolSearchFilter({
     }
 
     return cn(
-      "flex h-7 w-full items-center justify-center gap-1 rounded-lg border text-[11px] font-semibold transition-colors",
+      "flex h-7 w-full cursor-pointer items-center justify-center gap-1 rounded-lg border text-[11px] font-semibold transition-colors active:scale-[0.98]",
       selected
         ? "border-[#246a59] bg-[#0a1f1a] text-white"
         : "border-[#1a4d42]/10 bg-[#f8fbfa] text-[#1a4d42]/80 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#071411] dark:text-white/70",
@@ -535,7 +535,7 @@ export function SchoolSearchFilter({
             type="button"
             onClick={onSelectAllClasses}
             className={cn(
-              "flex w-full items-center gap-2 border px-2 py-1.5 text-left transition-colors",
+              "flex w-full cursor-pointer items-center gap-2 border px-2 py-1.5 text-left transition-colors active:scale-[0.99]",
               allClassesSelected
                 ? "border-[#246a59]/30 bg-[#246a59]/10"
                 : "border-[#1a4d42]/12 bg-white hover:border-[#246a59]/30 dark:bg-[#0c1a17]",

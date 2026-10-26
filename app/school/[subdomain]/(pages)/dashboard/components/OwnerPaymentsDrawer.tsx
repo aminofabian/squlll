@@ -213,7 +213,7 @@ function RailTab({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex min-w-0 items-center gap-2 border px-2.5 py-2 text-left transition-colors",
+        "flex min-w-0 cursor-pointer items-center gap-2 border px-2.5 py-2 text-left transition-all active:scale-[0.99]",
         active
           ? "border-[#246a59]/30 bg-white text-[#0a1f1a] shadow-sm dark:bg-[#0c1a17] dark:text-white"
           : "border-transparent text-[#1a4d42]/55 hover:bg-white/70 dark:text-white/45 dark:hover:bg-white/5",

@@ -12,7 +12,7 @@ import {
   Eye,
   FileStack,
   Send,
-  Smartphone,
+  Landmark,
   Sparkles,
   ArrowRight,
   AlertTriangle,
@@ -41,6 +41,7 @@ interface FeesOverviewBoardProps {
   onViewBalances?: () => void;
   onGenerateInvoices: () => void;
   onRecordPayment: () => void;
+  onOpenPaymentSettings?: () => void;
   onGuidedSetup?: () => void;
   onSendReminders?: () => void;
 }
@@ -54,6 +55,7 @@ export function FeesOverviewBoard({
   onViewBalances,
   onGenerateInvoices,
   onRecordPayment,
+  onOpenPaymentSettings,
   onGuidedSetup,
   onSendReminders,
 }: FeesOverviewBoardProps) {
@@ -225,16 +227,12 @@ export function FeesOverviewBoard({
       icon: CreditCard,
     },
     {
-      key: "mpesa",
-      label: "M-Pesa till",
-      sub: "M-Pesa payments",
-      onClick: () => {
-        if (typeof window !== "undefined") {
-          window.location.href = "/dashboard?payments=open";
-        }
-      },
+      key: "payments",
+      label: "Add bank details",
+      sub: "M-Pesa till & fee letters",
+      onClick: onOpenPaymentSettings ?? (() => {}),
       primary: false,
-      icon: Smartphone,
+      icon: Landmark,
     },
     {
       key: "balances",
@@ -370,10 +368,10 @@ export function FeesOverviewBoard({
                 type="button"
                 onClick={action.onClick}
                 className={cn(
-                  "flex min-w-0 flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-left transition-colors",
+                  "flex min-w-0 cursor-pointer select-none flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-left transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/40 focus-visible:ring-offset-2",
                   action.primary
-                    ? "text-white shadow-sm sm:col-span-1"
-                    : "bg-slate-50 ring-1 ring-slate-200/80 hover:bg-white hover:ring-emerald-200/60",
+                    ? "text-white shadow-sm hover:brightness-110 sm:col-span-1"
+                    : "bg-slate-50 ring-1 ring-slate-200/80 hover:bg-white hover:shadow-sm hover:ring-emerald-200/60 active:bg-slate-100",
                   action.primary &&
                     quickActions.length <= 3 &&
                     "sm:row-span-1",

@@ -52,7 +52,7 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
   {
     items: [
       { title: "Timetable", shortLabel: "Timetable", href: "/timetable", icon: ICONS.timetable },
-      { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees?section=plans", icon: ICONS.fees },
+      { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees", icon: ICONS.fees },
       { title: "Exams", shortLabel: "Exams", href: "/exams", icon: FileCheck },
     ],
   },
@@ -76,7 +76,7 @@ export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
   { title: "Messages", href: "/communication", icon: ICONS.messages },
   { title: "Communications", href: "/communications", icon: Megaphone },
   { title: "Timetable", href: "/timetable", icon: ICONS.timetable },
-  { title: "Fees & Invoices", href: "/fees?section=plans", icon: ICONS.fees },
+  { title: "Fees & Invoices", href: "/fees", icon: ICONS.fees },
   { title: "Exams", href: "/exams", icon: FileCheck },
 ];
 
@@ -133,7 +133,7 @@ export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
     id: "administration",
     label: "Administration",
     items: [
-      { title: "Fees & Invoices", href: "/fees?section=plans", icon: ICONS.fees },
+      { title: "Fees & Invoices", href: "/fees", icon: ICONS.fees },
       { title: "Attendances", href: "/attendances", icon: ICONS.attendance },
       { title: "School Years", href: "/school-years", icon: CalendarCheck },
       { title: "Reports", href: "/reports", icon: ICONS.reports },

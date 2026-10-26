@@ -23,6 +23,8 @@ interface FeesStudentFiltersProps {
   gradeOptions: string[];
   /** Single row for the page chrome toolbar. */
   inline?: boolean;
+  /** Balances uses the grade rail instead of this dropdown. */
+  showGradeFilter?: boolean;
 }
 
 export function FeesStudentFilters({
@@ -36,6 +38,7 @@ export function FeesStudentFilters({
   onGradeChange,
   gradeOptions,
   inline = false,
+  showGradeFilter = true,
 }: FeesStudentFiltersProps) {
   return (
     <div
@@ -65,43 +68,45 @@ export function FeesStudentFilters({
           onClearSelection={onClearSelection}
         />
       </div>
-      <div
-        className={cn(
-          "shrink-0",
-          inline ? "w-full sm:w-[9.5rem]" : "w-full space-y-1.5 sm:w-[11rem]",
-        )}
-      >
-        {!inline && (
-          <label
-            htmlFor="fees-grade-filter"
-            className="text-xs font-medium text-slate-500"
-          >
-            Grade
-          </label>
-        )}
-        <Select
-          value={selectedGrade || "all"}
-          onValueChange={onGradeChange}
+      {showGradeFilter ? (
+        <div
+          className={cn(
+            "shrink-0",
+            inline ? "w-full sm:w-[9.5rem]" : "w-full space-y-1.5 sm:w-[11rem]",
+          )}
         >
-          <SelectTrigger
-            id="fees-grade-filter"
-            className={cn(
-              "w-full border-slate-200 bg-white text-sm shadow-sm",
-              inline ? "h-9" : "h-10",
-            )}
+          {!inline && (
+            <label
+              htmlFor="fees-grade-filter"
+              className="text-xs font-medium text-slate-500"
+            >
+              Grade
+            </label>
+          )}
+          <Select
+            value={selectedGrade || "all"}
+            onValueChange={onGradeChange}
           >
-            <SelectValue placeholder="All grades" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All grades</SelectItem>
-            {gradeOptions.map((grade) => (
-              <SelectItem key={grade} value={grade}>
-                {grade}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <SelectTrigger
+              id="fees-grade-filter"
+              className={cn(
+                "w-full border-slate-200 bg-white text-sm shadow-sm",
+                inline ? "h-9" : "h-10",
+              )}
+            >
+              <SelectValue placeholder="All grades" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All grades</SelectItem>
+              {gradeOptions.map((grade) => (
+                <SelectItem key={grade} value={grade}>
+                  {grade}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
     </div>
   );
 }
