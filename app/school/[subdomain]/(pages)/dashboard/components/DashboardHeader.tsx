@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Filter,
   MoreHorizontal,
+  PencilRuler,
   Plus,
 } from "lucide-react";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
@@ -26,6 +27,7 @@ interface DashboardHeaderProps {
   selectedStreamLabel?: string;
   hasGradeSelected: boolean;
   onOpenGradePicker: () => void;
+  onManageClasses: () => void;
   onCreateTerm: () => void;
   canCreateTerm: boolean;
   showDesktopGradeToggle?: boolean;
@@ -39,6 +41,7 @@ export function DashboardHeader({
   selectedStreamLabel,
   hasGradeSelected,
   onOpenGradePicker,
+  onManageClasses,
   onCreateTerm,
   canCreateTerm,
   showDesktopGradeToggle = false,
@@ -94,6 +97,19 @@ export function DashboardHeader({
               {isGradePanelOpen ? "Hide grades" : "Show grades"}
             </Button>
           ) : null}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 rounded-lg border-[#1a4d42]/20 px-2.5 text-xs"
+            onClick={onManageClasses}
+            aria-label="Manage grades and streams"
+            title="Add, rename or delete grades and streams"
+          >
+            <PencilRuler className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">Manage</span>
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -28,6 +28,7 @@ import { ClassesSidebar } from "./components/ClassesSidebar";
 import { ClassProfile } from "./components/ClassProfile";
 import { SubjectsView } from "./components/SubjectsView";
 import { AddStreamModal } from "../components/AddStreamModal";
+import { AddGradeDialog } from "../components/AddGradeDialog";
 import { AssignTeacherModal } from "../components/AssignTeacherModal";
 import { AddSubjectDialog } from "../components/AddSubjectDialog";
 import { type ClassAction } from "./components/ClassActionBar";
@@ -71,6 +72,7 @@ export default function ClassesPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showSubjectsDrawer, setShowSubjectsDrawer] = useState(false);
   const [showAddStreamModal, setShowAddStreamModal] = useState(false);
+  const [showAddGradeDialog, setShowAddGradeDialog] = useState(false);
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false);
   const [assignTeacherData, setAssignTeacherData] = useState<{
     streamId?: string;
@@ -311,6 +313,12 @@ export default function ClassesPage() {
 
   const pageActions: ClassAction[] = useMemo(
     () => [
+      {
+        id: "add-grade",
+        label: "Add grade",
+        icon: Plus,
+        onClick: () => setShowAddGradeDialog(true),
+      },
       {
         id: "subjects",
         label: "All subjects",
@@ -687,6 +695,15 @@ export default function ClassesPage() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {showAddGradeDialog ? (
+        <AddGradeDialog
+          open
+          onOpenChange={setShowAddGradeDialog}
+          levels={config?.selectedLevels ?? []}
+          defaultLevelId={selectedGrade?.level.id}
+        />
+      ) : null}
 
       {showAddStreamModal && selectedGrade?.grade ? (
         <AddStreamModal

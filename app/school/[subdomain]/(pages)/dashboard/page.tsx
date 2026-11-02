@@ -25,6 +25,7 @@ import { DashboardSection } from "./components/DashboardSection";
 import { OwnerPaymentsDrawer } from "./components/OwnerPaymentsDrawer";
 import { ClassesContextBar } from "../classes/components/ClassesContextBar";
 import { GradeDetailsView } from "../classes/components/GradeDetailsView";
+import { ManageClassesSheet } from "../components/ManageClassesSheet";
 import { GradeInsights } from "./components/GradeInsights";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { readIsSchoolOwner } from "@/lib/school/isSchoolOwner";
@@ -44,6 +45,7 @@ export default function SchoolDashboard() {
   const [isGradeSheetOpen, setIsGradeSheetOpen] = useState(false);
   const [showCreateTermModal, setShowCreateTermModal] = useState(false);
   const [paymentsOpen, setPaymentsOpen] = useState(false);
+  const [manageClassesOpen, setManageClassesOpen] = useState(false);
   const isOwner = useMemo(() => readIsSchoolOwner(), []);
 
   const { getActiveAcademicYear } = useCurrentAcademicYear();
@@ -129,6 +131,20 @@ export default function SchoolDashboard() {
     setSelectedStreamId("");
   }, []);
 
+  const handleManagedGradeDeleted = useCallback(
+    (gradeId: string) => {
+      if (selectedGrade === gradeId) handleClearFilters();
+    },
+    [selectedGrade, handleClearFilters],
+  );
+
+  const handleManagedStreamDeleted = useCallback(
+    (streamId: string) => {
+      if (selectedStreamId === streamId) setSelectedStreamId("");
+    },
+    [selectedStreamId],
+  );
+
   if (isLoading || (statsLoading && !selectedGrade)) {
     return <DashboardPageSkeleton />;
   }
@@ -201,6 +217,7 @@ export default function SchoolDashboard() {
             selectedStreamLabel={selectedStreamName}
             hasGradeSelected={Boolean(selectedGrade)}
             onOpenGradePicker={() => setIsGradeSheetOpen(true)}
+            onManageClasses={() => setManageClassesOpen(true)}
             onCreateTerm={() => setShowCreateTermModal(true)}
             canCreateTerm={Boolean(currentAcademicYear)}
             showDesktopGradeToggle
@@ -312,6 +329,15 @@ export default function SchoolDashboard() {
           </div>
         </div>
       </div>
+
+      <ManageClassesSheet
+        open={manageClassesOpen}
+        onOpenChange={setManageClassesOpen}
+        config={schoolConfig}
+        students={students}
+        onGradeDeleted={handleManagedGradeDeleted}
+        onStreamDeleted={handleManagedStreamDeleted}
+      />
 
       <DashboardGradeSheet
         open={isGradeSheetOpen}

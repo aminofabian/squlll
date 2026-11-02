@@ -25,6 +25,21 @@ const UPDATE_STREAM = gql`
   }
 `;
 
+const CREATE_TENANT_GRADE_LEVEL = gql`
+  mutation CreateTenantGradeLevel(
+    $curriculumId: String!
+    $gradeLevelId: String!
+  ) {
+    createTenantGradeLevel(
+      curriculumId: $curriculumId
+      gradeLevelId: $gradeLevelId
+    ) {
+      id
+      name
+    }
+  }
+`;
+
 const DELETE_TENANT_GRADE_LEVEL = gql`
   mutation DeleteClassGradeLevel($tenantGradeLevelId: String!) {
     deleteTenantGradeLevel(tenantGradeLevelId: $tenantGradeLevelId)
@@ -62,7 +77,10 @@ export function useClassDirectoryActions() {
   const invalidate = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["schoolConfig"] }),
+      queryClient.invalidateQueries({ queryKey: ["gradeLevelsForSchoolType"] }),
+      queryClient.invalidateQueries({ queryKey: ["availableGradeLevels"] }),
       queryClient.invalidateQueries({ queryKey: ["campusClassTeachers"] }),
+      queryClient.invalidateQueries({ queryKey: ["tenantStatistics"] }),
     ]);
   }, [queryClient]);
 
@@ -97,6 +115,66 @@ export function useClassDirectoryActions() {
         await invalidate();
       } finally {
         setIsSaving(false);
+      }
+    },
+    [invalidate],
+  );
+
+  const createGrade = useCallback(
+    async (curriculumId: string, gradeLevelId: string) => {
+      setIsSaving(true);
+      try {
+        const data = await graphqlClient.request<{
+          createTenantGradeLevel: { id: string; name?: string };
+        }>(CREATE_TENANT_GRADE_LEVEL, { curriculumId, gradeLevelId });
+        await invalidate();
+        return data.createTenantGradeLevel;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [invalidate],
+  );
+
+  const deleteGrade = useCallback(
+    async (unit: CampusClassUnit) => {
+      setIsDeleting(true);
+      try {
+        await graphqlClient.request(DELETE_TENANT_GRADE_LEVEL, {
+          tenantGradeLevelId: unit.gradeId,
+        });
+        await invalidate();
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [invalidate],
+  );
+
+  const deleteStream = useCallback(
+    async (unit: CampusClassUnit) => {
+      if (!unit.streamId) {
+        throw new Error("This class does not have a stream to delete");
+      }
+      setIsDeleting(true);
+      try {
+        const data = await graphqlClient.request<{
+          getTenantStreams: TenantStreamRow[];
+        }>(GET_TENANT_STREAMS, { tenantGradeLevelId: unit.gradeId });
+        const match = (data.getTenantStreams ?? []).find(
+          (row) => row.stream?.id === unit.streamId,
+        );
+        if (!match) {
+          throw new Error(
+            `Could not find the stream for ${unit.label}. Refresh and try again.`,
+          );
+        }
+        await graphqlClient.request(DELETE_TENANT_STREAM, {
+          tenantStreamId: match.id,
+        });
+        await invalidate();
+      } finally {
+        setIsDeleting(false);
       }
     },
     [invalidate],
@@ -168,9 +246,12 @@ export function useClassDirectoryActions() {
   );
 
   return {
+    createGrade,
     renameClass,
     renameStream,
     deleteClasses,
+    deleteGrade,
+    deleteStream,
     isSaving,
     isDeleting,
   };
