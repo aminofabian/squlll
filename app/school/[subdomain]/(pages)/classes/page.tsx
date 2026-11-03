@@ -341,7 +341,7 @@ export default function ClassesPage() {
       },
       {
         id: "streams",
-        label: "Streams",
+        label: "Add streams",
         icon: Layers,
         onClick: () => setShowStreamBoard(true),
       },

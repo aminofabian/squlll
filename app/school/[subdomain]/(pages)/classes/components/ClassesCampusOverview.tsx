@@ -140,7 +140,7 @@ export function ClassesCampusOverview({
     null,
   );
   const [bulkStreamGrades, setBulkStreamGrades] = useState<
-    { id: string; name: string }[] | null
+    { id: string; name: string; existing: string[] }[] | null
   >(null);
   const { teacherMap, isLoading: teachersLoading } = useCampusClassDirectory();
   const { getStaffing, isLoading: staffingLoading } =
@@ -391,13 +391,30 @@ export function ClassesCampusOverview({
               className="h-8 text-xs"
               disabled={selectedUnits.length === 0}
               onClick={() => {
-                const grades = new Map<string, string>();
-                for (const unit of selectedUnits) {
-                  grades.set(unit.gradeId, unit.gradeName);
+                const gradeIds = new Set(selectedUnits.map((unit) => unit.gradeId));
+                const grades = new Map<
+                  string,
+                  { id: string; name: string; existing: string[] }
+                >();
+                for (const unit of classUnits) {
+                  if (!gradeIds.has(unit.gradeId)) continue;
+                  const current = grades.get(unit.gradeId) ?? {
+                    id: unit.gradeId,
+                    name: unit.gradeName,
+                    existing: [],
+                  };
+                  if (
+                    unit.streamName &&
+                    !current.existing.some(
+                      (name) =>
+                        name.toLowerCase() === unit.streamName?.toLowerCase(),
+                    )
+                  ) {
+                    current.existing.push(unit.streamName);
+                  }
+                  grades.set(unit.gradeId, current);
                 }
-                setBulkStreamGrades(
-                  Array.from(grades, ([id, name]) => ({ id, name })),
-                );
+                setBulkStreamGrades(Array.from(grades.values()));
               }}
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -742,6 +759,12 @@ export function ClassesCampusOverview({
           onSuccess={() => setAddStreamUnit(null)}
           gradeId={addStreamUnit.gradeId}
           gradeName={addStreamUnit.gradeName}
+          existing={classUnits
+            .filter(
+              (unit) =>
+                unit.gradeId === addStreamUnit.gradeId && unit.streamName,
+            )
+            .map((unit) => unit.streamName as string)}
         />
       ) : null}
 

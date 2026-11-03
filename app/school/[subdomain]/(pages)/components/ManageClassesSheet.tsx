@@ -158,6 +158,7 @@ export function ManageClassesSheet({
   const [addStreamGrade, setAddStreamGrade] = useState<{
     id: string;
     name: string;
+    existing: string[];
   } | null>(null);
   const [editGradeUnit, setEditGradeUnit] = useState<CampusClassUnit | null>(
     null,
@@ -169,7 +170,7 @@ export function ManageClassesSheet({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkStreamGrades, setBulkStreamGrades] = useState<
-    { id: string; name: string }[] | null
+    { id: string; name: string; existing: string[] }[] | null
   >(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [streamBoardOpen, setStreamBoardOpen] = useState(false);
@@ -195,14 +196,22 @@ export function ManageClassesSheet({
   };
 
   const openBulkStreams = () => {
-    const grades = new Map<string, string>();
+    const grades = new Map<string, { id: string; name: string; existing: string[] }>();
     for (const unit of selectedUnits) {
-      grades.set(unit.gradeId, unit.gradeName);
+      if (grades.has(unit.gradeId)) continue;
+      const existing =
+        (config?.selectedLevels ?? [])
+          .flatMap((level) => level.gradeLevels ?? [])
+          .find((grade) => grade.id === unit.gradeId)
+          ?.streams?.map((stream) => stream.name) ?? [];
+      grades.set(unit.gradeId, {
+        id: unit.gradeId,
+        name: unit.gradeName,
+        existing,
+      });
     }
     if (grades.size === 0) return;
-    setBulkStreamGrades(
-      Array.from(grades, ([id, name]) => ({ id, name })),
-    );
+    setBulkStreamGrades(Array.from(grades.values()));
   };
 
   const gradeCount = useMemo(
@@ -306,7 +315,7 @@ export function ManageClassesSheet({
                   className="h-8 text-xs"
                   onClick={() => setStreamBoardOpen(true)}
                 >
-                  Streams
+                  Add streams
                 </Button>
                 <Button
                   type="button"
@@ -434,6 +443,7 @@ export function ManageClassesSheet({
                                 setAddStreamGrade({
                                   id: grade.id,
                                   name: displayName,
+                                  existing: streams.map((stream) => stream.name),
                                 })
                               }
                             >
@@ -623,6 +633,7 @@ export function ManageClassesSheet({
           onSuccess={() => setAddStreamGrade(null)}
           gradeId={addStreamGrade.id}
           gradeName={addStreamGrade.name}
+          existing={addStreamGrade.existing}
         />
       ) : null}
 

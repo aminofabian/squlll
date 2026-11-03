@@ -51,22 +51,25 @@ type GradeRow = {
   streams: Map<string, Cell>;
 };
 
-type Pending =
-  | { type: "add"; gradeId: string; name: string }
-  | {
-      type: "remove";
-      gradeId: string;
-      streamId: string;
-      name: string;
-    };
+type Removal = {
+  gradeId: string;
+  streamId: string;
+  name: string;
+};
 
-const PRESETS = [
-  { label: "A & B", names: ["A", "B"] },
-  { label: "A, B & C", names: ["A", "B", "C"] },
+const PRESETS: { label: string; names: string[] }[] = [
+  { label: "A and B", names: ["A", "B"] },
+  { label: "A, B and C", names: ["A", "B", "C"] },
 ];
 
 function streamKey(name: string) {
   return name.trim().toLowerCase();
+}
+
+function joinNames(names: string[]) {
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 function countStudents(
@@ -85,19 +88,6 @@ function countStudents(
   return count;
 }
 
-function parseNames(value: string) {
-  const seen = new Set<string>();
-  const names: string[] = [];
-  for (const part of value.split(/[\n,]/)) {
-    const name = part.trim();
-    const key = streamKey(name);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    names.push(name);
-  }
-  return names;
-}
-
 export function StreamBoard({
   open,
   onOpenChange,
@@ -108,13 +98,14 @@ export function StreamBoard({
   const actions = useClassDirectoryActions();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [customNames, setCustomNames] = useState("");
+  const [draftName, setDraftName] = useState("");
+  const [names, setNames] = useState<string[]>([]);
   const [selectedGradeIds, setSelectedGradeIds] = useState<Set<string>>(
     () => new Set(defaultGradeIds ?? []),
   );
-  const [pending, setPending] = useState<Pending[]>([]);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [removals, setRemovals] = useState<Removal[]>([]);
   const [confirming, setConfirming] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
@@ -146,7 +137,7 @@ export function StreamBoard({
     return next;
   }, [config?.selectedLevels, students]);
 
-  const visibleRows = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return rows;
     return rows.filter(
@@ -156,230 +147,97 @@ export function StreamBoard({
     );
   }, [rows, search]);
 
+  const groups = useMemo(() => {
+    const grouped = new Map<string, GradeRow[]>();
+    for (const row of filteredRows) {
+      const list = grouped.get(row.levelName) ?? [];
+      list.push(row);
+      grouped.set(row.levelName, list);
+    }
+    return Array.from(grouped, ([levelName, grades]) => ({
+      levelName,
+      grades,
+    }));
+  }, [filteredRows]);
+
   const columns = useMemo(() => {
-    const names = new Map<string, string>();
+    const found = new Map<string, string>();
     for (const row of rows) {
       for (const cell of row.streams.values()) {
         const key = streamKey(cell.name);
-        if (!names.has(key)) names.set(key, cell.name);
+        if (!found.has(key)) found.set(key, cell.name);
       }
     }
-    for (const change of pending) {
-      if (change.type !== "add") continue;
-      const key = streamKey(change.name);
-      if (!names.has(key)) names.set(key, change.name);
-    }
-    return Array.from(names, ([key, name]) => ({ key, name })).sort((a, b) =>
+    return Array.from(found, ([key, name]) => ({ key, name })).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
-  }, [rows, pending]);
+  }, [rows]);
 
-  const commonKeys = useMemo(() => {
+  const selectedGrades = rows.filter((row) => selectedGradeIds.has(row.id));
+
+  const creates = selectedGrades.flatMap((grade) =>
+    names
+      .filter((name) => !grade.streams.has(streamKey(name)))
+      .map((name) => ({
+        gradeId: grade.id,
+        gradeName: grade.name,
+        name,
+      })),
+  );
+
+  const skipped = selectedGrades.flatMap((grade) =>
+    names
+      .filter((name) => grade.streams.has(streamKey(name)))
+      .map((name) => `${grade.name} already has ${name}`),
+  );
+
+  const missing = useMemo(() => {
     const withStreams = rows.filter((row) => row.streams.size > 0);
     if (withStreams.length < 2) return [];
-    const counts = new Map<string, number>();
+    const counts = new Map<string, { name: string; count: number }>();
     for (const row of withStreams) {
-      for (const key of row.streams.keys()) {
-        counts.set(key, (counts.get(key) ?? 0) + 1);
+      for (const cell of row.streams.values()) {
+        const key = streamKey(cell.name);
+        const current = counts.get(key) ?? { name: cell.name, count: 0 };
+        current.count += 1;
+        counts.set(key, current);
       }
     }
     const threshold = Math.ceil(withStreams.length / 2);
-    return Array.from(counts.entries())
-      .filter(([, count]) => count >= threshold)
-      .map(([key]) => key);
+    const common = Array.from(counts.values()).filter(
+      (item) => item.count >= threshold,
+    );
+    return rows.flatMap((grade) =>
+      common
+        .filter((item) => !grade.streams.has(streamKey(item.name)))
+        .map((item) => ({
+          gradeId: grade.id,
+          gradeName: grade.name,
+          name: item.name,
+        })),
+    );
   }, [rows]);
 
-  const gapCount = rows.filter((row) =>
-    commonKeys.some((key) => !row.streams.has(key)),
-  ).length;
-
-  const targets = rows.filter((row) =>
-    selectedGradeIds.size === 0 ? true : selectedGradeIds.has(row.id),
-  );
-
-  const pendingFor = (gradeId: string, name: string) =>
-    pending.find(
-      (change) =>
-        change.gradeId === gradeId && streamKey(change.name) === streamKey(name),
-    );
-
-  const queueAdds = (names: string[], gradeRows: GradeRow[]) => {
-    const additions: Pending[] = [];
-    let skipped = 0;
-    for (const grade of gradeRows) {
-      for (const name of names) {
-        if (grade.streams.has(streamKey(name))) {
-          skipped += 1;
-          continue;
-        }
-        additions.push({ type: "add", gradeId: grade.id, name });
+  const addNames = (incoming: string[]) => {
+    setNames((current) => {
+      const next = [...current];
+      const seen = new Set(current.map(streamKey));
+      for (const name of incoming) {
+        const trimmed = name.trim();
+        const key = streamKey(trimmed);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        next.push(trimmed);
       }
-    }
-    setPending((current) => {
-      const next = current.filter(
-        (change) =>
-          !additions.some(
-            (addition) =>
-              addition.gradeId === change.gradeId &&
-              streamKey(addition.name) === streamKey(change.name),
-          ),
-      );
-      return [...next, ...additions];
+      return next;
     });
-    setNotice(
-      additions.length === 0
-        ? "Those streams are already on the selected grades."
-        : skipped > 0
-          ? `Queued ${additions.length} new stream${additions.length === 1 ? "" : "s"}. ${skipped} already existed and were left alone.`
-          : null,
-    );
-    setConfirming(false);
-  };
-
-  const queueClearColumn = (name: string) => {
-    const removals: Pending[] = [];
-    let blocked = 0;
-    for (const grade of targets) {
-      const cell = grade.streams.get(streamKey(name));
-      if (!cell) continue;
-      if (cell.studentCount > 0) {
-        blocked += 1;
-        continue;
-      }
-      removals.push({
-        type: "remove",
-        gradeId: grade.id,
-        streamId: cell.streamId,
-        name: cell.name,
-      });
-    }
-    setPending((current) => {
-      const next = current.filter(
-        (change) =>
-          !(
-            streamKey(change.name) === streamKey(name) &&
-            targets.some((grade) => grade.id === change.gradeId)
-          ),
-      );
-      return [...next, ...removals];
-    });
-    setNotice(
-      blocked > 0
-        ? `${blocked} grade${blocked === 1 ? "" : "s"} still have students in ${name}, so those were left in place.`
-        : removals.length === 0
-          ? `${name} is not on the selected grades.`
-          : null,
-    );
-    setConfirming(false);
-  };
-
-  const toggleCell = (grade: GradeRow, name: string) => {
-    const existing = pendingFor(grade.id, name);
-    if (existing) {
-      setPending((current) =>
-        current.filter(
-          (change) =>
-            !(
-              change.gradeId === grade.id &&
-              streamKey(change.name) === streamKey(name)
-            ),
-        ),
-      );
-      return;
-    }
-    const cell = grade.streams.get(streamKey(name));
-    if (cell?.studentCount) {
-      toast.error(
-        `${grade.name} ${cell.name} has ${cell.studentCount} student${cell.studentCount === 1 ? "" : "s"}. Move them before removing it.`,
-      );
-      return;
-    }
-    setPending((current) => [
-      ...current,
-      cell
-        ? {
-            type: "remove",
-            gradeId: grade.id,
-            streamId: cell.streamId,
-            name: cell.name,
-          }
-        : { type: "add", gradeId: grade.id, name },
-    ]);
-    setConfirming(false);
-  };
-
-  const adds = pending.filter((change) => change.type === "add");
-  const removes = pending.filter((change) => change.type === "remove");
-
-  const apply = async () => {
     setError(null);
-    let created = 0;
-    const failures: string[] = [];
-    try {
-      for (const change of adds) {
-        const response = await fetch("/api/school/create-stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: change.name,
-            capacity: "30",
-            gradeId: change.gradeId,
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          const detail = Array.isArray(data.details)
-            ? data.details[0]?.message
-            : undefined;
-          failures.push(detail || data.error || `Could not add ${change.name}`);
-          continue;
-        }
-        created += 1;
-      }
+  };
 
-      if (removes.length > 0) {
-        const units: CampusClassUnit[] = removes.map((change) => {
-          const grade = rows.find((row) => row.id === change.gradeId);
-          return {
-            id: `${change.gradeId}:${change.streamId}`,
-            gradeId: change.gradeId,
-            levelId: grade?.levelId ?? "",
-            label: `${grade?.name ?? "Grade"} · ${change.name}`,
-            gradeName: grade?.name ?? "Grade",
-            levelName: grade?.levelName ?? "",
-            streamId: change.streamId,
-            streamName: change.name,
-            studentCount: 0,
-            subjectCount: 0,
-            subjectsStaffed: 0,
-            classTeacher: null,
-            health: "empty",
-          };
-        });
-        await actions.deleteStreams(units);
-      } else {
-        await queryClient.invalidateQueries({ queryKey: ["schoolConfig"] });
-      }
-
-      const removed = removes.length;
-      toast.success(
-        [
-          created ? `Added ${created}` : null,
-          removed ? `removed ${removed}` : null,
-        ]
-          .filter(Boolean)
-          .join(" and ") || "Stream board updated",
-      );
-      if (failures.length > 0) {
-        setError(failures[0]);
-      } else {
-        setPending([]);
-        setConfirming(false);
-        setNotice(null);
-      }
-    } catch (err) {
-      setError(getDisplayErrorMessage(err));
-    }
+  const commitDraft = () => {
+    const parts = draftName.split(/[\n,]/);
+    if (parts.some((part) => part.trim())) addNames(parts);
+    setDraftName("");
   };
 
   const toggleGrade = (gradeId: string) => {
@@ -389,317 +247,594 @@ export function StreamBoard({
       else next.add(gradeId);
       return next;
     });
+    setError(null);
   };
+
+  const toggleLevel = (grades: GradeRow[]) => {
+    setSelectedGradeIds((current) => {
+      const next = new Set(current);
+      const allOn = grades.every((grade) => next.has(grade.id));
+      for (const grade of grades) {
+        if (allOn) next.delete(grade.id);
+        else next.add(grade.id);
+      }
+      return next;
+    });
+  };
+
+  const createStreams = async (
+    pairs: { gradeId: string; name: string }[],
+    options?: { clearNames?: boolean },
+  ) => {
+    setSaving(true);
+    setError(null);
+    let created = 0;
+    const failures: string[] = [];
+    try {
+      for (const pair of pairs) {
+        const response = await fetch("/api/school/create-stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: pair.name,
+            capacity: "30",
+            gradeId: pair.gradeId,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          const detail = Array.isArray(data.details)
+            ? data.details[0]?.message
+            : undefined;
+          failures.push(detail || data.error || `Could not add ${pair.name}`);
+          continue;
+        }
+        created += 1;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["schoolConfig"] });
+      if (created > 0) {
+        toast.success(
+          created === 1 ? "Stream added" : `${created} streams added`,
+        );
+      }
+      if (failures.length > 0) {
+        setError(failures[0]);
+      } else if (options?.clearNames) {
+        setNames([]);
+        setDraftName("");
+      }
+    } catch (err) {
+      setError(getDisplayErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const queueRemoval = (grade: GradeRow, cell: Cell) => {
+    if (cell.studentCount > 0) {
+      toast.error(
+        `${grade.name} ${cell.name} has ${cell.studentCount} student${cell.studentCount === 1 ? "" : "s"}. Move them before removing it.`,
+      );
+      return;
+    }
+    setRemovals((current) => {
+      const exists = current.some(
+        (item) => item.gradeId === grade.id && item.streamId === cell.streamId,
+      );
+      if (exists) {
+        return current.filter(
+          (item) =>
+            !(item.gradeId === grade.id && item.streamId === cell.streamId),
+        );
+      }
+      return [
+        ...current,
+        { gradeId: grade.id, streamId: cell.streamId, name: cell.name },
+      ];
+    });
+    setConfirming(false);
+  };
+
+  const clearEmptyColumn = (name: string) => {
+    const next: Removal[] = [];
+    let blocked = 0;
+    for (const grade of rows) {
+      const cell = grade.streams.get(streamKey(name));
+      if (!cell) continue;
+      if (cell.studentCount > 0) {
+        blocked += 1;
+        continue;
+      }
+      next.push({
+        gradeId: grade.id,
+        streamId: cell.streamId,
+        name: cell.name,
+      });
+    }
+    setRemovals(next);
+    setConfirming(next.length > 0);
+    if (blocked > 0) {
+      toast.error(
+        `${blocked} grade${blocked === 1 ? "" : "s"} still have students in ${name}. Those stay.`,
+      );
+    } else if (next.length === 0) {
+      toast.error(`${name} is not on any grade.`);
+    }
+  };
+
+  const applyRemovals = async () => {
+    setError(null);
+    try {
+      const units: CampusClassUnit[] = removals.map((change) => {
+        const grade = rows.find((row) => row.id === change.gradeId);
+        return {
+          id: `${change.gradeId}:${change.streamId}`,
+          gradeId: change.gradeId,
+          levelId: grade?.levelId ?? "",
+          label: `${grade?.name ?? "Grade"} · ${change.name}`,
+          gradeName: grade?.name ?? "Grade",
+          levelName: grade?.levelName ?? "",
+          streamId: change.streamId,
+          streamName: change.name,
+          studentCount: 0,
+          subjectCount: 0,
+          subjectsStaffed: 0,
+          classTeacher: null,
+          health: "empty",
+        };
+      });
+      await actions.deleteStreams(units);
+      toast.success(
+        removals.length === 1
+          ? "Stream removed"
+          : `${removals.length} streams removed`,
+      );
+      setRemovals([]);
+      setConfirming(false);
+    } catch (err) {
+      setError(getDisplayErrorMessage(err));
+    }
+  };
+
+  const presetActive = (presetNames: string[]) =>
+    names.length === presetNames.length &&
+    presetNames.every((name, index) => streamKey(names[index] ?? "") === streamKey(name));
+
+  const addLabel =
+    names.length === 0
+      ? "Choose stream names"
+      : selectedGrades.length === 0
+        ? "Choose grades"
+        : creates.length === 0
+          ? "Already on those grades"
+          : `Add ${joinNames(names)} to ${selectedGrades.length} grade${selectedGrades.length === 1 ? "" : "s"}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="border-b border-slate-200 px-5 py-4 text-left dark:border-slate-800">
-          <DialogTitle>Streams across the school</DialogTitle>
+          <DialogTitle>Add streams</DialogTitle>
           <DialogDescription>
-            Tick a grade, then add A and B everywhere they are missing. Empty
-            cells can be cleared without opening each grade. Nothing is saved
-            until you apply.
+            Name the streams, tick the grades, then add them. A grade that
+            already has a name is skipped.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 border-b border-slate-200 px-5 py-3 dark:border-slate-800">
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+        <div className="min-h-0 flex-1 space-y-5 overflow-auto px-5 py-4">
+          <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
+            <div>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                1. What are the streams called?
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Pick a common set, or type your own names.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {PRESETS.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setNames(preset.names)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium",
+                    presetActive(preset.names)
+                      ? "border-[#246a59] bg-[#e8f2ef] text-[#246a59]"
+                      : "border-slate-200 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200",
+                  )}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            {names.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {names.map((name) => (
+                  <span
+                    key={streamKey(name)}
+                    className="inline-flex items-center gap-1 rounded-full bg-[#e8f2ef] px-2.5 py-1 text-xs font-medium text-[#246a59]"
+                  >
+                    {name}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${name}`}
+                      onClick={() =>
+                        setNames((current) =>
+                          current.filter(
+                            (item) => streamKey(item) !== streamKey(name),
+                          ),
+                        )
+                      }
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <div className="flex gap-2">
+              <Input
+                value={draftName}
+                onChange={(event) => setDraftName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    commitDraft();
+                  }
+                }}
+                placeholder="Type a name, then press Enter"
+                className="h-9 text-sm"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 shrink-0"
+                onClick={commitDraft}
+                disabled={!draftName.trim()}
+              >
+                Add name
+              </Button>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  2. Which grades get them?
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {selectedGrades.length === 0
+                    ? "Tick one grade, a whole level, or every grade."
+                    : `${selectedGrades.length} grade${selectedGrades.length === 1 ? "" : "s"} selected.`}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <button
+                  type="button"
+                  className="font-medium text-[#246a59]"
+                  onClick={() =>
+                    setSelectedGradeIds(new Set(rows.map((row) => row.id)))
+                  }
+                >
+                  All grades
+                </button>
+                <button
+                  type="button"
+                  className="font-medium text-slate-500"
+                  onClick={() => setSelectedGradeIds(new Set())}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search grades"
-                className="h-8 pl-7 text-xs"
+                className="h-9 pl-8 text-sm"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {PRESETS.map((preset) => (
+
+            {groups.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                No grades to show yet. Add a grade first.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {groups.map((group) => {
+                  const allOn = group.grades.every((grade) =>
+                    selectedGradeIds.has(grade.id),
+                  );
+                  return (
+                    <div key={group.levelName} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          {group.levelName}
+                        </p>
+                        <button
+                          type="button"
+                          className="text-[11px] font-medium text-[#246a59]"
+                          onClick={() => toggleLevel(group.grades)}
+                        >
+                          {allOn ? "Clear level" : "Whole level"}
+                        </button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {group.grades.map((grade) => {
+                          const checked = selectedGradeIds.has(grade.id);
+                          const existing = Array.from(grade.streams.values()).map(
+                            (cell) => cell.name,
+                          );
+                          const willAdd = names.filter(
+                            (name) => !grade.streams.has(streamKey(name)),
+                          );
+                          return (
+                            <label
+                              key={grade.id}
+                              className={cn(
+                                "flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5",
+                                checked
+                                  ? "border-[#246a59] bg-[#e8f2ef]/60"
+                                  : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950",
+                              )}
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() => toggleGrade(grade.id)}
+                                aria-label={grade.name}
+                                className="mt-0.5"
+                              />
+                              <span className="min-w-0">
+                                <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">
+                                  {grade.name}
+                                </span>
+                                <span className="mt-0.5 block text-[11px] text-slate-500">
+                                  {checked && names.length > 0
+                                    ? willAdd.length === 0
+                                      ? `Already has ${joinNames(names)}`
+                                      : `Will add ${joinNames(willAdd)}`
+                                    : existing.length > 0
+                                      ? `Has ${existing.join(", ")}`
+                                      : "No streams yet"}
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {skipped.length > 0 && creates.length > 0 ? (
+              <p className="text-xs text-slate-500">
+                {skipped.length === 1
+                  ? `${skipped[0]}. That one is left as it is.`
+                  : `${skipped.length} streams already exist and will be left as they are.`}
+              </p>
+            ) : null}
+            {error ? (
+              <p className="text-xs font-medium text-rose-600" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <Button
+              type="button"
+              className="h-10 w-full bg-[#0a1f1a] text-white hover:bg-[#246a59] sm:w-auto"
+              disabled={creates.length === 0 || saving}
+              onClick={() => void createStreams(creates, { clearNames: true })}
+            >
+              {saving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="mr-2 h-4 w-4" />
+              )}
+              {addLabel}
+            </Button>
+          </section>
+
+          <section className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-800">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Streams already in the school
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  A dash adds that stream to one grade. A tick marks an empty
+                  stream for removal.
+                </p>
+              </div>
+              {missing.length > 0 ? (
                 <Button
-                  key={preset.label}
                   type="button"
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs"
-                  onClick={() => queueAdds(preset.names, targets)}
+                  disabled={saving}
+                  onClick={() => void createStreams(missing)}
                 >
-                  <Plus className="mr-1 h-3 w-3" />
-                  {preset.label}
+                  Add {missing.length} missing
                 </Button>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs"
-                disabled={gapCount === 0}
-                onClick={() => {
-                  const names = columns
-                    .filter((column) => commonKeys.includes(column.key))
-                    .map((column) => column.name);
-                  const missing = rows.filter((row) =>
-                    commonKeys.some((key) => !row.streams.has(key)),
-                  );
-                  queueAdds(names, missing);
-                }}
-              >
-                Fill {gapCount || ""} gap{gapCount === 1 ? "" : "s"}
-              </Button>
+              ) : null}
             </div>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              value={customNames}
-              onChange={(event) => setCustomNames(event.target.value)}
-              placeholder="Custom names, one per line or comma: North, South"
-              className="h-8 text-xs"
-            />
-            <Button
-              type="button"
-              size="sm"
-              className="h-8 shrink-0 text-xs"
-              onClick={() => queueAdds(parseNames(customNames), targets)}
-            >
-              Add to {selectedGradeIds.size || rows.length} grade
-              {(selectedGradeIds.size || rows.length) === 1 ? "" : "s"}
-            </Button>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-            <button
-              type="button"
-              className="font-medium text-[#246a59]"
-              onClick={() =>
-                setSelectedGradeIds(new Set(visibleRows.map((row) => row.id)))
-              }
-            >
-              Select visible
-            </button>
-            <button
-              type="button"
-              className="font-medium text-[#246a59]"
-              onClick={() => setSelectedGradeIds(new Set())}
-            >
-              Use every grade
-            </button>
-            <span>
-              {selectedGradeIds.size === 0
-                ? "Presets apply to every grade."
-                : `Presets apply to ${selectedGradeIds.size} selected grade${selectedGradeIds.size === 1 ? "" : "s"}.`}
-            </span>
-            {gapCount > 0 ? (
-              <span className="text-amber-700">
-                {gapCount} grade{gapCount === 1 ? "" : "s"} missing a stream
-                others already use.
-              </span>
-            ) : null}
-          </div>
-          {notice ? <p className="text-xs text-slate-600">{notice}</p> : null}
-        </div>
 
-        <div className="min-h-0 flex-1 overflow-auto">
-          {visibleRows.length === 0 ? (
-            <p className="px-5 py-10 text-center text-sm text-slate-500">
-              No grades to show yet. Add a grade first.
-            </p>
-          ) : (
-            <table className="w-full border-separate border-spacing-0 text-left text-xs">
-              <thead className="sticky top-0 z-20 bg-white dark:bg-slate-950">
-                <tr>
-                  <th className="sticky left-0 z-30 min-w-40 border-b border-r border-slate-200 bg-white px-3 py-2 font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-950">
-                    Grade
-                  </th>
-                  {columns.map((column) => (
-                    <th
-                      key={column.key}
-                      className="min-w-24 border-b border-slate-200 px-2 py-2 text-center font-medium text-slate-700 dark:border-slate-800"
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <span>{column.name}</span>
-                        <button
-                          type="button"
-                          className="text-[10px] font-medium text-rose-600"
-                          onClick={() => queueClearColumn(column.name)}
+            {columns.length === 0 ? (
+              <p className="text-xs text-slate-500">
+                No streams yet. Use the steps above to add the first ones.
+              </p>
+            ) : (
+              <div className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full border-separate border-spacing-0 text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-900">
+                    <tr>
+                      <th className="sticky left-0 z-10 min-w-36 border-b border-r border-slate-200 bg-slate-50 px-3 py-2 font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+                        Grade
+                      </th>
+                      {columns.map((column) => (
+                        <th
+                          key={column.key}
+                          className="min-w-24 border-b border-slate-200 px-2 py-2 text-center font-medium text-slate-700 dark:border-slate-800"
                         >
-                          Clear empty
-                        </button>
-                      </div>
-                    </th>
-                  ))}
-                  {columns.length === 0 ? (
-                    <th className="border-b border-slate-200 px-3 py-2 font-normal text-slate-400">
-                      No streams yet. Use A &amp; B to start.
-                    </th>
-                  ) : null}
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRows.map((grade) => {
-                  const dimmed =
-                    selectedGradeIds.size > 0 &&
-                    !selectedGradeIds.has(grade.id);
-                  return (
-                    <tr key={grade.id} className="hover:bg-slate-50/80">
-                      <td className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950">
-                        <label className="flex items-center gap-2">
-                          <Checkbox
-                            checked={selectedGradeIds.has(grade.id)}
-                            onCheckedChange={() => toggleGrade(grade.id)}
-                            aria-label={`Include ${grade.name}`}
-                          />
-                          <span className="min-w-0">
-                            <span className="block font-medium text-slate-800 dark:text-slate-100">
-                              {grade.name}
-                            </span>
-                            <span className="block text-[10px] text-slate-400">
-                              {grade.levelName}
-                              {grade.streams.size === 0
-                                ? " · no streams"
-                                : ` · ${grade.streams.size}`}
-                            </span>
-                          </span>
-                        </label>
-                      </td>
-                      {columns.map((column) => {
-                        const cell = grade.streams.get(column.key);
-                        const change = pendingFor(grade.id, column.name);
-                        const blocked = (cell?.studentCount ?? 0) > 0;
-                        return (
-                          <td
-                            key={column.key}
-                            className="border-b border-slate-100 px-2 py-1.5 text-center dark:border-slate-800/70"
-                          >
+                          <div className="flex flex-col items-center gap-1">
+                            <span>{column.name}</span>
                             <button
                               type="button"
-                              onClick={() => toggleCell(grade, column.name)}
-                              className={cn(
-                                "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-1.5 text-[11px] font-medium",
-                                change?.type === "add" &&
-                                  "border-[#246a59] bg-[#e8f2ef] text-[#246a59]",
-                                change?.type === "remove" &&
-                                  "border-rose-300 bg-rose-50 text-rose-700",
-                                !change &&
-                                  cell &&
-                                  !blocked &&
-                                  "border-slate-200 bg-white text-slate-700",
-                                !change &&
-                                  blocked &&
-                                  "border-amber-200 bg-amber-50 text-amber-800",
-                                !change &&
-                                  !cell &&
-                                  "border-dashed border-slate-200 text-slate-300",
-                                dimmed && "opacity-45",
-                              )}
-                              title={
-                                blocked
-                                  ? `${cell?.studentCount} students. Move them before removing this stream.`
-                                  : change?.type === "add"
-                                    ? "Will be added"
-                                    : change?.type === "remove"
-                                      ? "Will be removed"
-                                      : cell
-                                        ? "Click to remove"
-                                        : "Click to add"
-                              }
+                              className="text-[10px] font-medium text-rose-600"
+                              onClick={() => clearEmptyColumn(column.name)}
                             >
-                              {change?.type === "add" ? (
-                                <Plus className="h-3.5 w-3.5" />
-                              ) : change?.type === "remove" ? (
-                                <X className="h-3.5 w-3.5" />
-                              ) : cell ? (
-                                <span className="inline-flex items-center gap-1">
-                                  <Check className="h-3.5 w-3.5" />
-                                  {blocked ? cell.studentCount : null}
-                                </span>
-                              ) : (
-                                <Minus className="h-3.5 w-3.5" />
-                              )}
+                              Remove empty
                             </button>
-                          </td>
-                        );
-                      })}
+                          </div>
+                        </th>
+                      ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                  </thead>
+                  <tbody>
+                    {filteredRows.map((grade) => (
+                      <tr key={grade.id}>
+                        <td className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950">
+                          <span className="block font-medium text-slate-800 dark:text-slate-100">
+                            {grade.name}
+                          </span>
+                          <span className="block text-[10px] text-slate-400">
+                            {grade.levelName}
+                          </span>
+                        </td>
+                        {columns.map((column) => {
+                          const cell = grade.streams.get(column.key);
+                          const marked = removals.some(
+                            (item) =>
+                              item.gradeId === grade.id &&
+                              item.streamId === cell?.streamId,
+                          );
+                          const blocked = (cell?.studentCount ?? 0) > 0;
+                          return (
+                            <td
+                              key={column.key}
+                              className="border-b border-slate-100 px-2 py-1.5 text-center dark:border-slate-800/70"
+                            >
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() => {
+                                  if (!cell) {
+                                    void createStreams([
+                                      { gradeId: grade.id, name: column.name },
+                                    ]);
+                                    return;
+                                  }
+                                  queueRemoval(grade, cell);
+                                }}
+                                className={cn(
+                                  "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-1.5 text-[11px] font-medium",
+                                  marked &&
+                                    "border-rose-300 bg-rose-50 text-rose-700",
+                                  !marked &&
+                                    cell &&
+                                    !blocked &&
+                                    "border-slate-200 bg-white text-slate-700",
+                                  !marked &&
+                                    blocked &&
+                                    "border-amber-200 bg-amber-50 text-amber-800",
+                                  !cell &&
+                                    "border-dashed border-slate-200 text-slate-300",
+                                )}
+                                title={
+                                  !cell
+                                    ? `Add ${column.name} to ${grade.name}`
+                                    : blocked
+                                      ? `${cell.studentCount} students. Move them before removing this stream.`
+                                      : marked
+                                        ? "Will be removed"
+                                        : "Mark for removal"
+                                }
+                              >
+                                {!cell ? (
+                                  <Minus className="h-3.5 w-3.5" />
+                                ) : marked ? (
+                                  <X className="h-3.5 w-3.5" />
+                                ) : (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Check className="h-3.5 w-3.5" />
+                                    {blocked ? cell.studentCount : null}
+                                  </span>
+                                )}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-        <div className="space-y-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
-          {confirming && removes.length > 0 ? (
-            <div className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs text-slate-700">
-              <p className="font-medium text-rose-700">
-                Remove {removes.length} empty stream
-                {removes.length === 1 ? "" : "s"}?
-              </p>
-              <p className="mt-1 text-slate-500">
-                {removes
-                  .slice(0, 8)
-                  .map((change) => {
-                    const grade = rows.find((row) => row.id === change.gradeId);
-                    return `${grade?.name ?? "Grade"} ${change.name}`;
-                  })
-                  .join(", ")}
-                {removes.length > 8 ? ` and ${removes.length - 8} more` : ""}.
-                The grades stay. Streams with students are not included.
-              </p>
-            </div>
-          ) : null}
-          {error ? (
-            <p className="text-xs font-medium text-rose-600" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[11px] text-slate-500">
-              {pending.length === 0
-                ? "Click a cell, or use a preset. Green adds, red removes."
-                : `${adds.length} to add · ${removes.length} to remove`}
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={pending.length === 0 || actions.isDeleting}
-                onClick={() => {
-                  setPending([]);
-                  setConfirming(false);
-                  setNotice(null);
-                  setError(null);
-                }}
-              >
-                Discard
-              </Button>
-              {confirming && removes.length > 0 ? (
+            {confirming && removals.length > 0 ? (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-slate-700">
+                <p className="font-medium text-rose-700">
+                  Remove {removals.length} empty stream
+                  {removals.length === 1 ? "" : "s"}?
+                </p>
+                <p className="mt-1 text-slate-600">
+                  {removals
+                    .slice(0, 8)
+                    .map((change) => {
+                      const grade = rows.find((row) => row.id === change.gradeId);
+                      return `${grade?.name ?? "Grade"} ${change.name}`;
+                    })
+                    .join(", ")}
+                  {removals.length > 8 ? ` and ${removals.length - 8} more` : ""}.
+                  Grades stay. Streams with students are not included.
+                </p>
+              </div>
+            ) : null}
+            {removals.length > 0 ? (
+              <div className="flex justify-end gap-2">
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="ghost"
                   size="sm"
                   disabled={actions.isDeleting}
-                  onClick={() => void apply()}
-                >
-                  {actions.isDeleting ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : null}
-                  Confirm changes
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={pending.length === 0 || actions.isDeleting}
                   onClick={() => {
-                    if (removes.length > 0) setConfirming(true);
-                    else void apply();
+                    setRemovals([]);
+                    setConfirming(false);
                   }}
                 >
-                  Apply
+                  Keep them
                 </Button>
-              )}
-            </div>
-          </div>
+                {confirming ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={actions.isDeleting}
+                    onClick={() => void applyRemovals()}
+                  >
+                    {actions.isDeleting ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    Remove streams
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirming(true)}
+                  >
+                    Review removal
+                  </Button>
+                )}
+              </div>
+            ) : null}
+          </section>
         </div>
       </DialogContent>
     </Dialog>
