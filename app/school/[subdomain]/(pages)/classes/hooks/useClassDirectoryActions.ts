@@ -272,12 +272,58 @@ export function useClassDirectoryActions() {
     [invalidate],
   );
 
+  const deleteStreams = useCallback(
+    async (units: CampusClassUnit[]) => {
+      const streams = units.filter((unit) => unit.streamId);
+      if (streams.length === 0) return;
+      if (streams.some((unit) => unit.studentCount > 0)) {
+        throw new Error(
+          "One of these streams still has students. Move them before deleting.",
+        );
+      }
+
+      setIsDeleting(true);
+      try {
+        const byGrade = new Map<string, CampusClassUnit[]>();
+        for (const unit of streams) {
+          const group = byGrade.get(unit.gradeId) ?? [];
+          group.push(unit);
+          byGrade.set(unit.gradeId, group);
+        }
+
+        for (const [gradeId, selected] of byGrade) {
+          const data = await graphqlClient.request<{
+            getTenantStreams: TenantStreamRow[];
+          }>(GET_TENANT_STREAMS, { tenantGradeLevelId: gradeId });
+          const rows = data.getTenantStreams ?? [];
+          for (const unit of selected) {
+            const match = rows.find((row) => row.stream?.id === unit.streamId);
+            if (!match) {
+              throw new Error(
+                `Could not find ${unit.streamName ?? "that stream"} in ${unit.gradeName}. Refresh and try again.`,
+              );
+            }
+            await graphqlClient.request(DELETE_TENANT_STREAM, {
+              tenantStreamId: match.id,
+            });
+          }
+        }
+
+        await invalidate();
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [invalidate],
+  );
+
   return {
     createGrade,
     createGrades,
     renameClass,
     renameStream,
     deleteClasses,
+    deleteStreams,
     deleteGrade,
     deleteStream,
     isSaving,

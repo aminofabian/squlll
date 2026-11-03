@@ -27,7 +27,7 @@ import { ClassesPageSkeleton } from "./components/ClassesPageSkeleton";
 import { ClassesSidebar } from "./components/ClassesSidebar";
 import { ClassProfile } from "./components/ClassProfile";
 import { SubjectsView } from "./components/SubjectsView";
-import { AddStreamModal } from "../components/AddStreamModal";
+import { StreamBoard } from "../components/StreamBoard";
 import { AddGradeDialog } from "../components/AddGradeDialog";
 import { AssignTeacherModal } from "../components/AssignTeacherModal";
 import { AddSubjectDialog } from "../components/AddSubjectDialog";
@@ -71,7 +71,7 @@ export default function ClassesPage() {
   const [isClassesDrawerOpen, setIsClassesDrawerOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showSubjectsDrawer, setShowSubjectsDrawer] = useState(false);
-  const [showAddStreamModal, setShowAddStreamModal] = useState(false);
+  const [showStreamBoard, setShowStreamBoard] = useState(false);
   const [showAddGradeDialog, setShowAddGradeDialog] = useState(false);
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false);
   const [assignTeacherData, setAssignTeacherData] = useState<{
@@ -340,15 +340,10 @@ export default function ClassesPage() {
         disabledReason: "Select a grade first",
       },
       {
-        id: "add-stream",
-        label: "Add stream",
+        id: "streams",
+        label: "Streams",
         icon: Layers,
-        onClick: () => {
-          if (selectedGrade?.grade) setShowAddStreamModal(true);
-          else toast.error("Select a grade first");
-        },
-        disabled: !selectedGrade?.grade,
-        disabledReason: "Select a grade first",
+        onClick: () => setShowStreamBoard(true),
       },
       {
         id: "assign-teacher",
@@ -710,13 +705,13 @@ export default function ClassesPage() {
         />
       ) : null}
 
-      {showAddStreamModal && selectedGrade?.grade ? (
-        <AddStreamModal
-          isOpen={showAddStreamModal}
-          onClose={() => setShowAddStreamModal(false)}
-          onSuccess={() => setShowAddStreamModal(false)}
-          gradeId={selectedGrade.grade.id}
-          gradeName={selectedGrade.grade.name}
+      {showStreamBoard ? (
+        <StreamBoard
+          open
+          onOpenChange={setShowStreamBoard}
+          config={config}
+          students={students}
+          defaultGradeIds={selectedGradeId ? [selectedGradeId] : undefined}
         />
       ) : null}
 

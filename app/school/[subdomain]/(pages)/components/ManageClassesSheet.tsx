@@ -37,6 +37,7 @@ import {
 } from "../classes/components/ClassDirectoryDialogs";
 import { AddStreamModal } from "./AddStreamModal";
 import { AddGradeDialog } from "./AddGradeDialog";
+import { StreamBoard } from "./StreamBoard";
 import type { SchoolConfiguration } from "@/lib/types/school-config";
 import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import {
@@ -171,6 +172,7 @@ export function ManageClassesSheet({
     { id: string; name: string }[] | null
   >(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [streamBoardOpen, setStreamBoardOpen] = useState(false);
 
   const selectedUnits = units.filter((unit) => selectedIds.has(unit.id));
   const deletableUnits = units.filter((unit) => unit.studentCount === 0);
@@ -297,6 +299,15 @@ export function ManageClassesSheet({
               </>
             ) : (
               <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setStreamBoardOpen(true)}
+                >
+                  Streams
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -587,6 +598,15 @@ export function ManageClassesSheet({
           until the students are moved.
         </div>
       </SheetContent>
+
+      {streamBoardOpen ? (
+        <StreamBoard
+          open
+          onOpenChange={setStreamBoardOpen}
+          config={config}
+          students={students}
+        />
+      ) : null}
 
       {addGradeOpen ? (
         <AddGradeDialog
