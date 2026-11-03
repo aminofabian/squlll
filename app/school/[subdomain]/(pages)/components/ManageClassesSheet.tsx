@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useClassDirectoryActions } from "../classes/hooks/useClassDirectoryActions";
 import type { CampusClassUnit } from "../classes/components/ClassesCampusOverview";
 import {
@@ -163,6 +164,44 @@ export function ManageClassesSheet({
   const [editStreamUnit, setEditStreamUnit] =
     useState<CampusClassUnit | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkStreamGrades, setBulkStreamGrades] = useState<
+    { id: string; name: string }[] | null
+  >(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+
+  const selectedUnits = units.filter((unit) => selectedIds.has(unit.id));
+  const deletableUnits = units.filter((unit) => unit.studentCount === 0);
+
+  const exitSelect = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
+    setBulkError(null);
+  };
+
+  const toggleUnit = (unit: CampusClassUnit) => {
+    if (unit.studentCount > 0) return;
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(unit.id)) next.delete(unit.id);
+      else next.add(unit.id);
+      return next;
+    });
+  };
+
+  const openBulkStreams = () => {
+    const grades = new Map<string, string>();
+    for (const unit of selectedUnits) {
+      grades.set(unit.gradeId, unit.gradeName);
+    }
+    if (grades.size === 0) return;
+    setBulkStreamGrades(
+      Array.from(grades, ([id, name]) => ({ id, name })),
+    );
+  };
 
   const gradeCount = useMemo(
     () =>
@@ -206,15 +245,79 @@ export function ManageClassesSheet({
             </span>{" "}
             stream{streamCount === 1 ? "" : "s"}
           </p>
-          <Button
-            type="button"
-            size="sm"
-            className="h-8 gap-1.5 rounded-lg bg-[#0a1f1a] text-xs text-white hover:bg-[#246a59]"
-            onClick={() => setAddGradeOpen(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add grade
-          </Button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {selectMode ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() =>
+                    setSelectedIds(
+                      new Set(deletableUnits.map((unit) => unit.id)),
+                    )
+                  }
+                  disabled={deletableUnits.length === 0}
+                >
+                  All empty
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={openBulkStreams}
+                  disabled={selectedUnits.length === 0}
+                >
+                  Add streams
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setBulkError(null);
+                    setBulkDeleteOpen(true);
+                  }}
+                  disabled={selectedUnits.length === 0}
+                >
+                  Delete {selectedUnits.length || ""}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={exitSelect}
+                >
+                  Done
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setSelectMode(true)}
+                >
+                  Select
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 gap-1.5 rounded-lg bg-[#0a1f1a] text-xs text-white hover:bg-[#246a59]"
+                  onClick={() => setAddGradeOpen(true)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add grades
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
@@ -251,6 +354,42 @@ export function ManageClassesSheet({
                         className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/50"
                       >
                         <div className="flex items-start justify-between gap-2 px-3 py-2.5">
+                          {selectMode ? (
+                            <Checkbox
+                              checked={
+                                gradeUnits.filter(
+                                  (unit) => unit.studentCount === 0,
+                                ).length > 0 &&
+                                gradeUnits
+                                  .filter((unit) => unit.studentCount === 0)
+                                  .every((unit) => selectedIds.has(unit.id))
+                              }
+                              disabled={
+                                gradeUnits.every(
+                                  (unit) => unit.studentCount > 0,
+                                )
+                              }
+                              onCheckedChange={() => {
+                                const empty = gradeUnits.filter(
+                                  (unit) => unit.studentCount === 0,
+                                );
+                                if (empty.length === 0) return;
+                                const allSelected = empty.every((unit) =>
+                                  selectedIds.has(unit.id),
+                                );
+                                setSelectedIds((current) => {
+                                  const next = new Set(current);
+                                  for (const unit of empty) {
+                                    if (allSelected) next.delete(unit.id);
+                                    else next.add(unit.id);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              aria-label={`Select ${displayName}`}
+                              className="mt-0.5"
+                            />
+                          ) : null}
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                               {displayName}
@@ -343,6 +482,23 @@ export function ManageClassesSheet({
                                   key={stream.id}
                                   className="flex items-center justify-between gap-2 bg-slate-50/40 px-3 py-1.5 pl-5 dark:bg-slate-900/20"
                                 >
+                                  {selectMode ? (
+                                    <Checkbox
+                                      checked={selectedIds.has(
+                                        `${grade.id}:${stream.id}`,
+                                      )}
+                                      disabled={streamCount > 0}
+                                      onCheckedChange={() => {
+                                        const unit = units.find(
+                                          (item) =>
+                                            item.gradeId === grade.id &&
+                                            item.streamId === stream.id,
+                                        );
+                                        if (unit) toggleUnit(unit);
+                                      }}
+                                      aria-label={`Select ${displayName} ${stream.name}`}
+                                    />
+                                  ) : null}
                                   <div className="min-w-0">
                                     <p className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
                                       {stream.name}
@@ -448,6 +604,87 @@ export function ManageClassesSheet({
           gradeId={addStreamGrade.id}
           gradeName={addStreamGrade.name}
         />
+      ) : null}
+
+      {bulkStreamGrades ? (
+        <AddStreamModal
+          isOpen
+          onClose={() => setBulkStreamGrades(null)}
+          onSuccess={() => {
+            setBulkStreamGrades(null);
+            exitSelect();
+          }}
+          gradeId={bulkStreamGrades[0]?.id ?? ""}
+          gradeName={bulkStreamGrades[0]?.name ?? ""}
+          grades={bulkStreamGrades}
+        />
+      ) : null}
+
+      {bulkDeleteOpen ? (
+        <Dialog
+          open
+          onOpenChange={(next) => {
+            if (!next && !actions.isDeleting) setBulkDeleteOpen(false);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                Delete {selectedUnits.length} class
+                {selectedUnits.length === 1 ? "" : "es"}?
+              </DialogTitle>
+              <DialogDescription>
+                Empty grades are removed completely. Empty streams are removed
+                from their grade. Classes that still have students stay.
+              </DialogDescription>
+            </DialogHeader>
+            {bulkError ? (
+              <p className="text-xs font-medium text-rose-600" role="alert">
+                {bulkError}
+              </p>
+            ) : null}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setBulkDeleteOpen(false)}
+                disabled={actions.isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={actions.isDeleting}
+                onClick={() => {
+                  void (async () => {
+                    setBulkError(null);
+                    try {
+                      await actions.deleteClasses(selectedUnits, units);
+                      toast.success(
+                        `${selectedUnits.length} class${selectedUnits.length === 1 ? "" : "es"} deleted`,
+                      );
+                      exitSelect();
+                    } catch (err) {
+                      setBulkError(getDisplayErrorMessage(err));
+                    }
+                  })();
+                }}
+              >
+                {actions.isDeleting ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Deleting…
+                  </>
+                ) : (
+                  "Delete selected"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       ) : null}
 
       {editGradeUnit ? (

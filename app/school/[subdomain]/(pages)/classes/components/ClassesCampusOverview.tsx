@@ -139,6 +139,9 @@ export function ClassesCampusOverview({
   const [deleteUnits, setDeleteUnits] = useState<CampusClassUnit[] | null>(
     null,
   );
+  const [bulkStreamGrades, setBulkStreamGrades] = useState<
+    { id: string; name: string }[] | null
+  >(null);
   const { teacherMap, isLoading: teachersLoading } = useCampusClassDirectory();
   const { getStaffing, isLoading: staffingLoading } =
     useCampusDirectoryStaffing(config);
@@ -380,6 +383,25 @@ export function ClassesCampusOverview({
               onClick={exitSelect}
             >
               Done
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              disabled={selectedUnits.length === 0}
+              onClick={() => {
+                const grades = new Map<string, string>();
+                for (const unit of selectedUnits) {
+                  grades.set(unit.gradeId, unit.gradeName);
+                }
+                setBulkStreamGrades(
+                  Array.from(grades, ([id, name]) => ({ id, name })),
+                );
+              }}
+            >
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Add streams
             </Button>
             <Button
               type="button"
@@ -720,6 +742,20 @@ export function ClassesCampusOverview({
           onSuccess={() => setAddStreamUnit(null)}
           gradeId={addStreamUnit.gradeId}
           gradeName={addStreamUnit.gradeName}
+        />
+      ) : null}
+
+      {bulkStreamGrades ? (
+        <AddStreamModal
+          isOpen
+          onClose={() => setBulkStreamGrades(null)}
+          onSuccess={() => {
+            setBulkStreamGrades(null);
+            exitSelect();
+          }}
+          gradeId={bulkStreamGrades[0]?.id ?? ""}
+          gradeName={bulkStreamGrades[0]?.name ?? ""}
+          grades={bulkStreamGrades}
         />
       ) : null}
 

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { gql } from "graphql-request";
 import { graphqlClient } from "@/lib/graphql-client";
+import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
 import type { CampusClassUnit } from "../components/ClassesCampusOverview";
 
 const UPDATE_TENANT_GRADE_LEVEL = gql`
@@ -121,20 +122,45 @@ export function useClassDirectoryActions() {
     [invalidate],
   );
 
-  const createGrade = useCallback(
-    async (curriculumId: string, gradeLevelId: string) => {
+  const createGrades = useCallback(
+    async (items: { curriculumId: string; gradeLevelId: string }[]) => {
+      if (items.length === 0) return [];
       setIsSaving(true);
+      const created: { id: string; name?: string }[] = [];
+      const errors: string[] = [];
       try {
-        const data = await graphqlClient.request<{
-          createTenantGradeLevel: { id: string; name?: string };
-        }>(CREATE_TENANT_GRADE_LEVEL, { curriculumId, gradeLevelId });
+        for (const item of items) {
+          try {
+            const data = await graphqlClient.request<{
+              createTenantGradeLevel: { id: string; name?: string };
+            }>(CREATE_TENANT_GRADE_LEVEL, item);
+            created.push(data.createTenantGradeLevel);
+          } catch (err) {
+            errors.push(getDisplayErrorMessage(err));
+          }
+        }
         await invalidate();
-        return data.createTenantGradeLevel;
+        if (errors.length > 0) {
+          throw new Error(
+            created.length > 0
+              ? `Added ${created.length} grade${created.length === 1 ? "" : "s"}. ${errors[0]}`
+              : errors[0],
+          );
+        }
+        return created;
       } finally {
         setIsSaving(false);
       }
     },
     [invalidate],
+  );
+
+  const createGrade = useCallback(
+    async (curriculumId: string, gradeLevelId: string) => {
+      const created = await createGrades([{ curriculumId, gradeLevelId }]);
+      return created[0];
+    },
+    [createGrades],
   );
 
   const deleteGrade = useCallback(
@@ -248,6 +274,7 @@ export function useClassDirectoryActions() {
 
   return {
     createGrade,
+    createGrades,
     renameClass,
     renameStream,
     deleteClasses,

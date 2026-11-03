@@ -35,10 +35,7 @@ export function AddGradeDialog({
   onAdded,
 }: AddGradeDialogProps) {
   const [query, setQuery] = useState("");
-  const [selection, setSelection] = useState<{
-    curriculumId: string;
-    gradeId: string;
-  } | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const actions = useClassDirectoryActions();
 
@@ -73,18 +70,50 @@ export function AddGradeDialog({
       .filter((curriculum) => curriculum.grades.length > 0);
   }, [curricula, query]);
 
-  const selected = useMemo(() => {
-    if (!selection) return null;
+  const selectionKey = (curriculumId: string, gradeId: string) =>
+    `${curriculumId}:${gradeId}`;
+
+  const selectedItems = useMemo(() => {
+    const items: { curriculumId: string; gradeLevelId: string; name: string }[] =
+      [];
     for (const curriculum of curricula) {
-      const grade = curriculum.grades.find(
-        (item) => item.id === selection.gradeId,
-      );
-      if (grade && curriculum.id === selection.curriculumId) {
-        return { curriculum, grade };
+      for (const grade of curriculum.grades) {
+        if (selectedKeys.has(selectionKey(curriculum.id, grade.id))) {
+          items.push({
+            curriculumId: curriculum.id,
+            gradeLevelId: grade.id,
+            name: grade.name,
+          });
+        }
       }
     }
-    return null;
-  }, [curricula, selection]);
+    return items;
+  }, [curricula, selectedKeys]);
+
+  const toggleGrade = (curriculumId: string, gradeId: string) => {
+    const key = selectionKey(curriculumId, gradeId);
+    setSelectedKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    setError(null);
+  };
+
+  const toggleGroup = (curriculumId: string, gradeIds: string[]) => {
+    setSelectedKeys((current) => {
+      const next = new Set(current);
+      const keys = gradeIds.map((gradeId) => selectionKey(curriculumId, gradeId));
+      const allSelected = keys.every((key) => next.has(key));
+      for (const key of keys) {
+        if (allSelected) next.delete(key);
+        else next.add(key);
+      }
+      return next;
+    });
+    setError(null);
+  };
 
   const remainingCount = curricula.reduce(
     (count, curriculum) => count + curriculum.grades.length,
@@ -92,16 +121,23 @@ export function AddGradeDialog({
   );
 
   const submit = async () => {
-    if (!selection) {
-      setError("Choose a grade to add");
+    if (selectedItems.length === 0) {
+      setError("Choose at least one grade to add");
       return;
     }
 
     setError(null);
     try {
-      await actions.createGrade(selection.curriculumId, selection.gradeId);
+      await actions.createGrades(
+        selectedItems.map((item) => ({
+          curriculumId: item.curriculumId,
+          gradeLevelId: item.gradeLevelId,
+        })),
+      );
       toast.success(
-        `${selected ? formatGradeDisplayName(selected.grade.name) : "Grade"} added`,
+        selectedItems.length === 1
+          ? `${formatGradeDisplayName(selectedItems[0].name)} added`
+          : `${selectedItems.length} grades added`,
       );
       onAdded?.();
       onOpenChange(false);
@@ -121,8 +157,8 @@ export function AddGradeDialog({
             Add grade
           </DialogTitle>
           <DialogDescription>
-            Pick any grade from your school type, including levels you have not
-            added yet.
+            Select one or more grades from your school type, including levels
+            you have not added yet.
           </DialogDescription>
         </DialogHeader>
 
@@ -131,8 +167,8 @@ export function AddGradeDialog({
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="add-grade-search">Available grades</Label>
               <span className="text-[11px] text-slate-400">
-                {selected
-                  ? `Selected: ${formatGradeDisplayName(selected.grade.name)}`
+                {selectedItems.length > 0
+                  ? `${selectedItems.length} selected`
                   : remainingCount > 0
                     ? `${remainingCount} not added yet`
                     : null}
@@ -184,25 +220,41 @@ export function AddGradeDialog({
                   ) : (
                     groups.map((curriculum) => (
                       <section key={curriculum.id} className="space-y-1.5">
-                        <h3 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                          {curriculum.name}
-                        </h3>
+                        <div className="flex items-center justify-between gap-2 px-1">
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                            {curriculum.name}
+                          </h3>
+                          <button
+                            type="button"
+                            className="text-[11px] font-medium text-[#246a59] hover:underline"
+                            onClick={() =>
+                              toggleGroup(
+                                curriculum.id,
+                                curriculum.grades.map((grade) => grade.id),
+                              )
+                            }
+                          >
+                            {curriculum.grades.every((grade) =>
+                              selectedKeys.has(
+                                selectionKey(curriculum.id, grade.id),
+                              ),
+                            )
+                              ? "Clear"
+                              : "Select all"}
+                          </button>
+                        </div>
                         <div className="grid gap-2 sm:grid-cols-2">
                           {curriculum.grades.map((grade) => {
-                            const active =
-                              selection?.gradeId === grade.id &&
-                              selection.curriculumId === curriculum.id;
+                            const active = selectedKeys.has(
+                              selectionKey(curriculum.id, grade.id),
+                            );
                             return (
                               <button
                                 key={grade.id}
                                 type="button"
-                                onClick={() => {
-                                  setSelection({
-                                    curriculumId: curriculum.id,
-                                    gradeId: grade.id,
-                                  });
-                                  setError(null);
-                                }}
+                                onClick={() =>
+                                  toggleGrade(curriculum.id, grade.id)
+                                }
                                 className={cn(
                                   "flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                                   active
@@ -259,7 +311,9 @@ export function AddGradeDialog({
             type="button"
             size="sm"
             onClick={() => void submit()}
-            disabled={actions.isSaving || isLoading || !selection}
+            disabled={
+              actions.isSaving || isLoading || selectedItems.length === 0
+            }
           >
             {actions.isSaving ? (
               <>
@@ -267,7 +321,9 @@ export function AddGradeDialog({
                 Adding…
               </>
             ) : (
-              "Add grade"
+              selectedItems.length > 1
+                ? `Add ${selectedItems.length} grades`
+                : "Add grade"
             )}
           </Button>
         </DialogFooter>
