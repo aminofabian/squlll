@@ -494,6 +494,7 @@ export default function ClassesPage() {
       onSelectAll={handleSelectAll}
       isLoading={isLoading || staffingLoading || studentsQuery.isLoading}
       surface="sidebar"
+      onAddGrade={() => setShowAddGradeDialog(true)}
     />
   );
 
@@ -642,6 +643,10 @@ export default function ClassesPage() {
               isLoading={isLoading || staffingLoading || studentsQuery.isLoading}
               surface="drawer"
               onClose={() => setIsClassesDrawerOpen(false)}
+              onAddGrade={() => {
+                setIsClassesDrawerOpen(false);
+                setShowAddGradeDialog(true);
+              }}
             />
           </div>
         </DrawerContent>

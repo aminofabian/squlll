@@ -5,6 +5,7 @@ import {
   Check,
   ChevronRight,
   LayoutGrid,
+  Plus,
   Search,
   X,
 } from "lucide-react";
@@ -29,6 +30,7 @@ interface ClassesSidebarProps {
   surface?: "sidebar" | "drawer";
   className?: string;
   onClose?: () => void;
+  onAddGrade?: () => void;
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -80,6 +82,7 @@ export function ClassesSidebar({
   surface = "sidebar",
   className,
   onClose,
+  onAddGrade,
 }: ClassesSidebarProps) {
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -278,15 +281,25 @@ export function ClassesSidebar({
         )}
       </div>
 
-      {!isSearching && directory.rows.length > 4 ? (
+      {onAddGrade ? (
         <div className="shrink-0 border-t border-[#1a4d42]/10 pt-2 dark:border-white/10">
-          <p className="px-0.5 text-[9px] text-[#1a4d42]/40 dark:text-white/30">
-            Press{" "}
-            <kbd className="rounded border border-[#1a4d42]/12 bg-white px-1 py-0.5 font-sans text-[8px] font-semibold text-[#1a4d42]/50 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/40">
-              /
-            </kbd>{" "}
-            to search
-          </p>
+          <button
+            type="button"
+            onClick={onAddGrade}
+            className="flex w-full items-center gap-2 rounded-lg border border-dashed border-[#246a59]/30 bg-white px-2 py-2 text-left transition-colors hover:border-[#246a59]/50 hover:bg-[#f3faf7] dark:border-[#8fe3c8]/30 dark:bg-[#0c1a17] dark:hover:bg-[#246a59]/10"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ef] text-[#246a59] dark:bg-[#246a59]/20 dark:text-[#8fe3c8]">
+              <Plus className="h-3.5 w-3.5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs font-medium text-[#0a1f1a] dark:text-white">
+                Add a grade
+              </span>
+              <span className="block text-[10px] text-[#1a4d42]/45 dark:text-white/35">
+                Includes levels not on the school yet
+              </span>
+            </span>
+          </button>
         </div>
       ) : null}
     </div>

@@ -44,3 +44,44 @@ export function useAvailableGradeLevels(
     staleTime: 30_000,
   });
 }
+
+const AVAILABLE_CURRICULA_FOR_SCHOOL = gql`
+  query AvailableCurriculaForSchool {
+    availableCurriculaForSchool {
+      id
+      name
+      grades {
+        id
+        name
+        code
+        order
+        age
+      }
+    }
+  }
+`;
+
+export interface AvailableCurriculumGrades {
+  id: string;
+  name: string;
+  grades: AvailableGradeLevel[];
+}
+
+interface AvailableCurriculaForSchoolResponse {
+  availableCurriculaForSchool: AvailableCurriculumGrades[];
+}
+
+export function useAvailableCurriculaForSchool(enabled: boolean = true) {
+  return useQuery({
+    queryKey: ["availableCurriculaForSchool"],
+    queryFn: async (): Promise<AvailableCurriculumGrades[]> => {
+      const data =
+        await graphqlClient.request<AvailableCurriculaForSchoolResponse>(
+          AVAILABLE_CURRICULA_FOR_SCHOOL,
+        );
+      return data.availableCurriculaForSchool ?? [];
+    },
+    enabled,
+    staleTime: 30_000,
+  });
+}

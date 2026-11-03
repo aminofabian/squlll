@@ -79,6 +79,7 @@ export function useClassDirectoryActions() {
       queryClient.invalidateQueries({ queryKey: ["schoolConfig"] }),
       queryClient.invalidateQueries({ queryKey: ["gradeLevelsForSchoolType"] }),
       queryClient.invalidateQueries({ queryKey: ["availableGradeLevels"] }),
+      queryClient.invalidateQueries({ queryKey: ["availableCurriculaForSchool"] }),
       queryClient.invalidateQueries({ queryKey: ["campusClassTeachers"] }),
       queryClient.invalidateQueries({ queryKey: ["tenantStatistics"] }),
     ]);
