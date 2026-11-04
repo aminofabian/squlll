@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils'
 import { formatKes } from '../../../lib/feeLetter/buildFeeLetterModel'
 import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
-import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
+import { feeLetterHasPaymentCopy } from '../../../lib/feeLetter/paymentChannels'
+import { FeeLetterPayMethods } from '../FeeLetterPayMethods'
 import { LogoBox, SchoolWebsiteLine } from '../FeeLetterParts'
 
 const MAROON = '#5c1a2e'
@@ -322,50 +323,17 @@ function FormalScheduleA({ model }: { model: FeeLetterModel }) {
 }
 
 function FormalRemittance({ model }: { model: FeeLetterModel }) {
+  if (!feeLetterHasPaymentCopy(model)) return null
+
   return (
     <section className="fee-letter-formal-remittance fee-letter-section mb-6">
       <h3
         className="fee-letter-formal-section-title mb-2 text-[11px] font-bold uppercase tracking-[0.2em]"
         style={{ color: MAROON }}
       >
-        II. Mode of remittance
+        II. How to pay
       </h3>
-      <p className="mb-3 text-justify text-[12px] leading-relaxed indent-6">
-        Fees shall be remitted in full at the beginning of each term to any of the
-        institution accounts herein specified. Official receipts will be issued
-        upon presentation of the original deposit slip or approved payment
-        instruction.
-      </p>
-      <ol className="fee-letter-formal-banks ml-6 list-decimal space-y-2 text-[12px]">
-        {model.bankAccounts.map((acc, i) => (
-          <li key={i} className="pl-1">
-            <span className="font-semibold">{acc.bankName}</span>
-            {acc.branch ? <> — {formatBankPaybillLine(acc.branch)}</> : null}
-            <span className="text-stone-600">
-              {' '}
-              · A/C{' '}
-              <span className="underline decoration-stone-400">
-                {acc.accountNumber || '……………………'}
-              </span>
-            </span>
-          </li>
-        ))}
-        {model.includePostalMoneyOrder && model.postalAddress?.trim() ? (
-          <li className="pl-1">
-            Postal Money Order — {model.postalAddress}
-          </li>
-        ) : null}
-      </ol>
-      <div className="mt-4 border-l-2 pl-3 text-[11px] leading-relaxed text-stone-700" style={{ borderColor: GOLD }}>
-        <p className="font-bold uppercase tracking-wide text-stone-800 mb-1">
-          Nota bene
-        </p>
-        {model.paymentNotes.map((note, i) => (
-          <p key={i} className="mb-1 text-justify">
-            {note}
-          </p>
-        ))}
-      </div>
+      <FeeLetterPayMethods model={model} tone="formal" />
     </section>
   )
 }

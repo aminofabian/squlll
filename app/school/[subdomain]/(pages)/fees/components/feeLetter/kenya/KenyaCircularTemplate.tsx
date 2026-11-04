@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils'
 import { formatKes } from '../../../lib/feeLetter/buildFeeLetterModel'
 import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
-import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
+import { feeLetterHasPaymentCopy } from '../../../lib/feeLetter/paymentChannels'
+import { FeeLetterPayMethods } from '../FeeLetterPayMethods'
 import { LogoBox, SchoolWebsiteLine } from '../FeeLetterParts'
 
 const GREEN = '#006600'
@@ -317,6 +318,8 @@ function KenyaFeesMatrix({ model }: { model: FeeLetterModel }) {
 }
 
 function KenyaAnnexPayment({ model }: { model: FeeLetterModel }) {
+  if (!feeLetterHasPaymentCopy(model)) return null
+
   return (
     <section className="fee-letter-kenya-annex fee-letter-section mb-6">
       <div className="mb-3 flex items-center gap-2">
@@ -330,45 +333,14 @@ function KenyaAnnexPayment({ model }: { model: FeeLetterModel }) {
           className="text-[12px] font-bold uppercase tracking-wide"
           style={{ color: GREEN_DARK }}
         >
-          Annex — Mode of payment
+          Annex — How to pay
         </h3>
       </div>
       <div
         className="rounded-md border px-4 py-3 text-[12px] leading-relaxed"
         style={{ borderColor: `${GREEN}66`, backgroundColor: '#fafafa' }}
       >
-        <p className="mb-3 text-justify indent-6">
-          Fees shall be paid in full at the opening of each term to the accounts
-          below. Official receipts are issued upon presentation of original pay-in
-          slips.
-        </p>
-        <ol className="ml-5 list-decimal space-y-2">
-          {model.bankAccounts.map((acc, i) => (
-            <li key={i}>
-              <span className="font-semibold">{acc.bankName}</span>
-              {acc.branch ? `, ${formatBankPaybillLine(acc.branch)}` : ''} — A/C{' '}
-              <span className="underline decoration-stone-400">
-                {acc.accountNumber || '…………'}
-              </span>
-            </li>
-          ))}
-          {model.includePostalMoneyOrder && model.postalAddress?.trim() ? (
-            <li>Postal Money Order — {model.postalAddress}</li>
-          ) : null}
-        </ol>
-        <div
-          className="mt-4 border-l-4 pl-3 text-[11px]"
-          style={{ borderColor: GREEN }}
-        >
-          <p className="font-bold uppercase tracking-wide mb-1" style={{ color: GREEN }}>
-            Notice
-          </p>
-          {model.paymentNotes.map((note, i) => (
-            <p key={i} className="mb-1 text-justify">
-              {note}
-            </p>
-          ))}
-        </div>
+        <FeeLetterPayMethods model={model} tone="kenya" />
       </div>
     </section>
   )

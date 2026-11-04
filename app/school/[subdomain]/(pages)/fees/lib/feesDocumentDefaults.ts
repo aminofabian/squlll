@@ -30,24 +30,9 @@ export function createDefaultPaymentModes(): {
   notes: string[]
 } {
   return {
-    bankAccounts: [
-      {
-        bankName: 'Kenya Commercial Bank',
-        branch: '',
-        accountNumber: '',
-      },
-      {
-        bankName: 'Co-operative Bank of Kenya',
-        branch: '',
-        accountNumber: '',
-      },
-    ],
+    bankAccounts: [],
     postalAddress: '',
     includePostalMoneyOrder: false,
-    notes: [
-      'The school official receipts shall be issued upon presentation of original pay-in slips or money order copies.',
-      'Fees may be deposited at any branch of the listed banks countrywide.',
-      "Fees can be paid by banker's cheque; personal cheques will not be accepted unless otherwise stated.",
-    ],
+    notes: [],
   }
 }

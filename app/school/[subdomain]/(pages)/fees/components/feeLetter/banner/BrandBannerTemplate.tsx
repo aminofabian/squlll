@@ -8,7 +8,8 @@ import { formatKes } from '../../../lib/feeLetter/buildFeeLetterModel'
 import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import { formatPortalUrlForDisplay } from '../../../lib/feeLetter/schoolPortalUrl'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
-import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
+import { feeLetterHasPaymentCopy } from '../../../lib/feeLetter/paymentChannels'
+import { FeeLetterPayMethods } from '../FeeLetterPayMethods'
 import { LogoBox } from '../FeeLetterParts'
 
 function Amount({
@@ -414,6 +415,8 @@ function BrandPaymentRail({
   from: string
   to: string
 }) {
+  if (!feeLetterHasPaymentCopy(model)) return null
+
   return (
     <section
       className="fee-letter-brand-payment fee-letter-section mb-6 overflow-hidden rounded-xl"
@@ -424,97 +427,15 @@ function BrandPaymentRail({
         printColorAdjust: 'exact',
       }}
     >
-      <div
-        className="fee-letter-brand-payment-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1.2fr',
-        }}
-      >
-        <div
-          className="fee-letter-brand-payment-intro"
-          style={{
-            padding: '1rem 1.25rem',
-            borderRight: '1px solid rgba(255,255,255,0.2)',
-          }}
+      <div style={{ padding: '1rem 1.25rem' }}>
+        <h3
+          className="fee-letter-brand-payment-title text-[11px] font-bold uppercase tracking-[0.2em]"
+          style={{ color: '#fff', textDecoration: 'none', margin: '0 0 0.75rem' }}
         >
-          <h3
-            className="fee-letter-brand-payment-title text-[11px] font-bold uppercase tracking-[0.2em]"
-            style={{ color: '#fff', textDecoration: 'none', margin: 0 }}
-          >
-            How to pay
-          </h3>
-          <p
-            className="mt-2 text-[12px] leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.92)', marginBottom: 0 }}
-          >
-            Pay in full at the start of each term. Present your deposit slip for
-            an official receipt.
-          </p>
-        </div>
-        <div
-          className="fee-letter-brand-payment-banks"
-          style={{
-            padding: '1rem 1.25rem',
-            backgroundColor: 'rgba(0,0,0,0.15)',
-          }}
-        >
-          <ol
-            className="text-[11px] leading-snug"
-            style={{ margin: 0, padding: 0, listStyle: 'none' }}
-          >
-            {model.bankAccounts.map((acc, i) => (
-              <li
-                key={i}
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem',
-                  color: '#fff',
-                }}
-              >
-                <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
-                  {i + 1}.
-                </span>
-                <span>
-                  <span style={{ fontWeight: 600 }}>{acc.bankName}</span>
-                  {acc.branch ? ` · ${formatBankPaybillLine(acc.branch)}` : ''}
-                  <br />
-                  <span style={{ color: 'rgba(255,255,255,0.88)' }}>
-                    A/C {acc.accountNumber || '…………'}
-                  </span>
-                </span>
-              </li>
-            ))}
-            {model.includePostalMoneyOrder && model.postalAddress?.trim() ? (
-              <li style={{ display: 'flex', gap: '0.5rem', color: '#fff' }}>
-                <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
-                  +
-                </span>
-                <span>Postal order — {model.postalAddress}</span>
-              </li>
-            ) : null}
-          </ol>
-        </div>
+          How to pay
+        </h3>
+        <FeeLetterPayMethods model={model} tone="banner" />
       </div>
-      {model.paymentNotes.length > 0 ? (
-        <div
-          className="fee-letter-brand-payment-notes"
-          style={{
-            borderTop: '1px solid rgba(255,255,255,0.2)',
-            backgroundColor: 'rgba(0,0,0,0.1)',
-            padding: '0.75rem 1.25rem',
-            fontSize: '10px',
-            lineHeight: 1.5,
-            color: 'rgba(255,255,255,0.92)',
-          }}
-        >
-          <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>
-            Note —{' '}
-          </span>
-          {model.paymentNotes.join(' ')}
-        </div>
-      ) : null}
     </section>
   )
 }

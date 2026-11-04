@@ -25,6 +25,14 @@ export type FeeLetterBankAccount = {
   accountNumber?: string
 }
 
+export type FeeLetterPaymentChannel = {
+  id: string
+  kind: 'bank' | 'mpesa' | 'postal'
+  label: string
+  title: string
+  lines: string[]
+}
+
 export type FeeLetterModel = {
   displaySchool: string
   displayAddress: string
@@ -41,6 +49,9 @@ export type FeeLetterModel = {
   grandTotal: number
   hasAnyLines: boolean
   bankAccounts: FeeLetterBankAccount[]
+  paymentChannels: FeeLetterPaymentChannel[]
+  /** Sentence that matches whichever methods were actually added. */
+  paymentIntro: string
   paymentNotes: string[]
   postalAddress?: string
   includePostalMoneyOrder?: boolean

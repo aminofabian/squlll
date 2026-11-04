@@ -28,6 +28,7 @@ import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useGradeLevels } from '../hooks/useGradeLevels'
 import { useGraphQLFeeStructures } from '../hooks/useGraphQLFeeStructures'
 import { getDisplayErrorMessage } from '@/lib/utils/graphql-errors'
+import { createDefaultPaymentModes } from '../lib/feesDocumentDefaults'
 import { CreateAcademicYearModal } from './CreateAcademicYearModal'
 import FeeStructureStepContent from './FeeStructureStepBasedContent'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
@@ -182,19 +183,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       principalName: 'PRINCIPAL NAME',
       principalTitle: 'PRINCIPAL'
     },
-    paymentModes: {
-      bankAccounts: [
-        { bankName: 'Kenya Commercial Bank', branch: 'Main Branch', accountNumber: '1234567890' },
-        { bankName: 'National Bank of Kenya', branch: 'Main Branch', accountNumber: '0987654321' }
-      ],
-      postalAddress: 'Repayable at Main Post Office',
-      notes: [
-        'Full school fees should be paid at the beginning of the term to any of the school accounts listed.',
-        'The school official receipts shall be issued upon presentation of original pay-in slips or Money Orders.',
-        'The fees may be deposited at any Branch of National Bank or Kenya Commercial Bank County wide.',
-        'Fees can be paid by Banker\'s Cheque, but personal cheques will not be accepted.'
-      ]
-    }
+    paymentModes: createDefaultPaymentModes()
   })
 
   const [selectedGrades, setSelectedGrades] = useState<string[]>([])
@@ -1110,19 +1099,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
           principalName: 'PRINCIPAL NAME',
           principalTitle: 'PRINCIPAL'
         },
-        paymentModes: {
-          bankAccounts: [
-            { bankName: 'Kenya Commercial Bank', branch: 'Main Branch', accountNumber: '1234567890' },
-            { bankName: 'National Bank of Kenya', branch: 'Main Branch', accountNumber: '0987654321' }
-          ],
-          postalAddress: 'Repayable at Main Post Office',
-          notes: [
-            'Full school fees should be paid at the beginning of the term to any of the school accounts listed.',
-            'The school official receipts shall be issued upon presentation of original pay-in slips or Money Orders.',
-            'The fees may be deposited at any Branch of National Bank or Kenya Commercial Bank County wide.',
-            'Fees can be paid by Banker\'s Cheque, but personal cheques will not be accepted.'
-          ]
-        }
+        paymentModes: createDefaultPaymentModes()
       })
       setSelectedGrades([])
     }

@@ -6,8 +6,9 @@ import { FIGTREE_FONT_FAMILY } from '@/lib/fonts/figtree'
 import { cn } from '@/lib/utils'
 import { formatPortalUrlForDisplay } from '../../lib/feeLetter/schoolPortalUrl'
 import { formatKes } from '../../lib/feeLetter/buildFeeLetterModel'
-import { formatBankPaybillLine } from '../../lib/kenyaBanks'
+import { feeLetterHasPaymentCopy } from '../../lib/feeLetter/paymentChannels'
 import type { FeeLetterModel } from '../../lib/feeLetter/types'
+import { FeeLetterPayMethods } from './FeeLetterPayMethods'
 
 export function KesAmount({ amount }: { amount: number }) {
   return (
@@ -228,42 +229,12 @@ export function PaymentSection({
   model: FeeLetterModel
   titleClassName?: string
 }) {
+  if (!feeLetterHasPaymentCopy(model)) return null
+
   return (
     <div className="fee-letter-section mb-8">
-      <h3 className={titleClassName}>MODE OF PAYMENT:</h3>
-      <p className="mb-4 text-justify">
-        Full school fees should be paid at the beginning of the term to any of
-        the school accounts listed hereunder.
-      </p>
-      <div className="mb-4 space-y-2">
-        {model.bankAccounts.map((acc, i) => (
-          <p key={i} className="mb-2">
-            {i + 1}. {acc.bankName}
-            {acc.branch ? (
-              <>&nbsp;&nbsp;&nbsp;&nbsp;{formatBankPaybillLine(acc.branch)}</>
-            ) : (
-              <>&nbsp;&nbsp;&nbsp;&nbsp;Paybill …………</>
-            )}
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A/C No:{' '}
-            <span className="underline font-medium">
-              {acc.accountNumber || '……………………'}
-            </span>
-          </p>
-        ))}
-        {model.includePostalMoneyOrder && model.postalAddress?.trim() ? (
-          <p className="mb-2">
-            {model.bankAccounts.length + 1}. Postal Money Order
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            {model.postalAddress}
-          </p>
-        ) : null}
-      </div>
-      <p className="font-bold mb-2">NB.</p>
-      <div className="mb-4 space-y-2 text-justify">
-        {model.paymentNotes.map((note, i) => (
-          <p key={i}>{note}</p>
-        ))}
-      </div>
+      <h3 className={titleClassName}>HOW TO PAY</h3>
+      <FeeLetterPayMethods model={model} tone="ink" />
     </div>
   )
 }

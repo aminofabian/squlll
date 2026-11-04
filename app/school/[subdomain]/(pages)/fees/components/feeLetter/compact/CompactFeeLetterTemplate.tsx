@@ -7,7 +7,8 @@ import { buildFeeLetterPivot } from '../../../lib/feeLetter/buildFeeLetterPivot'
 import { formatPortalUrlForDisplay } from '../../../lib/feeLetter/schoolPortalUrl'
 import { FIGTREE_FONT_FAMILY } from '@/lib/fonts/figtree'
 import type { FeeLetterModel } from '../../../lib/feeLetter/types'
-import { formatBankPaybillLine } from '../../../lib/kenyaBanks'
+import { feeLetterHasPaymentCopy } from '../../../lib/feeLetter/paymentChannels'
+import { FeeLetterPayMethods } from '../FeeLetterPayMethods'
 import { LogoBox } from '../FeeLetterParts'
 
 const INK = '#1e293b'
@@ -170,39 +171,25 @@ function CompactMatrix({ model }: { model: FeeLetterModel }) {
 }
 
 function CompactFooterGrid({ model }: { model: FeeLetterModel }) {
+  const showPayment = feeLetterHasPaymentCopy(model)
   return (
-    <div className="fee-letter-compact-footer fee-letter-section grid gap-2 sm:grid-cols-2">
-      <section
-        className="fee-letter-compact-payment rounded border px-2 py-1.5"
-        style={{ borderColor: RULE }}
-      >
-        <h3 className="text-[9px] font-bold uppercase tracking-wide text-slate-700 mb-1">
-          Payment
-        </h3>
-        <ul className="space-y-0.5 text-[9px] leading-snug text-slate-800">
-          {model.bankAccounts.map((acc, i) => (
-            <li key={i}>
-              <span className="font-semibold">{i + 1}.</span> {acc.bankName}
-              {acc.branch ? ` (${formatBankPaybillLine(acc.branch)})` : ''} —{' '}
-              <span className="font-mono">{acc.accountNumber || '…………'}</span>
-            </li>
-          ))}
-          {model.includePostalMoneyOrder && model.postalAddress?.trim() ? (
-            <li>
-              <span className="font-semibold">P.O.</span> {model.postalAddress}
-            </li>
-          ) : null}
-        </ul>
-        {model.paymentNotes.length > 0 ? (
-          <p className="mt-1 border-t border-slate-200 pt-1 text-[8px] leading-snug text-slate-600">
-            <span className="font-bold">NB:</span>{' '}
-            {model.paymentNotes[0]}
-            {model.paymentNotes.length > 1
-              ? ` ${model.paymentNotes.slice(1).join(' ')}`
-              : ''}
-          </p>
-        ) : null}
-      </section>
+    <div
+      className={cn(
+        'fee-letter-compact-footer fee-letter-section grid gap-2',
+        showPayment && 'sm:grid-cols-2',
+      )}
+    >
+      {showPayment ? (
+        <section
+          className="fee-letter-compact-payment rounded border px-2 py-1.5"
+          style={{ borderColor: RULE }}
+        >
+          <h3 className="text-[9px] font-bold uppercase tracking-wide text-slate-700 mb-1">
+            How to pay
+          </h3>
+          <FeeLetterPayMethods model={model} tone="compact" hideIntro />
+        </section>
+      ) : null}
 
       <section
         className="fee-letter-compact-sign flex flex-col justify-between rounded border px-2 py-1.5"

@@ -1,9 +1,10 @@
 import { DEFAULT_SCHOOL_MOTTO } from '@/lib/schoolLogo'
 import { sortTermNamesForLetter } from '../sortTermsForLetter'
 import type { FeeStructureForm } from '../../types'
+import { isBankAccountReady } from '../bankAccounts'
+import { buildPaymentChannels, paymentIntro } from './paymentChannels'
 import type {
   BuildFeeLetterModelInput,
-  FeeLetterBankAccount,
   FeeLetterModel,
   VoteHeadLine,
 } from './types'
@@ -64,18 +65,12 @@ function termTotal(
   return voteHeadsFromTerm(termStruct, feeBuckets).reduce((s, l) => s + l.amount, 0)
 }
 
-const DEFAULT_BANKS: FeeLetterBankAccount[] = [
-  {
-    bankName: 'Kenya Commercial Bank',
-    branch: '………… Branch',
-    accountNumber: '……………………',
-  },
-  {
-    bankName: 'Co-operative Bank of Kenya',
-    branch: '………… Branch',
-    accountNumber: '……………………',
-  },
-]
+/** Notes that used to ship with the empty KCB / Co-op placeholders. */
+const LEGACY_PLACEHOLDER_NOTES = new Set([
+  'The school official receipts shall be issued upon presentation of original pay-in slips or money order copies.',
+  'Fees may be deposited at any branch of the listed banks countrywide.',
+  "Fees can be paid by banker's cheque; personal cheques will not be accepted unless otherwise stated.",
+])
 
 export function buildFeeLetterModel(
   input: BuildFeeLetterModelInput,
@@ -152,22 +147,29 @@ export function buildFeeLetterModel(
     year: 'numeric',
   })
 
-  const bankAccounts = formData.paymentModes?.bankAccounts?.length
-    ? formData.paymentModes.bankAccounts
-    : DEFAULT_BANKS
-
-  const mpesaLine = input.mpesaCustodyLine?.trim()
-  const baseNotes = formData.paymentModes?.notes ?? [
-    'The school official receipts shall be issued upon presentation of original pay-in slips or money order copies.',
-    'Fees may be deposited at any branch of the listed banks countrywide.',
-    "Fees can be paid by banker's cheque; personal cheques will not be accepted unless otherwise stated.",
-  ]
-  const paymentNotes = mpesaLine
-    ? [
-        `Lipa Na M-Pesa Express: ${mpesaLine}. Parents receive a PIN prompt in the school portal — money credits this till/paybill directly.`,
-        ...baseNotes,
-      ]
-    : baseNotes
+  const savedAccounts = formData.paymentModes?.bankAccounts ?? []
+  const paymentChannels = buildPaymentChannels({
+    bankAccounts: savedAccounts,
+    postalAddress: formData.paymentModes?.postalAddress,
+    includePostalMoneyOrder: formData.paymentModes?.includePostalMoneyOrder,
+    mpesaCustodyLine: input.mpesaCustodyLine,
+  })
+  const bankAccounts = savedAccounts
+    .filter((account) => isBankAccountReady(account))
+    .map((account) => ({
+      bankName: account.bankName.trim(),
+      branch: account.branch,
+      accountNumber: account.accountNumber,
+    }))
+  const savedNotes = (formData.paymentModes?.notes ?? [])
+    .map((note) => note.trim())
+    .filter(Boolean)
+  const paymentNotes =
+    paymentChannels.length === 0 &&
+    savedNotes.length > 0 &&
+    savedNotes.every((note) => LEGACY_PLACEHOLDER_NOTES.has(note))
+      ? []
+      : savedNotes
 
   return {
     displaySchool,
@@ -185,6 +187,8 @@ export function buildFeeLetterModel(
     grandTotal,
     hasAnyLines,
     bankAccounts,
+    paymentChannels,
+    paymentIntro: paymentIntro(paymentChannels),
     paymentNotes,
     postalAddress:
       formData.paymentModes?.includePostalMoneyOrder &&
