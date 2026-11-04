@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowRight,
-  Building2,
-  Check,
   CheckCircle2,
   Landmark,
   Loader2,
   MessageSquare,
-  ShieldCheck,
   Smartphone,
-  Sparkles,
-  Wallet,
   X,
 } from "lucide-react";
 import {
@@ -38,7 +33,8 @@ import {
   cleanBankAccounts,
   isBankAccountReady,
 } from "../../fees/lib/bankAccounts";
-import { findKenyaBankByName, formatBankPaybillLine } from "../../fees/lib/kenyaBanks";
+import { findKenyaBankByName, bankShortName, formatBankPaybillLine } from "../../fees/lib/kenyaBanks";
+import type { BankAccount } from "../../fees/types";
 import { readIsSchoolOwner } from "@/lib/school/isSchoolOwner";
 
 type Rail = "mpesa" | "bank";
@@ -64,6 +60,10 @@ export function OwnerPaymentsDrawer({
   const subdomain = typeof params?.subdomain === "string" ? params.subdomain : "";
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [rail, setRail] = useState<Rail>(defaultRail);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const handleActiveIndex = useCallback((index: number) => {
+    setPreviewIndex(index);
+  }, []);
   const [supportOpen, setSupportOpen] = useState(false);
   const isOwner = useMemo(() => readIsSchoolOwner(), []);
 
@@ -109,15 +109,15 @@ export function OwnerPaymentsDrawer({
   const readyCount = cleanedAccounts.filter(isBankAccountReady).length;
   const bankReady =
     cleanedAccounts.length > 0 && readyCount === cleanedAccounts.length;
-  const primaryAccount = cleanedAccounts.find((account) => account.bankName);
-  const primaryBank = primaryAccount
-    ? findKenyaBankByName(primaryAccount.bankName)
-    : null;
-  const primaryPaybill = primaryAccount
-    ? formatBankPaybillLine(primaryAccount.branch).replace(/^Paybill\s*/, "")
-    : "";
-  const primaryAccountNumber = primaryAccount?.accountNumber ?? "";
-
+  let savedIsEmpty = true;
+  try {
+    const parsed = JSON.parse(savedSnapshotRef.current ?? "[]") as unknown;
+    savedIsEmpty = !Array.isArray(parsed) || parsed.length === 0;
+  } catch {
+    savedIsEmpty = true;
+  }
+  const canSaveBanks =
+    readyCount > 0 || (cleanedAccounts.length === 0 && !savedIsEmpty);
   const closeDrawer = () => {
     // Keep what the owner typed even when they close with X, Esc or Done.
     // Removing every bank stays an explicit Save action so a stray close
@@ -199,8 +199,8 @@ export function OwnerPaymentsDrawer({
         direction="right"
       >
         {trigger ? <DrawerTrigger asChild>{trigger}</DrawerTrigger> : null}
-        <DrawerContent className="flex h-full max-h-[100dvh] w-full flex-col border-l border-[#1a4d42]/12 bg-[#f8fbfa] p-0 data-[vaul-drawer-direction=right]:sm:max-w-[42rem] data-[vaul-drawer-direction=right]:xl:w-[44vw] data-[vaul-drawer-direction=right]:xl:max-w-[46rem]">
-          <DrawerHeader className="relative shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-4 pr-14 sm:px-5 sm:pt-5">
+        <DrawerContent className="flex h-full max-h-[100dvh] w-full flex-col border-l border-[#1a4d42]/10 bg-[#f6f8f6] p-0 data-[vaul-drawer-direction=right]:sm:max-w-[28rem]">
+          <DrawerHeader className="relative shrink-0 bg-[#f6f8f6] px-4 pb-2 pt-4 pr-14 sm:px-5 sm:pt-5">
             <DrawerClose asChild>
               <button
                 type="button"
@@ -211,17 +211,14 @@ export function OwnerPaymentsDrawer({
               </button>
             </DrawerClose>
 
-            <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#246a59]">
-              <Sparkles className="h-3.5 w-3.5" />
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6d7f78]">
               Payment settings
             </p>
-            <DrawerTitle className="mt-1 font-display text-[1.65rem] font-normal tracking-tight text-[#0a1f1a] sm:text-[1.8rem]">
+            <DrawerTitle className="mt-1 font-display text-[1.85rem] font-normal tracking-tight text-[#0a1f1a]">
               How parents pay
             </DrawerTitle>
-            <DrawerDescription className="mt-0.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
-              {rail === "bank"
-                ? "Pick the school bank once. We fill the paybill and print the account number on every fee letter."
-                : "Set the M-Pesa paybill parents pay into. They get a request on their phone and pay with their PIN."}
+            <DrawerDescription className="mt-1 max-w-sm text-[13px] leading-relaxed text-slate-500">
+              Tell us where fees should go. We print it on every fee letter.
             </DrawerDescription>
 
             <div
@@ -236,12 +233,17 @@ export function OwnerPaymentsDrawer({
                 label="Bank"
                 hint={
                   cleanedAccounts.length === 0
-                    ? "Prints on fee letters"
+                    ? "Not set up"
                     : bankReady
-                      ? `Ready · ${readyCount} account${readyCount === 1 ? "" : "s"}`
-                      : cleanedAccounts.length === 1
-                        ? "Add account number"
-                        : `${readyCount} of ${cleanedAccounts.length} ready`
+                      ? `${readyCount} ready`
+                      : `${readyCount} of ${cleanedAccounts.length} ready`
+                }
+                tone={
+                  cleanedAccounts.length === 0
+                    ? "slate"
+                    : bankReady
+                      ? "emerald"
+                      : "amber"
                 }
               />
               <RailCard
@@ -254,126 +256,33 @@ export function OwnerPaymentsDrawer({
                     ? "Checking…"
                     : railOn
                       ? tillReady
-                        ? "Ready · phone request"
+                        ? "Ready"
                         : "Paybill not set"
-                      : "Not switched on"
+                      : "Not set up"
                 }
+                tone={railOn && tillReady ? "emerald" : railOn ? "amber" : "slate"}
               />
             </div>
+            <p className="mt-3 text-[13px] text-slate-600">
+              Turn on one or both. Parents pick whichever suits them.
+            </p>
           </DrawerHeader>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
             {rail === "bank" ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white text-[10px]">
-                  <SummaryCell
-                    label="Prints on"
-                    value="Fee letters"
-                    hint="Every letter + invoice"
-                  />
-                  <SummaryCell
-                    label="Bank accounts"
-                    value={String(cleanedAccounts.length)}
-                    hint={
-                      cleanedAccounts.length === 0
-                        ? "None added yet"
-                        : cleanedAccounts.length === 1
-                          ? "One account"
-                          : "Shared on letters"
-                    }
-                    className="border-l border-slate-100"
-                  />
-                  <SummaryCell
-                    label="Ready"
-                    value={
-                      cleanedAccounts.length === 0
-                        ? "—"
-                        : bankReady
-                          ? "Yes"
-                          : `${readyCount} of ${cleanedAccounts.length}`
-                    }
-                    hint={
-                      cleanedAccounts.length === 0
-                        ? "Add a bank"
-                        : bankReady
-                          ? "Parents can pay"
-                          : "Needs details"
-                    }
-                    tone={
-                      cleanedAccounts.length === 0
-                        ? "slate"
-                        : bankReady
-                          ? "emerald"
-                          : "amber"
-                    }
-                    className="border-l border-slate-100"
-                  />
-                </div>
-
-                <SectionCard
-                  icon={Landmark}
-                  title="School bank"
-                  description="Parents pay into this bank. The account number is the reference."
-                  action={
-                    cleanedAccounts.length ? (
-                      <span className="rounded-full bg-[#e8f2ef] px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-[#1a4d42]/70">
-                        {cleanedAccounts.length} account
-                        {cleanedAccounts.length === 1 ? "" : "s"}
-                      </span>
-                    ) : null
-                  }
-                >
-                  <BankAccountsEditor
-                    accounts={accounts}
-                    onChange={setAccounts}
-                    loading={banksLoading && !banksLoaded}
-                    error={banksError}
-                    focusAccountAfterPick
-                  />
-                </SectionCard>
-
-                <SectionCard
-                  icon={Wallet}
-                  title="How a parent pays"
-                  description="No phone prompt and no cash handling."
-                >
-                  <ol className="space-y-1.5">
-                    <PayStep
-                      step="1"
-                      title="Open M-Pesa or the bank app"
-                      hint="M-Pesa → Lipa na M-Pesa → Pay Bill"
-                    />
-                    <PayStep
-                      step="2"
-                      title={
-                        primaryPaybill
-                          ? `Business no. ${primaryPaybill}`
-                          : "Business no. from the letter"
-                      }
-                      hint={
-                        primaryBank
-                          ? `${primaryBank.name}`
-                          : primaryAccount?.bankName || "Pick a bank above to fill this in"
-                      }
-                    />
-                    <PayStep
-                      step="3"
-                      title={
-                        primaryAccountNumber
-                          ? `Account no. ${primaryAccountNumber}`
-                          : "Account no. from the letter"
-                      }
-                      hint="The school account number is the reference."
-                    />
-                  </ol>
-                </SectionCard>
-
-                <p className="flex items-start gap-2 px-1 pb-1 text-[10px] leading-relaxed text-slate-400">
-                  <Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  Bank payments do not ping a phone. Parents pay the paybill from
-                  any bank app or agent and use the account number as the
-                  reference.
-                </p>
+              <div className="space-y-4">
+                <BankAccountsEditor
+                  accounts={accounts}
+                  onChange={setAccounts}
+                  loading={banksLoading && !banksLoaded}
+                  error={banksError}
+                  focusAccountAfterPick
+                  presentation="sheet"
+                  onActiveIndex={handleActiveIndex}
+                />
+                <FeeLetterPreview
+                  account={accounts[previewIndex] ?? accounts[0] ?? null}
+                />
               </div>
             ) : mpesaLoading ? (
               <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-3 py-6 text-[12px] text-slate-500">
@@ -402,8 +311,7 @@ export function OwnerPaymentsDrawer({
                   <CustodyMpesaSettingsPanel compact />
                 </SectionCard>
 
-                <p className="flex items-start gap-2 px-1 text-[10px] leading-relaxed text-slate-400">
-                  <Landmark className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <p className="px-1 text-[12px] leading-relaxed text-slate-500">
                   M-Pesa pays into the same school bank you picked under Bank.
                 </p>
               </div>
@@ -415,48 +323,48 @@ export function OwnerPaymentsDrawer({
             )}
           </div>
 
-          <DrawerFooter className="shrink-0 border-t border-[#1a4d42]/10 bg-white px-4 py-3">
-            <div className="flex w-full items-center gap-2">
-              <p className="hidden flex-1 items-center gap-1.5 text-[10px] text-slate-400 sm:flex">
-                <ShieldCheck className="h-3 w-3" />
-                Only the school owner can change these.
-              </p>
-
-              {rail === "bank" ? (
-                <>
+          <DrawerFooter className="shrink-0 border-t border-[#e4ebe7] bg-[#f6f8f6] px-4 py-3">
+            {rail === "bank" ? (
+              <div className="w-full space-y-2.5">
+                {!canSaveBanks ? (
+                  <p className="text-[13px] text-slate-600">
+                    {cleanedAccounts.length === 0
+                      ? "Add a bank and its account number to save."
+                      : "Add at least one account number to save."}
+                  </p>
+                ) : null}
+                <div className="flex w-full items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 flex-1 text-xs sm:h-9 sm:flex-none sm:px-5"
+                    className="h-11 rounded-xl border-[#d5ddd8] bg-white px-5 text-[13px] text-[#0a1f1a]"
                     onClick={closeDrawer}
                   >
-                    Done
+                    Cancel
                   </Button>
                   <Button
                     type="button"
-                    className="h-11 flex-[1.35] gap-1.5 bg-[#0a1f1a] text-xs text-white hover:bg-[#143b31] sm:h-9 sm:flex-none sm:px-5"
+                    className="h-11 flex-1 rounded-xl bg-[#0a1f1a] text-[13px] text-white hover:bg-[#143b31] disabled:bg-[#e4eee9] disabled:text-[#8aa097] disabled:opacity-100"
                     onClick={() => void handleSaveBanks()}
-                    disabled={saving || banksLoading}
+                    disabled={saving || banksLoading || !canSaveBanks}
                   >
                     {saving ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Check className="h-3.5 w-3.5" />
-                    )}
-                    {saving ? "Saving…" : "Save for fee letters"}
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    {saving ? "Saving…" : "Save to fee letters"}
                   </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 flex-1 text-xs sm:ml-auto sm:h-9 sm:flex-none sm:px-5"
-                  onClick={closeDrawer}
-                >
-                  Done
-                </Button>
-              )}
-            </div>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full rounded-xl border-[#d5ddd8] bg-white text-[13px]"
+                onClick={closeDrawer}
+              >
+                Done
+              </Button>
+            )}
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -478,12 +386,14 @@ function RailCard({
   icon: Icon,
   label,
   hint,
+  tone,
 }: {
   active: boolean;
   onClick: () => void;
   icon: typeof Landmark;
   label: string;
   hint: string;
+  tone: "slate" | "amber" | "emerald";
 }) {
   return (
     <button
@@ -492,64 +402,80 @@ function RailCard({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-left transition-all active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/35",
+        "flex min-h-[4.25rem] cursor-pointer items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/35",
         active
-          ? "border-[#246a59] bg-[#e8f2ef] ring-1 ring-[#246a59]/20"
-          : "border-slate-200 bg-white hover:border-[#246a59]/30 hover:bg-[#f8fbfa]",
+          ? "border-[#c5ddd0] bg-[#e7f3ec]"
+          : "border-[#e4ebe7] bg-white hover:border-[#c5ddd0]",
       )}
     >
-      <span
-        className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-          active
-            ? "bg-[#0a1f1a] text-white"
-            : "bg-[#eef7f1] text-[#1a4d42]",
-        )}
-      >
-        <Icon className="h-3.5 w-3.5" />
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#e4ebe7] bg-white text-[#1a4d42] shadow-[0_1px_0_rgba(10,31,26,0.04)]">
+        <Icon className="h-4 w-4" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1 text-[11.5px] font-semibold leading-tight text-[#0a1f1a]">
+        <span className="block text-[14px] font-semibold leading-tight text-[#0a1f1a]">
           {label}
-          {active ? <Check className="h-3 w-3 text-[#246a59]" /> : null}
         </span>
-        <span className="mt-0.5 block truncate text-[9px] text-slate-500">
-          {hint}
+        <span className="mt-1 flex items-center gap-1.5 text-[12px] text-slate-500">
+          <span
+            className={cn(
+              "h-1.5 w-1.5 shrink-0 rounded-full",
+              tone === "amber" && "bg-amber-500",
+              tone === "emerald" && "bg-emerald-500",
+              tone === "slate" && "bg-slate-300",
+            )}
+          />
+          <span className="truncate">{hint}</span>
         </span>
       </span>
     </button>
   );
 }
 
-function SummaryCell({
-  label,
-  value,
-  hint,
-  tone = "slate",
-  className,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  tone?: "slate" | "emerald" | "amber";
-  className?: string;
-}) {
+function FeeLetterPreview({ account }: { account: BankAccount | null }) {
+  const bank = account?.bankName ? findKenyaBankByName(account.bankName) : null;
+  const title = bank
+    ? bankShortName(bank)
+    : account?.bankName?.trim() || "your bank";
+  const paybill = formatBankPaybillLine(account?.branch).replace(/^Paybill\s*/, "");
+  const accountNo = account?.accountNumber?.trim() ?? "";
+
   return (
-    <div className={cn("px-2.5 py-2", className)}>
-      <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5 truncate text-[11px] font-semibold",
-          tone === "emerald" && "text-emerald-800",
-          tone === "amber" && "text-amber-800",
-          tone === "slate" && "text-slate-900",
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-0.5 truncate text-[8.5px] text-slate-400">{hint}</p>
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          On the fee letter
+        </p>
+        <p className="text-[12px] text-slate-400">Updates as you type</p>
+      </div>
+      <div className="rounded-2xl border border-[#e3ebe6] bg-white px-4 py-3.5">
+        <p className="text-[15px] font-semibold text-[#0a1f1a]">
+          Pay school fees via {title}
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+              Paybill
+            </p>
+            <p className="mt-1 font-mono text-[18px] font-semibold tracking-wide text-[#0a1f1a]">
+              {paybill || "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+              Account no.
+            </p>
+            {accountNo ? (
+              <p className="mt-1 font-mono text-[18px] font-semibold tracking-wide text-[#0a1f1a]">
+                {accountNo}
+              </p>
+            ) : (
+              <span className="mt-1.5 inline-flex rounded-lg border border-dashed border-orange-300 px-2 py-1 text-[12px] font-medium text-orange-700">
+                Add account no.
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -587,30 +513,6 @@ function SectionCard({
       </div>
       <div className="p-3.5">{children}</div>
     </section>
-  );
-}
-
-function PayStep({
-  step,
-  title,
-  hint,
-}: {
-  step: string;
-  title: string;
-  hint: string;
-}) {
-  return (
-    <li className="flex items-start gap-2">
-      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e8f2ef] text-[9px] font-bold text-[#1a4d42]">
-        {step}
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-[11px] font-semibold text-[#0a1f1a]">
-          {title}
-        </span>
-        <span className="block truncate text-[9px] text-slate-400">{hint}</span>
-      </span>
-    </li>
   );
 }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Check, ChevronLeft, Search, X } from 'lucide-react'
+import { Check, ChevronLeft, Lock, Search, Trash2, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -24,6 +24,9 @@ type BankAccountEditorProps = {
   dense?: boolean
   /** Focus the account number as soon as a bank is picked (drawer flow). */
   focusAccountAfterPick?: boolean
+  /** Compact fee-letter drawer: paybill is shown, account number is the only field. */
+  presentation?: 'default' | 'sheet'
+  onRemove?: () => void
 }
 
 export function BankAccountEditor({
@@ -31,6 +34,8 @@ export function BankAccountEditor({
   onChange,
   dense = false,
   focusAccountAfterPick = false,
+  presentation = 'default',
+  onRemove,
 }: BankAccountEditorProps) {
   const matched = findKenyaBankByName(value.bankName)
   const [query, setQuery] = useState('')
@@ -74,8 +79,10 @@ export function BankAccountEditor({
         matched={custom ? null : matched}
         custom={custom || (!matched && Boolean(value.bankName.trim()))}
         dense={dense}
+        presentation={presentation}
         autoFocusAccount={focusAccount}
         onChange={onChange}
+        onRemove={onRemove}
         onChangeBank={() => {
           setPicking(true)
           setCustom(false)
@@ -328,17 +335,21 @@ function ChosenBank({
   matched,
   custom,
   dense,
+  presentation,
   autoFocusAccount,
   onChange,
   onChangeBank,
+  onRemove,
 }: {
   value: BankAccount
   matched: KenyaBankOption | null
   custom: boolean
   dense: boolean
+  presentation: 'default' | 'sheet'
   autoFocusAccount: boolean
   onChange: (next: BankAccount) => void
   onChangeBank: () => void
+  onRemove?: () => void
 }) {
   const inputClass = cn(
     'text-[13px]',
@@ -347,6 +358,96 @@ function ChosenBank({
   const paybill = formatBankPaybillLine(value.branch)
   const title = matched ? bankShortName(matched) : value.bankName || 'Your bank'
   const subtitle = matched ? matched.name : custom ? 'Custom bank' : ''
+  const paybillNumber = paybill.replace(/^Paybill\s*/, '')
+
+  if (presentation === 'sheet') {
+    return (
+      <div className="space-y-3 pt-3">
+        {custom ? (
+          <Field label="Bank name" hint="As parents know it" dense={dense}>
+            <Input
+              value={value.bankName}
+              onChange={(event) =>
+                onChange({ ...value, bankName: event.target.value })
+              }
+              placeholder="Sacco or bank name"
+              className="h-11 rounded-xl bg-white text-[13px] shadow-none"
+              autoFocus
+            />
+          </Field>
+        ) : null}
+
+        {paybillNumber && !custom ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-[#f3f6f4] px-3 py-2.5">
+            <span className="inline-flex min-w-0 items-center gap-2 text-[13px] text-[#3d524c]">
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+              Paybill, added for you
+            </span>
+            <span className="font-mono text-[15px] font-medium tracking-wide text-[#0a1f1a]">
+              {paybillNumber}
+            </span>
+          </div>
+        ) : (
+          <Field
+            label="Paybill / business no."
+            hint={custom ? 'From your bank slip' : 'Add the paybill from your slip'}
+            dense={dense}
+          >
+            <Input
+              inputMode="numeric"
+              value={value.branch}
+              onChange={(event) =>
+                onChange({
+                  ...value,
+                  branch: event.target.value.replace(/\s+/g, ''),
+                })
+              }
+              placeholder="e.g. 400200"
+              className="h-11 rounded-xl bg-white font-mono text-[13px] shadow-none"
+            />
+          </Field>
+        )}
+
+        <label className="block">
+          <span className="text-[13px] font-medium text-[#0a1f1a]">
+            School account number
+          </span>
+          <Input
+            value={value.accountNumber}
+            onChange={(event) =>
+              onChange({ ...value, accountNumber: event.target.value })
+            }
+            placeholder="e.g. 0110398765"
+            className="mt-1.5 h-11 rounded-xl bg-white font-mono text-[14px] shadow-none"
+            autoFocus={autoFocusAccount}
+          />
+          <span className="mt-1.5 block text-[12px] text-slate-500">
+            Parents type this as the payment reference.
+          </span>
+        </label>
+
+        <div className="flex items-center justify-between gap-3 pt-0.5">
+          <button
+            type="button"
+            onClick={onChangeBank}
+            className="text-[13px] font-medium text-[#1f4d40] underline decoration-[#1f4d40]/40 underline-offset-2 hover:decoration-[#1f4d40]"
+          >
+            Change bank
+          </button>
+          {onRemove ? (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="inline-flex items-center gap-1.5 text-[13px] text-slate-500 hover:text-rose-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove
+            </button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3">

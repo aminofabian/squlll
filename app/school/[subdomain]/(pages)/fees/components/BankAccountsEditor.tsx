@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BankAccountEditor } from './BankAccountEditor'
 import { isBankAccountReady, blankBankAccount } from '../lib/bankAccounts'
-import { findKenyaBankByName, bankShortName } from '../lib/kenyaBanks'
+import { findKenyaBankByName, bankMonogram, bankShortName } from '../lib/kenyaBanks'
 import type { BankAccount } from '../types'
 
 let keySeed = 0
@@ -21,6 +21,10 @@ type BankAccountsEditorProps = {
   error?: string | null
   /** Focus the account number right after a bank is picked. */
   focusAccountAfterPick?: boolean
+  /** Accordion cards used by the payment settings drawer. */
+  presentation?: 'default' | 'sheet'
+  /** Which card is open, so the fee-letter preview can follow it. */
+  onActiveIndex?: (index: number) => void
   className?: string
 }
 
@@ -35,6 +39,8 @@ export function BankAccountsEditor({
   loading = false,
   error = null,
   focusAccountAfterPick = false,
+  presentation = 'default',
+  onActiveIndex,
   className,
 }: BankAccountsEditorProps) {
   // Stable keys so removing one account doesn't hand its inline picker state
@@ -42,6 +48,7 @@ export function BankAccountsEditor({
   const [keys, setKeys] = useState<string[]>(() =>
     accounts.length ? accounts.map(makeKey) : ['draft'],
   )
+  const [openKey, setOpenKey] = useState<string | null>(keys[0] ?? null)
 
   useEffect(() => {
     // Re-key only when the list length changes from outside (first load or a
@@ -55,6 +62,17 @@ export function BankAccountsEditor({
       return accounts.map(() => makeKey())
     })
   }, [accounts])
+
+  const rows =
+    accounts.length > 0
+      ? accounts.map((account, index) => ({ account, index }))
+      : [{ account: blankBankAccount(), index: 0 }]
+
+  const activeIndex = rows.findIndex((row) => keys[row.index] === openKey)
+
+  useEffect(() => {
+    onActiveIndex?.(activeIndex < 0 ? 0 : activeIndex)
+  }, [activeIndex, onActiveIndex])
 
   const updateAt = (index: number, next: BankAccount) => {
     if (accounts.length === 0) {
@@ -70,8 +88,14 @@ export function BankAccountsEditor({
   }
 
   const addAccount = () => {
-    onChange([...accounts, blankBankAccount()])
-    setKeys((prev) => [...prev, makeKey()])
+    const key = makeKey()
+    if (accounts.length === 0) {
+      onChange([blankBankAccount(), blankBankAccount()])
+    } else {
+      onChange([...accounts, blankBankAccount()])
+    }
+    setKeys((prev) => [...prev, key])
+    setOpenKey(key)
   }
 
   if (loading) {
@@ -83,10 +107,99 @@ export function BankAccountsEditor({
     )
   }
 
-  const rows =
-    accounts.length > 0
-      ? accounts.map((account, index) => ({ account, index }))
-      : [{ account: blankBankAccount(), index: 0 }]
+  if (presentation === 'sheet') {
+    return (
+      <div className={cn('space-y-2.5', className)}>
+        {error ? (
+          <p className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-[11px] text-rose-800">
+            {error}
+          </p>
+        ) : null}
+        {rows.map(({ account, index }) => {
+            const matched = findKenyaBankByName(account.bankName)
+            const ready = isBankAccountReady(account)
+            const hasBank = Boolean(account.bankName.trim())
+            const key = keys[index] ?? `account-${index}`
+            const open = openKey === key
+            const canRemove =
+              accounts.length > 1 ||
+              Boolean(account.bankName || account.branch || account.accountNumber)
+            const mark = matched
+              ? bankMonogram(matched)
+              : (account.bankName || 'BK').slice(0, 2).toUpperCase()
+            return (
+              <div
+                key={key}
+                className="overflow-hidden rounded-2xl border border-[#e3ebe6] bg-white"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenKey(open ? null : key)}
+                  className="flex w-full items-center gap-3 px-3 py-3 text-left"
+                  aria-expanded={open}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#d7e3dc] bg-[#f4faf6] text-[10px] font-bold tracking-tight text-[#1a4d42]">
+                    {mark}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold leading-tight text-[#0a1f1a]">
+                      {matched
+                        ? bankShortName(matched)
+                        : hasBank
+                          ? account.bankName
+                          : 'Choose a bank'}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] text-slate-500">
+                      {matched?.name ||
+                        (hasBank ? 'Custom bank' : 'Search Equity, KCB, Co-op…')}
+                    </span>
+                  </span>
+                  {hasBank ? (
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        ready
+                          ? 'bg-[#e7f3ec] text-[#1a4d42]'
+                          : 'bg-[#f8edd9] text-[#9a6230]',
+                      )}
+                    >
+                      {ready ? 'Ready' : 'Needs account no.'}
+                    </span>
+                  ) : null}
+                  {open ? (
+                    <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+                  )}
+                </button>
+                {open ? (
+                  <div className="border-t border-[#eef2f0] px-3 pb-3">
+                    <BankAccountEditor
+                      value={account}
+                      dense
+                      presentation="sheet"
+                      focusAccountAfterPick={focusAccountAfterPick}
+                      onRemove={canRemove ? () => removeAt(index) : undefined}
+                      onChange={(next) => updateAt(index, next)}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
+        {accounts.length > 0 || presentation === 'sheet' ? (
+          <button
+            type="button"
+            onClick={addAccount}
+            className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#c9d5ce] bg-transparent px-3 text-[13px] font-medium text-[#3d524c] transition-colors hover:border-[#246a59]/45 hover:bg-white/70"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add another bank
+          </button>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <div className={cn('space-y-2.5', className)}>
